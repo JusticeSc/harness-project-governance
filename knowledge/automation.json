@@ -1,0 +1,3637 @@
+{
+  "domain": "automation",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "automation-local-check-boundary",
+      "title": "本地检查与 CI 穷尽覆盖的分工边界",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 84,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 136,
+          "end": 161,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 9,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 1,
+          "end": 4,
+          "kind": "config"
+        }
+      ],
+      "problem": "如果每次提交或推送都跑全量测试、构建与平台矩阵，本地反馈会被昂贵检查拖死；如果只依赖开发者自觉，CI 又会收到大量可本地发现的错误。源需要明确哪一层拥有哪种证据。",
+      "triggers": [
+        "agent 准备提交或推送代码",
+        "决定是否要本地复现 CI 的完整矩阵",
+        "新增一条检查并选择放在钩子、本地命令还是 CI"
+      ],
+      "obligations": [
+        "本地只跑与改动表面相关的检查；不默认跑全量测试，也不为提交/推送重复已通过的检查（AGENTS.md:117-119）",
+        "CI 拥有穷尽覆盖率、构建产物 smoke 与 Node 22.19/24.26 兼容矩阵（AGENTS.md:118；docs/development.md:147）",
+        "覆盖率门禁使用 test:coverage 而不是 test（AGENTS.md:119）",
+        "在声称完成前，先 build:artifacts，再 build:check 或完整 build（AGENTS.md:120）",
+        "钩子只跑快速检查点；不跑 tests/snapshots/docs/builds/hygiene（lefthook.yml:1-4；docs/development.md:147）",
+        "check:all 是可选的综合本地集合，不是 agent 必须执行的指令（docs/development.md:149）"
+      ],
+      "actors": [
+        "提交者",
+        "agent",
+        "CI 维护者",
+        "分支保护管理员"
+      ],
+      "steps": [
+        "识别改动表面（代码、文档、发布路径、平台专属）。",
+        "选择最小覆盖集合：聚焦测试、doc-sync、built smoke 或 real-API e2e。",
+        "在本地运行该集合一次；不重复运行已通过的检查。",
+        "把仓库级、平台级、穷尽覆盖交给 CI。",
+        "完成前按改动类型执行 build:check 或 build。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-ci-structure",
+        "implementation": "AGENTS.md 的命令与政策；lefthook.yml 仅承载快速钩子；ci.yml/ci-master.yml 承载穷尽矩阵；docs/development.md 解释预算与钩子分工",
+        "trust": "本地政策依赖 agent 遵守，无法自动强制；CI 结构通过工作流与契约测试强制",
+        "failure": "违反本地政策不会立即失败，但会在 CI 产生返工；把全量检查塞进钩子会造成提交延迟",
+        "exceptions": "显式请求、CI 诊断、不可约的仓库级改动可以本地跑全量（AGENTS.md:118）；check:windows-wine 只在诊断已知 Windows 失败时运行（AGENTS.md:99）"
+      },
+      "applicability": "所有采用本地钩子 + 远端 CI 的仓库。新仓库若没有 CI 矩阵，本地边界需重新定义，不能照搬“CI 拥有穷尽覆盖”。",
+      "relationships": [
+        "related: automation-lefthook-hook-matrix; automation-final-verdict; automation-pr-job-inventory",
+        "crossDomain: 工程规范域拥有 AGENTS.md 命令语义; 测试域拥有覆盖率阈值"
+      ],
+      "migration": {
+        "strategy": "先定义证据归属，再决定钩子和 CI 的内容；不要从工具清单反推分工",
+        "implementation": "在新 AGENTS.md 写清“本地跑什么、CI 拥有什么、完成前跑什么”；钩子只保留 staged/快速项；CI 用一个聚合 check 承担穷尽信号",
+        "requiredSupport": [
+          "可本地执行的包脚本",
+          "CI 工作流",
+          "契约测试固定关键边界"
+        ]
+      },
+      "reference": "references/automation.md#1-读者触发索引",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "首次提交只跑相关检查即可合入，CI 矩阵仍覆盖全平台",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把全量 test 放进 pre-commit 时能被评审拒绝或契约测试发现",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误在本地跑全量后，可停止并按最小集合重跑；CI 结果不受影响",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "这是政策型机制，没有自动检查器；源内只能看到文档与钩子/CI 结构，无法证明 agent 实际遵守。"
+    },
+    {
+      "id": "automation-lefthook-hook-matrix",
+      "title": "lefthook 提交前/合并前/推送前钩子矩阵",
+      "sources": [
+        {
+          "path": "lefthook.yml",
+          "start": 5,
+          "end": 49,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 214,
+          "end": 214,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1516,
+          "end": 1530,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-oxlint.ts",
+          "start": 1,
+          "end": 112,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 137,
+          "end": 149,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "提交前需要拦截配对记录、风格、空白、生成元数据与 vendor 变更日志的明显错误，但不能把昂贵检查放进每次提交。",
+      "triggers": [
+        "git commit",
+        "git merge 自动创建合并提交",
+        "git push",
+        "新增或修改钩子 job"
+      ],
+      "obligations": [
+        "pre-commit 校验暂存区 i18n 配对记录，排除归档 Agent Note",
+        "pre-commit 对暂存归档笔记运行归档校验器",
+        "pre-commit 用项目无关的 .oxlintrc.staged.json 检查暂存 TS/TSX/MTS/CTS/MJS，排除 vendor/*/src，并 stage_fixed",
+        "pre-commit 运行 git diff --cached --check",
+        "仅当 pi-ai 输入或生成文件被暂存时运行 provider metadata --check --cached",
+        "pre-commit 无条件运行 vendor manifest guard",
+        "pre-merge-commit 只重复配对与归档检查",
+        "pre-push 运行 pnpm run typecheck",
+        "Oxlint 非 fix 只调用一次；fix 首次非零时只追加一次修复调用，处理 JS-plugin 重叠修复产生的后续诊断；首轮 signal 不重试，首轮成功直接返回",
+        "lint 子进程启动错误抛出；signal 原样传播给父进程，未知退出状态按失败处理，不能把 null 状态当成功",
+        "DSH_OXLINT_THREADS 必须是规范表示的正安全整数，并同时控制 Oxlint --threads 与 GOMAXPROCS；显式环境值和调用者 --threads 冲突即拒绝。CI 未显式选值时保留工具默认；本地沿用仓库 worker budget"
+      ],
+      "actors": [
+        "提交者",
+        "仓库维护者",
+        "文档域脚本所有者"
+      ],
+      "steps": [
+        "lefthook 按 glob/exclude 选择 job 并展开 {staged_files}。",
+        "job 失败则阻止提交/推送并打印命令输出。",
+        "auto-fix job 成功后把修改重新加入暂存区。",
+        "提交者修复后重新提交。"
+      ],
+      "enforcement": {
+        "mode": "local-git-hook",
+        "implementation": "lefthook.yml + node_modules/.bin/lefthook，由 scripts/install-lefthook.mjs 安装",
+        "trust": "只在本地执行；CI 不运行贡献者钩子；开发者可用 --no-verify 绕过",
+        "failure": "任一 job 非零即阻止对应 Git 操作",
+        "exceptions": "vendor/*/src 不参与 staged lint；归档笔记不参与配对；pre-merge-commit 不重复 lint/whitespace/vendor"
+      },
+      "applicability": "使用 pnpm + lefthook 的仓库。glob 与脚本名必须替换为新仓库的路径；钩子框架无关的仓库需重建同等 job。",
+      "relationships": [
+        "dependsOn: automation-lefthook-worktree-installer",
+        "related: automation-local-check-boundary",
+        "crossDomain: 文档域拥有 verify-translation-pairing/verify-archived-agent-notes 的判定; 供应链域拥有 vendor manifest 语义"
+      ],
+      "migration": {
+        "strategy": "保留 staged-only 与快速原则，按语言/目录替换 glob",
+        "implementation": "复制 job 结构；把脚本路径改为新仓库命令；保留 stage_fixed 与 exclude；契约测试至少固定归档目录排除",
+        "requiredSupport": [
+          "lefthook devDependency",
+          "postinstall 安装器",
+          "可对 --cached/--staged 工作的校验脚本"
+        ]
+      },
+      "reference": "references/automation.md#21-lefthook-作业矩阵源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "暂存一个坏的 i18n 记录会阻止提交",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "提交 vendor/src 改动但不改 vendor/README.md 会被 vendor guard 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "auto-fix 后暂存区包含修复，重新提交通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "钩子可被 --no-verify 绕过；源没有 CI 端复核钩子是否被绕过。 pre-commit 的 translation pairing 只检查 {staged_files} 展开的命名对；没有暂存 i18n 文件时检查 0 对并以 0 退出，脚本明确提示全库检查在 doc-sync（deepseek-harness/scripts/verify-translation-pairing.ts:6-9、360-363@687f282e）。干净检出上的钩子成功不是全库配对证据，也不覆盖未暂存文件。"
+    },
+    {
+      "id": "automation-lefthook-worktree-installer",
+      "title": "worktree-local Lefthook 安装器与安全迁移",
+      "sources": [
+        {
+          "path": "scripts/install-lefthook.mjs",
+          "start": 1,
+          "end": 769,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 218,
+          "end": 860,
+          "kind": "test"
+        },
+        {
+          "path": "package.json",
+          "start": 214,
+          "end": 214,
+          "kind": "config"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 35,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-27-worktree-local-lefthook.md",
+          "start": 1,
+          "end": 19,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 1,
+          "end": 217,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 515,
+          "end": 544,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 625,
+          "end": 637,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 851,
+          "end": 882,
+          "kind": "test"
+        }
+      ],
+      "problem": "链接 worktree 共享默认 hooks 目录；任一 worktree 安装 Lefthook 会重写所有 worktree 的钩子，并可能让其它 worktree 运行错误 worktree 捕获的绝对二进制路径；并发安装还会互相覆盖。",
+      "triggers": [
+        "pnpm install 触发 postinstall",
+        "手工运行 node scripts/install-lefthook.mjs",
+        "checkout 移动后重跑",
+        "新增链接 worktree"
+      ],
+      "obligations": [
+        "CI=true 或 GITHUB_ACTIONS=true 时在 Git 发现和任何变更前返回",
+        "要求 Git ≥ 2.26（--show-scope）",
+        "repository format 0 升到 1，启用 extensions.worktreeConfig",
+        "当前 worktree 的 core.hooksPath 指向 $GIT_DIR/dsh-hooks 的绝对路径",
+        "拒绝公共 config 中 format 0 下的直接 extensions.*、core.worktree、core.bare=true，以及会因启用扩展而激活的非空 dormant worktree config",
+        "公共 config 与所有 config.worktree 必须是普通非符号链接文件",
+        "拒绝 command-scoped hooksPath；拒绝非本安装器所有的 worktree-scoped 路径；继承的 system/global/local 路径只有在 DSH_LEFTHOOK_ALLOW_HOOKS_PATH_OVERRIDE=1 时允许",
+        "钩子目录必须有合法 .dsh-lefthook-owned 标记；目录与其中每个条目必须是普通单链接文件",
+        "安装锁独占创建、记录 pid+uuid、释放前复核 dev/ino/内容；死锁或非法锁要求人工恢复",
+        "Lefthook 失败后回滚旧的 worktree core.hooksPath；回滚失败与安装失败一起报告",
+        "永不删除或重写公共 $GIT_COMMON_DIR/hooks 的既有文件",
+        "重复安装幂等；并发安装串行化",
+        "拒绝必须发生在任何写入之前：非本安装器拥有的 hooks 目录与低于 Git 2.26 时，extensions.worktreeConfig 必须保持未启用且用户 hook 字节不变；安装器以 install --force 调用 lefthook，失败时不得留下部分安装或改写公共 hooks。"
+      ],
+      "actors": [
+        "执行 pnpm install 的开发者/agent",
+        "需要人工恢复锁的人"
+      ],
+      "steps": [
+        "CI 短路；探测 Git 根与 lefthook 二进制。",
+        "校验 Git 版本与仓库布局。",
+        "获取仓库级安装锁。",
+        "执行只读安全校验（config 文件类型、dormant config、core.worktree/core.bare、有效 hooksPath scope）。",
+        "创建/验证归属目录与标记。",
+        "迁移 format 与 worktreeConfig；写入 worktree core.hooksPath；确认生效。",
+        "运行 lefthook install --force；更新标记。",
+        "失败则回滚路径；最后释放锁。"
+      ],
+      "enforcement": {
+        "mode": "installer-with-refusals-and-rollback",
+        "implementation": "scripts/install-lefthook.mjs；锁 .dsh-lefthook-install.lock；标记 .dsh-lefthook-owned",
+        "trust": "安装器自身执行；测试覆盖隔离、迁移拒绝、锁、归属、重定位、回滚",
+        "failure": "任一校验失败即抛错并阻止安装；锁不可自动破除；回滚失败聚合报告",
+        "exceptions": "CI 完全 no-op；ALLOW_HOOKS_PATH_OVERRIDE 只放行继承路径；公共 hooks 目录保留给未升级 worktree"
+      },
+      "applicability": "多 worktree 并发开发（尤其是 agent 工作树）且使用 Lefthook 的仓库。单 checkout 仓库可简化，但仍应保留 CI 短路与归属检查。",
+      "relationships": [
+        "related: automation-lefthook-hook-matrix",
+        "crossDomain: Git 工作树语义属于外部工具行为"
+      ],
+      "migration": {
+        "strategy": "复制顺序与拒绝清单，不复制具体项目路径",
+        "implementation": "以当前 Git 目录为基准计算 hooksPath；用 repository-scoped 锁；用 JSON 标记记录绝对路径；失败回滚",
+        "requiredSupport": [
+          "Git ≥ 2.26",
+          "lefthook 二进制",
+          "可写的 git common dir"
+        ]
+      },
+      "reference": "references/automation.md#22-worktree-local-钩子安装器源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "两个 worktree 安装后 hooksPath 不同且互不影响",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "存在用户所有的 dormant worktree config 时安装被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "Lefthook 安装失败后旧 hooksPath 被恢复，错误同时报告回滚失败",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源测试在临时 Git fixture 中运行，不等于真实多 worktree 并发；Windows 锁 EPERM 路径未在真实 Windows CI 上验证。"
+    },
+    {
+      "id": "automation-gate-aggregate-registry",
+      "title": "统一门禁运行器的聚合注册与包脚本所有权",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 122,
+          "end": 183,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 186,
+          "end": 364,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 87,
+          "end": 101,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 130,
+          "end": 130,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 198,
+          "end": 199,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 240,
+          "end": 266,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 402,
+          "end": 429,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 438,
+          "end": 494,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 267,
+          "end": 400,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 430,
+          "end": 437,
+          "kind": "test"
+        }
+      ],
+      "problem": "CI、文档和开发者需要稳定的聚合入口；把依赖图写进 YAML 会重复且无法本地复现。",
+      "triggers": [
+        "新增 CI 阶段",
+        "本地需要复现 CI 聚合",
+        "重构 gate 列表"
+      ],
+      "obligations": [
+        "package.json 拥有公共聚合名；run-gates.ts 拥有经过校验的依赖图、调度环境与诊断",
+        "Mode 联合类型、parseMode switch、gatesForMode 三处同步",
+        "未知聚合名报错并列出全部合法值",
+        "聚合内的复用片段用私有构造函数，不复制 gate 列表",
+        "必须通过 pnpm 脚本调起；npm_execpath 缺失时抛错",
+        "聚合成员契约必须包含 policy-gate roster：dsh-package-licenses、client-packages、approval-policy 在 ci-primary/ci-static/check-all；no-unknown-casts、package-dependencies、default-product-isolation、client-ui-i18n、client-route-resolution、application-entrypoints 在 ci-primary/ci-static/check-all/hygiene；其中 no-unknown-casts 与 default-product-isolation 显式断言非 allowFailure。Windows complete 中 coverage 与 coverage-exempt-heavy 非 allowFailure 且都 needs build；共享诊断在 complete 中 allowFailure=true 且 after coverage/coverage-exempt-heavy；observational-ready 去掉 build/windows-site/native-system/coverage/coverage-exempt-heavy，保留共享诊断并单独加 docs-site-build。"
+      ],
+      "actors": [
+        "门禁维护者",
+        "CI 配置者"
+      ],
+      "steps": [
+        "在 package.json 注册脚本。",
+        "在 Mode 与 parseMode 加名。",
+        "在 gatesForMode 返回 Gate[]。",
+        "为每个 gate 指定 id/label/displayCommand/command/args/needs/after/env。",
+        "运行聚合确认启动行与退出码。"
+      ],
+      "enforcement": {
+        "mode": "runtime-registry-validation",
+        "implementation": "scripts/run-gates.ts + package.json 脚本",
+        "trust": "运行器在启动子进程前校验名字与图；测试遍历所有 Mode 验证图无环",
+        "failure": "未知名字/空图/重复 id/未知依赖/环均在子进程前抛错",
+        "exceptions": "ci-windows-observational-ready 过滤 build 并重写 needs/after，由调用方保证已构建"
+      },
+      "applicability": "需要多语言、多阶段门禁但希望本地与 CI 共用同一图的仓库。",
+      "relationships": [
+        "dependsOn: automation-gate-dependency-graph",
+        "related: automation-gate-scheduler; automation-final-verdict",
+        "crossDomain: 各域拥有具体 gate 的实现"
+      ],
+      "migration": {
+        "strategy": "保留一个运行器 + 多个聚合入口",
+        "implementation": "先迁移 2-3 个聚合，再补齐 CI 使用面；每个聚合保持可独立本地运行",
+        "requiredSupport": [
+          "pnpm 或等价 npm_execpath",
+          "package.json scripts",
+          "Node 进程 spawn"
+        ]
+      },
+      "reference": "references/automation.md#31-聚合名与包脚本所有权源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个合法聚合名都能打印启动行并返回 0/1",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "未知聚合名立即非零并列出合法值",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "注册失败后可只修枚举/图并重跑，不留下子进程",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "运行器只保证图可执行，不保证每个 gate 的命令本身有意义；命令正确性由各域测试负责。"
+    },
+    {
+      "id": "automation-gate-dependency-graph",
+      "title": "Gate 图的 needs/after 语义与静态校验",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 42,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 921,
+          "end": 979,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1004,
+          "end": 1027,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1142,
+          "end": 1153,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 738,
+          "end": 772,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 241,
+          "end": 265,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 717,
+          "end": 730,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/build.ts",
+          "start": 92,
+          "end": 142,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "一条 gate 可能既需要前驱的成功结果，又只需要前驱不再占用资源；把两者混为一谈会导致依赖失败后继续消费坏数据，或资源冲突时无谓阻塞。",
+      "triggers": [
+        "新增 gate",
+        "调整 gate 顺序",
+        "排查 gate 被跳过或并发冲突"
+      ],
+      "obligations": [
+        "needs 要求前驱 passed；前驱 failed/skipped 时后继 skipped 并记录依赖 ids",
+        "after 只要求前驱已结算；前驱失败或跳过时后继仍运行",
+        "needs 与 after 都参与环检测",
+        "重复 id、未知依赖、空图在启动子进程前失败",
+        "图停滞且找不到失败依赖时抛错，不静默死锁"
+      ],
+      "actors": [
+        "门禁维护者"
+      ],
+      "steps": [
+        "用 needs 表达数据依赖（构建产物、声明、覆盖率 blob）。",
+        "用 after 表达资源/噪声隔离（浏览器池、启动测量）。",
+        "运行 validateGateGraph。",
+        "用注入 executor 的测试验证失败/跳过传播。"
+      ],
+      "enforcement": {
+        "mode": "graph-validation-plus-scheduler",
+        "implementation": "validateGateGraph/findDependencyCycle/predecessorsReady/gateFailed",
+        "trust": "运行时在启动任何子进程前校验；调度器按状态表执行",
+        "failure": "非法图抛错；依赖失败使后继 skipped 且聚合退出码为 1；图停滞抛错",
+        "exceptions": "allowFailure 只影响聚合退出码与 fail-fast 触发，不改变 needs 传播：依赖它的 gate 仍会因 failed/skipped 被跳过；after 边不受结果影响"
+      },
+      "applicability": "任何有阶段依赖的门禁系统；语义可映射到 CI needs 或本地任务图。",
+      "relationships": [
+        "dependsOn: automation-gate-aggregate-registry",
+        "related: automation-gate-scheduler; automation-gate-failfast-cancel"
+      ],
+      "migration": {
+        "strategy": "先建模两类边，再写调度器",
+        "implementation": "Gate 结构保留 needs/after 两个数组；校验函数在任何执行前运行；状态表区分 pending/running/passed/failed/skipped",
+        "requiredSupport": [
+          "状态机",
+          "环检测",
+          "可注入 executor 的测试"
+        ]
+      },
+      "reference": "references/automation.md#32-gate-图模型源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "after 后继在前驱失败后仍启动",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "needs 前驱失败时后继 skipped 且聚合退出 1",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修正依赖后重跑，skipped gate 正常执行",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "图只表达 gate 级依赖，不表达文件级或资源级配额；同一 gate 内的并行由子工具自行管理。"
+    },
+    {
+      "id": "automation-gate-scheduler",
+      "title": "有界并发调度、启动顺序与聚合停滞保护",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 96,
+          "end": 96,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 186,
+          "end": 212,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1030,
+          "end": 1136,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/parallelism.ts",
+          "start": 14,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 166,
+          "end": 238,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 379,
+          "end": 400,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 731,
+          "end": 736,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 929,
+          "end": 943,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 141,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 561,
+          "end": 645,
+          "kind": "test"
+        }
+      ],
+      "problem": "无界并行会在共享主机上打爆内存/CPU；固定顺序又会拖长 wall clock。需要可解释的默认预算、显式覆盖和确定性启动顺序。",
+      "triggers": [
+        "CI 运行聚合",
+        "本地运行聚合",
+        "共享 runner 超订",
+        "调整 gate 顺序"
+      ],
+      "obligations": [
+        "默认预算：CI 用可用 CPU；本地 gate/build/typecheck/Oxlint/publint 上限 12，Vitest fork 上限 48",
+        "聚合 worker = min(gate 总数, 预算)；check-all/hygiene/doc-sync/doc-quick 额外上限 8",
+        "DSH_GATE_CONCURRENCY 显式覆盖且必须为正整数",
+        "启动选择数组顺序中第一个满足前驱的 pending gate",
+        "无运行中 gate 且仍有 pending 时，若找不到失败依赖则抛停滞错误",
+        "等待任一 gate 结算而不是固定轮询",
+        "Windows 的 Electron 安装是单独 gate：非 allowFailure、不 needs build，只在 ci-coverage 的 win32 图及 ci-windows-complete/observational-ready 出现，env 仅该 gate 有 ELECTRON_GET_USE_PROXY=1；coverage 与 built-bin-smoke 都 needs 它。安装失败在 complete 只把 electron-install 记为非 allowFailure 失败，built-bin-smoke/coverage 跳过，coverage-exempt-heavy 与无关诊断继续；观测车道只跳过 built-bin-smoke，无关诊断继续。"
+      ],
+      "actors": [
+        "门禁维护者",
+        "CI 配置者",
+        "runner 维护者"
+      ],
+      "steps": [
+        "计算默认预算并打印来源。",
+        "循环填充运行槽。",
+        "在无进展时等待 Promise.race。",
+        "结算后更新状态并触发 fail-fast（若启用）。",
+        "汇总结果。"
+      ],
+      "enforcement": {
+        "mode": "scheduler-with-bounded-workers",
+        "implementation": "runGates/defaultConcurrency/defaultParallelism/concurrencyFromEnv",
+        "trust": "运行器自身；显式环境变量优先；测试覆盖默认值与上限",
+        "failure": "非法并发值在启动子进程前抛错；图停滞抛错",
+        "exceptions": "ci-unit 不注入工具预算；doc 聚合固定 8 上限；串行参考车道把 DSH_GATE_CONCURRENCY 设为 1"
+      },
+      "applicability": "所有需要并行门禁的仓库。参数（12/48/8）是源项目经验值，迁移时按目标主机调整。",
+      "relationships": [
+        "dependsOn: automation-gate-dependency-graph",
+        "related: automation-gate-env-budget; automation-gate-failfast-cancel",
+        "crossDomain: 测试域拥有 Vitest fork 语义"
+      ],
+      "migration": {
+        "strategy": "先实现串行正确性，再加有界并发；保留显式覆盖",
+        "implementation": "状态表 + 运行数组 + Promise.race；预算函数集中在一处；文档写出默认值",
+        "requiredSupport": [
+          "可注入 executor",
+          "worker 预算模块",
+          "测试"
+        ]
+      },
+      "reference": "references/automation.md#34-调度与并发预算源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "给定 8 个可并行 gate 与 4 worker，最多同时 4 个 running",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "DSH_GATE_CONCURRENCY=0 在启动子进程前失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "非法预算修正后重跑，无残留子进程",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "并发上限不感知每个 gate 的内存占用；共享主机的实际安全值需要实测。"
+    },
+    {
+      "id": "automation-gate-env-budget",
+      "title": "工具级 worker 预算的派生与不覆盖原则",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 215,
+          "end": 257,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 684,
+          "end": 694,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 166,
+          "end": 238,
+          "kind": "test"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 151,
+          "end": 151,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 654,
+          "end": 669,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 787,
+          "end": 798,
+          "kind": "test"
+        }
+      ],
+      "problem": "调度器、Oxlint、publint、Vitest、覆盖率分区各有自己的并行池；若都读同一个 CPU 数，实际并发会按工具数量相乘，压垮共享 runner。",
+      "triggers": [
+        "CI 聚合启动",
+        "共享 runner 上出现内存/CPU 超订",
+        "新增一个自带 worker 池的工具"
+      ],
+      "obligations": [
+        "只对 ci-* 聚合注入默认值，且排除 ci-unit",
+        "DSH_OXLINT_THREADS 与 DSH_PUBLINT_CONCURRENCY 各取预算的一半",
+        "DSH_SNAPSHOT_MAX_WORKERS=1，DSH_SNAPSHOT_MAX_CONCURRENCY=共享值",
+        "DSH_WEB_SNAPSHOT_WORKERS：门禁并发为 1 时取 1，否则取预算",
+        "DSH_COVERAGE_MAX_WORKERS 使用 Vitest 预算（本地 48），覆盖率分区数由总预算减去约三分之一得到",
+        "只填空值；显式设置永远优先",
+        "覆盖率预算必须是正整数，否则在启动前抛错"
+      ],
+      "actors": [
+        "CI 配置者",
+        "门禁维护者"
+      ],
+      "steps": [
+        "解析 CI 与本地预算。",
+        "按工具计算默认值。",
+        "仅当变量未定义或为空时写入。",
+        "把派生结果打印到启动行。"
+      ],
+      "enforcement": {
+        "mode": "environment-derivation",
+        "implementation": "ciWorkerEnvironment/defaultParallelism/positiveIntArg",
+        "trust": "运行器自身；测试覆盖不同 CPU 与覆盖值",
+        "failure": "非法覆盖率预算抛错；显式值不被覆盖",
+        "exceptions": "ci-unit 完全不注入；文档/卫生聚合不额外改工具变量"
+      },
+      "applicability": "多工具并行池的 CI。具体折半比例是源经验值，迁移时按工具开销调整。",
+      "relationships": [
+        "dependsOn: automation-gate-scheduler",
+        "related: automation-coverage-partitioning",
+        "crossDomain: 测试域拥有 Vitest worker 选项; lint 域拥有 Oxlint 线程语义"
+      ],
+      "migration": {
+        "strategy": "把“工具预算”集中到一个函数，按工具名派生",
+        "implementation": "读取 CI/CPU 预算；为每个工具设独立变量；只填空值；对数值做正整数校验",
+        "requiredSupport": [
+          "环境变量命名约定",
+          "测试"
+        ]
+      },
+      "reference": "references/automation.md#35-环境预算派生源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "CI=true 的 16 CPU 覆盖率聚合得到共享预算与分区默认值",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "DSH_COVERAGE_MAX_WORKERS=abc 在启动前抛错",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "显式设置预算后重跑，默认值不覆盖它",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "派生值是启发式；源测试只断言数值，不证明目标 runner 不超订。"
+    },
+    {
+      "id": "automation-gate-failfast-cancel",
+      "title": "fail-fast 中止、宿主信号转发与进程树终止",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 981,
+          "end": 1140,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1164,
+          "end": 1396,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1398,
+          "end": 1620,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1040,
+          "end": 1226,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1358,
+          "end": 1371,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1028,
+          "end": 1039,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1320,
+          "end": 1356,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 54,
+          "end": 56,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 131,
+          "end": 133,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 588,
+          "end": 592,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 520,
+          "end": 560,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1227,
+          "end": 1319,
+          "kind": "test"
+        }
+      ],
+      "problem": "聚合中一个阻塞 gate 失败后，继续跑其余多分钟任务会浪费付费 runner；只停止调度而不杀死已运行子进程树，CI 仍会等到最长任务或超时。",
+      "triggers": [
+        "DSH_GATE_FAIL_FAST=1 的 CI lane",
+        "宿主 Ctrl+C/SIGTERM",
+        "runner 取消",
+        "失败诊断"
+      ],
+      "obligations": [
+        "DSH_GATE_FAIL_FAST 只接受 '1' 或空；其它值抛错",
+        "首个非 allowFailure 失败设置 abortCause 并 abort",
+        "abort 后所有 pending gate 记为 skipped，错误含 aborted by fail-fast 与原因",
+        "abort 后结算的运行中 gate，若 aborted=true，丢弃部分输出并改写 skipped",
+        "abort 前已结算的 gate 保留真实结果",
+        "allowFailure 失败不触发 abort",
+        "forwardProcessSignals 必须与 failFast 同时启用；宿主 SIGINT/SIGTERM 走同一 abort",
+        "abort 时终止整棵进程树：POSIX 进程组 + 捕获后代；Windows taskkill /PID /T /F 根+后代",
+        "5 秒后升级 SIGKILL；10 秒后销毁 stdio 防管道挂起；POSIX 结算前确认树静默，8 秒后大声报告",
+        "运行器必须区分“被杀”与“失败”，不能把被杀当通过",
+        "晚到的 abort 必须仍杀掉已 detach/reparent 的孙进程：根 child 已退出时不能重新枚举进程树，必须从 sampler 缓存终止；采样器跨 tick 合并而不是覆盖后代集合。"
+      ],
+      "actors": [
+        "CI 配置者",
+        "门禁运行器维护者",
+        "on-call 诊断者"
+      ],
+      "steps": [
+        "检测失败并设置 abort 原因。",
+        "abort 信号传给运行中 gate 的 executor。",
+        "每个 gate 终止时枚举并合并后代，投递 SIGTERM/taskkill，必要时升级。",
+        "把所有未运行 gate 标记 skipped。",
+        "汇总并返回 1。"
+      ],
+      "enforcement": {
+        "mode": "abort-controller-plus-process-tree-kill",
+        "implementation": "runGates/runGate/terminate/treeKill/descendantPids/taskkillArgs/skippedByFailFast",
+        "trust": "运行器自身；测试覆盖失败中止、非阻塞失败不中止、宿主信号转发、kill 子进程、纯函数树枚举",
+        "failure": "树未静默时打印错误但仍结算；被杀 gate 记为 skipped/failed，不记为 passed",
+        "exceptions": "observational lane 关闭 fail-fast；allowFailure 不中止；abort 前已结算保留真实结果"
+      },
+      "applicability": "任何需要快速失败与可靠清理的并行门禁。Windows 与 POSIX 的树终止实现不同，必须分别验证。",
+      "relationships": [
+        "dependsOn: automation-gate-scheduler",
+        "related: automation-workflow-concurrency-cancellation",
+        "crossDomain: subprocess 包的 teardown 契约（源注释引用 packages/subprocess/subprocess-local/src/spawn.ts）"
+      ],
+      "migration": {
+        "strategy": "先保留 abort 语义，再实现平台树终止；不要在 abort 时只 quit 调度循环",
+        "implementation": "AbortController 贯穿 executor；terminate 捕获后代缓存；POSIX 用负 pid，Windows 用 taskkill；5/10/8 秒边界可参数化",
+        "requiredSupport": [
+          "可传 AbortSignal 的 executor",
+          "进程表枚举",
+          "平台 kill 原语",
+          "测试"
+        ]
+      },
+      "reference": "references/automation.md#36-fail-fast取消与进程树终止源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "首个阻塞失败后剩余 gate 全部 skipped，长任务被终止",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "被杀子进程即使退出 0 也不得报告 passed",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "宿主 SIGINT 后无孤儿进程，重跑可正常启动",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "Windows taskkill 全树未在真实 Windows runner 执行；不可中断 I/O 的进程无法被 SIGKILL 清理，只能报告未静默。"
+    },
+    {
+      "id": "automation-gate-result-reporting",
+      "title": "门禁诊断聚合、退出码与 NON-BLOCKING 标记",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 62,
+          "end": 84,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 136,
+          "end": 140,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 1646,
+          "end": 1697,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1011,
+          "end": 1038,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1011,
+          "end": 1039,
+          "kind": "test"
+        }
+      ],
+      "problem": "多 gate 并行时，失败信息容易被后续输出淹没；只报第一个退出码会隐藏 error/exit/signal 的组合事实；非阻塞失败若不标记会被误读为阻塞。",
+      "triggers": [
+        "聚合失败",
+        "CI 日志诊断",
+        "判断某个 gate 是否阻塞"
+      ],
+      "obligations": [
+        "失败结果同时保留 error、exit code、signal，任一不遮盖其它",
+        "通过 gate 默认只打印一行 PASS；DSH_GATE_VERBOSE=1 时打印详情",
+        "非 streamOutput 的 gate 在结算时打印缓冲输出",
+        "汇总打印 passed/failed/skipped 计数与总耗时",
+        "非成功 gate 列表标注 NON-BLOCKING（allowFailure）",
+        "聚合退出码为 1 当且仅当存在非 allowFailure 的 failed 或 skipped"
+      ],
+      "actors": [
+        "门禁维护者",
+        "诊断者"
+      ],
+      "steps": [
+        "每个 gate 结算时打印结果。",
+        "失败时打印命令与 outcome 事实。",
+        "聚合结束打印汇总与非成功列表。",
+        "以聚合退出码结束进程。"
+      ],
+      "enforcement": {
+        "mode": "reporting-and-exit-code",
+        "implementation": "printResult/printSummary/formatGateResultReason/runAggregate 返回值",
+        "trust": "运行器自身；CI 直接使用退出码",
+        "failure": "skipped 计失败；spawn error/exit/signal 全部呈现",
+        "exceptions": "allowFailure 失败只标记 NON-BLOCKING，不改变退出码"
+      },
+      "applicability": "所有多 gate 聚合。输出格式可按团队调整，但退出码语义应保留。",
+      "relationships": [
+        "dependsOn: automation-gate-dependency-graph",
+        "related: automation-final-verdict"
+      ],
+      "migration": {
+        "strategy": "把退出码作为唯一机器接口，日志只做人类诊断",
+        "implementation": "结果结构保留 status/duration/output/exitCode/signalCode/error/aborted；汇总函数集中",
+        "requiredSupport": [
+          "结构化结果",
+          "CI 使用进程退出码"
+        ]
+      },
+      "reference": "references/automation.md#37-汇总诊断与退出码源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "失败 gate 的 error+exit+signal 同时出现在日志",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "skipped 依赖导致聚合退出 1",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修复失败 gate 后汇总为 0 且无 NON-BLOCKING 误标",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "日志解析不是契约；外部系统若解析文本而非退出码，可能因格式变化失效。"
+    },
+    {
+      "id": "automation-contracts-ready",
+      "title": "contracts-ready 声明前置与 Typert 契约生成",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 53,
+          "end": 58,
+          "kind": "config"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 110,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/compile-referenced-projects.ts",
+          "start": 197,
+          "end": 273,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 400,
+          "end": 426,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 518,
+          "end": 556,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 653,
+          "end": 657,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 800,
+          "end": 846,
+          "kind": "test"
+        }
+      ],
+      "problem": "仓库级 typecheck/lint/doc-typecheck 读取 Host-for-Client 生成声明；内层脚本直接运行会因缺声明失败，而完整 build 又太贵。",
+      "triggers": [
+        "运行 typecheck/lint/doc-typecheck",
+        "新增读取生成声明的消费者",
+        "干净 checkout 上 CI 失败"
+      ],
+      "obligations": [
+        "公共 typecheck/lint/doc-typecheck 先做契约准备，再调用 *:contracts-ready 内层脚本",
+        "内层 *:contracts-ready 假设调用方已准备，不自己重复生成",
+        "Host 编译与 Typert 生成并行；两者都结束再报告，单失败抛单错，双失败抛 AggregateError",
+        "Client 编译 needs host-src + host-typert",
+        "调度图中 typecheck/lint/doc-typecheck 都 needs typert-contracts",
+        "build 在 typecheck/lint/doc-typecheck 之后，避免 tsbuildinfo 竞争与声明替换",
+        "ci-consumers 可复用已验证构建的契约，不再单独 host-contracts"
+      ],
+      "actors": [
+        "构建/类型系统维护者",
+        "门禁维护者"
+      ],
+      "steps": [
+        "调用公共命令或调度 gate 先跑契约准备。",
+        "并行执行 Host tsc -b 与 Typert 生成。",
+        "等待两者结束，任一失败即失败。",
+        "运行 Client 编译/消费者检查。",
+        "构建在所有声明消费者之后启动。"
+      ],
+      "enforcement": {
+        "mode": "script-layering-plus-gate-needs",
+        "implementation": "compile-referenced-projects.ts/run-gates.ts/package.json",
+        "trust": "公共脚本与调度图共同保证；测试固定三种准备关系",
+        "failure": "缺声明表现为编译器诊断；双失败聚合报告",
+        "exceptions": "doc-sync 独立运行时自己准备；ci-consumers 复用已有构建契约"
+      },
+      "applicability": "使用 TypeScript project references 且有生成声明（代码生成、远程类型）的仓库。",
+      "relationships": [
+        "dependsOn: automation-build-artifact-record",
+        "related: automation-gate-aggregate-registry",
+        "crossDomain: Typert 生成器域拥有生成规则; 文档域拥有 doc-typecheck 实现"
+      ],
+      "migration": {
+        "strategy": "把“准备”与“消费”拆成两层命令，并在图中显式连接",
+        "implementation": "公共命令 = prepare + internal；internal 命名固定；生成与编译并行；build 排在消费者后",
+        "requiredSupport": [
+          "tsc -b",
+          "生成器",
+          "门禁图"
+        ]
+      },
+      "reference": "references/automation.md#41-contracts-ready声明生成与消费者分层源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "干净树运行公共 typecheck/lint/doc-typecheck 通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "删除声明后直接跑 internal 脚本会报编译器错误",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "运行公共准备命令后 internal 脚本恢复通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源没有自动验证“internal 脚本在缺声明时失败”；该反例需迁移方手工演练。"
+    },
+    {
+      "id": "automation-build-artifact-record",
+      "title": "构建作用域、官方 client profile 与 build record",
+      "sources": [
+        {
+          "path": "scripts/build.ts",
+          "start": 92,
+          "end": 185,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/client-build-environment.ts",
+          "start": 1,
+          "end": 123,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/client-build-environment.ts",
+          "start": 124,
+          "end": 407,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 269,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 751,
+          "end": 765,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 885,
+          "end": 919,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 72,
+          "end": 92,
+          "kind": "test"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 88,
+          "end": 90,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一仓库有源码面、声明面、bundle 面与 Web 产物；混用会让消费者读到旧产物或把 dev profile 的产物当成发布产物。",
+      "triggers": [
+        "运行 build/build:artifacts/build:check",
+        "CI 构建官方产物",
+        "消费 lib/ 的 gate",
+        "发布前验证"
+      ],
+      "obligations": [
+        "complete/artifacts 作用域按 native → host-src → host-bundle → desktop-bundle → client-src → client-bundle → web 串行",
+        "typecheck 作用域只生成契约，不写 bundle；check 作用域只读已有声明",
+        "官方 client 构建要求 DSH_CLIENT_BUILD_PROFILE=official 与 DSH_CLIENT_TITLE",
+        "提交哈希默认取 Git HEAD 前 7 位，版本取根 package.json；均嵌入 client 产物",
+        "构建成功且聚合退出 0 后才写 .dsh-build/client-build-environment.json；失败不写",
+        "只给 build gate 注入 DSH_BUILD_CLIENT_PROFILE=official，不污染兄弟 gate",
+        "读取 lib/ 的 gate 显式 needs build 并设 DSH_EXAMPLE_MODE=lib",
+        "构建子进程移除继承的公开变量和非公开 profile selector，再注入选定公开变量；消费者比较完整键集合和值，额外的 DSH_CLIENT_* 变量也拒绝",
+        "build record 使用闭式顶层/schema、格式版本、非空 artifact 文件数和小写 SHA-256 校验；读取时重算路径排序且长度分隔的路径/内容摘要并比较 fileCount 与 hash",
+        "缺记录、无产物、非法 JSON/schema/profile 或产物变化都要求完整重建；摘要明确排除 lib/client.node 一类 Node-face 文件，不把记录当成源码构建来源证明"
+      ],
+      "actors": [
+        "构建维护者",
+        "CI 配置者"
+      ],
+      "steps": [
+        "解析 scope 与 profile；check/typecheck 不接受 profile。",
+        "按 scope 构造 gate 图。",
+        "运行聚合。",
+        "成功时写 build record；失败直接返回。",
+        "消费前验证记录格式、精确公开环境及当前产物摘要；任何不符拒绝，不沿用旧记录声称构建有效。"
+      ],
+      "enforcement": {
+        "mode": "build-scope-graph-plus-record",
+        "implementation": "build.ts/buildGates/runAggregate；client-build-environment.ts",
+        "trust": "构建脚本自身；记录文件作为产物面证据；测试固定 CI 使用官方 profile 与 build:check 关系",
+        "failure": "任一步失败使聚合非零且不写记录；缺产物时消费者报错",
+        "exceptions": "benchmark emission 模式可 --noCheck 延迟诊断给必需完整构建；check 作用域读取已有声明"
+      },
+      "applicability": "多包 TypeScript 仓库，尤其是源码与打包产物并存、浏览器产物需要嵌入元数据的项目。",
+      "relationships": [
+        "dependsOn: automation-contracts-ready",
+        "related: automation-gate-aggregate-registry",
+        "crossDomain: 发布域拥有发布 profile 与打包语义"
+      ],
+      "migration": {
+        "strategy": "先定义作用域与记录，再接 CI",
+        "implementation": "保留 scope 枚举与串行步骤；profile 只影响构建 gate；记录在构建成功后写入，源 writeFileSync 不提供原子替换保证",
+        "requiredSupport": [
+          "tsc -b",
+          "bundler",
+          "Git 元数据",
+          "CI 产物消费者"
+        ]
+      },
+      "reference": "references/automation.md#42-产物面build-recordprofile-与消费模式源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "build 成功后记录文件存在且含 commit/version",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "构建失败时旧记录被删除且不写新记录",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修复构建后重跑生成新记录，消费者通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "记录校验公开环境与当前选定产物字节的一致性，不证明产物来自所声明源码、可复现构建或发布授权；直接 writeFileSync 不是原子替换。124-407 行已补充阅读；本轮未实跑构建与消费者。"
+    },
+    {
+      "id": "automation-native-sandbox-prerequisites",
+      "title": "原生 addon、Electron、bubblewrap 与运行时前置",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 60,
+          "end": 63,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 615,
+          "end": 623,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 696,
+          "end": 735,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/prepare-ci-bubblewrap.sh",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 386,
+          "end": 388,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 964,
+          "end": 998,
+          "kind": "test"
+        }
+      ],
+      "problem": "测试、覆盖率和沙箱 e2e 依赖宿主二进制（native addon、Electron、bubblewrap、Office runtime）；缺前置会表现为测试失败或 self-skip 假绿。",
+      "triggers": [
+        "运行 test/test:coverage",
+        "Windows 覆盖率",
+        "沙箱 e2e",
+        "消费者作业"
+      ],
+      "obligations": [
+        "test 与 test:coverage 先 build:native-system；聚合把 native-system 作为独立 gate 并让覆盖率 needs 它",
+        "Windows 覆盖率额外 needs electron-install，且该 gate 设 ELECTRON_GET_USE_PROXY=1",
+        "bubblewrap 只支持 Linux x86_64；要求 RUNNER_TEMP 与 GITHUB_PATH；固定版本/SHA-256；dpkg-deb 解包；写 PATH；best-effort 关 AppArmor；跑功能探针",
+        "prepare:primary-runtime 输出与下载缓存都在 runner temp",
+        "缺前置必须显式失败或由 e2e 的“实际执行数”断言兜底"
+      ],
+      "actors": [
+        "测试/平台维护者",
+        "CI 配置者"
+      ],
+      "steps": [
+        "构建 native addon。",
+        "按平台安装 Electron 二进制。",
+        "下载并校验 bubblewrap payload，解包并探针。",
+        "构建 primary runtime 到 runner temp。",
+        "运行测试/覆盖率/e2e。"
+      ],
+      "enforcement": {
+        "mode": "prerequisite-gates-plus-probe",
+        "implementation": "run-gates coverageGates/electronInstallGate；prepare-ci-bubblewrap.sh",
+        "trust": "聚合 needs 强制顺序；bubblewrap 用 SHA-256 与功能探针；契约测试固定 pinned URL 与无 apt pool 下载",
+        "failure": "任一步非零即失败；bubblewrap 缺工具/校验失败/探针失败退出 1",
+        "exceptions": "Linux 覆盖率不装 Electron；自托管镜像预装 Playwright 系统依赖，CI 不跑 apt"
+      },
+      "applicability": "有原生模块、Electron 或内核沙箱测试的仓库。bubblewrap 前置只适用于 Linux x86_64。",
+      "relationships": [
+        "dependsOn: automation-build-artifact-record",
+        "related: automation-coverage-partitioning; automation-windows-gate-lanes",
+        "crossDomain: 测试域拥有 self-skip 与沙箱断言; 沙箱实现域拥有 bwrap/Landlock 语义"
+      ],
+      "migration": {
+        "strategy": "把每个宿主前置做成独立 gate，并让消费者 needs 它",
+        "implementation": "native/electron gate + 下载校验脚本 + runner temp 输出；契约测试固定 URL 形状",
+        "requiredSupport": [
+          "平台构建工具",
+          "下载校验",
+          "runner 临时目录"
+        ]
+      },
+      "reference": "references/automation.md#43-原生沙箱与运行时前置源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "覆盖率在 native-system 完成后启动",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "bubblewrap SHA-256 不匹配时脚本失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "重新下载正确 payload 后探针通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "功能探针只证明 bwrap 可运行，不证明 e2e 真正执行；后者由 e2e 的执行数断言负责。"
+    },
+    {
+      "id": "automation-coverage-partitioning",
+      "title": "覆盖率聚合、重负载豁免与按耗时分区",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 665,
+          "end": 735,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 1,
+          "end": 140,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 144,
+          "end": 330,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 341,
+          "end": 420,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 461,
+          "end": 538,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 549,
+          "end": 693,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 695,
+          "end": 756,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-exempt.ts",
+          "start": 1,
+          "end": 59,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-coverage-partitions.ts",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 166,
+          "end": 238,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 577,
+          "end": 591,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 109,
+          "end": 204,
+          "kind": "config"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 646,
+          "end": 730,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 134,
+          "end": 137,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "全量覆盖率在单进程下过慢；把重负载套件也纳入 v8 instrumentation 会付出数倍运行时间却不改变阈值；分区不均会让最慢分区决定 wall clock。",
+      "triggers": [
+        "运行 test:coverage",
+        "CI 覆盖率超时",
+        "调整分区数/worker",
+        "Windows 覆盖率不稳定"
+      ],
+      "obligations": [
+        "覆盖率聚合拆成 instrumented 与 exempt-heavy 两个并行 gate，都 needs native-system",
+        "DSH_COVERAGE_EXEMPT_HEAVY=1 让 vitest.config 从所有项目剔除豁免套件（CLI --exclude 无法表达）",
+        "豁免成员必须满足：其执行的受测文件已被其它套件完全覆盖，移除不改变阈值",
+        "分区数必须为 >1 的整数；DSH_COVERAGE_PARTITIONS 未设时用未分区命令",
+        "分区协调器按记录耗时分配文件，最重桶先启动；无耗时数据时按文件数均衡",
+        "每个分区写独立 blob 与 timing report；合并前校验 blob 集合完整、每个文件恰好归属一次",
+        "拒绝空分区（Vitest 对空 include 会跑全量）",
+        "失败时保留 coverage/.partitioned 诊断；成功才清理临时树",
+        "DSH_COVERAGE_TEST_TIMEOUT_MS 由 vitest.config 每个项目读取，不作为 gate 参数",
+        "通过 pnpm 脚本转发覆盖率参数时，forwardedCoverageArgs 必须只剥掉 argv 的第一个 -- 再交给 Vitest；其余参数（包括后续 --）原样保留。"
+      ],
+      "actors": [
+        "测试/覆盖率维护者",
+        "CI 配置者"
+      ],
+      "steps": [
+        "构建 native addon。",
+        "并行启动 instrumented 与 exempt-heavy gate。",
+        "若配置分区，协调器收集 inventory/耗时、分配文件、写每分区配置、运行、校验、合并、跑阈值。",
+        "汇总结果。"
+      ],
+      "enforcement": {
+        "mode": "coverage-gate-split-plus-weighted-partitions",
+        "implementation": "coverageGates/coverageExemptHeavySuites/CoveragePartitionCoordinator",
+        "trust": "runner 与协调器自身；测试覆盖分区参数、覆盖预算派生、平台恢复",
+        "failure": "任一分区或合并失败返回 1；空分区/blob 缺失/文件漏算直接抛错；失败保留诊断",
+        "exceptions": "DSH_COVERAGE_PARTITIONS=1 被拒绝；未设置时走普通 vitest --coverage"
+      },
+      "applicability": "大型 Vitest 覆盖率套件。耗时历史需要跨 run 持久化；否则退化为文件数均衡。",
+      "relationships": [
+        "dependsOn: automation-gate-env-budget; automation-native-sandbox-prerequisites",
+        "related: automation-cache-posture",
+        "crossDomain: 测试域拥有阈值与豁免成员资格; Vitest 配置域拥有项目划分"
+      ],
+      "migration": {
+        "strategy": "先拆豁免 gate，再引入分区；分区必须可回退到普通模式",
+        "implementation": "保留环境变量名与校验；协调器先 inventory 再分配；blob 完整性校验；失败保留临时树",
+        "requiredSupport": [
+          "Vitest blob reporter",
+          "跨 run 耗时存储",
+          "分区配置生成"
+        ]
+      },
+      "reference": "references/automation.md#44-覆盖率聚合与按耗时分区源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "四分区运行时每个文件恰好被一个分区执行，合并后阈值通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "设置 DSH_COVERAGE_PARTITIONS=1 在启动前失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "某分区失败后诊断保留，重跑可重新分区",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "耗时均衡依赖历史质量；首次运行可能不均。阈值正确性属于测试域，本机制只保证执行与合并完整性。"
+    },
+    {
+      "id": "automation-node-compat-matrix",
+      "title": "Node 兼容版本矩阵与自托管工具缓存隔离",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 428,
+          "end": 484,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 393,
+          "end": 484,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-compatible-toolcache.mjs",
+          "start": 1,
+          "end": 8,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/ci-compatible-selfhosted.spec.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-compatible-selfhosted.spec.ts",
+          "start": 41,
+          "end": 181,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 848,
+          "end": 919,
+          "kind": "test"
+        }
+      ],
+      "problem": "仓库声称支持的 Node 区间必须在每个版本上真实验证；共享自托管主机上，版本安装与工具缓存会互相污染；兼容矩阵并行会放大资源争用。",
+      "triggers": [
+        "修改 engines 或 Node API 使用",
+        "PR 兼容矩阵",
+        "自托管 runner 上的 Node 安装",
+        "Node 版本发布"
+      ],
+      "obligations": [
+        "矩阵覆盖 22.19、24.9、26；24.9 刻意落在 v1 loader 区间，避免与 latest 24 重复",
+        "fail-fast: false（版本间独立），max-parallel: 1（共享资源串行），每 leg DSH_GATE_CONCURRENCY=1",
+        "selfhosted 准入要求同仓库、非 fork、非 Dependabot",
+        "自托管上隔离 NODE_COMPILE_CACHE、npm_config_devdir、PNPM_CONFIG_STORE_DIR",
+        "setup-node 进程内用 NODE_OPTIONS=--import=ci-compatible-toolcache.mjs 改写 RUNNER_TOOL_CACHE",
+        "安装后验证 process.execPath 位于 $RUNNER_TEMP/node-compat-toolcache/，否则 ::error:: 退出",
+        "托管 runner 才启用 pnpm cache；自托管用共享 store",
+        "Node 22 额外 build:artifacts 并跑 CLI smoke；DSH_NODE_COMPAT_SKIP_TYPECHECK 可省略 typecheck",
+        "source smokes 串行（--no-file-parallelism --maxWorkers=1，VITEST_MAX_WORKERS=1）",
+        "loader shape 检测留在矩阵 job，不进聚合",
+        "路由谓词要保留全部否定边界：仅 opt-in 的同仓库、非 fork、非 Dependabot PR 才进 selfhosted；actor 字段不能掩盖 author 是 Dependabot 的情况；repository 为空、fork 或未预期 mode 回退 hosted；blacksmith 不要求同仓库。",
+        "setup-node 只在 selfhosted 注入 NODE_OPTIONS preload，并要求 RUNNER_TEMP 为绝对路径；preload 只改 setup-node 进程自己的 RUNNER_TOOL_CACHE，后续 Node 进程保持原值；cache 只在 github-hosted 为 pnpm，package-manager-cache 始终 false；checkout 不持久凭据，且不得使用 actions/cache。"
+      ],
+      "actors": [
+        "CI 配置者",
+        "Node 兼容性维护者"
+      ],
+      "steps": [
+        "解析矩阵版本与 runner。",
+        "安装隔离的 Node/pnpm。",
+        "验证 Node 路径。",
+        "安装依赖并准备 bubblewrap。",
+        "运行 node-compat 聚合。",
+        "单独跑 loader shape spec。"
+      ],
+      "enforcement": {
+        "mode": "matrix-workflow-plus-isolation-checks",
+        "implementation": "ci.yml node-compat；run-gates nodeCompatGates；ci-compatible-toolcache.mjs；ci-compatible-selfhosted.spec.ts",
+        "trust": "工作流与显式路径检查；契约测试固定路由与缓存条件",
+        "failure": "Node 路径不在 runner temp 时步骤失败；任一版本 smoke 失败使该 leg 红",
+        "exceptions": "blacksmith 分支无 Dependabot/fork 谓词（ephemeral）；Node 22 与其它版本 gate 组成不同"
+      },
+      "applicability": "声明多 Node 版本支持的仓库。具体版本必须来自实际 engines 政策。",
+      "relationships": [
+        "dependsOn: automation-failover-switches",
+        "related: automation-pr-job-inventory",
+        "crossDomain: Node 运行时域拥有 loader 行为; 供应域拥有 pnpm lockfile"
+      ],
+      "migration": {
+        "strategy": "版本轴与平台轴分开；每个版本一个 leg；共享主机串行",
+        "implementation": "矩阵 include；runner temp 隔离；setup-node 进程内 shim；路径断言；独立 loader spec",
+        "requiredSupport": [
+          "setup-node 支持 NODE_OPTIONS",
+          "runner temp",
+          "版本矩阵"
+        ]
+      },
+      "reference": "references/automation.md#56-node-兼容矩阵源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "三个版本 leg 在各自 Node 上通过 source smokes",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "Node 安装到共享 toolcache 时路径断言失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "清理共享缓存后重跑，隔离安装成功",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "契约测试用 Node vm 求值表达式，不是 Actions 求值器；真实 GitHub 行为需远端验证。"
+    },
+    {
+      "id": "automation-windows-gate-lanes",
+      "title": "Windows blocking / complete / observational 三车道",
+      "sources": [
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 582,
+          "end": 650,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 885,
+          "end": 919,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 531,
+          "end": 735,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 304,
+          "end": 562,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 235,
+          "end": 285,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 495,
+          "end": 575,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 577,
+          "end": 644,
+          "kind": "test"
+        }
+      ],
+      "problem": "Windows 原生构建必须阻塞 PR，但全部诊断跑在一个 job 里会让一次失败截断其余证据；覆盖率又需要独立的长时间预算。",
+      "triggers": [
+        "PR 修改 Windows 相关代码",
+        "Windows 构建/站点失败",
+        "收集 Windows 诊断",
+        "master standby 演练"
+      ],
+      "obligations": [
+        "windows-build 阻塞：build + production site；另跑 observational-ready 但 continue-on-error",
+        "observational 关闭 DSH_GATE_FAIL_FAST，保持完整诊断；失败输出 warning 与 step summary",
+        "windows-coverage 独立 job，120 分钟，先不构建，跑 check:ci:coverage",
+        "windows-native-tests 独立 job，文件串行，--testTimeout 90000，指定 Windows 专属 spec",
+        "自托管 Windows 安装按文件系统分支：ReFS 用 corepack pnpm + clone，其它用普通 pnpm",
+        "Developer Mode 必须启用（symlink 支持）",
+        "complete 聚合中 observational gate 全部 allowFailure 且 after 覆盖率结果",
+        "observational-ready 过滤 build，调用方保证已构建",
+        "ci-master 的 serial-windows 固定 [self-hosted,dsh-win-ci,windows]、120 分钟，先启用 Developer Mode；store 在 workspace 卷根，只有 ReFS 用 clone，其它文件系统普通 frozen install；运行 check:ci:windows-complete，coverage/gate/publint workers 为 1，测试预算变量 90000，不设置 DSH_GATE_FAIL_FAST"
+      ],
+      "actors": [
+        "Windows 平台维护者",
+        "CI 配置者"
+      ],
+      "steps": [
+        "启用 Developer Mode。",
+        "按卷类型安装依赖。",
+        "运行阻塞 build/site。",
+        "解析 runner supervision 脚本。",
+        "运行 observational（非阻塞）。",
+        "并行运行 coverage 与 native tests。"
+      ],
+      "enforcement": {
+        "mode": "split-jobs-plus-allowFailure-aggregate",
+        "implementation": "ci.yml windows-* jobs；run-gates ci-windows-* 聚合",
+        "trust": "工作流 continue-on-error 与聚合 allowFailure 双重标记；契约测试固定 needs 不含 coverage/observational",
+        "failure": "阻塞 job 失败使裁决红；observational 失败只警告；覆盖率失败当前不阻塞（临时状态）",
+        "exceptions": "windows-coverage 临时非阻塞；observational 不 fail-fast；serial-windows 只 master"
+      },
+      "applicability": "有原生 Windows 构建/进程测试的仓库。没有 Windows 平台的仓库可跳过，但需在平台策略中显式声明。",
+      "relationships": [
+        "dependsOn: automation-platform-policy; automation-pr-job-inventory",
+        "related: automation-final-verdict; automation-runner-topology",
+        "crossDomain: 测试域拥有 Windows 专属 spec 列表与稳定性"
+      ],
+      "migration": {
+        "strategy": "阻塞与诊断分离；先保证阻塞 job 稳定，再扩大诊断",
+        "implementation": "三个 job + 三个聚合；observational 用 allowFailure/continue-on-error；安装按文件系统分支",
+        "requiredSupport": [
+          "Windows runner",
+          "ReFS/Developer Mode",
+          "PowerShell",
+          "Windows 专属测试"
+        ]
+      },
+      "reference": "references/automation.md#55-windows-三车道源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "阻塞 build 失败时裁决红，observational 仍产出诊断",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "NTFS 上使用 clone 安装会失败，分支逻辑必须走 else",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "observational 失败后修复并重跑，warning 不再出现",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "windows-coverage 非阻塞是临时决定；源没有证明 Windows ACP 半关闭测试已稳定。"
+    },
+    {
+      "id": "automation-pr-master-workflow-split",
+      "title": "PR-only 与 master-only 工作流物理分离",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 1,
+          "end": 33,
+          "kind": "config"
+        },
+        {
+          "path": ".github/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 679,
+          "end": 740,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 34,
+          "end": 531,
+          "kind": "config"
+        }
+      ],
+      "problem": "把 master-only 平台检查、自托管 standby、手动基准放进 PR workflow，会让它们出现在 PR check panel，并让 required 集合随矩阵变化。",
+      "triggers": [
+        "新增平台检查",
+        "新增主干专属演练",
+        "调整 PR 必过集合"
+      ],
+      "obligations": [
+        "ci.yml 只监听 pull_request",
+        "ci-master.yml 只监听 push(master) + workflow_dispatch，从不在 pull_request 触发",
+        "两者都限制 permissions: contents: read",
+        "两者都使用各自 workflow-ref 维度的 concurrency 与 cancel-in-progress；公式相同不等于两个不同名称 workflow 共享同一取消组",
+        "standby drill 不设 job 级 concurrency，共享父 run 的取消策略",
+        "契约测试精确断言两个 on 键集合",
+        "ci-master workflow_dispatch 的必填 suite 只选 larger-runner-benchmark、consolidated-runner-benchmark 或 ssh-helper，默认 larger；push 只触发 python-runtime、windows、serial-linux-selfhosted、serial-windows，serial-macos 为 if:false；没有 needs 或汇总裁决 job",
+        "同一 ref 的 ci-master 手工 suite 与 push run 共用取消组，新的 suite/push 会取消该 ref 的旧 run；不同 ref 不共享该组，不能泛称所有手工演练会互相取消"
+      ],
+      "actors": [
+        "CI 维护者",
+        "分支保护管理员"
+      ],
+      "steps": [
+        "判断检查是否必须阻断 PR。",
+        "阻断项放 ci.yml；主干/手动/演练放 ci-master.yml。",
+        "在裁决 needs 中只列 PR 阻断项。",
+        "更新契约测试。"
+      ],
+      "enforcement": {
+        "mode": "workflow-trigger-separation",
+        "implementation": "两个 workflow 文件 + ci-workflow.spec.ts",
+        "trust": "GitHub 触发规则强制；契约测试防止误加事件",
+        "failure": "误加 pull_request 到 ci-master 会让 master job 进入 PR panel；契约测试失败",
+        "exceptions": "reusable workflow 可被两者调用（如 python runtime builder），但其触发面由调用方决定"
+      },
+      "applicability": "使用 GitHub Actions 且 PR check panel 需要稳定的仓库。其它 forge 可用等价的分支/事件过滤。",
+      "relationships": [
+        "dependsOn: automation-local-check-boundary",
+        "related: automation-pr-job-inventory; automation-final-verdict",
+        "crossDomain: 分支保护语义属于仓库设置"
+      ],
+      "migration": {
+        "strategy": "先按事件切文件，再按平台切 job",
+        "implementation": "两个 workflow；共享 reusable；契约测试固定事件集合",
+        "requiredSupport": [
+          "GitHub Actions 或等价事件模型"
+        ]
+      },
+      "reference": "references/automation.md#51-pr-only-与-master-only-的硬分离源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR 只触发 ci.yml；master push 只触发 ci-master.yml",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "给 ci-master 加 pull_request 会被契约测试捕获",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "移除误加事件后 PR panel 恢复稳定",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源无法证明 GitHub 分支保护实际只要求一个 check；该设置需单独核对。"
+    },
+    {
+      "id": "automation-platform-policy",
+      "title": "平台覆盖策略与原生/兼容/Wine 的分工",
+      "sources": [
+        {
+          "path": ".github/AGENTS.md",
+          "start": 3,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 206,
+          "end": 264,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 486,
+          "end": 528,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 34,
+          "end": 51,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 289,
+          "end": 531,
+          "kind": "config"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 153,
+          "end": 161,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 781,
+          "end": 802,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 784,
+          "end": 963,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 141,
+          "end": 191,
+          "kind": "config"
+        }
+      ],
+      "problem": "跨平台检查若不分工，会出现“用 Wine 代替原生 Windows”“PR 上跑发布全平台”“基准与门禁共享 runner”等错误。",
+      "triggers": [
+        "新增平台相关功能",
+        "PR 平台矩阵",
+        "master 平台检查",
+        "Python/Node 运行时发布"
+      ],
+      "obligations": [
+        "Windows 原生检查必须在 Windows 宿主与 native pwsh；托管 lanes 用 windows-* 标签，自托管 standby 使用包含 windows 的专用标签；Wine 只在 master 的 Linux 上跑",
+        "PR 覆盖 Linux/Windows x64；master push 增加 Linux ARM64 与两种 macOS；发布保留五个目标",
+        "Python runtime PR 只请求 linux-x64/win-x64，needs python-sdk；master 请求 arm64/macos",
+        "ci.yml 的 node-24-bench 固定 ubuntu-24.04、单独 runner、20 分钟；ci-master 的两个手工基准各为 12 行 Linux/Windows 4/8/16/32/64/96 vCPU、15 分钟、max-parallel 12；Blacksmith 只映射 4/8/16/32，64/96 保留 fleet 标签",
+        "手动打包/发布使用专用 runner 路由，不与自动 CI 混用",
+        "发布/部署工作流不参与 PR 裁决",
+        "master serial-linux-selfhosted 固定 [self-hosted,linux,x64,vm-backup]，没有 job timeout-minutes；checkout fetch-depth:0，跑 check:ci:linux-primary 并注入 DSH_ARCHIVE_BASE_REF=github.event.before；这里仅记录接线，archive verifier 语义归 decisions 域"
+      ],
+      "actors": [
+        "平台维护者",
+        "CI 配置者",
+        "发布域"
+      ],
+      "steps": [
+        "列出平台轴与用途（阻断/诊断/发布）。",
+        "为每个用途选 runner 与触发事件。",
+        "把发布目标矩阵与 CI 目标矩阵分开声明。",
+        "用契约测试固定关键路由。"
+      ],
+      "enforcement": {
+        "mode": "workflow-routing-policy",
+        "implementation": "ci.yml/ci-master.yml/reusable workflows/AGENTS.md",
+        "trust": "配置 + 契约测试；平台实际能力需 runner 镜像保证",
+        "failure": "错误平台会导致构建/测试失败；Wine 代替原生会漏掉原生问题",
+        "exceptions": "Wine 诊断可用；macOS/ARM 只在 master；发布矩阵更宽"
+      },
+      "applicability": "跨平台产品。平台数量与优先级需按目标产品调整，不能照搬五个目标。",
+      "relationships": [
+        "dependsOn: automation-pr-master-workflow-split",
+        "related: automation-runner-topology; automation-wine-windows-gates",
+        "crossDomain: 发布域拥有发布目标矩阵; 测试域拥有平台专属断言"
+      ],
+      "migration": {
+        "strategy": "先声明平台承诺，再分配事件与 runner",
+        "implementation": "一张平台×用途矩阵；PR 只放阻断项；master 放扩展项；发布单独 workflow",
+        "requiredSupport": [
+          "多平台 runner",
+          "reusable workflow",
+          "契约测试"
+        ]
+      },
+      "reference": "references/automation.md#52-平台策略源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR 只在 Linux/Windows x64 上要求阻断 job",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把 Wine 加进 PR 裁决会被契约测试或评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "恢复正确平台分工后 PR panel 只显示承诺平台",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "平台承诺是配置；源没有逐平台运行时成功记录。"
+    },
+    {
+      "id": "automation-pr-job-inventory",
+      "title": "PR 作业清单、并发上限与 required 集合",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 42,
+          "end": 735,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 17,
+          "end": 70,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 304,
+          "end": 562,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 610,
+          "end": 647,
+          "kind": "test"
+        },
+        {
+          "path": ".github/AGENTS.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "作业数量、矩阵并行度与 required 集合会随时间漂移；一次性把太多 worker job 塞进 PR 会压垮 runner 池，太少又会漏检。",
+      "triggers": [
+        "新增/删除 PR job",
+        "调整矩阵",
+        "runner 容量变化",
+        "分支保护变更"
+      ],
+      "obligations": [
+        "普通 worker job 数 + node-compat 并行度 ≤ 10；python-sdk 之后 runtime targets 增加时仍 ≤ 10",
+        "node-compat 的 max-parallel 为正整数且 fail-fast:false",
+        "所有阻塞 job 出现在 all-checks-passed.needs；非阻塞 job 明确排除",
+        "windows-coverage、windows（Wine）、serial-*、observational 不进入 PR 裁决",
+        "benchmark 是 required 输入且独立 runner",
+        "普通 job 不定义 strategy 或 uses（python-runtime 例外）"
+      ],
+      "actors": [
+        "CI 维护者",
+        "分支保护管理员"
+      ],
+      "steps": [
+        "列出 PR job 与并行度。",
+        "计算最大并发 worker。",
+        "更新 needs 与契约测试。",
+        "在 runner 池上观察排队。"
+      ],
+      "enforcement": {
+        "mode": "workflow-inventory-contract",
+        "implementation": "ci.yml + ci-workflow.spec.ts",
+        "trust": "契约测试断言数量/并行度/needs；运行时由 GitHub 调度",
+        "failure": "超过上限或漏列 needs 会被测试捕获；漏列阻塞 job 会让裁决假绿",
+        "exceptions": "python-runtime 是 reusable workflow 且有 strategy/uses；benchmark 独立"
+      },
+      "applicability": "runner 容量有限、需要稳定 PR 队列的仓库。10 是源项目的经验上限。",
+      "relationships": [
+        "dependsOn: automation-platform-policy",
+        "related: automation-final-verdict; automation-ci-runner-failover",
+        "crossDomain: 发布域拥有 reusable builder 的输入"
+      ],
+      "migration": {
+        "strategy": "先测量目标 runner 容量，再定上限；用测试锁定",
+        "implementation": "显式 needs 列表；矩阵 max-parallel；契约测试计算并发",
+        "requiredSupport": [
+          "runner 容量数据",
+          "契约测试"
+        ]
+      },
+      "reference": "references/automation.md#53-pr-作业清单与依赖源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR 最大并发 worker ≤ 10",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "漏列阻塞 job 时裁决测试失败或人工检查发现",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "调整并行度后队列恢复，required 集合仍完整",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "并发上限不计算每个 job 内部 gate 的进程数；真实 runner 容量需实测。"
+    },
+    {
+      "id": "automation-ci-runner-failover",
+      "title": "CI runner 故障切换开关（selfhosted / blacksmith）",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 26,
+          "end": 49,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 109,
+          "end": 116,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 266,
+          "end": 281,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 393,
+          "end": 412,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 531,
+          "end": 543,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 602,
+          "end": 620,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 737,
+          "end": 753,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 141,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 304,
+          "end": 560,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 564,
+          "end": 678,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 289,
+          "end": 299,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 406,
+          "end": 410,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 1,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/docs-pages.yml",
+          "start": 1,
+          "end": 93,
+          "kind": "config"
+        }
+      ],
+      "problem": "托管 runner 池故障时，所有 PR 变成不可合并；而修复本身又需要合并，形成死锁。需要无需合并、可逆、分平台的改派机制。",
+      "triggers": [
+        "托管池排队/标签消失",
+        "计划内演练",
+        "成本/容量实验",
+        "恢复后切回"
+      ],
+      "obligations": [
+        "两个独立变量：DSH_CI_FAILOVER_LINUX/_WINDOWS，按平台切换",
+        "值 selfhosted 路由到 vm-backup/dsh-win-ci，并排除 Dependabot",
+        "值 blacksmith 路由到对应 vCPU 的 Blacksmith runner，无 Dependabot 排除",
+        "其它值/unset 保留托管默认",
+        "Linux 三 worker、node-compat 三 leg、裁决；Windows 三 job 参与切换",
+        "逐 job 核对参与范围，不能把 Note 的排除清单当作已强制保证：Note 称凭据 job/发布链不切换，但固定源 e2e.yml 在 blacksmith 值改派，docs-pages.yml 的 build 固定用 Blacksmith、deploy 才用 ubuntu-latest；保留此意图冲突，不凭 YAML 推定凭据/发布信任政策已撤销。ci.yml 的 node-24-bench 与宿主能力 leg 保留各自路由；ci-master 手工矩阵基准参与 4–32 vCPU 映射，64/96 行仍用 fleet 标签",
+        "切换只需改仓库变量 + 重跑；已排队 job 不自动改派",
+        "切回删除变量或改为其它值",
+        "standby 只在 master push 上持续证明备用池；取消/仅排队 run 不作就绪证据",
+        "变量是 writer 可管理状态；信任边界是仓库成员身份，不是变量"
+      ],
+      "actors": [
+        "仓库 writer",
+        "on-call",
+        "CI 维护者"
+      ],
+      "steps": [
+        "判断哪个平台降级，检查最新已完成 standby。",
+        "设置对应变量为 selfhosted 或 blacksmith。",
+        "取消卡住的 run 并 re-run all（或推新提交）。",
+        "观察节点：若仍排队，检查是否只 re-run failed/权限/拼写。",
+        "恢复后删除变量并清理临时注册实例。"
+      ],
+      "enforcement": {
+        "mode": "repository-variable-selector",
+        "implementation": "runs-on 表达式 + vars；standby drill；契约测试对每个值求值",
+        "trust": "GitHub Variables 与 runner group 策略；契约测试只验证表达式逻辑",
+        "failure": "已排队 job 不改派；Dependabot 在 selfhosted 下持续排队是预期；blacksmith 有费用与能力限制",
+        "exceptions": "selfhosted 的 Dependabot 排除；blacksmith 无此排除；e2e/Pages 的实际 runner 与 Note 的笼统排除冲突，须逐 job 评审而非宣称发布链始终托管"
+      },
+      "applicability": "使用 GitHub Actions 且有备用 runner 池的组织。没有备用池时只能使用 hosted 默认。",
+      "relationships": [
+        "dependsOn: automation-pr-job-inventory; automation-runner-topology",
+        "related: automation-cache-posture; automation-workflow-concurrency-cancellation",
+        "crossDomain: 发布域拥有发布链 runner 边界; 安全域拥有 runner group 信任边界"
+      ],
+      "migration": {
+        "strategy": "先建两个池与 standby，再接变量；不要先写选择器后补池",
+        "implementation": "两个变量、每平台选择器、standby workflow；runbook 写清排队语义与切回",
+        "requiredSupport": [
+          "自托管/第三方 runner",
+          "仓库 Variables 权限",
+          "standby 演练"
+        ]
+      },
+      "reference": "references/automation.md#62-故障切换开关源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "selfhosted 值把 Linux/Windows 作业路由到对应自托管标签",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "Dependabot PR 在 selfhosted 下不被路由到持久 VM",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "删除变量后新 run 回到托管默认",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "无法从源码证明远端变量值、runner group 策略或池容量；切换演练需要真实授权与隔离。"
+    },
+    {
+      "id": "automation-runner-topology",
+      "title": "runner 池拓扑、标签与镜像前置",
+      "sources": [
+        {
+          "path": ".github/AGENTS.md",
+          "start": 3,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md",
+          "start": 20,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md",
+          "start": 9,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 141,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 235,
+          "end": 285,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/windows-package.yml",
+          "start": 54,
+          "end": 56,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/desktop-publish.yml",
+          "start": 23,
+          "end": 99,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 218,
+          "end": 283,
+          "kind": "test"
+        },
+        {
+          "path": "apps/desktop/scripts/setup-macos-packaging.mjs",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/start-macos-packaging-runner.sh",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/macos-runner-service.sh",
+          "start": 1,
+          "end": 61,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "不同作业需要不同宿主能力（原生 shell、ReFS、Playwright 系统包、沙箱内核）；标签若与镜像前置不匹配，作业会在安装/运行阶段随机失败。",
+      "triggers": [
+        "新增 runner 标签",
+        "迁移到新主机",
+        "打包/发布路由",
+        "故障切换"
+      ],
+      "obligations": [
+        "Windows 原生 job 在 Windows 宿主与 pwsh；托管 windows-* 与自托管专用标签分别保留，不能用 Linux/Wine 标签替代原生信号",
+        "自托管 Linux 镜像预装 Playwright 系统包；Windows 镜像预装 Node/pnpm/Git+Git Bash/PowerShell 7 并启用 Developer Mode",
+        "自托管 Windows standby 的 pnpm store 与 workspace 同卷；仅 ReFS 使用 clone，非 ReFS 保留普通 frozen install，而不是要求所有 Windows 主机必须采用 ReFS",
+        "手动 Windows 打包用专用标签 dsh-win-package-trial",
+        "Desktop 发布按 DESKTOP_PUBLISH_RUNNERS 路由到原机器唯一标签；测试/生产用不同 Environment",
+        "pnpm/action-setup 的 dest 每 runner/run 私有",
+        "master serial-linux 固定 self-hosted 标签且无 job timeout，serial-windows 固定专用 Windows 标签且 120 分钟；二者不是手工 benchmark 的 failover 变量路由",
+        "macOS 打包 setup 只创建/校验当前账户拥有的真实私有目录和缺失模板；启动器要求 Apple Silicon、Node24、Xcode SDK/notarytool/stapler/C 编译器与 test preset/macos-signing.env；--check 不查注册、凭据内容或执行 svc/launchctl；实际启动用 env -i 清理环境并由 caffeinate 托管",
+        "macOS service install 要求非 root、GUI 登录与已注册 runner，拒绝既有 .service，重写 .path、生成 0600 LaunchAgent 模板并 plutil lint；启停/卸载委托 svc.sh，重启后需桌面登录，不能把生成配置等同服务已运行"
+      ],
+      "actors": [
+        "runner 管理员",
+        "CI 配置者",
+        "发布域"
+      ],
+      "steps": [
+        "为每类作业定义能力需求。",
+        "选择/注册带稳定标签的 runner。",
+        "预装系统依赖并验证。",
+        "在 workflow 中只引用标签，不硬编码机器名。",
+        "用契约测试固定 dest 隔离与关键标签。"
+      ],
+      "enforcement": {
+        "mode": "runner-label-contract",
+        "implementation": "runs-on 标签 + 镜像预装 + 契约测试",
+        "trust": "runner 注册与镜像人工维护；workflow 只声明",
+        "failure": "标签缺失会长期排队；镜像缺依赖会在安装/运行失败",
+        "exceptions": "Blacksmith 无 64/96 核档；Landlock/Seatbelt 必须原生宿主"
+      },
+      "applicability": "自托管或多池 CI。小团队可只用 hosted runner，但应保留按能力分标签的原则。",
+      "relationships": [
+        "dependsOn: automation-ci-runner-failover",
+        "related: automation-cache-posture",
+        "crossDomain: 发布域拥有打包/发布路由"
+      ],
+      "migration": {
+        "strategy": "先写能力矩阵，再定标签；镜像前置写成可验证清单",
+        "implementation": "标签命名含平台与池；镜像预装；dest 隔离；契约测试",
+        "requiredSupport": [
+          "runner 注册",
+          "镜像构建",
+          "标签治理"
+        ]
+      },
+      "reference": "references/automation.md#61-runner-拓扑与标签源事实",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个 job 的标签能被至少一个注册 runner 匹配",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 ReFS 的 Windows runner 不会走 clone 分支",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补齐镜像依赖后作业不再排队/安装失败",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "标签与镜像状态不在源码内；源只记录约定与部分 runbook 事实。"
+    },
+    {
+      "id": "automation-cache-posture",
+      "title": "缓存分类、PR 只读姿态与临时目录所有权",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 58,
+          "end": 67,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 93,
+          "end": 100,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 144,
+          "end": 156,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 174,
+          "end": 204,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 234,
+          "end": 240,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 323,
+          "end": 337,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 630,
+          "end": 678,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 78,
+          "end": 100,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 115,
+          "end": 121,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 232,
+          "end": 283,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 623,
+          "end": 636,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 743,
+          "end": 771,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 124,
+          "end": 217,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 141,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 235,
+          "end": 285,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 289,
+          "end": 531,
+          "kind": "config"
+        }
+      ],
+      "problem": "PR 上保存缓存会把压缩/上传放在延迟关键路径，并让不可信 PR 影响默认分支缓存；自托管路径写入托管缓存键会污染命名空间；临时文件若不在 runner 清理范围会泄漏。",
+      "triggers": [
+        "新增缓存",
+        "PR 缓存命中差",
+        "自托管/托管切换",
+        "取消 run 后的残留"
+      ],
+      "obligations": [
+        "pnpm store 的位置显式声明并以 pnpm store path 输出；Linux 使用 $HOME/.local/share/pnpm/store，自托管 Windows standby 使用 workspace 卷根，不能把 Linux 路径外推到全部 Windows lanes",
+        "PR 只 cache/restore，不 save；键含 OS/Node/lockhash，前缀回退",
+        "常规 PR 自托管 lane 跳过 hosted pnpm/Playwright restore（持久 store/镜像）；ci-master 手工 benchmark 的 cache 配置另行列出，不外推为所有自托管作业都无 cache",
+        "覆盖率时长历史按 OS/runner.environment/failover 值分区；保存键含 run_id/run_attempt，restore 用稳定前缀",
+        "覆盖率保存用 if: !cancelled()",
+        "Playwright 缓存路径在 runner temp 父目录；自托管不 apt",
+        "ci-master Wine deb 缓存用 actions/cache，key 为 wine-debs-${ImageOS:-linux}-${ImageVersion:-v0}；pnpm store 仅 actions/cache/restore，无 save；apt fallback 取回 deb 的行不是 cache save 步骤",
+        "NODE_COMPILE_CACHE 在第一次 pnpm 调用前指向 runner temp",
+        "TMPDIR 指向 runner temp；步骤级不得覆盖 TMPDIR/npm_config_cache",
+        "pnpm/action-setup dest 每 runner/run 私有",
+        "ci-master serial-linux/serial-windows 无 cache 步骤；larger 手工基准仅 Linux 配置 pnpm cache，consolidated 两个平台均配置 pnpm cache；不声明 workspace 依赖安装目录缓存"
+      ],
+      "actors": [
+        "CI 配置者",
+        "runner 管理员"
+      ],
+      "steps": [
+        "分类缓存：包存储/测量历史/工具安装。",
+        "为每类选键与保存条件。",
+        "PR 只 restore；必要时在受控分支 save。",
+        "把临时目录指向 runner 清理范围。",
+        "用契约测试固定顺序与形状。"
+      ],
+      "enforcement": {
+        "mode": "cache-policy-plus-contract-tests",
+        "implementation": "workflow cache 步骤 + ci-workflow.spec.ts",
+        "trust": "GitHub cache 语义 + 测试；自托管持久 store 由镜像维护",
+        "failure": "缓存未命中只是变慢；保存不可信数据会污染后续 run；临时目录泄漏会占满磁盘",
+        "exceptions": "覆盖率历史即使失败也保存；master standby 不保存托管缓存"
+      },
+      "applicability": "所有 CI。具体键前缀与临时路径需按 runner 环境调整。",
+      "relationships": [
+        "dependsOn: automation-runner-topology",
+        "related: automation-coverage-partitioning; automation-ci-runner-failover",
+        "crossDomain: 供应域拥有 lockfile 哈希语义"
+      ],
+      "migration": {
+        "strategy": "先分类，再决定 save 权限；临时目录优先于缓存优化",
+        "implementation": "restore-only PR；测量缓存按池分区；工具 dest 隔离；编译缓存提前注入",
+        "requiredSupport": [
+          "actions/cache 或等价",
+          "runner temp",
+          "契约测试"
+        ]
+      },
+      "reference": "references/automation.md#63-缓存姿态源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR run 只出现 restore，不出现 save pnpm 缓存",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "NODE_COMPILE_CACHE 在 pnpm 之后设置会被契约测试捕获",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "缓存损坏后删除键，下一次冷启动成功",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "无法从源码证明远端缓存条目未被污染；缓存命中率需实测。"
+    },
+    {
+      "id": "automation-workflow-concurrency-cancellation",
+      "title": "工作流并发组、取消策略与发布事务保护",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 14,
+          "end": 19,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 19,
+          "end": 22,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 127,
+          "end": 129,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 163,
+          "end": 216,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 679,
+          "end": 742,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/desktop-publish.yml",
+          "start": 94,
+          "end": 99,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-python-sdk.yml",
+          "start": 44,
+          "end": 50,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-ssh-helper.yml",
+          "start": 24,
+          "end": 26,
+          "kind": "config"
+        }
+      ],
+      "problem": "同一 ref 的旧 run 会与新 run 争抢 runner；但发布/部署事务一旦开始就不能被新提交取消，否则会留下半发布状态。",
+      "triggers": [
+        "向 PR 推新提交",
+        "master 快速更新",
+        "standby drill 被新 run 取代",
+        "发布 run 与新提交重叠"
+      ],
+      "obligations": [
+        "CI 与 master CI 都用 group=${{github.workflow}}-${{github.ref}}、cancel-in-progress:true",
+        "发布 publish job 用 cancel-in-progress:false",
+        "Desktop publish 按 runner/preset 分组且不取消进行中的发布",
+        "失败后诊断与取消后清理要分别声明条件：!cancelled() 排除已取消 run，Wine 清理用 always()；不能把两种条件混称为取消后都执行",
+        "standby drill 不设 job 级 concurrency，共享父 run 取消",
+        "取消/仅排队的 standby 不作为就绪证据",
+        "同一 ref 的 ci-master manual suite 与 push run 共享 workflow-ref 取消组；不同 ref 独立；两个 reusable native builder 分别用 build-single-exe-* 与 ssh-helper-* 前缀，cancel-in-progress=!inputs.release，普通 CI 可取消旧 build，release 事务不这样取消"
+      ],
+      "actors": [
+        "CI 配置者",
+        "发布域",
+        "on-call"
+      ],
+      "steps": [
+        "按工作流用途选取消策略。",
+        "把可取消的 CI 与不可取消的发布分组。",
+        "为清理/证据上传加条件。",
+        "用契约测试固定关键策略。"
+      ],
+      "enforcement": {
+        "mode": "concurrency-group-policy",
+        "implementation": "workflow/job concurrency + ci-workflow.spec.ts",
+        "trust": "GitHub 调度语义；测试固定配置",
+        "failure": "错误取消会中断发布；不取消会积压旧 run",
+        "exceptions": "发布/部署不取消；standby 共享父取消"
+      },
+      "applicability": "所有有并发 run 的 CI。发布事务保护是发布域义务，本域负责工作流配置层。",
+      "relationships": [
+        "dependsOn: automation-pr-master-workflow-split",
+        "related: automation-gate-failfast-cancel; automation-final-verdict",
+        "crossDomain: 发布域拥有发布事务语义"
+      ],
+      "migration": {
+        "strategy": "按“可重跑/不可重跑”分类工作流",
+        "implementation": "CI cancel true；发布 cancel false；清理 always/!cancelled；测试固定",
+        "requiredSupport": [
+          "GitHub concurrency 或等价"
+        ]
+      },
+      "reference": "references/automation.md#7-并发取消与最终裁决的关系",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR 推新提交后旧 run 被取消",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "发布 run 不被新提交取消",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "取消后 wineserver/临时目录被清理，下一次 run 正常",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "取消的时序与 GitHub 内部队列行为无法在源码中完全证明。"
+    },
+    {
+      "id": "automation-final-verdict",
+      "title": "单一 required check：all checks passed",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 737,
+          "end": 763,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 17,
+          "end": 70,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 304,
+          "end": 562,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 610,
+          "end": 621,
+          "kind": "test"
+        },
+        {
+          "path": ".github/AGENTS.md",
+          "start": 3,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 1,
+          "end": 531,
+          "kind": "config"
+        }
+      ],
+      "problem": "为每个矩阵 leg 维护分支保护 required check 会随矩阵变化而失效；取消的 run 还可能让裁决永久缺失。",
+      "triggers": [
+        "PR 提交",
+        "新增/删除阻塞 job",
+        "分支保护配置",
+        "workflow 取消"
+      ],
+      "obligations": [
+        "使用单一稳定 check 名 all checks passed",
+        "needs 列出所有 PR 阻塞 job；不跨 workflow 文件",
+        "显式 if:!cancelled() && pull_request 覆盖默认 success 条件，只有表达式满足才进入裁决；不保证已取消的整次 run 仍产出最终 check",
+        "任一 need 为 failure/cancelled/skipped 时打印结果并 exit 1",
+        "裁决 runner 跟随 Linux failover 选择器，默认 ubuntu-latest",
+        "非阻塞 job 明确不列入 needs",
+        "all checks passed 只是 ci.yml 的 PR 裁决；ci-master 没有 needs 或汇总 job，不能外推成 master required check；目标若需要 master 门，必须另行实现并验证分支保护"
+      ],
+      "actors": [
+        "分支保护管理员",
+        "CI 维护者"
+      ],
+      "steps": [
+        "列出阻塞 job。",
+        "写入 needs。",
+        "配置显式状态步骤。",
+        "在分支保护中只要求该 check。",
+        "变更 needs 时同步契约测试。"
+      ],
+      "enforcement": {
+        "mode": "aggregate-status-job",
+        "implementation": "all-checks-passed job + 分支保护",
+        "trust": "job 退出码 + 分支保护设置；源码只能证明 job 逻辑",
+        "failure": "skipped need 计失败；取消的 run 需由分支保护语义处理",
+        "exceptions": "非阻塞 job（windows-coverage、observational、Wine、serial）不列入"
+      },
+      "applicability": "GitHub Actions + 分支保护。其它 forge 可用等价聚合 status。",
+      "relationships": [
+        "dependsOn: automation-pr-job-inventory; automation-workflow-concurrency-cancellation",
+        "related: automation-ci-workflow-contract-tests",
+        "crossDomain: 分支保护配置属于仓库设置"
+      ],
+      "migration": {
+        "strategy": "先建 job，再配 needs，最后只要求一个 check",
+        "implementation": "显式 needs + 状态函数 + 契约测试；runner 默认标准托管",
+        "requiredSupport": [
+          "分支保护",
+          "required check 设置"
+        ]
+      },
+      "reference": "references/automation.md#54-最终裁决-all-checks-passed源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有 need 成功时 check 为绿",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "任一 need 为 skipped 时 check 为红",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修复失败 need 并重跑后 check 变绿",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源码不包含分支保护配置，无法证明该 check 真的是 required 或取消 run 的实际合并语义。ci-master 的完整源文件没有 needs/汇总 job；PR 裁决不能当成 master 的远端阻断证明。"
+    },
+    {
+      "id": "automation-ci-workflow-contract-tests",
+      "title": "工作流与安装器的契约测试（把策略变成可执行断言）",
+      "sources": [
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1,
+          "end": 1565,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 1,
+          "end": 1371,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 218,
+          "end": 860,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-compatible-selfhosted.spec.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "test"
+        },
+        {
+          "path": "package.json",
+          "start": 60,
+          "end": 60,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 124,
+          "end": 217,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 564,
+          "end": 678,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 784,
+          "end": 963,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1001,
+          "end": 1233,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1401,
+          "end": 1515,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/install-lefthook.spec.ts",
+          "start": 1,
+          "end": 217,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-compatible-selfhosted.spec.ts",
+          "start": 41,
+          "end": 181,
+          "kind": "test"
+        }
+      ],
+      "problem": "CI YAML、runs-on 选择器、缓存条件、fail-fast 标志和安装器安全策略都是文本/配置，容易在重构中静默漂移；仅靠评审无法防止。",
+      "triggers": [
+        "修改 workflow",
+        "修改 run-gates 聚合",
+        "修改安装器",
+        "修改 runner 路由"
+      ],
+      "obligations": [
+        "工作流 spec 断言：并发事件集合、十 worker 上限、runner 选择器对每个变量值的结果、fail-fast 标志、setup dest 隔离、TMPDIR/NODE_COMPILE_CACHE 顺序、缓存保存条件、Windows 车道与非阻塞 needs、bubblewrap URL 形状、lefthook 归档排除",
+        "run-gates spec 断言：所有 Mode 图可校验、worker 默认与上限、依赖失败传播、after 语义、fail-fast 中止、树终止纯函数",
+        "安装器 spec 断言：CI no-op、worktree 隔离、新 worktree 复制、并发锁、迁移拒绝、重定位、回滚、非法归属拒绝",
+        "Node 兼容 spec 断言：自托管路由谓词、版本矩阵、隔离安装",
+        "这些 spec 进入 unit/coverage 库存，随 pnpm run test 或覆盖率门禁执行",
+        "工作流契约还要固定发布/构建分支：Python builder --build-artifacts 只在 ci && pull_request；bubblewrap 准备先于 node-compat smoke 且不 continue-on-error；复用 Python build 的 concurrency cancel 只在非 release；publish/deploy 永不 cancel；coverage history save 用 !cancelled()，Wine 清理始终运行。",
+        "Windows/benchmark 契约：Windows Vitest 配置必须两处使用 pool: 'forks'，不得按平台切成 threads，两个 inline project 都必须展开共享 laneTestBudget；node-24-bench 必须无 needs/env/continue-on-error 且在聚合 needs 中，64/96-core 行的 Blacksmith label 必须为空，其余矩阵行必须含 blacksmith-<cores>vcpu。",
+        "发布工作流契约：PR 只 pack 不 publish；npm publish 是 dispatch-only 且引用 npm-publish environment/concurrency Release-publish，vendor dist-tag 可选并需 quoted；docs-pages 从 dsh-v tag dispatch-only，RELEASE_PUBLISH 校验、fetch-depth 0、DOCS_REPOSITORY_REF=master、github-pages environment。"
+      ],
+      "actors": [
+        "CI 维护者",
+        "门禁维护者",
+        "安装器维护者"
+      ],
+      "steps": [
+        "修改配置/实现时同步修改契约测试。",
+        "在本地运行相关 spec（聚焦，不必全量）。",
+        "CI 的 unit/coverage 门禁执行它们。",
+        "测试失败时修配置或更新契约，不能删除断言规避。"
+      ],
+      "enforcement": {
+        "mode": "spec-as-contract",
+        "implementation": "scripts/*.spec.ts 读取 YAML/源码并断言",
+        "trust": "测试框架执行；但表达式求值用 Node vm，不是 GitHub Actions 求值器",
+        "failure": "断言失败使 unit/coverage gate 失败，进而 PR 裁决失败",
+        "exceptions": "部分 spec 只做字符串/结构断言；跨域行为仍需各自测试"
+      },
+      "applicability": "任何把策略写在 YAML/配置中的 CI。没有测试框架的仓库至少应加一个 YAML lint + 关键断言脚本。",
+      "relationships": [
+        "dependsOn: automation-pr-job-inventory; automation-final-verdict",
+        "related: automation-gate-dependency-graph; automation-lefthook-worktree-installer",
+        "crossDomain: 各实现域拥有被断言脚本的语义"
+      ],
+      "migration": {
+        "strategy": "把最容易漂移的 5-10 条策略先写成断言",
+        "implementation": "读取 YAML/TS 源；对 runner 选择器用受控求值；对顺序/条件做结构断言",
+        "requiredSupport": [
+          "YAML 解析",
+          "测试运行器",
+          "与 CI 相同的包脚本"
+        ]
+      },
+      "reference": "references/automation.md#8-辅助工作流与跨平台脚本",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "现有 workflow 全部契约测试通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把 fail-fast 从阻塞 lane 移除会使契约测试失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "恢复配置后测试通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "契约测试证明“配置符合断言”，不证明 GitHub 实际按断言执行；远端行为需真实 run 证据。",
+      "notes": [
+        "这",
+        "些",
+        "是",
+        " ",
+        "N",
+        "o",
+        "d",
+        "e",
+        " ",
+        "v",
+        "m",
+        "/",
+        "字",
+        "符",
+        "串",
+        "结",
+        "构",
+        "断",
+        "言",
+        "，",
+        "不",
+        "证",
+        "明",
+        " ",
+        "G",
+        "i",
+        "t",
+        "H",
+        "u",
+        "b",
+        " ",
+        "A",
+        "c",
+        "t",
+        "i",
+        "o",
+        "n",
+        "s",
+        " ",
+        "实",
+        "际",
+        "执",
+        "行",
+        "。"
+      ]
+    },
+    {
+      "id": "automation-wine-windows-gates",
+      "title": "Wine 上的 Windows 阻塞门禁（诊断/主干信号）",
+      "sources": [
+        {
+          "path": "scripts/wine-windows-gates.sh",
+          "start": 1,
+          "end": 143,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/wine-windows-gates.sh",
+          "start": 144,
+          "end": 288,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 98,
+          "end": 98,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 53,
+          "end": 129,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 99,
+          "end": 99,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 671,
+          "end": 677,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 181,
+          "end": 216,
+          "kind": "test"
+        }
+      ],
+      "problem": "没有原生 Windows 机器时，Windows 构建/站点错误只能在合并后暴露；但在 Linux 上直接跑 win32 代码需要隔离工作树、固定 Node 与 Wine 前缀。",
+      "triggers": [
+        "master push",
+        "本地诊断已知 Windows 失败",
+        "无法使用原生 Windows runner"
+      ],
+      "obligations": [
+        "不修改工作树：快照 tracked + untracked-unignored 到 scratch，在快照中安装/运行",
+        "Wine 专用 pnpm override 写入快照的 pnpm-workspace.yaml",
+        "scratch 无 Git 元数据，必须显式设 DSH_CLIENT_COMMIT_HASH",
+        "预检 wine/curl/unzip/校验工具/pnpm，缺失一次性报全",
+        "Windows Node zip 用官方 SHASUMS256 校验；镜像只作传输回退；离线回退缓存并大声提示",
+        "Wine prefix 与 Node zip 持久缓存；DSH_WINE_* 控制版本/缓存/保留",
+        "结束 wineserver -k；master job 用 always() 清理",
+        "Wine 不作为 PR 必需信号；原生 Windows job 拥有该信号",
+        "安装只对 ERR_PNPM_ENOENT.*rename.*_tmp_ 的已知 hoisted-linker 竞态最多尝试三次，每次清除快照 node_modules；其他错误或最终失败非零退出，不泛化为任意失败重试",
+        "Node 准备、Wine 初始化和快照安装并发后，先等待每个子进程再汇总状态，不能让首个失败触发 scratch 删除而其他进程仍在其中运行",
+        "Wine Node 的 stdio 走文件，执行前真实 smoke 必须报告 win32 x64；Host/desktop/Client 构建与 production site 分别收集状态，任一失败都必须传播并保留对应日志",
+        "ci-master Wine job 为 ubuntu-latest、15 分钟；pnpm store restore-only，Wine deb 缓存用 actions/cache 与含 ImageOS/ImageVersion 默认值的 key；实际脚本调用在 124–125，always() wineserver 清理在 127–129，不能把 apt fallback 当调用或清理证据"
+      ],
+      "actors": [
+        "平台维护者",
+        "诊断者"
+      ],
+      "steps": [
+        "预检工具。",
+        "快照工作树并注入 Wine override。",
+        "下载/校验 Windows Node，初始化 Wine。",
+        "等待三个准备子进程全部结束，分别报告根因；快照安装仅重试精确已知竞态。",
+        "先校验实际 win32 x64 smoke，再并发运行构建与站点，等待两者并传播失败。",
+        "清理 wineserver 与 scratch。"
+      ],
+      "enforcement": {
+        "mode": "wine-sandbox-script",
+        "implementation": "scripts/wine-windows-gates.sh + ci-master windows job",
+        "trust": "脚本预检 + SHA-256 + master-only 触发；本地仅在诊断时使用",
+        "failure": "缺工具/校验失败/门禁失败即非零；scratch 默认删除，保留需显式开关",
+        "exceptions": "离线缓存回退；镜像传输回退；Wine 保真度有限"
+      },
+      "applicability": "没有原生 Windows CI 但需要主干 Windows 信号的项目。Wine 不能替代原生 Windows 验收。",
+      "relationships": [
+        "dependsOn: automation-platform-policy",
+        "related: automation-pr-master-workflow-split",
+        "crossDomain: Windows 平台实现域拥有构建/站点命令"
+      ],
+      "migration": {
+        "strategy": "把 Wine 当补充信号，不做 PR 必需；先验证 scratch 安装可复现",
+        "implementation": "快照 + override + 校验 Node + 缓存前缀 + 预检",
+        "requiredSupport": [
+          "Wine",
+          "curl/unzip/校验工具",
+          "pnpm"
+        ]
+      },
+      "reference": "references/automation.md#83-wine-windows-门禁源义务可选本地",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "master Wine job 跑完 build + production site",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "Node zip 校验失败时脚本退出 1",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "清理缓存后重新下载并通过校验",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "1-288 行已由原作者头部读取与补充尾部读取覆盖；只是固定源代码检查，不是 Wine 执行证明。Wine 行为不等同原生 Windows；本轮未实跑此平台门禁。"
+    },
+    {
+      "id": "automation-auxiliary-filtered-workflows",
+      "title": "路径过滤的命名检查与沙箱 false-green 防护接线",
+      "sources": [
+        {
+          "path": ".github/workflows/expected-filenames.yml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/check-expected-filenames.sh",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/sandbox.yml",
+          "start": 1,
+          "end": 168,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 581,
+          "end": 608,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 964,
+          "end": 998,
+          "kind": "test"
+        }
+      ],
+      "problem": "小型策略检查若每次全量运行会浪费 runner；而“缺能力就 self-skip”的 e2e 会把缺失环境误报为通过。",
+      "triggers": [
+        "PR 路径包含 golden",
+        "沙箱 e2e",
+        "新增路径过滤工作流"
+      ],
+      "obligations": [
+        "expected-filenames 只在 PR 且路径匹配 *golden*（排除 vendor）时触发；拒绝非 vendor 的 tracked 文件名含 golden",
+        "该工作流只响应 blacksmith failover 值，selfhosted 不参与",
+        "沙箱 e2e 每个 leg 断言 Test Files 2 passed (2)，无 skip",
+        "Landlock 与 Seatbelt 不映射到 Blacksmith（能力未验证）",
+        "unit-darwin 使用与覆盖率 lane 相同的 90000ms 预算",
+        "bubblewrap 前置从 pinned payload 安装，不在 workflow 中 apt-get"
+      ],
+      "actors": [
+        "文档/命名策略所有者",
+        "测试域",
+        "CI 配置者"
+      ],
+      "steps": [
+        "为路径过滤 job 选精确 paths。",
+        "脚本用 git ls-files -z 与 icase glob。",
+        "对 self-skip e2e 加执行数断言。",
+        "用契约测试固定 URL/无 apt/路由。"
+      ],
+      "enforcement": {
+        "mode": "path-filtered-job-plus-execution-count-assertion",
+        "implementation": "expected-filenames workflow/script；sandbox workflow 的 grep 断言",
+        "trust": "GitHub paths 过滤 + shell 断言；能力缺失会显式失败",
+        "failure": "文件名违规失败；e2e 自跳导致执行数断言失败",
+        "exceptions": "vendor 路径豁免；Blacksmith 只承接 bwrap leg"
+      },
+      "applicability": "有命名策略或内核沙箱测试的仓库。路径过滤 required check 的语义需在分支保护层验证。",
+      "relationships": [
+        "dependsOn: automation-platform-policy",
+        "related: automation-ci-runner-failover",
+        "crossDomain: 文档域拥有命名策略; 测试域拥有沙箱 e2e 实现"
+      ],
+      "migration": {
+        "strategy": "小检查用路径过滤；自跳 e2e 必须加执行数断言",
+        "implementation": "paths + icase exclude + git ls-files；grep 'Test Files N passed (N)'",
+        "requiredSupport": [
+          "GitHub paths 过滤",
+          "shell/测试输出稳定格式"
+        ]
+      },
+      "reference": "references/automation.md#81-路径过滤的命名检查源义务",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "含 golden 的 tracked 非 vendor 文件使检查失败",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 bwrap 的 leg 因执行数不足而失败，不产生假绿",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "重命名文件/补齐 runner 后检查通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "路径过滤 required check 在无匹配路径时的 GitHub 行为未在源码中验证。"
+    },
+    {
+      "id": "automation-credentialed-workflow-trust",
+      "title": "凭据型/发布型工作流的信任边界与不可取消性",
+      "sources": [
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 1,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/pi-ai-provider-e2e.yml",
+          "start": 1,
+          "end": 63,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/issue-policy.yml",
+          "start": 1,
+          "end": 58,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/issue-lifecycle.yml",
+          "start": 1,
+          "end": 52,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 1,
+          "end": 66,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/docs-pages.yml",
+          "start": 1,
+          "end": 93,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-preview-cloudflare.yml",
+          "start": 1,
+          "end": 73,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/publish-ssh-helper.yml",
+          "start": 1,
+          "end": 83,
+          "kind": "config"
+        },
+        {
+          "path": ".github/AGENTS.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/desktop-publish.yml",
+          "start": 23,
+          "end": 99,
+          "kind": "config"
+        }
+      ],
+      "problem": "把不可信 PR 代码交给带权限的策略发布器、错误取消发布，或在缺失凭据时让套件 self-skip，会造成凭据泄露、假绿或发布中断；真实 API e2e 对可信同仓 PR 执行关联代码不是被源禁止的情况。",
+      "triggers": [
+        "新增持有 secret 的 workflow",
+        "PR 来自 fork 或 Dependabot",
+        "发布/部署 run 与新提交竞争",
+        "手动发布或手动 e2e",
+        "issue/approval 自动化写 status"
+      ],
+      "obligations": [
+        "凭据型 e2e 绝不使用 pull_request_target；用 job-level if 按 PR 作者排除 fork 与 Dependabot，而非按 github.actor；可信同仓 PR 仍构建/执行关联代码，secret 只注入 preflight 与测试步骤",
+        "缺失 secret 时 preflight 硬失败，禁止 self-skip 套件造成全绿",
+        "Issue/approval 受信策略发布器从默认分支检出策略，PR 内容只作为 API 数据；Pages/Release 按被选发布 ref、版本与 source commit 校验，不能把发布代码一律替换成默认分支",
+        "发布/部署工作流使用 cancel-in-progress: false；PR preview 用 per-PR 分组且可取消",
+        "手动发布校验 ref/tag 与版本一致，verify 按被选 source commit 校验完整产物",
+        "issue 自动化按 issue/PR number 单飞，不取消进行中的事件",
+        "最小权限：默认 contents: read，按 job 增加 pages/statuses/pull-requests write",
+        "opt-in provider e2e 只允许 workflow_dispatch",
+        "Desktop 发布按原机器唯一标签路由，test/production 使用独立审批 Environment"
+      ],
+      "actors": [
+        "workflow 作者",
+        "仓库管理员",
+        "发布/on-call"
+      ],
+      "steps": [
+        "把 workflow 分类为普通 PR 检查、凭据型、发布部署或 issue 自动化。",
+        "为凭据型选择安全触发，并加 job-level if 排除不可信来源。",
+        "加 preflight：缺 key 时失败而不是跳过。",
+        "逐类选执行 ref：e2e 保留可信 PR 关联代码；issue/approval 策略从默认分支检出且不执行 PR 代码；发布按选定 ref/产物校验，不能混用三类边界。",
+        "设置并发组与取消策略：PR 可取消，发布不取消，issue 单飞。",
+        "设置最小权限与 environment/reviewer。",
+        "用契约测试或一次隔离演练验证触发、权限、跳过与取消行为。"
+      ],
+      "enforcement": {
+        "mode": "trigger-permission-preflight-concurrency",
+        "implementation": "e2e.yml、pi-ai-provider-e2e.yml、issue-policy.yml、issue-lifecycle.yml、weighted-approval.yml、docs-pages.yml、build-preview-cloudflare.yml、publish-ssh-helper.yml",
+        "trust": "e2e 的 job-if 排除 fork/Dependabot，可信同仓 PR 执行关联代码且 secret 仅限指定步骤；issue/approval 默认分支策略不受 PR 改写；发布 ref/tag 校验与 environment/reviewer 是另一条边界，远端状态仍需证明",
+        "failure": "缺 key 时 preflight 失败；发布 run 不被新 run 取消；策略脚本失败仍发布 error status；fork PR 的 job 显示 skipped（成功 check）",
+        "exceptions": "fork/Dependabot e2e 跳过；pull_request_target 仅限不执行 PR 代码的 approval publisher；docs-pages 手动且非 PR"
+      },
+      "applicability": "任何持有 secret 或写权限的 CI；纯只读、无秘密的 PR 检查不需要这一层。",
+      "relationships": [
+        "dependsOn: automation-pr-master-workflow-split; automation-workflow-concurrency-cancellation; automation-ci-runner-failover",
+        "related: automation-final-verdict; automation-cache-posture",
+        "crossDomain: 发布域拥有发布/tag/环境审批语义；协作域拥有 issue/approval 策略内容；安全域拥有 secret 边界"
+      ],
+      "migration": {
+        "strategy": "先按执行代码与权限区分可信 PR e2e、受信策略发布器、发布部署；各自保留来源排除、默认分支策略或发布 ref 校验与必要 preflight，不能一律禁止 PR 或强制默认分支",
+        "implementation": "为每个 workflow 写一张表：触发、权限、runs-on、concurrency、preflight、environment",
+        "requiredSupport": [
+          "GitHub secrets/environments",
+          "App token（如需要）",
+          "tag 校验脚本",
+          "可取消/不可取消策略"
+        ]
+      },
+      "reference": "references/automation.md#85-凭据型发布型工作流的信任与不可取消性源义务发布协作语义跨域",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "缺失 key 的凭据型 e2e 在 preflight 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "发布 run 在新提交后继续运行",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "fork PR 的 e2e 为 skipped 而非 failed",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "可信同仓 PR 仍可进入 e2e；secret 只在 preflight 与实际测试步骤可见，不泄入 checkout/setup/install",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把 e2e 改为 pull_request_target 会暴露 secret，评审必须拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "策略脚本从 PR head 检出会被 PR 改写，评审必须拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "凭据缺失时补 secret 后重跑，preflight 通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "environment reviewers、App 安装范围、secret 是否存在、Cloudflare Access 都是远端状态；job-level skip 的 required check 语义需在目标仓库验证。"
+    },
+    {
+      "id": "automation-gitlab-python-release-pipeline",
+      "title": "GitLab Python 发布流水线的 tag 门槛、产物断言与资源组",
+      "sources": [
+        {
+          "path": ".gitlab-ci.yml",
+          "start": 1,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1182,
+          "end": 1232,
+          "kind": "test"
+        }
+      ],
+      "problem": "Python wheel 的发布必须绑定确切的标签/版本，且六个平台产物缺一不可；并发发布同一版本会互相覆盖或失败。",
+      "triggers": [
+        "推送 python-v* 标签",
+        "Python 发布",
+        "GitLab runner 平台变化"
+      ],
+      "obligations": [
+        "workflow.rules 只允许 python-v<semver> 标签，其它事件 never",
+        "每个 job 先断言 CI_COMMIT_TAG == python-v$DSH_VERSION",
+        "runtime wheel 构建后跑 smoke（all 场景）与 wheel 安装 smoke；Linux 校验最高 GLIBC ≤ 2.28 并在 manylinux_2_28 复测",
+        "macOS 校验 lipo 架构与 deployment target",
+        "publish 使用 resource_group: python-release，needs 全部六个产物",
+        "publish 断言恰好 6 个 wheel、文件名精确、twine check，再上传",
+        "上传失败提示 GitLab 不覆盖已存在版本"
+      ],
+      "actors": [
+        "发布域",
+        "GitLab CI 维护者"
+      ],
+      "steps": [
+        "打标签并推送。",
+        "sdk-wheel 与各平台 runtime wheel 构建/验证。",
+        "publish 收集六个产物并校验数量/名称。",
+        "twine check + upload。",
+        "失败时按提示创建新版本标签。"
+      ],
+      "enforcement": {
+        "mode": "tag-gated-release-pipeline",
+        "implementation": ".gitlab-ci.yml rules + before_script 断言 + publish 断言 + resource_group",
+        "trust": "GitLab rules 与 shell 断言；resource_group 串行化发布",
+        "failure": "标签/版本不一致即退出；产物缺失/数量不符/twine 失败即失败",
+        "exceptions": "无标签 push 不运行；GitLab 不允许覆盖同版本"
+      },
+      "applicability": "GitLab 上发布多平台 Python wheel 的项目。发布语义属于发布域，本域只记录流水线结构。",
+      "relationships": [
+        "dependsOn: automation-platform-policy",
+        "related: automation-ci-workflow-contract-tests",
+        "crossDomain: 发布域拥有版本/产物语义; 供应域拥有 twine/PyPI 凭据"
+      ],
+      "migration": {
+        "strategy": "先锁标签与版本，再锁产物集合，最后串行发布",
+        "implementation": "rules + version assertion + artifact count/name assertions + resource_group",
+        "requiredSupport": [
+          "GitLab runner 平台",
+          "twine",
+          "PyPI 项目令牌"
+        ]
+      },
+      "reference": "references/automation.md#84-gitlab-发布流水线源义务发布语义跨域",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "正确标签触发六个 wheel 并发布",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "标签与 package.json 版本不一致时 job 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修正版本并创建新标签后发布成功",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行 GitLab 流水线；源只提供配置与契约测试。发布权限/令牌不在源码内。"
+    }
+  ],
+  "evidenceModel": "sources[] record path/start/end/kind ranges actually inspected at 687f282e. obligations are source facts stated in the reference prose, not proof of runtime behavior. limitations records confirmed source weaknesses and unknowns. verification.*.evidence=\"planned\" means the migration check was NOT executed. No remote runner, branch-protection, environment, secret, or runner-group state is claimed."
+}

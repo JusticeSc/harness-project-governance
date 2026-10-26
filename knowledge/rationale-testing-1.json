@@ -1,0 +1,3325 @@
+{
+  "domain": "rationale-testing-1",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale-testing-1.record-once-replay-corpus",
+      "title": "Record the real model transcript once and replay it keylessly as the only mocked boundary",
+      "problem": "Model output is nondeterministic and unavailable to fork PRs, but hand-authored transcripts drift from the production agent loop and a fully mocked model boundary hides assembly regressions. The source postmortem recorded a keyless green while a real ACP session crashed, so a suite that self-skips without a key can report green without exercising anything.",
+      "triggers": [
+        "A scenario must cover assembled loop, tools, persistence or UI behavior that depends on model output.",
+        "A prompt, tool schema or model-visible prefix changes and the committed expected output must change.",
+        "A suite is about to add a mock for anything other than the model."
+      ],
+      "obligations": [
+        "Record fixtures against the real API under an explicit record mode, then replay them with no key in the default gate.",
+        "Keep exactly one mocked boundary: the model stream. Agent loop, tools, presenters, persistence and transport stay production implementations.",
+        "Commit the recorded per-session logs and the normalized expected outputs; regenerate only through the explicit record or refresh workflow.",
+        "A record invocation without a key must self-skip, never silently produce an empty or green fixture.",
+        "PR CI must run replay only and must never run record or refresh."
+      ],
+      "actors": [
+        "Scenario author: records against the real API and reviews captured fixtures.",
+        "Reviewer: reviews the expected-output diff.",
+        "CI: replays keylessly and compares.",
+        "Maintainer: owns the API key and record workflow."
+      ],
+      "steps": [
+        "Write the scenario with production composition except the model adapter.",
+        "Run `pnpm run test:snapshot:record` with a key and capture `session[.vN].jsonl` plus the wire output.",
+        "Derive one replay script from each durable `assistant/message` or `assistant/attempt` settlement.",
+        "Normalize volatile identifiers, paths and timestamps; write expected outputs.",
+        "Replay with `DSH_SNAPSHOT=replay` (web lane `test:web:ci` also injects it) and confirm no writes occur.",
+        "After an intentional product change, run refresh, review every golden diff, then replay again."
+      ],
+      "enforcement": {
+        "mode": "workflow and CI policy",
+        "implementation": "Dedicated keyed workflow or record command separate from the keyless PR gate; record self-skips without a key; web gate registers `test:web:ci` with `DSH_SNAPSHOT=replay`; `ci.yml` never runs record or refresh.",
+        "trust": "The recorded transcript is ground truth for model behavior. The test asserts the rest of the stack around it.",
+        "failure": "Missing key during record is a skip, not a fabricated fixture. A replay mismatch fails the gate. Missing refresh fails in the same PR that changed the assembly.",
+        "exceptions": [
+          "Authored override scenarios (`replay.override.json`) may drive error or cancel behavior without a model call; the session log then holds the expected log.",
+          "A scenario with no model turn may be authored keylessly, but its events must still come from the real code path."
+        ]
+      },
+      "applicability": "Protocol-shaped and assembled-application testing where model behavior is the only genuinely nondeterministic input and a real API key can be held outside untrusted PR execution.",
+      "relationships": [
+        "Depends on expected-output-authority for the comparison discipline.",
+        "Uses replay-script-keying for nested agents.",
+        "Uses fixture-hygiene-guards to keep fixtures closed and current.",
+        "Contrasts with boundary-mock-not-contract-reimplementation."
+      ],
+      "migration": {
+        "strategy": "Introduce the replay boundary before adding scenarios; separate the keyed record workflow from the always-available gate.",
+        "implementation": "A replay adapter keyed by caller session, a harness that harvests every session log, normalization helpers, and explicit record/refresh/replay modes.",
+        "requiredSupport": "A secret store usable only on trusted events, a keyless replay path, and a review process for golden diffs."
+      },
+      "reference": "references/rationale-testing-1.md#proc-replay",
+      "verification": {
+        "positive": [
+          "A recorded scenario replays keylessly and matches its committed expected outputs.",
+          "Nested and fork scenarios route each child to its own recorded script."
+        ],
+        "rejection": [
+          "Tampering a hook config output turns its scenario red on replay because the hook process still runs for real.",
+          "Removing the seed-boundary slice turns both fork scenarios red."
+        ],
+        "recovery": [
+          "Refresh regenerates expected outputs only after an intentional change and the reviewer re-runs replay to prove no writes."
+        ],
+        "evidenceStatus": "reported in source notes as local runs or CI run ids; not re-executed during this extraction."
+      },
+      "limitations": [
+        "A recorded model reaction is one sample, not a distribution; it does not prove model quality.",
+        "Fixtures age and must be re-recorded when the model or prompt changes.",
+        "A keyless skip in the wrong workflow can still look green; the preflight in no-false-green-preflight is required."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-06-19-acp-snapshot-tests.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-subagent-snapshot-replay.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.expected-output-authority",
+      "title": "Make committed normalized expected outputs the assertion authority, with refresh as a separate reviewed action",
+      "problem": "A snapshot mechanism that rewrites its own expected output during the test cannot assert anything: it turns the oracle into a generator. Hand-authored event sequences also drift from the production loop while presentation tests stay green.",
+      "triggers": [
+        "A snapshot test is added or changed.",
+        "A rendering, wire or persisted-log normalization changes.",
+        "A developer is tempted to run refresh in CI or inside the assertion."
+      ],
+      "obligations": [
+        "Compare the live normalized result against a committed expected output; do not write expected outputs on the comparison path.",
+        "Keep refresh as a separate explicit developer action followed by review and a replay run that proves no writes.",
+        "Normalize only volatile facts (ids, paths, timestamps, durations); never collapse two distinct rendered facts into one token.",
+        "Keep expected outputs reviewable: split large prompt and tool-schema pins into Markdown and JSON sidecars, and keep text and style separate for terminal projections.",
+        "When an expected output changes, the diff must belong to the change under review."
+      ],
+      "actors": [
+        "Test author: produces and explains the expected output.",
+        "Reviewer: verifies the diff represents the intended behavior.",
+        "CI: compares in replay mode and refuses to write."
+      ],
+      "steps": [
+        "Choose the semantic projection that states the contract (for example rows, wrap markers and non-default styles for a terminal; aria tree for a web page).",
+        "Normalize volatile values with explicit tokens.",
+        "Commit the expected output beside the fixture.",
+        "Run replay and confirm byte equality without writes.",
+        "On intentional change, run refresh, inspect every diff, and re-run replay."
+      ],
+      "enforcement": {
+        "mode": "test design plus CI mode policy",
+        "implementation": "Session logs use plain equality rather than file-snapshot updates; expected-output files are committed; CI runs replay only; pin sidecars are regenerated from the normalized live header sequence rather than hand-edited.",
+        "trust": "The committed expected output is the reviewable oracle. The normalizer is trusted only for the narrow volatile fields it owns.",
+        "failure": "A mismatch fails the test. A stale expected output fails in the same PR that changed the assembly. A refresh accidentally enabled in CI would convert a regression into a passing update, so mode injection is explicit.",
+        "exceptions": [
+          "Authored override scenarios may commit the expected session log as `session.jsonl` when an override file drives the model.",
+          "A transient renderer state may be authored directly because a completed log cannot retain it."
+        ]
+      },
+      "applicability": "Any golden or snapshot test whose expected artifact can grow large, especially when multiple normalization layers exist.",
+      "relationships": [
+        "Required by record-once-replay-corpus.",
+        "Uses fixture-hygiene-guards for closed inventories and fixed-point scrubbers.",
+        "Semantic-state-projection is one concrete form.",
+        "Negative-control-calibration proves the expected output can actually fail."
+      ],
+      "migration": {
+        "strategy": "Separate compare and refresh into different commands before committing goldens; make CI pass the compare mode explicitly.",
+        "implementation": "A normalizer with a declared volatile-field list, a compare entry point and a refresh entry point, plus review guidance for diffs.",
+        "requiredSupport": "Version control review of large expected files and a CI path that cannot request refresh."
+      },
+      "reference": "references/rationale-testing-1.md#proc-golden",
+      "verification": {
+        "positive": [
+          "Replay compares the live normalized log to the committed file and writes nothing.",
+          "Prompt and schema pins produce line-oriented Markdown or structured JSON diffs per composition class."
+        ],
+        "rejection": [
+          "Collapsing a dated clock form into the same token as the same-day form fails other scenarios whose goldens deliberately record the dated form.",
+          "A missing refresh fails in the PR that changed the web assembly."
+        ],
+        "recovery": [
+          "Refresh regenerates sidecars from the normalized live sequence; a following replay proves the working tree stays clean."
+        ],
+        "evidenceStatus": "reported in source notes as executed local and CI checks; not re-executed here."
+      },
+      "limitations": [
+        "A normalizer can hide a real difference if it is too broad.",
+        "Large goldens still need a review policy; the mechanism does not review itself.",
+        "Expected outputs are only as good as the scenario input state; see observation-waits-on-observed-state."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-06-20-remove-redundant-snapshot-log-expected-output.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-08-18-session-snapshot-envelope-projection.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-18-tui-terminal-state-snapshots.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.replay-script-keying",
+      "title": "Key replay scripts by calling session, harvest every nested log, and cut at an explicit inherited boundary",
+      "problem": "A single global cursor cannot serve a parent and an in-process child streaming on the same context: it hands the child the parent script. A fork child log also begins with the parent inherited prefix, so deriving from the whole log replays parent responses as child model calls.",
+      "triggers": [
+        "A nested agent, subagent, fork or background child participates in one process.",
+        "A new replay scenario has more than one session log.",
+        "A recorded child fixture carries a seeded prefix."
+      ],
+      "obligations": [
+        "Stamp the calling session id on every model request and route by that id, not by global call order.",
+        "Harvest every session log, primary-first, and fail loudly when a live session has no recorded script.",
+        "Bind live sessions to recorded scripts by first-call order and advance a cursor per session.",
+        "Persist an explicit inherited-prefix boundary at the producer; slice child events at that boundary and never infer it from the current seed length.",
+        "Treat a call without a session id as one anonymous session bound to the primary script so the single-session path stays byte-identical.",
+        "The inherited boundary is consumed from the persisted fixture's inheritedEventCount, never inferred from the current seed length; child script derivation slices exactly at that boundary.",
+        "Live Sessions bind to recorded scripts in first-call order; a session token resolves against actual bound live ids and fails if that Session has not bound; a background child id may be learned from the stable started-subagent tool-result text."
+      ],
+      "actors": [
+        "Replay adapter owner: implements keying and fail-loud behavior.",
+        "Session/fork backend owner: emits the boundary metadata.",
+        "Scenario author: records parent and each child log."
+      ],
+      "steps": [
+        "Add the optional session id to the model request options and stamp it from the agent session.",
+        "Name fixtures `session[.vN].jsonl` for the parent and `session.<ordinal>[.vN].jsonl` for children; select the highest generation per role.",
+        "Sort child fixtures by header `createdAt` and break ties by recorded id.",
+        "At live replay, let the first live session to call claim the first script, and so on; error if live sessions exceed recorded scripts.",
+        "For fork children, derive the script from events at or after `inheritedEventCount` and mark the boundary in persisted JSONL."
+      ],
+      "enforcement": {
+        "mode": "runtime routing invariant plus fail-loud error",
+        "implementation": "`GenerateOptions.sessionId`, per-session cursors, `harvestSessionLogs` with primary-first ordering, `inheritEventCount` persisted through `session/end-seed { inherited: true }`, and `fixture.events.slice(inheritedEventCount)`.",
+        "trust": "The producer owns the boundary; the replay harness does not re-derive it from heuristics.",
+        "failure": "More distinct live sessions than recorded scripts is a fail-loud error, never a silent mis-route. A missing session id falls back to the primary script only for the anonymous single-session path.",
+        "exceptions": [
+          "Concurrent or background children must introduce an explicit first-call ordinal instead of relying on timestamps.",
+          "An id rename in a config overlay is a review-visible config-rot case, not a wrong snapshot."
+        ]
+      },
+      "applicability": "Any replay or record system that can host more than one logical conversation in one process.",
+      "relationships": [
+        "Extends record-once-replay-corpus.",
+        "Depends on the fork producer persisting the boundary.",
+        "Exercised by fixture-hygiene-guards and negative-control-calibration."
+      ],
+      "migration": {
+        "strategy": "Add per-caller identity to the request contract before nested scenarios are attempted; make missing routing an error.",
+        "implementation": "Optional session id on model requests, fixture naming and ordering rules, per-session cursors, explicit boundary metadata and slice.",
+        "requiredSupport": "A branding-safe id type that does not create an import cycle, and a persistence format that can carry the boundary."
+      },
+      "reference": "references/rationale-testing-1.md#proc-nested",
+      "verification": {
+        "positive": [
+          "A spawn plus fork mixed scenario routes both children and both branches of the slice.",
+          "The single-session path is byte-for-byte unchanged."
+        ],
+        "rejection": [
+          "Removing `slice(seedLength)` or the inherited-count slice makes both fork scenarios red because the child receives parent chunks.",
+          "A live session with no recorded script fails loudly instead of consuming another script."
+        ],
+        "recovery": [
+          "Re-record all fork and spawn fixtures from the real API; keyless runs then reproduce them."
+        ],
+        "evidenceStatus": "reported in source notes including a red-to-green check; not re-executed here."
+      },
+      "limitations": [
+        "First-call order assumes siblings run sequentially; concurrent children need an explicit ordinal.",
+        "Out-of-process ACP subagents are a different replay shape and remain deferred.",
+        "The boundary must be carried through every persistence and restore path or resume can lose it."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-subagent-snapshot-replay.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-fork-child-replay-seed-boundary.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-fork-snapshot-scenarios.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 315,
+          "end": 350,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 820,
+          "end": 853,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 968,
+          "end": 1030,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 849,
+          "end": 949,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1280,
+          "end": 1373,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.single-source-composition",
+      "title": "Derive the test composition from the shipping composition by overlay, not by a hand-maintained twin",
+      "problem": "Two hand-maintained configs mirrored entry for entry drift silently. If the snapshot tree diverges from the shipping tree, the snapshot tier exercises a different application and reintroduces the green-units-broken-product gap one level up.",
+      "triggers": [
+        "A test app or benchmark app needs a different adapter, transport or backend than production.",
+        "A shipping composition gains a plugin or entry that the test tree must also carry.",
+        "A reviewer is maintaining a near-copy of a config file."
+      ],
+      "obligations": [
+        "Include the shipping config and patch only the entries that must differ.",
+        "Address patched entries by stable id and assert the name so a reused id does not disable the wrong plugin.",
+        "Keep recording on the unmodified shipping config and replay on the overlay.",
+        "Prove the overlay changes nothing else by replaying all existing scenarios with byte-identical expected outputs."
+      ],
+      "actors": [
+        "Config owner: maintains base and overlay.",
+        "Test author: records with the base config.",
+        "Reviewer: checks that the overlay delta stays minimal."
+      ],
+      "steps": [
+        "Write `cordis.snapshot.yml` as an include of `cordis.yml`.",
+        "Disable the production model adapter by id and name.",
+        "Insert the replay adapter.",
+        "Permit the intentionally disabled entry in the load guard.",
+        "Replay every scenario and confirm expected outputs are unchanged."
+      ],
+      "enforcement": {
+        "mode": "structural configuration design",
+        "implementation": "Include overlay with `patches`, id plus name targeting, and a load guard that permits the deliberately disabled entry.",
+        "trust": "The base config is the single source; the overlay is a declarative delta.",
+        "failure": "If the id is renamed, the patch degrades to a skip and an extra keyless adapter entry appears. Replay output can still be correct because the replay adapter owns the stream short-circuit, so this is config rot for review, not a wrong snapshot.",
+        "exceptions": [
+          "The overlay relies on patches being applied at include load and not on a later refresh path; it is suitable for a one-shot replay boot with no HMR.",
+          "A second divergence is one more patch line, not a second file."
+        ]
+      },
+      "applicability": "Test, benchmark and demo compositions that must stay shape-identical to a shipping application.",
+      "relationships": [
+        "Supports record-once-replay-corpus and real-assembly-over-hand-built-bench.",
+        "Interacts with fixture-hygiene-guards because an overlay can silently add an unloaded entry."
+      ],
+      "migration": {
+        "strategy": "Replace copies with an overlay that includes the real file; keep the delta declarative and next to the base.",
+        "implementation": "A loader that applies include patches, stable entry ids, a name assertion on disable patches, and a load guard exception list.",
+        "requiredSupport": "Config loader with include and patch semantics; review discipline for id stability."
+      },
+      "reference": "references/rationale-testing-1.md#proc-composition",
+      "verification": {
+        "positive": [
+          "All scenarios pass unchanged on the overlay with byte-identical expected outputs."
+        ],
+        "rejection": [
+          "An entry added to the base config appears in the replay tree without a second edit.",
+          "A disable patch that targets the wrong name is caught by the name assertion."
+        ],
+        "recovery": [
+          "Fix the id or patch target; no fixture regeneration is required if the delta remains one backend swap."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Depends on loader patch semantics and stable ids.",
+        "An id rename can leave a futile duplicate entry that does not fail replay; review must catch it.",
+        "Not a substitute for a full config test when the overlay itself gains logic."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-single-source-acp-replay-config.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.semantic-state-projection",
+      "title": "Project the semantic final state of a terminal or renderer instead of pinning raw write fragments or raster images",
+      "problem": "A stateful renderer depends on ANSI parsing, differential frames, wrapping, scrollback, viewport, width, focus, cursor and presentation intent. Write-fragment tests cannot prove the final screen; the same screen can be produced by different fragments; component-line snapshots miss ANSI effects; raster screenshots include unrelated host rendering noise.",
+      "triggers": [
+        "A terminal or rich renderer has user-visible output not captured by completed event logs.",
+        "A transient state such as streaming, pending tools, overlays, reflow, resize or shutdown must be pinned.",
+        "A reviewer cannot read the current snapshot format."
+      ],
+      "obligations": [
+        "Feed real ANSI writes into a real headless terminal parser and read the final state after synchronized frames quiesce.",
+        "Project dimensions, active buffer and viewport coordinates, lifecycle and cursor state, rows, wrap markers and non-default style ranges into text; keep text and style separate.",
+        "Freeze animation intervals but allow real elapsed time across one animation tick so the semantic status, not a scheduler-chosen glyph, is pinned.",
+        "Enforce theme independence: no RGB colors, no palette entries beyond ANSI 0-15, no explicit background colors; reverse video for selection is allowed.",
+        "Own a closed inventory that rejects missing scenarios, missing checkpoints and orphaned expected files.",
+        "State which layers the package owns and which the deployment owns (product journeys, PTY smoke)."
+      ],
+      "actors": [
+        "Package test owner: maintains emulator harness and projection.",
+        "Reviewer: reads cell and style diffs.",
+        "Deployment owner: owns PTY smoke and assembled product coverage."
+      ],
+      "steps": [
+        "Implement a headless terminal against the same terminal interface as production.",
+        "Drive production composition and collect ANSI writes.",
+        "Wait for synchronized frames to quiesce.",
+        "Read the semantic projection and write the expected text.",
+        "Run the closed-inventory guard.",
+        "On an xterm upgrade, re-run and review the projection."
+      ],
+      "enforcement": {
+        "mode": "test design plus inventory guard",
+        "implementation": "`HeadlessTerminal` over pinned `@xterm/headless`, frame quiescence, projection fields, theme assertions, closed inventories.",
+        "trust": "The emulator is trusted for terminal parsing; the projection is the reviewable contract.",
+        "failure": "A presentation regression produces a cell/style diff. A missing checkpoint or orphan expected file fails the inventory guard. A theme violation fails the checkpoint.",
+        "exceptions": [
+          "Transient states may be authored directly because a completed session log cannot retain them.",
+          "Completed application flows must not be hand-authored; they belong to an assembled deployment test.",
+          "PTY tests keep the real loader/input/teardown boundary but do not replace broad state coverage."
+        ]
+      },
+      "applicability": "Terminal UIs and other stateful renderers with an emulator or semantic accessibility tree that can expose final state.",
+      "relationships": [
+        "A concrete form of expected-output-authority.",
+        "Uses fixture-hygiene-guards for closed inventories.",
+        "Complements model-visible-surface-snapshot for the model-facing projection."
+      ],
+      "migration": {
+        "strategy": "Adopt an emulator and a semantic projection before committing terminal goldens; define ownership boundaries early.",
+        "implementation": "Headless terminal adapter, quiescence wait, projection serializer, theme assertions, inventory check.",
+        "requiredSupport": "A pinned parser version and a review process for projection changes."
+      },
+      "reference": "references/rationale-testing-1.md#proc-render",
+      "verification": {
+        "positive": [
+          "TUI event mapping or presentation regressions produce readable cell and style diffs.",
+          "Every checkpoint passes the theme independence rule."
+        ],
+        "rejection": [
+          "Raw write fragments change under differential rendering while the screen stays the same, so pinning them would produce false regressions.",
+          "A raster screenshot would vary with host fonts and themes."
+        ],
+        "recovery": [
+          "Intentional layout changes update and review the package semantic snapshots."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Uses xterm proposed buffer APIs; upgrades require re-review.",
+        "Terminal-specific behavior still needs a deployment-owned PTY smoke.",
+        "Fixed sizes intentionally encode wrapping and viewport behavior."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-18-tui-terminal-state-snapshots.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.model-visible-surface-snapshot",
+      "title": "Snapshot the exact model-visible request surface, not just tool execution",
+      "problem": "Functional tool assertions prove that a tool ran, but not that the advertised tool schemas, the added system section, or the injected user context reached the model. Tokenizing only a system prompt or tool name can miss the composed request that the model actually sees.",
+      "triggers": [
+        "A profile or runtime changes the model-visible prompt, tool catalog or injected context.",
+        "A tool executes correctly but the model may not have been told about it.",
+        "A cross-runtime parity claim is being made."
+      ],
+      "obligations": [
+        "Record, for every model request, the advertised tool schemas verbatim and the message list in order.",
+        "Keep full text for system and user messages, tokenizing only volatile paths; keep only call identity for assistant and tool messages whose text differs by platform.",
+        "Omit dynamic runtime context from the recorded profile so every emitted message can be compared.",
+        "Use the snapshot, not an inline mock assertion, as the owner of the composed tools and system prompt.",
+        "Compare the complete directory and file set, not a cherry-picked subset."
+      ],
+      "actors": [
+        "Runtime/profile owner: defines the model-visible surface.",
+        "Test author: records the surface and reviews the diff.",
+        "Reviewer: checks that the request is the shipped one."
+      ],
+      "steps": [
+        "Boot the shipped profile.",
+        "Capture each model request: tool schemas verbatim and the ordered message list.",
+        "Normalize volatile paths and omit dynamic runtime context.",
+        "Write `minimal/model-visible.json`.",
+        "Compare the complete set on replay and report a full diff."
+      ],
+      "enforcement": {
+        "mode": "snapshot comparison",
+        "implementation": "A `minimal/model-visible.json` artifact per scenario, with verbatim schema sequences and ordered messages.",
+        "trust": "The recorded request is the model-visible contract.",
+        "failure": "A changed schema, prompt or injected context produces a structured diff. A missing or extra message fails comparison.",
+        "exceptions": [
+          "Assistant and tool text is reduced to call identity because platform-specific rendering differs.",
+          "A scenario that deliberately varies dynamic context must not use the minimal profile."
+        ]
+      },
+      "applicability": "Agent runtimes and SDKs where the request surface is the product contract and multiple runtimes must agree.",
+      "relationships": [
+        "A specialized expected-output-authority.",
+        "Complements semantic-state-projection for the human-facing surface.",
+        "Supports coverage-plane-honesty when a runtime claims parity."
+      ],
+      "migration": {
+        "strategy": "Add a minimal profile that suppresses dynamic context, then record the full request surface.",
+        "implementation": "Request-capture hook, ordered message list, verbatim tool schemas, path tokens, full-set comparison.",
+        "requiredSupport": "A model adapter or proxy that can capture requests without changing them."
+      },
+      "reference": "references/rationale-testing-1.md#proc-modelsurface",
+      "verification": {
+        "positive": [
+          "The composed system prompt and tool catalog are visible in one reviewable artifact.",
+          "A changed schema appears as a structured diff."
+        ],
+        "rejection": [
+          "A tool executing correctly while absent from the advertised schemas fails the snapshot.",
+          "A cherry-picked subset would miss an added or removed message."
+        ],
+        "recovery": [
+          "Refresh the minimal artifact after an intentional profile change and review the full diff."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "The minimal profile deliberately omits dynamic context, so it does not prove runtime-context injection.",
+        "Platform-specific assistant and tool text is not compared.",
+        "The artifact is only as complete as the capture point."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-08-13-python-minimal-model-visible-snapshot.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.redaction-fixed-points",
+      "title": "Make redaction an idempotent fixed point enforced on disk",
+      "problem": "Large prompts and schemas duplicated in every JSONL fixture turn one edit into dozens of giant one-line diff records, while hand-scrubbing leaves stale review artifacts or reintroduces the content on the next record.",
+      "triggers": [
+        "A fixture stores bytes that are large, duplicated across scenarios, or not behaviorally meaningful.",
+        "A normalizer is added to replace volatile or bulky content with tokens.",
+        "A record or refresh path can write fixtures."
+      ],
+      "obligations": [
+        "Define pure scrubbers for each content class and make every stored file a fixed point of the applicable scrubber.",
+        "Tokenize the bulky content in session files and regenerate the authoritative sidecars from the normalized live sequence on every record or refresh.",
+        "Keep request-header count, field presence, config, reason and prefix message count; remove only the large content.",
+        "Guard uniformity across scenarios in the same composition class so one split pin remains authoritative.",
+        "Make required-file symmetry and orphan checks reject stale sidecars."
+      ],
+      "actors": [
+        "Fixture owner: defines scrubbers and sidecars.",
+        "Record/refresh path: applies scrubbing before writing.",
+        "Reviewer: reviews the split Markdown or JSON diff."
+      ],
+      "steps": [
+        "Classify the content to tokenize (system prompt, tool schemas, session prefix).",
+        "Implement pure scrubbers and a combined scrubber.",
+        "Store `{{system}}` and `{{tools}}` tokens in every JSONL.",
+        "Regenerate sidecars from the normalized live header sequence.",
+        "Enforce each `session*.jsonl` is a fixed point; only non-pinned fixtures must be full-header fixed points.",
+        "Run orphan and required-file guards."
+      ],
+      "enforcement": {
+        "mode": "normalizer plus on-disk invariant guard",
+        "implementation": "Pure scrubbers, tokens such as `\"{{system}}\"` and `\"{{tools}}\"`, regenerated sidecars, fixed-point checks and file-symmetry guards.",
+        "trust": "The scrubber is trusted only for the declared content class; the guard proves the stored file has no untokenized copy.",
+        "failure": "A stale duplicate or untokenized prompt fails the fixed-point check. A record path that bypasses scrubbing reintroduces the bulk and fails on the next check.",
+        "exceptions": [
+          "The live product log must remain byte-exact for reconstructability; only test artifacts are scrubbed.",
+          "A genuinely distinct composition class gets its own pin; identical classes are caught by the uniformity guard."
+        ]
+      },
+      "applicability": "Snapshot corpora with large repeated payloads, secrets, host paths or other non-behavioral bytes that must not dominate review.",
+      "relationships": [
+        "Supports expected-output-authority and fixture-hygiene-guards.",
+        "Requires the record path and the compare path to share the normalizer."
+      ],
+      "migration": {
+        "strategy": "Introduce pure scrubbers and committed sidecars together; never hand-edit the tokenized content.",
+        "implementation": "Scrub functions, sidecar generators, fixed-point assertions and closed-inventory checks.",
+        "requiredSupport": "A normalization layer shared by record, refresh and compare."
+      },
+      "reference": "references/rationale-testing-1.md#proc-redaction",
+      "verification": {
+        "positive": [
+          "A system-prompt change produces one line-oriented Markdown diff per composition class.",
+          "Every session file is a fixed point of its scrubber."
+        ],
+        "rejection": [
+          "A stale `session.expected.jsonl`-style duplicate or an untokenized header fails the fixed-point or orphan guard."
+        ],
+        "recovery": [
+          "Re-record or refresh regenerates both the JSONL and the sidecars from the live header sequence."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "A scrubber that is too broad can hide a behaviorally meaningful difference.",
+        "Tokenization changes the fixture away from byte-valid production format; consumers must use the matching parser.",
+        "The guard proves the declared fixed point, not the semantic completeness of the scrubber."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-24-session-log-snapshot-corpus.md",
+          "start": 1,
+          "end": 78,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-20-remove-redundant-snapshot-log-expected-output.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.fixture-hygiene-guards",
+      "title": "Guard fixture sets as closed inventories and project non-behavioral fields out of review diffs",
+      "problem": "A snapshot corpus with hand-managed files accumulates orphans, missing required files, duplicated pins and envelope churn. A scenario can pass while its required sidecars are stale or missing, and an insertion can rewrite every later record because volatile sequence and time fields are copied into the golden.",
+      "triggers": [
+        "A snapshot suite has more than one file per scenario.",
+        "A fixture format carries sequence numbers, timestamps or other non-behavioral envelope fields.",
+        "A new scenario is added or an old one is removed."
+      ],
+      "obligations": [
+        "Own a closed inventory per suite: reject missing scenarios, missing checkpoints, missing required files and orphaned expected outputs.",
+        "Enforce required-file symmetry for each scenario type; an override sidecar and a session log must not be mutually inconsistent.",
+        "Enforce pin uniformity: exactly one pinned scenario per composition class, and every non-pinned fixture must be a fixed point of the full scrubber.",
+        "Project non-behavioral envelope fields (`seq`, `time`, `seq0`, `time0`) out of committed snapshots while retaining every payload and top-level discriminative field.",
+        "Keep the replay parser able to read the projected form and assign sequence numbers when decoding; keep the runtime persistence format unchanged.",
+        "Regenerate required files and sidecars on record or refresh rather than editing them by hand."
+      ],
+      "actors": [
+        "Fixture owner: defines the required-file table and inventory.",
+        "Snapshot writer: applies projection and scrubbing at its own file boundary.",
+        "Replay parser owner: accepts the projected form.",
+        "Reviewer: reads the reduced diff."
+      ],
+      "steps": [
+        "Write the per-scenario required-file table, including optional override files.",
+        "Serialize each record while omitting the projected envelope keys.",
+        "Read snapshots back through the projection-aware parser.",
+        "Run orphan, missing-file and symmetry checks in the suite meta-test.",
+        "Run the one-pin-per-class and fixed-point checks.",
+        "On migration, rewrite committed fixtures through the projection so old recording cannot reintroduce the fields."
+      ],
+      "enforcement": {
+        "mode": "meta-test and file-boundary guard",
+        "implementation": "Closed inventories, required-file symmetry, single-pin checks, scrubber fixed-point assertions, envelope projection in the snapshot writer and compensation in `parseSessionLog`.",
+        "trust": "The inventory and fixed-point checks are mechanical; the projection is trusted only for the declared non-behavioral keys.",
+        "failure": "An orphan, missing file, duplicate pin or untokenized header fails the meta-test. A stale sidecar is rejected rather than silently ignored.",
+        "exceptions": [
+          "Nested payload fields with the same names as projected envelope keys stay unchanged.",
+          "The first `session` header is not projected; only body records lose the volatile keys.",
+          "A scenario that deliberately records a stateful or dated form keeps it; do not collapse it."
+        ]
+      },
+      "applicability": "Snapshot corpora with multiple artifacts per scenario, especially where large or repetitive records would otherwise dominate review.",
+      "relationships": [
+        "Supports expected-output-authority and redaction-fixed-points.",
+        "Protects record-once-replay-corpus from stale or orphaned fixtures.",
+        "Complements replay-script-keying for nested log sets."
+      ],
+      "migration": {
+        "strategy": "Introduce the inventory and the projection together; migrate all writers and the parser in one cutover.",
+        "implementation": "A required-file table, meta-tests, scrubber fixed-point checks, writer-side projection and parser-side sequence assignment.",
+        "requiredSupport": "A shared session-log format catalog so replay and persistence agree on the projected representation."
+      },
+      "reference": "references/rationale-testing-1.md#proc-inventory",
+      "verification": {
+        "positive": [
+          "The repository fixture-layout check uses the replay parser and keeps canonical packed rows.",
+          "New events no longer rewrite every later snapshot envelope."
+        ],
+        "rejection": [
+          "A duplicate pin, missing required file or orphan expected output is rejected.",
+          "A stale repeated expected-log artifact is rejected after the one-artifact decision."
+        ],
+        "recovery": [
+          "Re-record or refresh regenerates the files; the migration path rewrites committed fixtures through the projection."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "The guard proves the declared file set and fixed points, not semantic correctness.",
+        "Projected files are not byte-valid production logs; every consumer must use the matching parser.",
+        "A projection rule per event type would be costly; the source keeps payload references untouched instead."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-06-19-acp-snapshot-tests.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-24-session-log-snapshot-corpus.md",
+          "start": 1,
+          "end": 78,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-08-shared-acp-snapshot-package.md",
+          "start": 1,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-08-18-session-snapshot-envelope-projection.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.replay-assembled-lane",
+      "title": "Drive the assembled browser application with replayed model output and normalized semantic goldens",
+      "problem": "A browser UI can be tested against a standalone client fixture with no real Host, wire or loop, or against a live keyed service. The first cannot catch assembly regressions; the second cannot run on every PR and is nondeterministic.",
+      "triggers": [
+        "A web or desktop client must be covered end to end without a live model key.",
+        "A change touches client plugin bundles, the Host wire or the rendered tree.",
+        "A platform-specific input behavior needs a second engine."
+      ],
+      "obligations": [
+        "Boot the shipped composition through its real config loader, with only the model adapter replayed.",
+        "Drive a real browser against the real Host over HTTP JSON-RPC and SSE; do not substitute a hand-built client stand-in for the assembled path.",
+        "Capture the semantic UI surface (for example the aria tree), normalize volatile values, and compare against committed expected outputs.",
+        "Keep browser-driving code outside per-file coverage gates that cannot honestly measure it; put gate-worthy logic in gated packages.",
+        "Run the full suite in the primary engine and a narrow subset in a second engine only for behavior that engine uniquely exercises.",
+        "Run HMR or other state-mutating scenarios outside the parallel pool.",
+        "Treat only the Host's idle signal, which follows the persistence flush, plus a settled semantic surface as turn completion; a bare turn/end event, persistence-file polling, or networkidle is not a completion barrier.",
+        "Fail on any page error or connection-loss/gap-repair console warning, and assert at teardown that every recorded script and cursor was consumed.",
+        "Do not retry the lane; isolate each scenario with one browser and host, a fresh context, a pinned viewport, semantic selectors, and an explicit locale.",
+        "An assembled Web lane must own a fully hermetic world (temporary workspace, persistence, harness home, agents and bundled-skill roots, storage root), mask and restore ambient credentials, disable ambient telemetry, and authenticate through the real token exchange; ambient home and skill roots must not leak into replay requests.",
+        "Only explicit refresh writes goldens; a missing golden fails with the regeneration command. Console connection-loss/gap-repair warnings and page errors fail the scenario; only connection-loss warnings after an intentional reload may be acknowledged, gap-repair warnings remain fatal.",
+        "Aria goldens normalize volatile values but preserve literal relative age unless the region explicitly opts in; capture waits for two consecutive equal normalized captures and restores expanded controls in finally."
+      ],
+      "actors": [
+        "Web lane owner: maintains scaffold, fixtures and normalizer.",
+        "Scenario author: records and reviews goldens.",
+        "CI: runs replay-only with an explicit worker budget."
+      ],
+      "steps": [
+        "Load the shipping web config and patch test-only roots, disabled watchers and persistence paths.",
+        "Serve the built client and Host.",
+        "Replay the recorded model script and drive the page.",
+        "Wait for the semantic surface to stabilize.",
+        "Normalize and compare to the committed golden.",
+        "Run state-mutating scenarios serially and the rest in one bounded pool."
+      ],
+      "enforcement": {
+        "mode": "CI lane",
+        "implementation": "`test:web` and `test:web:ci` with `DSH_SNAPSHOT=replay`, `launchWebScaffold`, normalized aria goldens, separate HMR run, worker budget via `DSH_WEB_SNAPSHOT_WORKERS`.",
+        "trust": "The assembled browser and Host are production; only the model is replayed.",
+        "failure": "A semantic mismatch fails the file. A missing golden refresh fails the PR. A worker-budget change requires an end-to-end measurement.",
+        "exceptions": [
+          "A second engine is used only for behavior the primary engine cannot exercise.",
+          "A server-only or pure unit concern belongs in a lower layer."
+        ]
+      },
+      "applicability": "Web, Electron or desktop clients that compose many bundles and a Host process and whose user-visible contract is a semantic tree.",
+      "relationships": [
+        "A concrete record-once-replay-corpus lane.",
+        "Uses semantic-state-projection and expected-output-authority.",
+        "Shared prerequisite: no-false-green-preflight for the keyless lane."
+      ],
+      "migration": {
+        "strategy": "Start from the shipped config, add the replay adapter, and capture the semantic tree rather than pixels or DOM internals.",
+        "implementation": "Browser scaffold, config patches, aria normalizer, golden files, CI gate registration.",
+        "requiredSupport": "A browser automation runtime, a stable semantic surface and a build artifact the lane can serve."
+      },
+      "reference": "references/rationale-testing-1.md#proc-browser",
+      "verification": {
+        "positive": [
+          "A keyless replay exercises Chromium through the real wire and renders the committed semantic tree.",
+          "The second engine covers the input behavior it uniquely owns."
+        ],
+        "rejection": [
+          "A standalone client fixture would pass while the Host wire is broken.",
+          "A jsdom snapshot cannot cover HTTP/SSE carriage or real plugin bundle composition."
+        ],
+        "recovery": [
+          "Refresh the goldens after an intentional UI change and review the churn; replay again."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "The lane makes no cross-platform browser consistency claim.",
+        "A browser or automation upgrade that changes the semantic format requires an explicit refresh and review.",
+        "Worker-budget changes need a completed measurement.",
+        "First-call-order replay binding limits a scenario to one prompting session; shared replay cursors stay inert only under the published catalog window."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 351,
+          "end": 475,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 620,
+          "end": 1000,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1574,
+          "end": 1796,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.real-entry-path-gate",
+      "title": "Exercise the installed artifact through its public entry point, not the source tree",
+      "problem": "A unit suite can drive fake peers and pass while the packaged artifact is broken. Checking out the repo, installing editable, or importing from source hides a mismatched SDK and runtime, a broken native wheel, a missing platform closure or a failure in the real entry point.",
+      "triggers": [
+        "A package is shipped as a wheel, binary, installer or bundle.",
+        "A PR could break packaging or native dependencies while source tests stay green.",
+        "A runtime and SDK version must agree at the installed boundary."
+      ],
+      "obligations": [
+        "Build the distributable artifacts before the behavior test.",
+        "Install the built artifacts into a clean environment, change directory outside the repository, and unset source-resolution variables such as `PYTHONPATH` and runtime-mode overrides.",
+        "Invoke only public modules and the packaged executable.",
+        "Reject a non-clean environment, a repository-relative working directory, a source or editable import, and unequal SDK/runtime versions.",
+        "Run the installed-artifact gate as a required PR check on the platforms claimed."
+      ],
+      "actors": [
+        "Packaging owner: produces the wheel or installer.",
+        "CI: creates the clean environment and runs the black-box checks.",
+        "Reviewer: verifies the platform matrix."
+      ],
+      "steps": [
+        "Build the SDK and each runtime distribution.",
+        "Create a fresh virtual environment for each native target.",
+        "Install the two local files.",
+        "Move outside the repository and clear source-resolution variables.",
+        "Import public modules and run the packaged executable.",
+        "Assert version agreement and reject any source import."
+      ],
+      "enforcement": {
+        "mode": "required CI job",
+        "implementation": "A build-then-install job with a black-box harness that asserts environment cleanliness, cwd, import origin and version equality.",
+        "trust": "The installed artifact is the product under test.",
+        "failure": "A source import, editable install, repository cwd or version mismatch fails the gate. A missing platform artifact fails the matrix.",
+        "exceptions": [
+          "The default development suite may still use source imports for fast feedback; it cannot substitute for the installed gate.",
+          "A platform with no distributable yet must not be silently claimed as covered."
+        ]
+      },
+      "applicability": "Any project that ships an installable or native artifact and whose source tests can mask packaging failures.",
+      "relationships": [
+        "Extends record-once-replay-corpus to the artifact boundary.",
+        "Uses no-false-green-preflight.",
+        "Installed-artifact-qualification adds update and install-state coverage."
+      ],
+      "migration": {
+        "strategy": "Add the build-then-install job before claiming PR coverage; keep source tests as fast feedback.",
+        "implementation": "Wheel or bundle build, clean venv or container, public-entry smoke, environment assertions.",
+        "requiredSupport": "A CI matrix for each advertised platform and a packaging step that runs before behavior tests."
+      },
+      "reference": "references/rationale-testing-1.md#proc-installed",
+      "verification": {
+        "positive": [
+          "A clean environment imports the installed SDK and runs the packaged executable against the installed runtime.",
+          "Each native target installs the two local artifacts and passes."
+        ],
+        "rejection": [
+          "A source or editable import is rejected.",
+          "A mismatched SDK/runtime version or broken native wheel fails before merge."
+        ],
+        "recovery": [
+          "Rebuild and reinstall after fixing packaging; the gate reruns from a clean environment."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "The gate covers the platforms and entry points it actually invokes.",
+        "A clean environment does not prove every optional integration.",
+        "Cost grows with the platform matrix."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-08-12-required-python-runtime-pull-request-ci.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.installed-artifact-qualification",
+      "title": "Qualify the installed/update lifecycle with real artifacts, retained test-only identities, and fail-closed receipts",
+      "problem": "A successful file copy does not prove a signed installer exists or that the installed application will start. Normal release paths expose test metadata, and an installed-update walkthrough needs two increasing versions with a shared identity. Simulated update events cannot establish feed parsing, integrity, download and platform preparation together.",
+      "triggers": [
+        "An updater, installer or packaged desktop application must be verified.",
+        "A test needs two versions of an installed application.",
+        "A qualification run must not depend on production release infrastructure."
+      ],
+      "obligations": [
+        "Prepare test-only versions from a retained manifest with a random identity and distribution namespace; change only release-family versions and matching dependencies.",
+        "Seal and verify inventories, re-verify the source, and refuse to overwrite existing outputs.",
+        "Generate a bootstrap that validates installed package identity before importing production main.",
+        "Run the production update coordinator inside the real runtime with a real HTTP executor and updater, against a loopback feed served by an isolated server.",
+        "Allocate a fresh temporary directory and an OS-assigned port per invocation; use request barriers and observations instead of sleeps.",
+        "Keep signature or publisher verification absent only in the private fixture configuration, never in production.",
+        "A failed copy retains a failure record and cannot create a completion receipt."
+      ],
+      "actors": [
+        "Release/qualification engineer: prepares materials and runs the harness.",
+        "Update owner: owns the production coordinator and feed format.",
+        "CI or local operator: runs the isolated qualification."
+      ],
+      "steps": [
+        "Build two increasing versions with a shared app identity.",
+        "Seal inventories and verify the source descriptor hash.",
+        "Install version one into an isolated directory.",
+        "Serve a loopback update feed with the intended policy.",
+        "Drive the production update coordinator and observe download, integrity, preparation and restart behavior.",
+        "Assert the post-update identity and retain the journal or failure record."
+      ],
+      "enforcement": {
+        "mode": "qualification harness with fail-closed lifecycle",
+        "implementation": "Material preparer with manifests and inventory seals, generated bootstrap identity check, real updater plus loopback feed, atomic temp and port allocation, observations replacing UI interaction, journal and receipt rules.",
+        "trust": "The production coordinator and installer preparation path are real; only the feed and UI observations are controlled.",
+        "failure": "A copy without a signed installer, an identity mismatch, a missing inventory entry or a failed update step must fail and leave a record rather than a success receipt.",
+        "exceptions": [
+          "Publisher verification may be absent only in the private fixture configuration.",
+          "The test manifest is retained test-only metadata and must not leak into production release paths."
+        ]
+      },
+      "applicability": "Desktop applications, installers and updaters whose correctness depends on the installed state and the updater lifecycle.",
+      "relationships": [
+        "Extends real-entry-path-gate.",
+        "Uses fault-injection-and-recovery for feed and network failures.",
+        "Uses evidence-scoped-claims to avoid extrapolating from one platform."
+      ],
+      "migration": {
+        "strategy": "Build the real artifact pair and an isolated feed before writing update assertions; make success require a verified receipt.",
+        "implementation": "Test-only manifests, sealed inventories, generated bootstrap, loopback feed, atomic allocation and journal.",
+        "requiredSupport": "A platform installer toolchain and a runtime that can host the production updater."
+      },
+      "reference": "references/rationale-testing-1.md#proc-update",
+      "verification": {
+        "positive": [
+          "The installed application starts, updates from the loopback feed and preserves its identity.",
+          "The journal records the update and the receipt matches the installed state."
+        ],
+        "rejection": [
+          "A successful copy without a signed installer fails qualification.",
+          "An identity mismatch in the generated bootstrap is rejected before production main runs."
+        ],
+        "recovery": [
+          "A failed copy retains its failure record and cannot produce a completion receipt; rerun in a fresh directory and port."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "The source notes describe Windows qualification and local updater paths; other platforms need their own evidence.",
+        "A private fixture may omit publisher verification and therefore does not prove production signing.",
+        "The harness is heavy and local-first; it is not a cheap per-PR unit test."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-14-desktop-installed-update-materials.md",
+          "start": 1,
+          "end": 49,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-14-desktop-installed-update-journal.md",
+          "start": 1,
+          "end": 29,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.real-assembly-over-hand-built-bench",
+      "title": "Test the real boot and mount path instead of a hand-built bench or a programmable remote fake",
+      "problem": "A hand-built bench with a bare context, stand-ins and slot declarations asserts the bench, not the product. A programmable remote fake reimplements Gateway semantics and can permit behaviors the real system forbids, such as a unary rejection.",
+      "triggers": [
+        "A client or plugin host has a production boot and mount path.",
+        "A test constructs a context, remote or transport by hand.",
+        "A fake transport accepts a call shape the real protocol rejects."
+      ],
+      "obligations": [
+        "Boot the real client assembly with its production config and include rules.",
+        "Use a remote mock that answers by endpoint name and shares the real protocol contract, rather than a programmable fake that can invent semantics.",
+        "Read the plugin roster from the bundles, including inject and immediately metadata, rather than listing plugins in the test.",
+        "Keep the assembly tier in a test-runtime package that does not import the Host or dynamically import product code.",
+        "Assert the same closure and selection behavior the product performs."
+      ],
+      "actors": [
+        "Client assembly owner: maintains boot and mount.",
+        "Test-runtime owner: provides the real assembly and endpoint-named remote mock.",
+        "Scenario author: drives the assembled client."
+      ],
+      "steps": [
+        "Build the production boot path with one connection.",
+        "Load the plugin roster from bundle entries.",
+        "Filter to the platform and carry inject metadata.",
+        "Mount the client.",
+        "Answer remote calls by endpoint name with contract-shaped responses.",
+        "Assert user-visible behavior through the assembled tree."
+      ],
+      "enforcement": {
+        "mode": "test architecture",
+        "implementation": "`dsh-client-test-runtime` assembly tier and `dsh-remote-mock` endpoint-name responses; no Host import and no dynamic import.",
+        "trust": "The real boot and mount path are the system under test; the remote boundary is contract-shaped.",
+        "failure": "A hand-built bench can stay green while the real assembly is broken. A programmable fake can allow an impossible call and hide a protocol regression.",
+        "exceptions": [
+          "Pure helpers may still be unit-tested directly.",
+          "A transport fault may be injected at the narrow writer boundary, but the connection contract remains real."
+        ]
+      },
+      "applicability": "Clients, plugin hosts and other composed systems with a production boot path and a remote or plugin boundary.",
+      "relationships": [
+        "A general form of boundary-mock-not-contract-reimplementation.",
+        "Used by replay-assembled-lane.",
+        "Supports coverage-plane-honesty because the real assembly is what coverage claims apply to."
+      ],
+      "migration": {
+        "strategy": "Move from hand-built benches to the production boot path; keep the remote mock contract-shaped.",
+        "implementation": "A test runtime that exposes production assembly, bundle-derived rosters and an endpoint-named remote mock.",
+        "requiredSupport": "A boot path that can run under test without the Host, and a protocol schema the mock can follow."
+      },
+      "reference": "references/rationale-testing-1.md#proc-assembly",
+      "verification": {
+        "positive": [
+          "A focused source test boots the real client assembly and mounts it.",
+          "Plugin roster and inject metadata come from the bundles."
+        ],
+        "rejection": [
+          "A programmable fake that permits a unary rejection would pass tests the real Gateway would fail.",
+          "A hand-built context would not catch a boot or mount regression."
+        ],
+        "recovery": [
+          "Use the assembly tier for the failing path and add the missing contract to the endpoint-named mock."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "The assembly tier itself must be maintained as a real product path, not a second implementation.",
+        "An endpoint-named mock still needs contract coverage for each answer shape.",
+        "A test that cannot import the Host may need a different boundary for Host-side behavior."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-client-assembly-test-line.md",
+          "start": 1,
+          "end": 99,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-08-shared-acp-snapshot-package.md",
+          "start": 1,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-25-scriptable-llm-wire-fault-server.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.boundary-mock-not-contract-reimplementation",
+      "title": "Mock only the external boundary; never reimplement the contract inside the test",
+      "problem": "A test double that reimplements protocol semantics can accept states the real system forbids and hides whether the boundary preserved distinctions. In-process adapter mocks also bypass fetch, HTTP parsing, SSE framing, socket termination and idle watchdogs.",
+      "triggers": [
+        "A test needs to control a network peer, model adapter or process boundary.",
+        "A mock has begun parsing, framing, sequencing or retrying on behalf of the product.",
+        "A fault distinction such as reset-before-first-event versus clean EOF matters."
+      ],
+      "obligations": [
+        "Place the double at the narrowest external boundary (socket, HTTP server, model stream or message writer).",
+        "Keep the shipping adapter, loop, retry policy, framing and parsing in the test path.",
+        "Preserve distinct fault classes rather than collapsing them into one generic failure.",
+        "Inject transport failure through the real writer callback contract, not by reaching into host-specific pipe internals.",
+        "Make the double report facts, not retryability or policy decisions."
+      ],
+      "actors": [
+        "Test-infrastructure owner: provides the boundary double.",
+        "Adapter or connection owner: defines the real contract and fault classes.",
+        "Scenario author: chooses the narrowest sufficient boundary."
+      ],
+      "steps": [
+        "Identify the external boundary the product actually consumes.",
+        "Implement the double at that boundary with explicit behaviors.",
+        "Drive the real adapter and loop through it.",
+        "Assert request counts, body identity and recovery behavior.",
+        "Keep impossible states impossible in the double unless a script explicitly requests them."
+      ],
+      "enforcement": {
+        "mode": "test design and shared fixture",
+        "implementation": "A scriptable wire-fault server, a message-writer injection hook, an endpoint-named remote mock, and a real child process kept alive behind a controlled writer.",
+        "trust": "The product boundary is real; only the external peer is controlled.",
+        "failure": "A generic mock failure hides whether failed chunks stayed outside committed model history. A fake that permits an impossible call hides a contract regression.",
+        "exceptions": [
+          "A pure unit test may mock an internal seam for speed, but it cannot substitute for the boundary test.",
+          "A scripted server can share an arrival-ordered script across clients; that limitation must be stated."
+        ]
+      },
+      "applicability": "Adapters, transports, RPC clients, subprocess plumbing and any layer with a documented external protocol.",
+      "relationships": [
+        "Contrasts with real-assembly-over-hand-built-bench.",
+        "Used by fault-injection-and-recovery and subprocess-plumbing.",
+        "Depends on evidence-scoped-claims for what the double actually proves."
+      ],
+      "migration": {
+        "strategy": "Replace contract-reimplementing fakes with a boundary server or writer hook; keep fault classes explicit.",
+        "implementation": "A scriptable HTTP/SSE server, a writer injection hook, an endpoint-named remote mock.",
+        "requiredSupport": "A stable external protocol and a way to run the shipping adapter against a local peer."
+      },
+      "reference": "references/rationale-testing-1.md#proc-boundary",
+      "verification": {
+        "positive": [
+          "The real HTTP/SSE adapter, loop and retry policy run against scripted faults; request counts and retry steps match.",
+          "A transport write failure is distinguished from process exit without platform pipe internals."
+        ],
+        "rejection": [
+          "An in-process adapter mock bypasses fetch, status parsing and SSE framing, so it cannot catch those regressions.",
+          "A programmable remote fake that allows a unary rejection would pass where the real Gateway fails."
+        ],
+        "recovery": [
+          "Add the missing behavior or fault class to the boundary double; do not move it into product code."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A boundary double still needs its own tests.",
+        "Arrival-ordered shared scripts can make concurrency tests ambiguous.",
+        "The double does not prove remote production behavior, only the contract it models."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-25-scriptable-llm-wire-fault-server.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-client-assembly-test-line.md",
+          "start": 1,
+          "end": 99,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-03-opt-in-reasoning-chunk-browser-stress.md",
+          "start": 1,
+          "end": 45,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-22-cross-platform-test-fixtures.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.subprocess-plumbing",
+      "title": "Use one owned subprocess primitive for spawn, collection, timeout and termination",
+      "problem": "Dozens of tests re-derived spawn, stdout collection, timeout, SIGKILL and exit settlement by hand. Variations silently changed settlement order and leaked children, and hand-tokenized CLI flags duplicated a standard parser.",
+      "triggers": [
+        "A test or helper spawns a child process.",
+        "A suite needs captured output, a timeout or a kill path.",
+        "A CLI fixture parses flags or env files."
+      ],
+      "obligations": [
+        "Use a single shared subprocess helper for spawn, output collection, timeout and termination instead of per-file implementations.",
+        "Make settlement explicit: one exit or error, bounded wait, then a kill path.",
+        "Dispose children on timeout and on test failure; do not leave orphans.",
+        "Use the runtime standard parser and env loader instead of hand-rolled tokenization.",
+        "Keep the real child alive when the test is about the parent transport contract, and inject failure at the writer."
+      ],
+      "actors": [
+        "Test-infrastructure owner: maintains the helper.",
+        "Scenario author: consumes it.",
+        "CI: relies on bounded teardown."
+      ],
+      "steps": [
+        "Call the shared spawn helper with the command and timeout.",
+        "Collect stdout and stderr with a bounded buffer.",
+        "Wait for exit with a single settlement.",
+        "On timeout, terminate the tree and surface the failure.",
+        "Assert the collected output or exit status."
+      ],
+      "enforcement": {
+        "mode": "shared helper and review",
+        "implementation": "One subprocess utility replacing hand-rolled spawn, timeout and SIGKILL code; standard `parseArgs` and env loader.",
+        "trust": "The helper owns process lifetime; tests do not reimplement it.",
+        "failure": "A timeout that does not kill leaves a leaked child and contaminates later tests. A hand-rolled settlement can report success before the child exits.",
+        "exceptions": [
+          "A test of process lifetime itself may need direct control; it must still restore and dispose.",
+          "A PTY harness may wrap the helper but keeps the same settlement rules."
+        ]
+      },
+      "applicability": "Every test suite that spawns binaries, language runtimes or Git.",
+      "relationships": [
+        "Supports fixture-lifecycle-ownership and test-isolation-hermeticity.",
+        "Used by installed-artifact-qualification and timeout-budgeting."
+      ],
+      "migration": {
+        "strategy": "Consolidate on the standard runtime APIs and one helper before raising timeouts.",
+        "implementation": "A helper around the runtime child-process API, standard CLI parsing, and explicit settlement.",
+        "requiredSupport": "A runtime with reliable child-process semantics and a test cleanup registry."
+      },
+      "reference": "references/rationale-testing-1.md#proc-subprocess",
+      "verification": {
+        "positive": [
+          "All spawn sites use one helper and settle once.",
+          "Timeout tests terminate the child and leave no process."
+        ],
+        "rejection": [
+          "A hand-rolled collector that resolves on stdout close before exit would fail the settlement assertion.",
+          "Hand-tokenized flags that disagree with the standard parser are removed."
+        ],
+        "recovery": [
+          "On a kill failure, surface it as a teardown failure rather than retrying without ownership."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "A shared helper can grow options; keep the contract narrow.",
+        "Platform-specific tree kill still needs its own evidence.",
+        "The helper does not make an unbounded child safe; the caller must set a budget."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-26-execa-for-test-subprocess-plumbing.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-publint-test-subprocess-lifetime.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.test-isolation-hermeticity",
+      "title": "Model concurrent host resources and give every test its own namespace, cleanup owner and environment",
+      "problem": "Concurrent Vitest files, workers, gates and jobs share ports, predictable paths, external namespaces and inherited children. Process isolation does not isolate those resources, so a test can select the right tier and pass alone while failing in CI. Global mutations and incomplete teardown contaminate later tests.",
+      "triggers": [
+        "A test or fixture acquires a host resource (port, path, process, listener, env var, global singleton).",
+        "A test can pass alone but fails in the full lane.",
+        "A suite is about to use a fixed path, fixed port or process-wide setting."
+      ],
+      "obligations": [
+        "Inventory the resources a test owns and the concurrency it can meet (files, workers, gates, jobs, sibling runners).",
+        "Allocate unique temporary directories and OS-assigned ports; pair each root with the run result that produced it rather than assuming allocation order.",
+        "Set process-wide environment at the runner or workflow boundary, not inside a test; make the setting inherit to child processes deliberately.",
+        "Do not mutate process-global state without restoring it, and dispose listeners, watchers, children and directories even when setup fails.",
+        "Keep shared caches persistent only when the manager supports concurrent access; state the operational ownership of capacity and residue.",
+        "Model external namespaces and inherited children; do not assume process exit closes them."
+      ],
+      "actors": [
+        "Test author: declares owned resources and cleanup.",
+        "Test-infrastructure owner: provides allocators and guards.",
+        "CI operator: owns runner capacity, temp storage and caches."
+      ],
+      "steps": [
+        "List the resources and the maximum concurrency.",
+        "Replace fixed values with allocated ones.",
+        "Register cleanup immediately after successful acquisition.",
+        "Restore process-global state in a finally path, including setup failure.",
+        "Set lane-scoped environment before any child starts.",
+        "Run the suite under the real concurrent topology, not only alone."
+      ],
+      "enforcement": {
+        "mode": "test design, shared helpers and CI configuration",
+        "implementation": "Unique temp allocators, OS-assigned ports, `TMPDIR=runner.temp` exported through `GITHUB_ENV`, worker-level runtime flags, cleanup registries and disposal assertions.",
+        "trust": "Each test owns only its declared namespace; the runner owns the rest.",
+        "failure": "A fixed path or port can collide across workers. A leaked child or listener contaminates later tests. A shared temp directory can exhaust and fail unrelated PRs before tests execute.",
+        "exceptions": [
+          "A deliberately shared cache may be retained if the package manager supports concurrent access and capacity is owned operationally.",
+          "A test of process-global behavior must restore it and must not run concurrently with a test that depends on the default."
+        ]
+      },
+      "applicability": "Every parallel test suite and every fixture that touches the host outside the language runtime.",
+      "relationships": [
+        "Prerequisite for fixture-lifecycle-ownership and timeout-budgeting.",
+        "Used by test-reliability-governance for probabilistic failure diagnosis.",
+        "Complements platform-neutral-fixtures."
+      ],
+      "migration": {
+        "strategy": "Inventory resources first, then remove fixed paths, ports and globals; make cleanup registration automatic.",
+        "implementation": "Allocator helpers, cleanup registry, lane-scoped env, runner-owned temp, concurrency-aware caches.",
+        "requiredSupport": "CI configuration control, a temp allocator, and a cleanup assertion that runs on failure."
+      },
+      "reference": "references/rationale-testing-1.md#proc-isolation",
+      "verification": {
+        "positive": [
+          "The suite passes under the real multi-worker topology and on a shared-volume runner.",
+          "Every acquired directory and child has a single cleanup owner."
+        ],
+        "rejection": [
+          "A fixed port or predictable path would collide under concurrency.",
+          "A test that mutates a process global without restore contaminates a later test."
+        ],
+        "recovery": [
+          "On a collision, allocate a new value; on a leaked resource, surface it as a teardown failure rather than retrying."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "Process isolation still does not isolate host resources; the inventory must be maintained.",
+        "A shared cache can fail for capacity or filesystem reasons that tests cannot fix.",
+        "The source explicitly leaves historical residue and disk provisioning to operators."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-vitest-jsdom-webstorage-ownership.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-10-hosted-image-test-assumptions.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-plugin-install-interceptor-lifetime.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.fixture-lifecycle-ownership",
+      "title": "Give every fixture an explicit lifetime: acquire, register cleanup, restore on setup failure, and prove disposal",
+      "problem": "Fixtures that allocate subprocesses, watchers, temp directories or patched methods leak when setup fails or when a timeout fires. A test can report a teardown failure without identifying which resource exceeded its budget, and a requested termination is not proof that disposal finished.",
+      "triggers": [
+        "A fixture spawns a process, opens a watcher or listener, patches a method, or allocates a directory.",
+        "A test can time out during setup or teardown.",
+        "Cleanup failures appear only on a contended host."
+      ],
+      "obligations": [
+        "Register cleanup immediately after successful acquisition, before any assertion that can fail.",
+        "Restore patched factories and dispose the context even when setup fails before the local cleanup block.",
+        "Make disposal await the actual resource outcome (child exit, watcher closure, directory removal) rather than only requesting termination.",
+        "Keep failure cleanup waiting for disposal and child completion before removing the private directory.",
+        "A teardown failure must identify the resource and budget; do not mask it with a retry.",
+        "Use the lane test or hook budget for the fixture lifetime, not a smaller independent deadline."
+      ],
+      "actors": [
+        "Fixture owner: defines acquisition and disposal.",
+        "Test author: uses the registration hook.",
+        "CI: enforces hook and test budgets."
+      ],
+      "steps": [
+        "Acquire the resource and register its cleanup immediately.",
+        "Wrap setup in a path that still runs restoration on failure.",
+        "On timeout or assertion failure, request termination and await settlement.",
+        "Assert the resource is gone before the next case.",
+        "Surface any disposal failure with the resource name."
+      ],
+      "enforcement": {
+        "mode": "fixture contract and teardown assertions",
+        "implementation": "Cleanup registries, factory restoration in a failure path, disposal awaited under the lane budget, deferred exit observation, bounded child kill.",
+        "trust": "The fixture owns the resource until it proves disposal.",
+        "failure": "A requested kill that is not awaited can leave an orphan; a setup-failure path can leak a watcher or factory override; a teardown failure that omits the resource is not diagnosable.",
+        "exceptions": [
+          "A test of teardown latency must assert the contract, not one winner of a race.",
+          "A process that needs a real descendant tree kill uses the platform-specific mechanism, and a failed tree kill remains a failure."
+        ]
+      },
+      "applicability": "All fixtures that own resources, especially subprocess, watcher and patched-global fixtures.",
+      "relationships": [
+        "Builds on test-isolation-hermeticity.",
+        "Interacts with timeout-budgeting for hook and test deadlines.",
+        "Supports subprocess-plumbing and owned-completion-observation."
+      ],
+      "migration": {
+        "strategy": "Add a cleanup registry and a setup-failure path before widening budgets; make disposal awaitable.",
+        "implementation": "A per-test disposal list, factory restore hooks, awaited child exit, and resource-named failures.",
+        "requiredSupport": "A test runner with teardown hooks and a child-process API that exposes exit."
+      },
+      "reference": "references/rationale-testing-1.md#proc-lifecycle",
+      "verification": {
+        "positive": [
+          "A forced setup failure still closes the watcher and restores the factory before the next case.",
+          "Teardown waits for child completion and then removes the private directory."
+        ],
+        "rejection": [
+          "A requested termination alone does not prove disposal; a deferred observation shows the process tree exit.",
+          "An unregistered temp directory remains after failure and is caught."
+        ],
+        "recovery": [
+          "Retry cleanup only through safe removal within the documented window; a failed tree kill is surfaced, not ignored."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A cleanup assertion can still time out on a severely contended host; raising the hook budget is a separate decision.",
+        "Some resources are outside the account ability to remove.",
+        "The mechanism does not fix capacity or filesystem failure."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-publint-test-subprocess-lifetime.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-plugin-install-interceptor-lifetime.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-plugin-manager-git-child-environment.md",
+          "start": 1,
+          "end": 29,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-09-user-patch-hmr-test-delivery.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.determinism-barriers",
+      "title": "Synchronize with explicit barriers and injected clocks instead of sleeps or transient DOM assumptions",
+      "problem": "Wall-clock sleeps approximate readiness, fake timers can deadlock holds that read time twice, and asserting a transient DOM state before the product has completed its transition produces false failures. None of these establishes the state the test needs.",
+      "triggers": [
+        "A test waits for asynchronous startup, streaming, animation or a background handshake.",
+        "A test uses a fixed delay before asserting.",
+        "A rendered value is held by a timer or transition."
+      ],
+      "obligations": [
+        "Replace sleeps with event-driven waits or an explicit barrier the harness controls.",
+        "Inject a clock that advances from a fixed anchor with real elapsed time when product code reads time twice; a permanently frozen clock can prevent a hold from ever elapsing.",
+        "Wait for synchronized frames or quiescence before reading a renderer state.",
+        "Assert stable semantic states, not intermediate transitions.",
+        "Keep the barrier and clock controls in the fixture; do not add scenario-local product overrides that test a page the product does not serve."
+      ],
+      "actors": [
+        "Fixture author: provides barriers and clock injection.",
+        "Scenario author: asserts only after the barrier.",
+        "Reviewer: rejects sleep-based synchronization."
+      ],
+      "steps": [
+        "Identify the real completion signal for the operation.",
+        "Expose a barrier or an awaited event in the fixture.",
+        "If time itself is under test, inject a clock; otherwise wait on events.",
+        "Read the state after quiescence.",
+        "Remove fixed settling delays."
+      ],
+      "enforcement": {
+        "mode": "test design and fixture API",
+        "implementation": "Event-driven waits, barrier toggles, `pinHostClock`/`pinBrowserClock`, frame quiescence, semantic-state assertions.",
+        "trust": "The barrier or observed event owns readiness; elapsed time does not.",
+        "failure": "A sleep can pass on a fast host and fail on a slow one. A frozen clock can strand a two-reading hold. A transient assertion can capture the wrong state.",
+        "exceptions": [
+          "Fake timers are appropriate when the timer service itself is under test.",
+          "A deliberately dated or stateful rendering is a real assertion; do not collapse it in normalization."
+        ]
+      },
+      "applicability": "UI tests, streaming tests, and any test with asynchronous startup or animations.",
+      "relationships": [
+        "Closely related to observation-waits-on-observed-state.",
+        "Used by replay-assembled-lane and web scenario tests.",
+        "Supports timeout-budgeting by removing delay-based races."
+      ],
+      "migration": {
+        "strategy": "Replace sleeps with explicit barriers; add clock injection only where hold semantics are tested.",
+        "implementation": "Barrier primitives, clock spies with anchor and elapsed time, frame-quiescence waits.",
+        "requiredSupport": "A fixture surface that can control the page or process without changing product behavior."
+      },
+      "reference": "references/rationale-testing-1.md#proc-determinism",
+      "verification": {
+        "positive": [
+          "A scenario renders the same semantic state regardless of host speed.",
+          "A two-reading hold still elapses because the clock advances with real time."
+        ],
+        "rejection": [
+          "A permanently frozen browser clock leaves settled text unrendered.",
+          "A fixed delay captures a transition and fails on a loaded host."
+        ],
+        "recovery": [
+          "Add the missing barrier or observation and rerun; do not raise the delay."
+        ],
+        "evidenceStatus": "reported in source notes including a measured 10/61 failure without the observation and 20/20 with it; not re-executed here."
+      },
+      "limitations": [
+        "A barrier that the product does not expose may require a controlled test seam.",
+        "Clock injection can change timing-sensitive behavior; prefer event waits where possible.",
+        "Quiescence does not prove semantic correctness by itself."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-12-connection-and-compaction-fixture-preconditions.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.observation-waits-on-observed-state",
+      "title": "Establish the input state and observe the completion the assertion needs; a timeout is a budget, not delivery evidence",
+      "problem": "A capture can land on a different state than the golden records when the state is implied by pointer position, keyboard modality or an in-flight host read. A wait can stop after two equal snapshots that both show the wrong state. An event can be missed entirely and no deadline can recover it.",
+      "triggers": [
+        "A golden records a hovered row, focused tooltip, enabled status or other stateful rendering.",
+        "A test polls or captures after an action.",
+        "An operating-system or browser event may be delayed, coalesced or dropped."
+      ],
+      "obligations": [
+        "Before capture, establish the state the golden records: hover the intended row, clear the pointer-input flag, focus the intended control, or wait for the value published by the later read.",
+        "Poll the exact observed value until it equals the expected token or state; do not sample once.",
+        "Do not rely on a stability heuristic (two equal snapshots) as proof of the correct state.",
+        "Make deadlines budgets for bounded work; a deadline cannot recover an event that was never emitted.",
+        "When a real event cannot be guaranteed, deliver it through a controlled watcher while a separate owning test covers native delivery.",
+        "Separate visual transitions from JavaScript timers; they use different clocks."
+      ],
+      "actors": [
+        "Scenario author: names and establishes the input state.",
+        "Fixture owner: provides controlled delivery and exact observation helpers.",
+        "Reviewer: checks that the assertion owns its precondition."
+      ],
+      "steps": [
+        "Write down which state the golden represents.",
+        "Perform the input or wait for the exact published value before capture.",
+        "Poll computed values to the independent token rather than checking presence.",
+        "For native event delivery, use a controlled watcher for semantic tests and keep native delivery in its own test.",
+        "Never replace a missing observation with a longer timeout."
+      ],
+      "enforcement": {
+        "mode": "scenario design and fixture helpers",
+        "implementation": "Explicit hover/focus setup, polling predicates, `captureStableAria` plus correct-state establishment, controlled Chokidar watcher, independent color-token read.",
+        "trust": "The observed value is the only evidence the state exists.",
+        "failure": "A single sample inside a status-transition window reads the old value. A stable snapshot of the wrong state passes the stability check but fails the golden. A held event can never arrive, so extending the deadline fails too.",
+        "exceptions": [
+          "A real operating-system delivery guarantee belongs to a dedicated native test, not to every semantic assertion.",
+          "A timeout test still needs a bounded budget; the budget is not evidence of the event."
+        ]
+      },
+      "applicability": "Browser, terminal, HMR and any asynchronous UI scenario whose assertion depends on a state the harness does not otherwise own.",
+      "relationships": [
+        "Uses determinism-barriers.",
+        "Supports expected-output-authority and negative-control-calibration.",
+        "Related to owned-completion-observation for server-side completion."
+      ],
+      "migration": {
+        "strategy": "Make each capture name its state and each wait poll the exact value; split native delivery into its own test.",
+        "implementation": "Polling helpers, controlled watcher injection, independent token reads, explicit focus/hover setup.",
+        "requiredSupport": "A fixture API that can establish input state and expose the observed value."
+      },
+      "reference": "references/rationale-testing-1.md#proc-observe",
+      "verification": {
+        "positive": [
+          "The three browser scenarios render the aria their goldens record whatever state the harness arrives in.",
+          "The connection test polls computed colors to the independent tokens."
+        ],
+        "rejection": [
+          "A bare mouse press without a key raises no tooltip, so the running capture fails with the missing bubble.",
+          "A single status read inside the 61ms window captures the pre-reload value."
+        ],
+        "recovery": [
+          "Establish the state, poll the value, or control delivery; then rerun."
+        ],
+        "evidenceStatus": "reported in source notes with negative controls; not re-executed here."
+      },
+      "limitations": [
+        "Polling can still time out if the product never publishes the value.",
+        "A controlled watcher does not test native delivery.",
+        "A real visual transition may still be in progress after the token matches; use the computed value, not the intention."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-28-detail-close-waits-on-observed-state.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-observation-waits-on-observed-state.md",
+          "start": 1,
+          "end": 39,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-09-user-patch-hmr-test-delivery.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-12-connection-and-compaction-fixture-preconditions.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md",
+          "start": 1,
+          "end": 37,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.owned-completion-observation",
+      "title": "Wait on the completion signal that owns the operation, not an earlier acceptance or a bare process start",
+      "problem": "HTTP acceptance, projected UI state, process startup and durable completion are separate observations. A test that waits one second for a webhook-created session, or five seconds for PowerShell output, measures an unrelated prefix. A 202 response does not prove the session or model request exists.",
+      "triggers": [
+        "An operation crosses an HTTP boundary, a process boundary or a durable log.",
+        "A test waits a fixed time after a request.",
+        "A teardown must prove disposal rather than a termination request."
+      ],
+      "obligations": [
+        "Identify the completion signal that owns the operation (session creation, `turn/end`, child output in scrollback, journal entry, process-tree exit).",
+        "Hold the intermediate operation behind a barrier and assert its absence before releasing it.",
+        "Await the owning signal, not a wall-clock window.",
+        "Release barriers and restore listeners on timeout so cleanup still runs.",
+        "For readiness, accept every supported tier and reject timeout or exit settlements that are not readiness.",
+        "For teardown, await disposal and child completion; a requested kill is not completion."
+      ],
+      "actors": [
+        "Fixture author: exposes the completion signal and barriers.",
+        "Test author: asserts only the owning signal.",
+        "CI: provides lane budgets for the bounded wait."
+      ],
+      "steps": [
+        "Map the operation stages: acceptance, projection, durable completion.",
+        "Choose the durable or process signal that proves the assertion.",
+        "Hold the pre-completion stage and assert the absence of the later artifact.",
+        "Release and await the owning signal.",
+        "Clean up in a finally path even on timeout."
+      ],
+      "enforcement": {
+        "mode": "fixture contract and assertion design",
+        "implementation": "Barriers around workspace creation or child startup, awaited `turn/end` or journal entry, deferred exit observation, scrollback observation for shell output.",
+        "trust": "Only the owning signal proves completion; acceptance and startup are prefixes.",
+        "failure": "A one-second poll after HTTP 202 can fail while creation is slow. A process-start marker does not prove the command ran. A termination request does not prove the tree exited.",
+        "exceptions": [
+          "A test of latency itself may measure a prefix, but then it must say so.",
+          "A supported inferred-idle readiness tier is acceptable when the protocol defines it; a timeout settlement is not."
+        ]
+      },
+      "applicability": "Server-side integration tests, process-lifecycle tests and any test that currently sleeps after a request or a spawn.",
+      "relationships": [
+        "A server-side counterpart of observation-waits-on-observed-state.",
+        "Uses fixture-lifecycle-ownership for cleanup on timeout.",
+        "Supports replay-assembled-lane and installed-artifact qualification."
+      ],
+      "migration": {
+        "strategy": "Replace post-request delays with owning signals and add absence assertions before release.",
+        "implementation": "Barrier hooks, durable-log queries, journal reads, awaited child exit, scrollback observation.",
+        "requiredSupport": "A log or API that exposes the completion event and a fixture seam that can hold the intermediate stage."
+      },
+      "reference": "references/rationale-testing-1.md#proc-completion",
+      "verification": {
+        "positive": [
+          "The GitHub review test holds Workspace creation, proves neither Agent nor model request exists, releases and awaits the matching turn end.",
+          "The PowerShell test observes formatted child output in scrollback rather than an echoed command."
+        ],
+        "rejection": [
+          "A one-second webhook poll fails on a slow but successful creation.",
+          "An echoed output string present in the command text does not prove execution."
+        ],
+        "recovery": [
+          "On timeout, release the barrier, restore the method and remove the listener before failing."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A durable signal may not exist for every operation; then the test must state a bounded inference.",
+        "A supported readiness tier can be wider than a single exact state.",
+        "A true process exit may still leave external side effects outside the test namespace."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-08-ci-readiness-and-completion.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-08-ci-completion-observations.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-pwsh-ci-observable-completion.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-12-connection-and-compaction-fixture-preconditions.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.timeout-budgeting",
+      "title": "Let one lane budget govern case and hook time, and delete per-case ceilings that silently undercut it",
+      "problem": "A describe-level timeout overrides the lane argument, so a smaller per-suite value caps every case even when the lane grants more. Raising only the test budget moves a contended suite failure from the case into teardown because the hook budget remains at the default. Retrying hides the host property that caused the failure.",
+      "triggers": [
+        "A suite is bound by process creation rather than assertions.",
+        "A suite has a describe-level timeout or per-case allowances.",
+        "A lane grants a test budget but leaves the hook budget at its default."
+      ],
+      "obligations": [
+        "Express the budget once for the lane or suite, aligned with the lane environment value.",
+        "Delete per-case allowances that merely restate a describe value; a later case without one would silently inherit a different ceiling. When a file runs under lanes whose root config has no raised default (plain test command or a parity lane), an explicit per-case budget aligned with the lane value is acceptable and must be stated.",
+        "Set `--hookTimeout` alongside the test and poll timeouts so setup and teardown have the same budget.",
+        "Do not shorten a cleanup retry window just to fit a smaller hook budget.",
+        "Do not retry a timed-out suite; retrying moves the failure and leaves a red or green gate that carries no code information.",
+        "Record the trade-off: a raised ceiling accepts a real slowdown that the old ceiling would have caught; the old ceiling was firing on host contention."
+      ],
+      "actors": [
+        "Test owner: chooses the suite budget.",
+        "Lane owner: sets the environment value.",
+        "CI operator: owns host capacity."
+      ],
+      "steps": [
+        "Measure the slowest case on an idle host to understand the headroom.",
+        "Align the suite value with the lane test budget.",
+        "Remove duplicated per-case constants.",
+        "Emit the hook timeout from the same variable.",
+        "Run under the contended lane and confirm the failure moves from the budget to real assertions."
+      ],
+      "enforcement": {
+        "mode": "configuration and review",
+        "implementation": "`DSH_COVERAGE_TEST_TIMEOUT_MS`, `--testTimeout`, `--expect.poll.timeout`, `--hookTimeout`, suite-level values, deletion of per-case constants.",
+        "trust": "The lane environment owns the host property; suites defer to it.",
+        "failure": "A describe value below the lane cap silently lowers the budget. A missing hook timeout reproduces the failure in teardown. A retry hides a real regression or a real capacity problem.",
+        "exceptions": [
+          "A test of a genuine latency contract may carry a smaller explicit budget and must state why.",
+          "Lanes that do not set the variable keep every runtime default.",
+          "A spawning file that runs under both a raised lane and a default-config lane may need an explicit per-case budget equal to the lane value; the source did this for the oxlint spawn cases because the root config had no testTimeout. This is not a licence to restate a describe value in a suite that already has one."
+        ]
+      },
+      "applicability": "Any multi-tenant CI lane where process creation or host contention, not the assertion, decides timeout outcomes.",
+      "relationships": [
+        "Uses test-isolation-hermeticity for the host property.",
+        "Interacts with fixture-lifecycle-ownership for teardown.",
+        "test-reliability-governance forbids retry-based fixes."
+      ],
+      "migration": {
+        "strategy": "Adopt one lane variable for test and hook budgets; delete per-case restatements.",
+        "implementation": "Workflow environment, coverage argument builder, suite-level timeout, documented trade-off.",
+        "requiredSupport": "A workflow parser test or equivalent check that the assignment reaches every worker."
+      },
+      "reference": "references/rationale-testing-1.md#proc-budget",
+      "verification": {
+        "positive": [
+          "The Windows coverage lane runs the process-bound suites without budget-caused failures.",
+          "A slow fixture teardown no longer fails an otherwise passing suite."
+        ],
+        "rejection": [
+          "A describe-level 15s value caps all 23 cases while the lane grants 90s.",
+          "A raised test budget with the default 10s hook still fails in teardown."
+        ],
+        "recovery": [
+          "Raise the lane budget or fix the host; do not retry the suite."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A wider budget accepts a real slowdown into tens of seconds.",
+        "It does not make the host faster or fix capacity.",
+        "Cold-start costs may still exceed any reasonable budget and need their own observation."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-08-27-translation-pairing-merge-budget.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-08-29-windows-lane-hook-and-lefthook-budget.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-publint-test-subprocess-lifetime.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.platform-neutral-fixtures",
+      "title": "Keep supported-platform tests semantic and exclude only the fixture whose state cannot exist",
+      "problem": "Literal POSIX paths become drive-relative on Windows, a hosted file URI can be a valid UNC path, child-pipe closure and event-loop scheduling differ, and POSIX-only file states have no direct Windows fixture. Treating fixture syntax as product behavior reports false regressions or encourages production normalization that erases native semantics.",
+      "triggers": [
+        "A test runs on Windows, macOS and Linux.",
+        "A fixture builds a path, URI or filesystem state by hand.",
+        "A platform-specific exclusion is proposed."
+      ],
+      "obligations": [
+        "Build absolute paths and file URIs with the host `node:path` and `node:url` APIs; assert native absolute output or stable workspace-relative output as the contract requires.",
+        "Use invalid-URI encodings rejected by `fileURLToPath()` on every supported platform.",
+        "Inject transport failure through the connection message writer and deliver the same asynchronous callback error a real stream reports.",
+        "Implement descendant-tree teardown with a negative process-group id on POSIX and synchronous `taskkill /T /F` on Windows; only suppress the already-absent-tree status.",
+        "Use a narrow Windows exclusion for a genuinely POSIX-only primitive, and keep adjacent cross-platform assertions for the product behavior.",
+        "Keep supported Windows paths inside the per-file coverage gate rather than excluding the test file."
+      ],
+      "actors": [
+        "Test author: chooses native construction.",
+        "Fixture owner: provides transport and teardown helpers.",
+        "Reviewer: rejects broad platform exclusions."
+      ],
+      "steps": [
+        "Replace literal path or URI strings with host API construction.",
+        "Assert the output form the contract requires.",
+        "For transport failure, inject the writer callback error.",
+        "For process trees, use the platform-specific kill and surface real failures.",
+        "Exclude only the single impossible fixture; add the neighboring assertion."
+      ],
+      "enforcement": {
+        "mode": "test design and review",
+        "implementation": "Native path and URL construction, writer injection, process-group or taskkill teardown, narrow exclusions with adjacent coverage.",
+        "trust": "The host runtime defines path and URI semantics; the fixture must not normalize them away.",
+        "failure": "A literal POSIX path fails on Windows. A pipe-internal hack tests undocumented machinery. A whole-file exclusion hides supported behavior.",
+        "exceptions": [
+          "A genuinely POSIX-only primitive may exclude that single case on Windows.",
+          "Windows teardown may depend on `taskkill` after graceful shutdown fails."
+        ]
+      },
+      "applicability": "Cross-platform test suites, especially those with paths, URIs, child pipes and process trees.",
+      "relationships": [
+        "Supports test-isolation-hermeticity and fixture-lifecycle-ownership.",
+        "Uses boundary-mock-not-contract-reimplementation for writer injection.",
+        "Interacts with coverage-plane-honesty for exclusions."
+      ],
+      "migration": {
+        "strategy": "Replace hand-built platform strings and pipe hacks with native APIs and narrow injection points.",
+        "implementation": "Host path/URL helpers, writer callback injection, platform-specific tree teardown.",
+        "requiredSupport": "A supported-runtime matrix and a way to run the same suite on each host."
+      },
+      "reference": "references/rationale-testing-1.md#proc-platform",
+      "verification": {
+        "positive": [
+          "The same semantic test passes on Windows, macOS and Linux.",
+          "The transport-failure test keeps a real child alive and distinguishes failure from exit."
+        ],
+        "rejection": [
+          "A literal POSIX path under Windows fails or asserts the wrong thing.",
+          "A broad Windows exclusion would hide supported behavior."
+        ],
+        "recovery": [
+          "If a single POSIX-only state cannot exist, exclude only that case and keep the neighboring assertion."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Native expected paths must derive from shared constants.",
+        "Platform-only exclusions need an adjacent cross-platform assertion to remain honest.",
+        "Windows tree kill depends on the host command and a failed kill remains visible."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-22-cross-platform-test-fixtures.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.negative-control-calibration",
+      "title": "Prove the test can fail by reproducing the recorded failure signature with a negative control, then passing the positive control",
+      "problem": "A test can pass for the wrong reason. Without a control that reproduces the failure, a green run does not show that the assertion observes the property it names, and a threshold or fixture can be calibrated to a state that never exercises the failure.",
+      "triggers": [
+        "A new test claims to guard a specific failure or performance budget.",
+        "A fixture was changed to remove a flake.",
+        "A threshold or baseline is being chosen."
+      ],
+      "obligations": [
+        "Construct a negative control that reproduces the recorded failure signature with the shipped assertions.",
+        "Run the positive control after the fix and show it passes.",
+        "For performance, measure the baseline and set the budget with explicit headroom; state that the threshold is a regression allowance, not a measurement of what the work needs.",
+        "For credentials or matching logic, include both a matching and a non-matching control so the assertion cannot pass on any input.",
+        "Record the evidence level: local run, CI run id, or only planned.",
+        "Do not infer a failure cause from a single green or red run."
+      ],
+      "actors": [
+        "Test author: builds the controls.",
+        "Reviewer: checks that the negative control matches the recorded signature, not a convenient failure.",
+        "Performance owner: calibrates thresholds."
+      ],
+      "steps": [
+        "Write down the observed failure signature.",
+        "Reproduce it with the pre-fix fixture or a deliberate wrong input.",
+        "Confirm the assertion fails for that reason.",
+        "Apply the fix or fixture change.",
+        "Confirm the same assertion passes.",
+        "Record the runs and rates; repeat under the real topology where the failure was seen."
+      ],
+      "enforcement": {
+        "mode": "test-authoring practice and review",
+        "implementation": "Before/after controls, deliberately wrong hover or focus, one-clock-only pins, tampered hook config, measured failure rates, threshold headroom.",
+        "trust": "A test is trusted only after it has been shown to fail for the named reason.",
+        "failure": "A test that never fails may be asserting a tautology or a fixture that cannot reach the branch. A threshold set without a measurement can accept a regression or fail on noise.",
+        "exceptions": [
+          "A purely structural assertion may not need a runtime negative control, but it still needs a case that violates the structure.",
+          "A proposed mechanism has no executed control and must be marked proposed."
+        ]
+      },
+      "applicability": "Every new guard, every flake fix and every performance or security threshold.",
+      "relationships": [
+        "Proves tripwire-failures actually bite.",
+        "Uses observation-waits-on-observed-state for exact signatures.",
+        "Supports performance-budget-gate and property-invariants."
+      ],
+      "migration": {
+        "strategy": "Require a negative control in the change that introduces a guard or fixes a flake.",
+        "implementation": "A deliberately wrong input, a pre-fix reproduction, a measured before/after table.",
+        "requiredSupport": "A way to run the pre-fix state or simulate the wrong input without changing production behavior."
+      },
+      "reference": "references/rationale-testing-1.md#proc-controls",
+      "verification": {
+        "positive": [
+          "The three browser scenarios fail with the recorded signatures under the negative controls and pass after the fix.",
+          "The credential-matching test includes a non-matching control."
+        ],
+        "rejection": [
+          "A clock test that pins only one clock reproduces the midnight failure exactly.",
+          "A threshold without endpoint measurement is rejected."
+        ],
+        "recovery": [
+          "Fix the fixture or product and rerun both controls; if the negative control no longer fails, the guard has stopped biting."
+        ],
+        "evidenceStatus": "reported in source notes with before/after counts and CI run ids; not re-executed here."
+      },
+      "limitations": [
+        "A negative control can be too artificial and miss the real failure mode.",
+        "A local rate is not a CI rate; the topology can differ.",
+        "A control proves the assertion can fail, not that it covers every failure."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 1,
+          "end": 125,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-06-frontend-performance-budgets.md",
+          "start": 1,
+          "end": 107,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-11-user-text-credential-matching.md",
+          "start": 1,
+          "end": 70,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md",
+          "start": 1,
+          "end": 37,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.tripwire-failures",
+      "title": "Prefer guards that can bite: fail loud on impossible states and refuse coverage that cannot be proven to fail",
+      "problem": "A guard that produces byte-identical output to the no-guard run, or that silently skips an extra input, can never be proven to fail. Coverage that includes such guards overstates protection. Silent mis-routing and stale fixtures are worse than an explicit error.",
+      "triggers": [
+        "A test or assertion is proposed for a state that writes nothing or has no observable footprint.",
+        "A harness encounters more inputs than recorded scripts or a missing required fixture.",
+        "A guard is added for an error path that may never be exercised."
+      ],
+      "obligations": [
+        "Make harness states that cannot be routed an explicit fail-loud error, never a silent fallback to another script.",
+        "Do not count an observe-only or no-transcript guard as end-to-end coverage; it cannot bite.",
+        "Keep a guard on unit coverage when its end-to-end footprint is nondeterministic, and record why it is excluded.",
+        "Require every scenario that proves a guard to be shown red when the guarded behavior is removed or tampered.",
+        "Distinguish a missing-key skip in a record workflow from a required-gate skip; the required gate must fail loud."
+      ],
+      "actors": [
+        "Harness owner: implements fail-loud routing.",
+        "Scenario author: proves the guard bites.",
+        "Reviewer: rejects guards with no observable footprint."
+      ],
+      "steps": [
+        "Check whether the guarded behavior changes the transcript, output or state.",
+        "If it does not, keep it at a lower tier and document the omission.",
+        "If it does, remove or tamper the behavior and confirm the scenario turns red.",
+        "For harness cardinality, compare live and recorded counts and error on excess.",
+        "Restore the behavior and confirm green."
+      ],
+      "enforcement": {
+        "mode": "harness errors and proof-of-bite",
+        "implementation": "Fail-loud on extra live sessions; closed inventories; no-transcript omissions documented; red-to-green checks when a slice or guard is removed.",
+        "trust": "A guard is trusted only if its absence produces a distinguishable failure.",
+        "failure": "A silent fallback mis-routes a child to the parent script. An observe-only expected output equals the no-hook run and can never fail. A guard that only checks presence may pass on the wrong value.",
+        "exceptions": [
+          "An observe-only hook point may remain on unit coverage where the call itself is asserted.",
+          "A nondeterministic injection point must not be recorded as a stable golden; a 10/10 replay instability check justifies exclusion."
+        ]
+      },
+      "applicability": "Replay harnesses, hook matrices, negative controls and any guard whose expected artifact could be identical with and without the guard.",
+      "relationships": [
+        "Proven by negative-control-calibration.",
+        "Used by replay-script-keying and hook matrix coverage.",
+        "Supports coverage-plane-honesty."
+      ],
+      "migration": {
+        "strategy": "Add fail-loud cardinality checks and document every deliberate exclusion with its reason.",
+        "implementation": "Count checks, explicit errors, a matrix of covered points, red-to-green evidence per guard.",
+        "requiredSupport": "A harness that can observe whether a guarded artifact changed."
+      },
+      "reference": "references/rationale-testing-1.md#proc-tripwire",
+      "verification": {
+        "positive": [
+          "Tampering a hook config output turns the hook scenario red on replay.",
+          "Removing the seed-boundary slice turns both fork scenarios red."
+        ],
+        "rejection": [
+          "An observe-only SubagentStop expected output would be byte-identical to the no-hook run and is excluded.",
+          "More live sessions than recorded scripts is an error."
+        ],
+        "recovery": [
+          "Restore the behavior or the slice and confirm green; if the red state cannot be produced, the guard does not bite."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A guard can bite for the wrong reason; pair it with a signature check.",
+        "Some real behavior has no deterministic transcript and cannot be end-to-end guarded.",
+        "A fail-loud error can block a legitimate new scenario until it is recorded."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-fork-child-replay-seed-boundary.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-fork-snapshot-scenarios.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-06-22-subagent-snapshot-replay.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-client-assembly-test-line.md",
+          "start": 1,
+          "end": 99,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.property-invariants",
+      "title": "Use adversarial property generators for protocol-shaped code, with reproducible seeds and flake treated as a finding",
+      "problem": "Example tests pin only the cases the author thought of. Protocol code has combinatorial inputs and interleavings. A block-assembly ordering bug once survived 100% line coverage of the happy paths, because coverage proves lines ran, not that interleavings are correct.",
+      "triggers": [
+        "A package has protocol-shaped input: chunk streams, event logs, schema conversion, scheduling.",
+        "An example-based suite is approaching a coverage gate but the input space is combinatorial.",
+        "A bug appears only for an input interleaving nobody wrote."
+      ],
+      "obligations": [
+        "Add one property suite per protocol-shaped package using a property library such as `fast-check`.",
+        "Tune generators toward realistic but adversarial inputs (small index pools, short strings, malformed shapes), not uniform noise.",
+        "State the invariant for each package: counts, idempotence, determinism, monotonicity, totality, composition with the validator.",
+        "Keep `numRuns` bounded so the suite stays fast locally; print a reproducible seed on failure.",
+        "Treat a timeout or flake as a finding, not something to retry away; make loop properties deterministic by driving an event or status signal instead of sleeps.",
+        "Keep property tests as a supplement to example tests that pin branches for the coverage gate."
+      ],
+      "actors": [
+        "Package owner: states invariants and maintains generators.",
+        "Test author: adds the property suite.",
+        "Reviewer: checks that generators reach the adversarial shapes."
+      ],
+      "steps": [
+        "Write a generator for the protocol input.",
+        "State the invariant in executable form.",
+        "Run a bounded number of cases and print the seed on failure.",
+        "On failure, minimize and add a focused regression case.",
+        "Keep the suite in the normal test lane; a high-iteration nightly run is separate and optional."
+      ],
+      "enforcement": {
+        "mode": "test suite and review",
+        "implementation": "`tests/properties.spec.ts` per package, `fast-check`, bounded `numRuns`, seed output, deterministic settle signals.",
+        "trust": "The invariant, not the example, is the oracle.",
+        "failure": "A generator that produces only valid shapes misses malformed interleavings. A flaky property test indicates a real race or an invalid invariant; retrying hides it.",
+        "exceptions": [
+          "An operation with no meaningful invariant is a poor property target.",
+          "A nightly high-iteration job is optional and, in the source, not shipped.",
+          "Mutation testing was proposed as a coverage counterweight but is not implemented."
+        ]
+      },
+      "applicability": "Protocol-shaped libraries, parsers, assemblers, schedulers and serializers with combinatorial input spaces.",
+      "relationships": [
+        "Complements expected-output-authority and negative-control-calibration.",
+        "Supports tripwire-failures by finding a real bug on the first run.",
+        "Mutation testing remains a proposed counterweight, not a current mechanism."
+      ],
+      "migration": {
+        "strategy": "Start with the most algorithmic package, state a small number of invariants, and keep runtime bounded.",
+        "implementation": "A property library dependency, per-package generators, invariant assertions, seed logging.",
+        "requiredSupport": "A deterministic driver for asynchronous behavior; a separate optional nightly job if high-iteration runs are wanted."
+      },
+      "reference": "references/rationale-testing-1.md#proc-property",
+      "verification": {
+        "positive": [
+          "The BlockAssembler property found a duplicate block-end bug on its first run; the fix added a dedicated regression test.",
+          "Session and schema properties assert determinism, monotonicity and totality."
+        ],
+        "rejection": [
+          "A 100%-covered happy path did not catch the ordering bug.",
+          "A timeout in the loop property is a real hang because the property settles on status, not sleep."
+        ],
+        "recovery": [
+          "Minimize the failing seed into an example test and fix the code; keep the property running."
+        ],
+        "evidenceStatus": "reported in source note; mutation and nightly stress remain proposed."
+      },
+      "limitations": [
+        "Generator quality is the value lever; weak generators give false confidence.",
+        "A property suite does not replace branch-pinning example tests.",
+        "Mutation testing and nightly race stress are proposals, not implemented guarantees."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-06-11-property-based-testing.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/testing/2026-06-11-mutation-testing.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/testing/2026-06-11-deterministic-and-stress-testing.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.no-false-green-preflight",
+      "title": "Make a required lane fail loudly when its prerequisite is absent; never report green for an unexecuted suite",
+      "problem": "A suite that self-skips without a secret, or a compatibility lane that runs on only one runtime, can report green while exercising nothing. A one-second check can pass on a fast host and fail on a slow one without measuring the property it names.",
+      "triggers": [
+        "A required workflow depends on a secret, a browser, a runner capability or a runtime version.",
+        "A suite self-skips when its prerequisite is missing.",
+        "A compatibility claim covers more than one advertised line."
+      ],
+      "obligations": [
+        "Separate keyed or capability-dependent work into its own workflow and add a preflight that converts a missing secret or capability into a loud failure.",
+        "Do not add a self-skipping suite to an always-green gate; a skip is not evidence.",
+        "Run a compatibility smoke on every advertised runtime or platform line, asserting both the conditional configuration and a usable result.",
+        "Probe the actual host capability instead of branching only on the platform name; a capability refusal selects the clean fallback case.",
+        "State which lane owns the claim and which platforms the gate does not cover."
+      ],
+      "actors": [
+        "CI owner: separates workflows and writes the preflight.",
+        "Test author: provides capability probes.",
+        "Reviewer: checks that a skip cannot satisfy a required verdict."
+      ],
+      "steps": [
+        "Identify the prerequisite (secret, browser, system library, runtime flag).",
+        "Move the dependent suite to a workflow with the prerequisite.",
+        "Add a preflight that fails if the prerequisite is absent.",
+        "For compatibility, add a focused smoke per line.",
+        "For host capabilities, probe and branch to a clean case.",
+        "Record the evidence and the uncovered platforms."
+      ],
+      "enforcement": {
+        "mode": "workflow structure and preflight",
+        "implementation": "Dedicated keyed workflow, loud missing-secret failure, per-runtime compatibility smoke, capability probe, explicit lane scope.",
+        "trust": "A required gate fails when it cannot execute; a green result means the suite ran.",
+        "failure": "A keyless self-skip reports green without exercising. A single-runtime green leaves other advertised lines unverified. A platform-name branch can run the wrong containment case.",
+        "exceptions": [
+          "A record workflow may self-skip without a key because it is not the required gate.",
+          "A capability refusal may select a clean-rejection case and skip the real-dialog case, preserving file coverage."
+        ]
+      },
+      "applicability": "PR gates, compatibility matrices, secret-dependent suites and host-capability-dependent tests.",
+      "relationships": [
+        "Supports with-key-real-api-gate and secret-and-trigger-isolation.",
+        "Uses coverage-plane-honesty to state what a lane does not cover.",
+        "Complements timeout-budgeting."
+      ],
+      "migration": {
+        "strategy": "Split always-available and prerequisite-dependent lanes; add preflight before relying on a verdict.",
+        "implementation": "Workflow separation, preflight step, compatibility smoke, capability probe.",
+        "requiredSupport": "Secret storage scoped to trusted events and a runtime matrix."
+      },
+      "reference": "references/rationale-testing-1.md#proc-preflight",
+      "verification": {
+        "positive": [
+          "A missing secret in the keyed workflow fails loudly instead of skipping.",
+          "Each advertised Node line runs the jsdom smoke and asserts both the worker argument and usable storage."
+        ],
+        "rejection": [
+          "A keyless suite added to the always-green gate reports green without running.",
+          "A single Node 24 lane would miss a later runtime that reserves `localStorage`."
+        ],
+        "recovery": [
+          "Restore the secret or capability and rerun; do not mark the required gate green."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A preflight proves only the prerequisite, not every test outcome.",
+        "A capability probe that cannot run keeps the conservative assumption rather than claiming absence.",
+        "The gate still cannot cover platforms it does not provision."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-06-19-real-api-e2e-ci.md",
+          "start": 1,
+          "end": 100,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-vitest-jsdom-webstorage-ownership.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-10-hosted-image-test-assumptions.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.secret-and-trigger-isolation",
+      "title": "Keep secrets out of forkable PR execution and restrict the consuming workflow to trusted triggers",
+      "problem": "A keyless always-green gate cannot consume a repository secret. Fork PRs must not receive the secret. Coupling the secret-consuming job to the always-green gate would either leak the secret or make the gate depend on credential availability.",
+      "triggers": [
+        "A test needs a real API key, signing key or external credential.",
+        "A PR can come from a fork.",
+        "A workflow is being added to the required gate."
+      ],
+      "obligations": [
+        "Put credential-consuming tests in a separate workflow from the always-green PR CI.",
+        "Use a repository secret and only trusted event triggers (manual dispatch, pushes to protected branches, schedule, and trusted PR paths).",
+        "Do not expose the secret to fork-originated code or to untrusted pull request targets.",
+        "Add a preflight that fails when the secret is absent in the keyed workflow.",
+        "Do not add the keyless self-skipping suite to the always-green gate as a substitute.",
+        "Record the credential lifecycle and who owns rotation."
+      ],
+      "actors": [
+        "CI owner: owns workflow triggers and secret scope.",
+        "Maintainer: owns the secret.",
+        "Reviewer: checks that no untrusted event can reach the credential."
+      ],
+      "steps": [
+        "Create a dedicated workflow file with only the credential-consuming tests.",
+        "Bind the repository secret.",
+        "Restrict triggers to trusted events.",
+        "Add the preflight.",
+        "Run every matching end-to-end test on each trusted trigger.",
+        "Keep the keyless gate separate and always runnable."
+      ],
+      "enforcement": {
+        "mode": "workflow trigger policy and secret scope",
+        "implementation": "Dedicated `e2e.yml`, repository secret, trusted event filters, preflight, separate keyless `ci.yml`.",
+        "trust": "Only the dedicated workflow may consume the secret; the keyless gate never expects it.",
+        "failure": "Adding the suite to the keyless gate either skips silently or requires the secret on forks. A missing preflight turns a missing secret into a confusing skip.",
+        "exceptions": [
+          "A maintainer-triggered workflow may run on a branch from the same repository.",
+          "A record command run locally may use a developer key without CI secret exposure."
+        ]
+      },
+      "applicability": "Any repository that runs real external services in CI and accepts fork contributions.",
+      "relationships": [
+        "Pairs with with-key-real-api-gate and no-false-green-preflight.",
+        "Supports evidence-scoped-claims about what the keyed lane covers."
+      ],
+      "migration": {
+        "strategy": "Separate the workflows before adding the credential; restrict triggers first, then add tests.",
+        "implementation": "A dedicated workflow, trusted event filters, secret binding, preflight.",
+        "requiredSupport": "Hosting-provider secret scoping and event controls."
+      },
+      "reference": "references/rationale-testing-1.md#proc-secret",
+      "verification": {
+        "positive": [
+          "The keyed workflow runs on trusted triggers with the repository secret.",
+          "The keyless gate stays forkable and always green when tests pass."
+        ],
+        "rejection": [
+          "A fork PR cannot read the secret.",
+          "A missing secret fails the keyed preflight instead of skipping."
+        ],
+        "recovery": [
+          "Restore or rotate the secret and rerun the keyed workflow; do not copy it into the keyless gate."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "A trusted branch can still run untrusted code if the trigger is misconfigured.",
+        "A repository secret is not a per-job least-privilege boundary by itself.",
+        "The keyed workflow may be skipped on some events by design."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-06-19-real-api-e2e-ci.md",
+          "start": 1,
+          "end": 100,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.with-key-real-api-gate",
+      "title": "Run a dedicated keyed real-API gate on every trusted trigger instead of treating occasional live runs as coverage",
+      "problem": "Keyless tests can be green while a real ACP session crashes. The policy leaned on real-API tests, but the default `ci.yml` was keyless for forks and the e2e suite self-skips without a key, so adding it to `ci.yml` would report green without exercising anything.",
+      "triggers": [
+        "A product boundary depends on a real external API or service.",
+        "A keyless suite has replaced live coverage.",
+        "A trusted PR or nightly run should exercise the real service."
+      ],
+      "obligations": [
+        "Create a dedicated keyed workflow that runs every matching end-to-end test.",
+        "Run it on manual dispatch, pushes to protected branches, a nightly schedule, and every trusted PR.",
+        "Treat cost as secondary to reliability for this lane; do not narrow it to keep it cheap.",
+        "Keep the keyless gate separate and always available.",
+        "State that the keyed lane is not the same as a full matrix of every platform and service."
+      ],
+      "actors": [
+        "CI owner: owns triggers and scope.",
+        "Maintainer: owns the key.",
+        "Reviewer: checks that trusted PRs actually run the lane."
+      ],
+      "steps": [
+        "Create `e2e.yml` with only the end-to-end command.",
+        "Bind the repository secret and restrict triggers.",
+        "Run on the agreed events.",
+        "Keep the preflight loud.",
+        "Record failures as real defects, not as flaky retries."
+      ],
+      "enforcement": {
+        "mode": "dedicated CI workflow",
+        "implementation": "`e2e.yml`, `test:e2e`, repository secret, trusted event filters, nightly schedule.",
+        "trust": "The real service is the oracle; the keyless suite is not a substitute.",
+        "failure": "A keyless skip can look green. A fork cannot run the keyed lane by design. A missing key must fail the preflight.",
+        "exceptions": [
+          "A contributor without a key can still run keyless tests locally.",
+          "A record workflow may self-skip without a key; the required keyed gate may not."
+        ]
+      },
+      "applicability": "Projects with a real external service that cannot be exercised on untrusted PRs but must be covered continuously.",
+      "relationships": [
+        "Depends on secret-and-trigger-isolation and no-false-green-preflight.",
+        "Complements record-once-replay-corpus: replay for deterministic breadth, live for the real boundary."
+      ],
+      "migration": {
+        "strategy": "Stand up the keyed workflow and preflight before relying on live coverage claims.",
+        "implementation": "Dedicated workflow, triggers, secret, preflight, full e2e command.",
+        "requiredSupport": "A secret store, trusted-event configuration and a stable live test suite."
+      },
+      "reference": "references/rationale-testing-1.md#proc-live",
+      "verification": {
+        "positive": [
+          "Every matching end-to-end file runs on every trusted trigger.",
+          "The live lane catches a real boundary failure that keyless tests cannot."
+        ],
+        "rejection": [
+          "Adding the self-skipping suite to `ci.yml` would report green without exercising.",
+          "A missing secret in the keyed lane is a loud failure."
+        ],
+        "recovery": [
+          "Fix the product or the live fixture and rerun; do not downgrade the lane to a skip."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Live runs are nondeterministic and can fail for external reasons.",
+        "The lane covers only the services and platforms it provisions.",
+        "Cost and credential ownership remain operational concerns."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-06-19-real-api-e2e-ci.md",
+          "start": 1,
+          "end": 100,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.test-reliability-governance",
+      "title": "Treat probabilistic failure as a defect to diagnose, with an owned isolation and flake workflow",
+      "problem": "Tests run across concurrent files, workers, gates and jobs. Process isolation does not isolate host resources. Global mutations and incomplete teardown contaminate later tests. A test can pass only when run alone. Existing policy, defensive patterns and review give no focused workflow for designing resource-owning tests or classifying a probabilistic failure before changing code.",
+      "triggers": [
+        "A test acquires host resources, mutates process-global state, depends on asynchronous readiness, owns subprocesses or listeners, or fails only sometimes.",
+        "A flake is proposed to be fixed by retry, a larger timeout or a skip.",
+        "A CI failure cannot be reproduced locally."
+      ],
+      "obligations": [
+        "Model the concurrency the test meets and the resources it owns before choosing a fix.",
+        "Classify the failure: deterministic product bug, test isolation defect, timing/readiness defect, host capacity, or external service.",
+        "Fix the ownership or observation, not the symptom; do not retry, widen a budget or skip to make a flake disappear.",
+        "Record the evidence and reproduction rate; a single run does not establish a cause.",
+        "Keep a focused authoring and diagnosis guide as the current reference, and distinguish it from proposed mechanisms it does not implement.",
+        "Require teardown and budget ownership to be explicit in review."
+      ],
+      "actors": [
+        "Test author: models resources and reproduces the failure.",
+        "CI owner: provides topology and logs.",
+        "Reviewer: rejects masking fixes."
+      ],
+      "steps": [
+        "Reproduce under the real topology or record the failure rate.",
+        "Identify the shared resource or missing observation.",
+        "Apply the ownership or barrier fix.",
+        "Add a negative control or repeat run showing the failure is gone for the named reason.",
+        "Update the guide if the failure class is new."
+      ],
+      "enforcement": {
+        "mode": "review policy and a maintained guide",
+        "implementation": "A CI test reliability guide or Skill, resource inventory, flake classification, prohibition of retry-based masking, explicit budget ownership.",
+        "trust": "The guide is current guidance; proposed mechanisms it does not implement are not obligations.",
+        "failure": "A retry hides the cause. A widened budget hides a capacity problem. A skip hides a supported path. A fix without reproduction may change the wrong thing.",
+        "exceptions": [
+          "An external-service outage may be retried only under an explicitly stated policy, not as a general test fix.",
+          "A proposed governance mechanism remains proposed until implemented."
+        ]
+      },
+      "applicability": "Any multi-worker test system, especially one with subprocesses, network listeners and shared CI hosts.",
+      "relationships": [
+        "Orchestrates test-isolation-hermeticity, fixture-lifecycle-ownership and timeout-budgeting.",
+        "Uses negative-control-calibration for diagnosis.",
+        "Constrains no-false-green-preflight and evidence-scoped-claims."
+      ],
+      "migration": {
+        "strategy": "Adopt the resource model and failure classification before changing individual tests.",
+        "implementation": "A maintained guide, resource inventory, reproduction-rate evidence, review checklist.",
+        "requiredSupport": "CI logs that preserve failure context and a way to run the real concurrent topology."
+      },
+      "reference": "references/rationale-testing-1.md#proc-governance",
+      "verification": {
+        "positive": [
+          "A resource-owning test is designed with its concurrency and cleanup stated.",
+          "A probabilistic failure is classified and fixed with evidence."
+        ],
+        "rejection": [
+          "A retry-only fix and a larger timeout are rejected as masking.",
+          "A test that passes alone but fails in the lane is treated as an isolation defect, not a flake to retry."
+        ],
+        "recovery": [
+          "Reproduce, fix ownership or observation, then rerun under the real topology; record the rate."
+        ],
+        "evidenceStatus": "reported in source notes; the guide itself was referenced but not inspected in this partition."
+      },
+      "limitations": [
+        "A guide is not an automatic checker.",
+        "Some failures depend on host capacity outside the test control.",
+        "A proposed lint rule, universal replay fixture or nightly stress job is not implemented and must not be claimed."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.performance-budget-gate",
+      "title": "Gate measured user paths with endpoint budgets, isolated seeds and fresh workers, and keep the budget under real memory pressure",
+      "problem": "A performance regression can reach master unnoticed: first open regressed from 35ms to 5s on a 127,400-event synthetic log and from 0.3s to 26s on a 575,000-chunk real log, with 2.7GB RSS and heap exhaustion at a 512MB limit. A single `open()` measurement is insufficient because work moves among open, read, restore and projection, and endpoint heap usage without GC cannot separate retained from reclaimable memory. Uniform small corpora also understate heavy-tailed real sessions.",
+      "triggers": [
+        "A user-visible path has a latency or memory contract.",
+        "A change can move work between lifecycle stages rather than remove it.",
+        "A benchmark or threshold is being added or changed."
+      ],
+      "obligations": [
+        "Measure a compiled production path under plain Node, with no TypeScript loader and with ambient `NODE_OPTIONS` removed.",
+        "Group gates by the measured user path, not by internal module; measure endpoints of a workflow rather than independent cold scenarios when the user experiences them together.",
+        "Author current-generation sessions through the production append/stream/persistence path in a separate seed process; each sample copies to a private root and runs a fresh worker; fix timestamps and ids in the seed.",
+        "Set endpoint budgets with explicit headroom, for example a 50ms standard-runner expectation with 1.25x headroom giving 63ms.",
+        "Retain raw samples in verbose gate output; threshold changes require measured calibration and both positive and negative controls.",
+        "Run the same benchmark files under a cgroup memory clamp (for example 4 or 8 GiB with swap zero) and require the normal budget or treat a cgroup kill as failure.",
+        "Keep benchmark-only dependencies in a private workspace so the product install is unchanged."
+      ],
+      "actors": [
+        "Performance owner: owns workloads, budgets and calibration.",
+        "Benchmark author: authors the seed and scenario.",
+        "CI: provisions the runner and retains raw samples.",
+        "Reviewer: rejects unmeasured threshold changes."
+      ],
+      "steps": [
+        "Author the workload from production code and real distribution anchors.",
+        "Build the artifacts, then benchmark compiled output.",
+        "Seed a private copy per sample and start a fresh worker.",
+        "Measure every endpoint of the workflow.",
+        "Calibrate a budget with headroom and record the raw measurement.",
+        "Re-run under memory pressure and confirm the budget still holds."
+      ],
+      "enforcement": {
+        "mode": "required CI benchmark job",
+        "implementation": "`check:ci:bench` / `run-ci-bench.ts`, `vitest.bench.config.ts`, `benchmarks/**/*.bench.ts` and `*.bench.client.ts`, compiled JS under plain Node, private workspace deps, cgroup v2 `memory.max` with zero swap.",
+        "trust": "The budget is a regression allowance derived from endpoint measurement, not a theoretical target.",
+        "failure": "A budget without endpoint measurement is rejected. A cgroup kill or a normal-budget miss fails the case. A single cold scenario can hide work moved to another stage.",
+        "exceptions": [
+          "Package-local `.perf.ts` files are non-gating diagnostics.",
+          "A hardware-comparison workflow may use deliberately different runner sizes but does not replace the standard gate.",
+          "Terminal, fold, reconnect and continuation workloads may be excluded from the memory clamp when they are small in-process."
+        ]
+      },
+      "applicability": "Projects with a user-visible latency or memory contract and enough benchmark infrastructure to run compiled production paths.",
+      "relationships": [
+        "Uses negative-control-calibration for thresholds.",
+        "Uses perf-diagnostics-separation to keep stress evidence out of the gate.",
+        "Requires evidence-scoped-claims for what the measurement covers."
+      ],
+      "migration": {
+        "strategy": "Start from one measured user path, then expand by endpoint and workload; keep a clean standard runner class.",
+        "implementation": "A benchmark build, seed process, fresh-worker harness, endpoint budgets, verbose raw samples, memory-clamp runner.",
+        "requiredSupport": "A standard hosted runner class, benchmark-only dependencies and a corpus with recorded provenance."
+      },
+      "reference": "references/rationale-testing-1.md#proc-perf",
+      "verification": {
+        "positive": [
+          "The session-open gate catches the 35ms-to-5s and 0.3s-to-26s regressions.",
+          "The corpus benchmark anchors 1,650 real sessions by upper quantiles and measures list, search and fork endpoints."
+        ],
+        "rejection": [
+          "A threshold raised without endpoint measurement is rejected.",
+          "A cgroup kill or a normal-budget miss under the memory clamp fails the case."
+        ],
+        "recovery": [
+          "Fix the regression or recalibrate with measured evidence; do not relax the budget silently."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "A benchmark budget measures a runner class, not every machine.",
+        "A synthetic corpus is not production content.",
+        "Memory-clamp behavior at 4 or 8 GiB does not generalize to all deployments."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 1,
+          "end": 125,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-06-frontend-performance-budgets.md",
+          "start": 1,
+          "end": 107,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-06-backend-continuation-performance.md",
+          "start": 1,
+          "end": 70,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-28-session-corpus-performance.md",
+          "start": 1,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-07-memory-limited-benchmarks.md",
+          "start": 1,
+          "end": 42,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.perf-diagnostics-separation",
+      "title": "Keep stress lanes and manual benchmarks as scoped evidence, separate from deterministic gates",
+      "problem": "A browser stress lane measured through a real transport can be overwhelmed by socket backlog, and hardware or scheduling variation makes it unsuitable as a pass/fail gate. Conversely, a deterministic unit test cannot show responsiveness. Mixing the two either blocks merges on noise or hides a real performance defect.",
+      "triggers": [
+        "A performance claim needs a real assembled application and transport.",
+        "A stress or benchmark lane is proposed as a required check.",
+        "A result is being used to claim responsiveness or capacity."
+      ],
+      "obligations": [
+        "Label stress and profiling lanes as explicit evidence for manual diagnosis and fix acceptance, not default CI gates.",
+        "Pace the producer with an acknowledgment so the measurement is one bounded ingestion/render interval, not accumulated transport backlog.",
+        "Include a terminal marker proving all input reached the UI, and preserve exact event counts.",
+        "Use a test-owned adapter through the real Host and transport rather than an external nondeterministic model or a second HTTP recording format.",
+        "Keep deterministic focused tests for publication counts, accumulated content, preemption order and fallbacks.",
+        "Retain raw samples and verbose output in the required benchmark job; separate hardware-comparison workflows."
+      ],
+      "actors": [
+        "Performance author: designs the stress or benchmark scenario.",
+        "CI owner: decides gate versus evidence.",
+        "Reviewer: rejects gate use without a bounded topology."
+      ],
+      "steps": [
+        "Decide whether the claim is deterministic correctness or responsiveness evidence.",
+        "For stress, pace batches with a browser-timer acknowledgment and a heartbeat.",
+        "Emit a terminal marker and count every event.",
+        "Run manually or as opt-in evidence; profile with the headful mode.",
+        "Keep deterministic assertions in the normal suite."
+      ],
+      "enforcement": {
+        "mode": "lane classification and pacing",
+        "implementation": "Opt-in `test:web:stress`, 128-chunk batches with a timer acknowledgment, 50ms heartbeat, 250ms budget, terminal marker, `DSH_WEB_STRESS_HEADFUL=1`, focused Notifier/Session tests.",
+        "trust": "Stress results are evidence, not a merge verdict. Deterministic focused tests own the publication contract.",
+        "failure": "Pacing by animation frames gives the page implicit backpressure and masks starvation. Sending without acknowledgment measures socket backlog. An external model adds nondeterminism. A stress lane as a gate blocks on hardware noise.",
+        "exceptions": [
+          "A benchmark with a measured endpoint and fixed runner class may be a required gate; that is performance-budget-gate, not this evidence lane.",
+          "A visible profiling run may use the same scenario with different observation."
+        ]
+      },
+      "applicability": "Responsiveness, throughput or long-stream stress where the real assembled stack matters but the result varies by hardware and scheduling.",
+      "relationships": [
+        "Contrasts with performance-budget-gate.",
+        "Uses real-assembly-over-hand-built-bench and boundary-mock-not-contract-reimplementation.",
+        "Requires evidence-scoped-claims."
+      ],
+      "migration": {
+        "strategy": "Keep the stress lane opt-in and explicitly labeled; add deterministic tests for the mechanism before claiming coverage.",
+        "implementation": "A paced producer, timer acknowledgment, terminal marker, headful profiling switch, focused publication tests.",
+        "requiredSupport": "A real Host and transport in the test environment and a way to opt into the lane."
+      },
+      "reference": "references/rationale-testing-1.md#proc-stress",
+      "verification": {
+        "positive": [
+          "100,000 reasoning chunks reach the UI and the terminal marker proves delivery.",
+          "Focused tests pin per-frame coalescing, preemption, invalidated callbacks and no-rAF fallback."
+        ],
+        "rejection": [
+          "Animation-frame pacing would slow the producer and hide main-thread starvation.",
+          "Without acknowledgment the measurement becomes socket backlog."
+        ],
+        "recovery": [
+          "Use the headful profiler to diagnose; keep the deterministic tests green."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Hardware and scheduling differences make the lane unsuitable as a default gate.",
+        "It reduces snapshot rebuilding and React work, not raw-stream parsing cost.",
+        "A terminal marker proves delivery, not responsiveness for every user."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-03-opt-in-reasoning-chunk-browser-stress.md",
+          "start": 1,
+          "end": 45,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 1,
+          "end": 125,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-28-session-corpus-performance.md",
+          "start": 1,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-07-scaled-benchmark-report.md",
+          "start": 1,
+          "end": 43,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.evidence-scoped-claims",
+      "title": "Scope every test and benchmark claim to the topology actually exercised, and mark the rest planned",
+      "problem": "A green run on one runtime, platform, runner class or corpus is often reported as if it covered all of them. A local measurement is not a CI measurement; a single developer corpus is not production; a capability probe that cannot run is not proof of absence; a note describing a mechanism is not proof that it executes.",
+      "triggers": [
+        "A change description, comment or review claims coverage, performance or cross-platform consistency.",
+        "A test skips, probes or samples a subset.",
+        "A benchmark runs on one runner or one corpus."
+      ],
+      "obligations": [
+        "State the exact runtime, platform, runner class, corpus and topology a result covers.",
+        "Do not generalize a local result to CI, a single-machine corpus to production, or one browser to cross-platform consistency.",
+        "Keep raw samples and run identifiers so the claim can be audited.",
+        "Mark unexercised claims as planned or unknown rather than passed.",
+        "A capability probe that cannot run keeps the conservative assumption; a probe refusal selects only the corresponding fallback case.",
+        "Distinguish source-report evidence from independently re-executed evidence."
+      ],
+      "actors": [
+        "Test author: writes the scoped claim.",
+        "Reviewer: rejects overgeneralization.",
+        "CI owner: preserves run ids and logs."
+      ],
+      "steps": [
+        "Name the topology and the exact assertion.",
+        "Record run ids, counts and raw samples.",
+        "List what the run does not cover.",
+        "If a claim depends on another domain or an uninspected target, mark it unbound.",
+        "Re-run only when the claim is exercised; otherwise keep it planned."
+      ],
+      "enforcement": {
+        "mode": "documentation and review discipline",
+        "implementation": "Scoped issue/PR text, run ids, raw benchmark samples, explicit non-coverage notes, `evidenceStatus` in this knowledge base.",
+        "trust": "Only the exercised topology supports the claim.",
+        "failure": "A local green reported as CI coverage is false. A fixed-runner benchmark reported as universal is false. A YAML assertion reported as host capacity is false.",
+        "exceptions": [
+          "A deliberately broad platform claim may be supported by a matrix, but then each line must be listed.",
+          "A historical note may report its own run; that is source-report evidence, not this extraction running it."
+        ]
+      },
+      "applicability": "Every test, benchmark, audit and migration claim.",
+      "relationships": [
+        "Constrains performance-budget-gate and perf-diagnostics-separation.",
+        "Supports coverage-plane-honesty and no-false-green-preflight.",
+        "Used by every mechanism verification block."
+      ],
+      "migration": {
+        "strategy": "Add a scope-and-limitations section to every claim; keep unknown and planned states visible.",
+        "implementation": "Run-id recording, raw samples, per-platform matrices, explicit evidence status.",
+        "requiredSupport": "Log retention and a review norm that rejects unqualified claims."
+      },
+      "reference": "references/rationale-testing-1.md#proc-claims",
+      "verification": {
+        "positive": [
+          "The web gate states it makes no cross-platform browser consistency claim.",
+          "The benchmark note states that a runner change needs an actual hosted run before the timeout is validated."
+        ],
+        "rejection": [
+          "Local workflow assertions alone cannot establish execution time.",
+          "A single developer corpus cannot be presented as production content."
+        ],
+        "recovery": [
+          "Run the missing topology or downgrade the claim to planned; do not fill the gap with inference."
+        ],
+        "evidenceStatus": "this mechanism is a reporting obligation; all mechanism evidence here is source-reported and not re-executed."
+      },
+      "limitations": [
+        "Scoping does not create evidence.",
+        "A correctly scoped weak test is still weak.",
+        "Historical run ids can expire or become unreadable."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-14-desktop-installed-update-materials.md",
+          "start": 1,
+          "end": 49,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-14-desktop-installed-update-journal.md",
+          "start": 1,
+          "end": 29,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-07-scaled-benchmark-report.md",
+          "start": 1,
+          "end": 43,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-07-memory-limited-benchmarks.md",
+          "start": 1,
+          "end": 42,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-08-12-required-python-runtime-pull-request-ci.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-18-tui-terminal-state-snapshots.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-04-single-source-acp-replay-config.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-25-scriptable-llm-wire-fault-server.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.coverage-plane-honesty",
+      "title": "Measure coverage only on the plane the gate can honestly see, and put gate-worthy logic there",
+      "problem": "A per-file 100% coverage gate scoped to package sources does not measure browser-driving code, test harnesses or support modules. Mechanisms can sit entirely outside the measured plane while appearing covered, and a package test can be mistaken for product coverage after the product entry point is removed.",
+      "triggers": [
+        "A coverage gate is defined by a path glob.",
+        "Test or harness code carries logic that could regress.",
+        "A package test is proposed as evidence for an assembled application."
+      ],
+      "obligations": [
+        "State the exact path plane the coverage gate measures and the logic it does not measure.",
+        "Move gate-worthy logic into measured packages; keep browser-driving or harness code outside only when per-file coverage would be dishonest.",
+        "Do not claim product coverage from package tests after the product composition is removed; name the deployment that owns the assembled layer.",
+        "Keep narrow platform exclusions inside the file coverage gate rather than excluding the file.",
+        "Add a compatibility smoke per advertised runtime line so one lane is not the only signal.",
+        "Report uncovered planes as limitations, not as hidden gaps."
+      ],
+      "actors": [
+        "Coverage owner: defines the path plane.",
+        "Test author: places logic where the gate can see it.",
+        "Reviewer: rejects product-coverage claims from package tests."
+      ],
+      "steps": [
+        "List the measured paths and the excluded harness paths.",
+        "Move pure, decision-bearing logic into a measured package.",
+        "Keep only the driver or environment glue outside.",
+        "Document the excluded plane and who owns it.",
+        "Add per-line or per-platform smokes where a single lane would otherwise be the only signal."
+      ],
+      "enforcement": {
+        "mode": "coverage configuration and review",
+        "implementation": "Per-file 100% coverage over `packages/*/*/src`, harness code outside the gate, explicit scope notes, compatibility smokes, narrow per-case exclusions.",
+        "trust": "Coverage is evidence only for the measured plane.",
+        "failure": "A mechanism in an unmeasured harness appears covered by its consumers. A package snapshot after entry-point removal is not product coverage. A single-runtime green leaves other advertised lines unmeasured.",
+        "exceptions": [
+          "Browser-driving code cannot honestly hold per-file 100%; keep the gate-worthy logic in gated packages.",
+          "A package-local snapshot still guards its package contract even though it does not guard the assembled deployment."
+        ]
+      },
+      "applicability": "Monorepos and layered products where test harnesses, examples and drivers sit outside the coverage glob.",
+      "relationships": [
+        "Supports evidence-scoped-claims and no-false-green-preflight.",
+        "Explains why replay-assembled-lane and semantic-state-projection have separate ownership boundaries.",
+        "Interacts with platform-neutral-fixtures for exclusions."
+      ],
+      "migration": {
+        "strategy": "Define the measured plane and move decision logic into it before claiming coverage.",
+        "implementation": "Coverage path configuration, package placement rules, explicit scope documentation, per-runtime smokes.",
+        "requiredSupport": "A coverage tool that reports per file and a package layout that can host the logic."
+      },
+      "reference": "references/rationale-testing-1.md#proc-coverage",
+      "verification": {
+        "positive": [
+          "Gate-worthy logic lives in measured packages and is covered per file.",
+          "Each advertised runtime line runs a focused compatibility smoke."
+        ],
+        "rejection": [
+          "A support package outside the glob cannot be counted as product coverage.",
+          "A package TUI snapshot cannot substitute for an assembled application tool-path transcript."
+        ],
+        "recovery": [
+          "Move the logic or document the uncovered plane; do not report the gate as covering it."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "Coverage still proves lines execute, not that assertions notice errors.",
+        "Moving logic can increase coupling; the placement is a design decision.",
+        "A per-file gate can encourage shallow tests if used as the only quality signal."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-22-cross-platform-test-fixtures.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-30-vitest-jsdom-webstorage-ownership.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-standard-hosted-benchmark-runner.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.fault-injection-and-recovery",
+      "title": "Inject distinct faults at the real boundary and assert the recovery policy separately from the fault description",
+      "problem": "Connection refusal, reset before the first event, clean EOF without a terminator, a valid content-less completion and a reset after partial output have different adapter and recovery outcomes. Treating them as one generic failure hides whether the boundary preserved the distinction and whether failed chunks stayed outside committed history.",
+      "triggers": [
+        "An adapter, updater, network client or process supervisor has a recovery policy.",
+        "A test needs to prove that a transient fault recovers and a deterministic fault does not.",
+        "A fault taxonomy exists but tests collapse it."
+      ],
+      "obligations": [
+        "Implement a scriptable fault source at the real boundary with one explicit behavior per accepted request.",
+        "Make script exhaustion loud; require an explicit repeat marker for repetition.",
+        "Preserve each fault class distinctly and assert its adapter classification separately from its recovery.",
+        "Run the shipping adapter, loop and retry policy through the fault source; assert request counts, step numbers, body identity and failed-chunk isolation.",
+        "For a random stress profile, expose and log the seed and accept caller-supplied weights; state that weights are test pressure, not incident frequency.",
+        "A true connection refusal may need a listener-lifecycle phase because a bound handler cannot refuse its own connection.",
+        "Do not change the retry policy in the fault harness; policy changes require a separate decision."
+      ],
+      "actors": [
+        "Test-infrastructure owner: maintains the fault source.",
+        "Adapter owner: owns classification.",
+        "Retry owner: owns recovery policy."
+      ],
+      "steps": [
+        "Enumerate the fault classes and their expected classification.",
+        "Implement each as an explicit script entry.",
+        "Drive the shipping stack with an explicit script.",
+        "Assert classification, request count, retry steps and isolation of failed output.",
+        "Add a seeded random profile for stress, logging the seed.",
+        "Keep recovery assertions separate from class assertions."
+      ],
+      "enforcement": {
+        "mode": "shared fault harness and integration suite",
+        "implementation": "`dsh-llm-mock-server` with request behaviors, CLI listener phase for refusal, `repeatLast`, seeded weighted random profile; updater loopback feed; cgroup memory clamp.",
+        "trust": "The fault source reports wire facts; the shipping stack decides retryability.",
+        "failure": "A generic mock hides a distinction. A random profile without a seed is not reproducible. A harness that changes policy conflates observation with a product decision.",
+        "exceptions": [
+          "An in-process adapter mock may still test closed-step recovery, but it cannot cover wire framing.",
+          "A platform-specific updater or installer may need a private fixture that omits publisher verification; that omission must be stated."
+        ]
+      },
+      "applicability": "Adapters, updaters, network clients and supervisors with a documented fault taxonomy and recovery policy.",
+      "relationships": [
+        "Uses boundary-mock-not-contract-reimplementation.",
+        "Uses bounded-transient-retry for retry bounds.",
+        "Supports installed-artifact-qualification for update faults."
+      ],
+      "migration": {
+        "strategy": "Build the explicit fault vocabulary first, then wire the shipping stack through it.",
+        "implementation": "A private fault server with per-request behaviors, a seed and weights, and integration assertions for counts and isolation.",
+        "requiredSupport": "A local peer the shipping adapter can reach and a way to script responses."
+      },
+      "reference": "references/rationale-testing-1.md#proc-faults",
+      "verification": {
+        "positive": [
+          "Refusal, hard disconnect, partial reset, idle timeout and valid content-less completion recover under the existing policy.",
+          "Clean partial EOF stays `STREAM_CLOSED` and is not retried by default."
+        ],
+        "rejection": [
+          "A single generic failure would hide which classes recover.",
+          "A fault harness that changed retry defaults would make the observation self-fulfilling."
+        ],
+        "recovery": [
+          "Add the missing class or script entry; keep policy changes in a separate decision."
+        ],
+        "evidenceStatus": "reported in source notes; not re-executed here."
+      },
+      "limitations": [
+        "The harness reports wire facts, not production incident frequency.",
+        "A random profile needs a seed and is still not a production distribution.",
+        "Exact refusal requires coordinating the client attempt with the pre-listen interval.",
+        "Installer qualification may be platform-specific."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-10-07-memory-limited-benchmarks.md",
+          "start": 1,
+          "end": 42,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-07-25-scriptable-llm-wire-fault-server.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-python-runtime-install-retry.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-testing-1.bounded-transient-retry",
+      "title": "Retry only a named transient failure, with a small bounded budget, and let deterministic failures fail immediately",
+      "problem": "A CI install step can fail on an intermittent network timeout unrelated to the change, with no recovery beyond a human rerun. Unbounded or broad retries hide real failures and waste time; no retry at all turns an external transient into a red gate.",
+      "triggers": [
+        "A workflow step depends on an external download, registry or service.",
+        "A failure is observed to be transient and carries a recognizable error.",
+        "A retry is proposed for a test or build step."
+      ],
+      "obligations": [
+        "Name the transient failure class and the step it affects.",
+        "Set a small total attempt budget and a fixed pause; succeed on any attempt and stop immediately.",
+        "Keep a deterministic failure (license, lockfile, configuration, compile error) failing even after the full budget.",
+        "Use a portable shell on every platform image.",
+        "Do not apply this to test assertions or performance gates; a test flake is a finding, not a retry target.",
+        "Record the residual failure path so a human can still diagnose an exhausted budget."
+      ],
+      "actors": [
+        "CI owner: implements and bounds the retry.",
+        "Reviewer: checks it cannot mask a deterministic failure.",
+        "Operator: diagnoses an exhausted budget."
+      ],
+      "steps": [
+        "Identify the transient error signature and the step.",
+        "Wrap the command in a bounded loop with a pause.",
+        "Exit immediately on success.",
+        "Keep deterministic errors outside the transient classification or let them exhaust the budget and fail.",
+        "Record the final failure with the attempts."
+      ],
+      "enforcement": {
+        "mode": "CI step policy",
+        "implementation": "`pnpm install --frozen-lockfile` retried up to three total attempts with a 10s pause, bash on every platform, immediate success exit.",
+        "trust": "Only the named transient class is retried; the command itself is unchanged.",
+        "failure": "A broad retry hides a lockfile or native-build failure. An unbounded retry wastes capacity and obscures the cause. Retrying a test flake hides a product or test defect.",
+        "exceptions": [
+          "An external-service outage may justify a bounded retry under an explicit policy.",
+          "A test flake is never fixed by retry; use negative-control-calibration and test-reliability-governance."
+        ]
+      },
+      "applicability": "CI installs, downloads and other steps with a known intermittent external dependency.",
+      "relationships": [
+        "Contrasts with timeout-budgeting, which raises a budget rather than repeating work.",
+        "Uses fault-injection-and-recovery for taxonomy.",
+        "test-reliability-governance forbids retrying test failures."
+      ],
+      "migration": {
+        "strategy": "Add a bounded retry only after observing and naming the transient failure.",
+        "implementation": "A shell loop with three attempts and a 10s pause, immediate success exit.",
+        "requiredSupport": "A portable shell on all runners and a logged final error."
+      },
+      "reference": "references/rationale-testing-1.md#proc-retry",
+      "verification": {
+        "positive": [
+          "A transient node-gyp connect timeout is retried and the install can succeed.",
+          "A deterministic native-build error still fails after the bounded budget."
+        ],
+        "rejection": [
+          "An unbounded retry or a retry around the test command is rejected.",
+          "A lockfile error masked by retry would be a false pass."
+        ],
+        "recovery": [
+          "After the final attempt, fail with the captured error; a human diagnoses the external service."
+        ],
+        "evidenceStatus": "reported in source note; not re-executed here."
+      },
+      "limitations": [
+        "Retries add wall time and can mask a persistent external degradation.",
+        "The classification depends on the observed error text.",
+        "This does not make the external service reliable."
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/testing/2026-09-06-python-runtime-install-retry.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        }
+      ]
+    }
+  ]
+}

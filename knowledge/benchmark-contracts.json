@@ -1,0 +1,1284 @@
+{
+  "schema": "governance-domain/v1",
+  "domain": "benchmark-contracts",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "bounds": {
+    "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "sourceRoot": "deepseek-harness",
+    "sourceInventorySha256": "4485c550c067b7c13cdec7a6b3036093fa76897c35bacca0fabdbca6fde02a32",
+    "scope": "Residual reading partition benchmark-contracts: 30 assigned paths under deepseek-harness/benchmarks/ covering four case families (active-stream-reconnect, agent-continuation, long-session-browser, session-corpus), built-worker/support/config contracts, and one non-governance case fixture (session-open.constants.ts). The four case README pairs are additionally recorded as canonical inspected bodies (eight authored files plus four generated README.i18n.yaml sidecars); vitest.bench.config.ts remains a supplemental contract outside the 30. Record location does not change the 30-path partition scope."
+  },
+  "mechanisms": [
+    {
+      "id": "benchmark-contracts-case-selection-and-layout",
+      "title": "按被测用户路径选案例、命名与 support 归属",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 6,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 14,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/tsdown.config.ts",
+          "start": 15,
+          "end": 52,
+          "kind": "config"
+        },
+        {
+          "path": "benchmarks/agent-continuation/workload.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/support/built-worker.ts",
+          "start": 1,
+          "end": 102,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.zh.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.bench.config.ts",
+          "start": 19,
+          "end": 22,
+          "kind": "config"
+        }
+      ],
+      "problem": "按包目录镜像 benchmark 会把测量切成组件诊断，失去跨包用户路径；把诊断和门禁混在同一目录或同一后缀里，又会让 `test:bench` 收进不稳定的本地探针，或让评审者误以为每个性能脚本都是阻断门禁。",
+      "triggers": [
+        "新增一个性能门禁",
+        "判断某个性能脚本应放包内还是 benchmarks/",
+        "决定文件名后缀与目录归属",
+        "把案例专用 helper 提升为共享 support"
+      ],
+      "obligations": [
+        "benchmarks/ 只拥有跨包所有权、需要仓库级门禁的实测用户路径；包内本地诊断留在所有者旁边，用 .perf.ts 后缀，不加入 test:bench。",
+        "按被测用户路径组织，一个路径一个目录；不得镜像 packages/ 树。",
+        "Host 案例用 *.bench.ts；Client-face 案例用 *.bench.client.ts；worker、fixture 与 support 模块不带 benchmark 后缀。",
+        "场景专用 helper 先留在案例目录；至少两个 benchmark 目录需要同一行为后，才移入 benchmarks/support/。",
+        "只有进入 bench 配置并被门禁执行的案例才算门禁；本地诊断不得冒充阻断证据。",
+        "在所属 Agent Note 记录 workload、计时边界、内存端点、校准参考、被放弃的替代方案与已知排除项。",
+        "加入 test:bench:memory 的案例必须明确出现在内存压力重跑清单中，并在 4/8 GiB 下保持预算有效。",
+        "必需 bench lane 通过 glob 自动发现 *bench.ts / *bench.client.ts；新增案例文件即被收集，不维护逐文件白名单。"
+      ],
+      "actors": [
+        "性能作者",
+        "模块所有者",
+        "评审者"
+      ],
+      "steps": [
+        "先写清被测用户路径与它跨哪些包，而不是先选包。",
+        "判断是否需要仓库级阻断：需要则进 benchmarks/<path>/；只是本地诊断则留在包内 .perf.ts。",
+        "按 Host/Client 选择 .bench.ts 或 .bench.client.ts，worker/fixture 使用无后缀名称。",
+        "把场景专用 fixture 放案例目录，确认第二个消费者后再提升到 support/。",
+        "在 Agent Note 写清 workload、边界、校准参考、替代方案与排除项。",
+        "若加入内存压力清单，同时验证 4 GiB 与 8 GiB 预算。"
+      ],
+      "enforcement": {
+        "mode": "目录/后缀约定 + bench 配置范围 + Agent Note 记录",
+        "implementation": "benchmarks/AGENTS.md 定义目录与后缀；vitest.bench.config.ts 只收集 benchmarks/**/*.bench.ts；test:bench 与 test:bench:memory 决定哪些案例成为门禁；tsdown 的每目录 entry/outDir 强化一案例一目录。",
+        "trust": "后缀与配置范围可机械检查；‘该路径是否值得仓库级门禁’只能评审。",
+        "failure": "镜像包树会把端到端拆碎；诊断混入 test:bench 让门禁不稳定；缺少 Agent Note 会让预算失去 workload 与排除项上下文；support 过早集中会把单案例细节变成全局耦合。",
+        "exceptions": [
+          "包内诊断可以存在，但不得使用 .bench.ts 或加入 test:bench。",
+          "一个目录可以包含多个相关 endpoint，但仍应服务同一用户路径。",
+          "内存压力清单是 test:bench 的子集，不改变案例归属。"
+        ]
+      },
+      "applicability": "所有有性能门禁的仓库。目标仓库需要重新定义哪些路径属于仓库级门禁；没有跨包用户路径时，本机制应缩小为组件诊断布局，而不是伪造端到端。",
+      "relationships": [
+        "testing-benchmark-gate",
+        "testing-benchmark-workload-hygiene",
+        "benchmark-contracts-built-worker-protocol",
+        "benchmark-contracts-workload-fidelity-and-completion-proof"
+      ],
+      "migration": {
+        "strategy": "retain-and-rename",
+        "implementation": "保留‘用户路径目录 + Host/Client 后缀 + 本地诊断 .perf.ts + support 提升阈值’结构；把目录名、后缀与配置 glob 换成目标仓库约定。",
+        "requiredSupport": [
+          "独立的 bench 配置或等价筛选",
+          "包内诊断的命名约定",
+          "Agent Note 或等价决策记录",
+          "内存压力重跑清单"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-case-selection-and-layout",
+      "verification": {
+        "positive": [
+          {
+            "check": "新增案例落在用户路径目录、后缀正确，且只被 bench 配置收集；Agent Note 含 workload 与排除项。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把包内 .perf.ts 诊断改名成 .bench.ts，test:bench 会错误收集它，证明筛选边界有效。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复 .perf.ts 后缀或移出 bench 目录后，test:bench 不再收集该诊断。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "‘跨包用户路径’与‘值得阻断’没有机械判据；源仓库的 19 个案例目录是特定产品面，不是通用清单。Agent Note 记录只能人工评审。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-built-worker-protocol",
+      "title": "编译型 worker、纯 Node 协议与 built lib 解析",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/support/built-worker.ts",
+          "start": 1,
+          "end": 102,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/tsdown.config.ts",
+          "start": 1,
+          "end": 76,
+          "kind": "config"
+        },
+        {
+          "path": "benchmarks/agent-continuation/agent-continuation.worker.ts",
+          "start": 129,
+          "end": 142,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "在 Vitest 主进程里直接计时会被框架调度、并发和 TypeScript loader 干扰；从 src 或未构建的 lib 运行又会测到与发布不同的模块图。缺少机械约束时，benchmark 会安静地测源码路径或 stale lib，预算数字仍然通过。",
+      "triggers": [
+        "新增或修改受预算约束的 benchmark case",
+        "把计时从 bench 文件拆进独立 worker",
+        "升级 tsdown、Node 或 Vitest 后重建 .dsh-build",
+        "怀疑 benchmark 实际跑在 src 或 TSX 下"
+      ],
+      "obligations": [
+        "受预算约束的计时放在 benchmarks/.dsh-build/<case>/*.worker.js；由 benchmarks/tsdown.config.ts 预构建，test:bench 先构建 workspace lib 与 worker，再交给 Vitest 编排。",
+        "启动器只接受 .js/.cjs worker；必须从子进程环境删除 NODE_OPTIONS 与 TSX_TSCONFIG_PATH。",
+        "每个 worker 启动时调用 assertBuiltBenchmarkRuntime(import.meta.url, entries)：入口必须是 benchmarks/.dsh-build/ 下的 .js，process.execArgv 不得含 tsx loader，声明的包入口必须解析到 /lib/....js。",
+        "tsdown 统一 platform: node、target: es2024、dts: false、neverBundle: [/^@deepseek-ai\\//]；每个案例目录独立 outDir、clean: true，host 与 Client 分别使用 tsconfig.host.json / tsconfig.client.json。",
+        "只有无公开 Node 导出的被测路径才允许把私有适配器打进 worker；其余 workspace 包保持 external，让产品服务走 built package exports。",
+        "worker 以最后一行以 { 开头的 stdout 作为唯一 JSON 报告；只有 exitCode === 0 才解析该报告。",
+        "每次运行必须有 timeoutMs，超时用 SIGKILL；调用方必须同时检查 timedOut、signal === null、exitCode === 0 与 report 是否存在，失败信息带 stderr 尾部。",
+        "host 案例用 *.bench.ts，Client-face 案例用 *.bench.client.ts；worker、fixture、support 模块不带 .bench 后缀。"
+      ],
+      "actors": [
+        "性能作者",
+        "构建维护者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "在案例目录写 worker 入口，把被计时的逻辑留在 worker 内。",
+        "在 benchmarks/tsdown.config.ts 增加 entry、outDir 与 tsconfig，保持 @deepseek-ai/* import 为 external。",
+        "在 worker 末尾调用 assertBuiltBenchmarkRuntime，列出被测路径实际使用的包入口。",
+        "bench 文件用 runBuiltBenchmarkWorker 指定编译后路径、参数、timeout 与可选 GC/堆/半空间参数。",
+        "先校验 child 的 timedOut/signal/exitCode/report，再读取 report 并断言预算。",
+        "运行 test:bench，确认 .dsh-build 产物新于源码且报告来自 built lib。"
+      ],
+      "enforcement": {
+        "mode": "预构建 + worker 启动断言 + 单行 JSON 进程协议",
+        "implementation": "benchmarks/tsdown.config.ts 生成 .dsh-build；support/built-worker.ts 提供 runBuiltBenchmarkWorker 与 assertBuiltBenchmarkRuntime；每个 worker 首尾声明被测包入口。",
+        "trust": "能机械证明运行时来自编译产物、没有 TS loader、声明包解析到 lib；不证明 workload 语义正确，也不覆盖未声明的间接 import。",
+        "failure": "worker 从 src 或 TSX 启动、或包解析到非 lib 时立即抛错；超时、非零退出、signal 存在或缺失报告都让案例失败；stale lib 需要重新构建而不是放宽断言。",
+        "exceptions": [
+          "内存案例可额外传 --expose-gc、--max-old-space-size 与固定 semi-space；这些只改变 V8 环境，不改变入口约束。",
+          "无公开 Node 导出的被测路径允许 bundle 私有适配器，但包 import 仍必须 external。",
+          "纯同步 fold 若不需要进程隔离，仍通过编译后的 worker 运行，不能退回 src。"
+        ]
+      },
+      "applicability": "任何用独立进程做计时或内存预算的仓库。目标仓库需重设构建器、worker 输出目录、tsconfig 名称与包前缀；没有 built lib 的仓库必须先建立构建平面，否则本机制退化为普通子进程启动。",
+      "relationships": [
+        "testing-source-built-entry-modes",
+        "testing-benchmark-gate",
+        "testing-benchmark-workload-hygiene",
+        "benchmark-contracts-measurement-attribution-and-report"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留编译型 worker、启动断言与单行 JSON 协议；把 .dsh-build 路径、构建器、tsconfig 与包前缀参数化；没有等价构建器的仓库用 esbuild/tsc 提供同样的编译平面。",
+        "requiredSupport": [
+          "tsdown 或等价的 ESM 构建",
+          "plain Node 子进程启动器",
+          "每个被测包可解析的 built lib 入口",
+          "CI 中先 build 再跑 benchmark 的顺序"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-built-worker-protocol",
+      "verification": {
+        "positive": [
+          {
+            "check": "fresh checkout 运行 test:bench，worker 从 benchmarks/.dsh-build 启动，退出码为 0 且报告可解析。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 worker 入口改成 .ts 或向 execArgv 注入 tsx，assertBuiltBenchmarkRuntime 必须抛错。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新构建 worker 与 workspace lib 后重跑，案例恢复且报告重新生成。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "断言只覆盖入口文件与显式声明的包；未声明却仍解析到 src 的传递依赖不会被发现。源仓库的 tsconfig 与 outDir 名称是本地事实，迁移时必须替换。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-measurement-attribution-and-report",
+      "title": "端点归属、CPU/IO 份额与失败后仍生成的报告",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 11,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/support/scaling-report.ts",
+          "start": 1,
+          "end": 294,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.bench.ts",
+          "start": 239,
+          "end": 325,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 439,
+          "end": 454,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-corpus/projection-list.bench.ts",
+          "start": 85,
+          "end": 98,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.zh.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.zh.md",
+          "start": 21,
+          "end": 21,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "只断言一个总秒数时，报告无法解释 verdict，也无法把 wall time 换算到其他机器；漏记的端点、没有来源的 io 份额或只在成功时生成的报告会让失败无法复盘。",
+      "triggers": [
+        "新增受预算约束的 wall-clock 或内存端点",
+        "把测量迁移到其他参考机器",
+        "benchmark 失败后需要解释是哪一段变慢",
+        "CI 上缺少 benchmark-report artifact"
+      ],
+      "obligations": [
+        "每个受预算约束的 wall-clock 端点先调用 recordTimings，传入 BenchmarkCase 的 id、measures、affects 与 budgetMs，再执行断言。",
+        "Timing 二选一：同一区间的进程 CPU 毫秒 {ms,cpuMs}，或带源码注释的存储等待份额 {ms,ioShare}；不得使用来源不明的 io 数字。",
+        "含 paced 或固定等待的端点不参与跨机缩放（例如浏览器 streamWall）；其预算用绝对期望值加回固定等待。",
+        "整进程峰值 RSS 走 recordPeakMemory；内存与无量纲比值不缩放。",
+        "报告必须同时保留原始样本（console JSON）与聚合值（min/median/max 或 ratio），并写清每个预算使用中位数、最小值、绝对值还是比值。",
+        "setup() 清空 .dsh-report，teardown() 在 results.jsonl 存在时渲染 report.html；失败案例也必须留下已记录端点，报告文档明确覆盖失败情形。",
+        "报告嵌入 CPU 型号、平台/架构、Node 版本、可用并行度、GITHUB_SHA 与匹配的机器 profile；没有匹配 profile 时明确提示读者选择近似机器。",
+        "4/8 GiB 内存对照只是报告标尺，不是操作系统内存限制；不得声称测到了 swap 或 reclaim。",
+        "worker 失败时必须报告退出状态、信号、超时与 stderr 末尾；失败样本仍要留下可解释的原始输出，不允许只报一个失败断言。"
+      ],
+      "actors": [
+        "性能作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "为每个端点写 BenchmarkCase 文案：测什么、影响哪个用户场景。",
+        "在测量块内收集样本、进程 CPU 时间或声明 io 份额。",
+        "先调用 recordTimings / recordPeakMemory，再断言。",
+        "用 console JSON 打印原始样本与聚合，供失败复盘。",
+        "检查 .dsh-report/report.html 与 CI 的 benchmark-report artifact。",
+        "失败时从 results.jsonl 定位端点，而不是只看退出码。"
+      ],
+      "enforcement": {
+        "mode": "共享报告 API + 门禁断言 + CI artifact",
+        "implementation": "benchmarks/support/scaling-report.ts 提供 recordTimings、recordPeakMemory、setup、teardown 与 renderReport；vitest.bench.config.ts 挂 global setup/teardown；CI 发布包含 report.html 的 benchmark-report。",
+        "trust": "能证明已记录端点的归属、聚合与测量环境；报告是诊断证据，不证明生产容量。",
+        "failure": "漏记端点使报告缺行；先断言后记录会在失败时丢失数据；teardown 未运行则没有 report；错误的 ioShare 会让跨机缩放失真，但不影响本机断言。",
+        "exceptions": [
+          "paced replay 端点用绝对预算且不进入缩放集合。",
+          "无法测进程 CPU 的 SDK/profile 案例允许声明 ioShare，但必须在源码注释说明估计依据。",
+          "内存只记录峰值，不计算 retained 差值时使用 recordPeakMemory 的单一 endpoint。"
+        ]
+      },
+      "applicability": "有跨机器预算、HTML/JSON 报告与 artifact 上传的基准体系。没有报告基础设施的仓库至少应保留同样的端点归属与原始样本，再逐步引入缩放。",
+      "relationships": [
+        "testing-benchmark-gate",
+        "testing-benchmark-workload-hygiene",
+        "benchmark-contracts-budget-calibration-and-file-deadlines",
+        "benchmark-contracts-built-worker-protocol"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留 BenchmarkCase 归属、recordTimings/recordPeakMemory 与失败后渲染；把机器 profile 表、内存对照值与 artifacts 路径参数化；没有 HTML 报告时至少生成 JSONL。",
+        "requiredSupport": [
+          "共享的端点登记 API",
+          "原始样本与聚合值的记录位置",
+          "收集失败案例的 global setup/teardown",
+          "CI artifact 上传"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-measurement-attribution-and-report",
+      "verification": {
+        "positive": [
+          {
+            "check": "加入一个故意超预算的端点，失败后 report.html 仍生成并包含该端点的预算与原始值。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除 recordTimings 调用后重跑，报告不含该端点，verdict 无法解释。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复记录并重跑，results.jsonl 与 report.html 重新生成且包含原始样本。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "缩放公式依赖机器 profile 的 CPU 分与 IO 延迟参数；ioShare 在无 CPU 计时时是声明值而非实测。报告只比较峰值内存与 4/8 GiB，不模拟内存压力。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-budget-calibration-and-file-deadlines",
+      "title": "参考机期望、CI 时间尺度、方差余量与文件级时限",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 12,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 18,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/support/calibration.ts",
+          "start": 1,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/agent-continuation.bench.ts",
+          "start": 16,
+          "end": 33,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/agent-continuation/agent-continuation.bench.ts",
+          "start": 60,
+          "end": 150,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.bench.ts",
+          "start": 20,
+          "end": 78,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.bench.ts",
+          "start": 192,
+          "end": 203,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.bench.ts",
+          "start": 330,
+          "end": 335,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 14,
+          "end": 24,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 122,
+          "end": 151,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/active-stream-reconnect/reconnect.bench.client.ts",
+          "start": 9,
+          "end": 38,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/user-text/user-text.bench.client.ts",
+          "start": 20,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/user-text/user-text.bench.client.ts",
+          "start": 140,
+          "end": 161,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/agent-continuation/README.zh.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/active-stream-reconnect/README.md",
+          "start": 5,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/active-stream-reconnect/README.zh.md",
+          "start": 5,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/long-session-browser/README.md",
+          "start": 13,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/long-session-browser/README.zh.md",
+          "start": 13,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.zh.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.bench.config.ts",
+          "start": 23,
+          "end": 24,
+          "kind": "config"
+        }
+      ],
+      "problem": "预算如果直接取自某次测量，会随机器和噪声漂移；如果把参考机、CI 时间尺度、方差余量和无量纲比值混成一个乘数，内存和比值会被错误放大，回归也会被余量掩盖。",
+      "triggers": [
+        "首次为端点设定预算",
+        "CI runner 或参考机更换",
+        "benchmark 出现 flaky 或持续超预算",
+        "新增内存或比值型预算"
+      ],
+      "obligations": [
+        "参考机期望与共享 CI 时间尺度分离：ciTimeBudget(expectedMs) = ceil(expectedMs × CI_TIME_SCALE × PERFORMANCE_BUDGET_HEADROOM)；源仓库 CI_TIME_SCALE = 2、headroom = 1.25，二者都是具名常量。",
+        "已经直接来自 CI 的期望值（如浏览器 EXPECTED_*_CI_MS）只乘方差余量，不再乘机器时间尺度。",
+        "内存只乘方差余量、不乘时间尺度；无量纲比值使用独立余量（如 user-text 的 1.75），不得与时间预算共用。",
+        "预算值是受评审的源码常量；环境变量不得覆盖性能预算；修改预算必须同时更新参考记录与理由。",
+        "每个案例保留能解释 verdict 的原始样本与聚合；median、minimum、absolute、ratio 的选择写在常量附近或测试名中。",
+        "用校准测试固化判定逻辑：接受 recorded hosted samples，拒绝合成的 +25% 回归，并断言预算数值本身（如 125、1125、297）防止静默漂移。",
+        "文件级总时限（session-corpus 为 300 s）与测试 deadline（worker 数 × child timeout + 30 s）必须大于所有子进程 deadline，保证清理先于外层超时。",
+        "只有单个端点成本占主导时才允许单样本（如最长 fork），其余用多次 fresh 进程的中位数。",
+        "加入 test:bench:memory 列表的案例必须在 4 GiB 与 8 GiB 两个上限下满足同一预算。",
+        "案例目录的 README（中英成对，存在时）是预算、host 类别、余量与排除项的公开契约；Agent Note 拥有校准与工作量派生。预算常量必须与 README 一致，改预算要同时更新两处。",
+        "计时运行不得与构建或其他 benchmark 重叠；构建、播种与测量分开执行。",
+        "已评审的托管期望：continuation catalog/tool 900 ms（1.25× = 1125 ms）、request-history 297 ms、reconnect 50 ms（2× CI ×1.25 = 125 ms，retained heap 30 MiB 为不缩放终值）、long-session open/page/trajectory 900/700/520 ms（→1125/875/650 ms）、session-corpus 整文件含 seeding ≤300 s。"
+      ],
+      "actors": [
+        "性能作者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "在参考机上记录多次样本，写出期望毫秒并注明机器与日期。",
+        "为每个端点选择 median/min/absolute/ratio，并把预算推导写成源码常量表达式。",
+        "为新增的预算分支补校准测试：recorded samples 通过，合成回归失败，预算数值被显式断言。",
+        "把文件总时限与 test deadline 设为大于所有 child deadline。",
+        "在 CI 失败时先复跑并核对机器 profile，再决定是回归还是预算漂移。",
+        "需要改预算时提交参考样本与理由，不在环境变量或命令行覆盖。"
+      ],
+      "enforcement": {
+        "mode": "具名校准常量 + 校准回归测试 + 文件级 deadline",
+        "implementation": "benchmarks/support/calibration.ts 提供 CI_TIME_SCALE、PERFORMANCE_BUDGET_HEADROOM 与 ciTimeBudget；各 bench 文件用 recorded samples 写接受/拒绝测试，并用 FILE_LIMIT_MS、serialDeadline 约束总时长。",
+        "trust": "校准测试证明算术与判定分支正确，不证明某台机器的真实性能；recorded samples 是历史证据，不是持续监控。",
+        "failure": "预算过紧造成 flaky；过松让回归漏过；通过环境变量或静默调数改预算会失去可审计性；文件 deadline 短于 child deadline 会留下孤儿进程并掩盖失败。",
+        "exceptions": [
+          "test:bench:memory 在 4/8 GiB cgroup 下重跑，预算不变。",
+          "最长 fork 端点允许单样本。",
+          "浏览器 CI 期望直接来自 hosted runner，不再乘 2× 机器时间尺度。"
+        ]
+      },
+      "applicability": "有独立 CI runner、可重复测量并愿意维护校准样本的仓库。没有稳定 runner 时只能做本地诊断，不应把这些数字变成阻断门禁。",
+      "relationships": [
+        "testing-benchmark-gate",
+        "testing-benchmark-workload-hygiene",
+        "benchmark-contracts-measurement-attribution-and-report",
+        "benchmark-contracts-workload-fidelity-and-completion-proof"
+      ],
+      "migration": {
+        "strategy": "recalibrate-per-target",
+        "implementation": "保留“参考期望 / 时间尺度 / 方差余量 / 比值余量”四分结构；目标仓库必须重新测参考机、重设 CI_TIME_SCALE 与 headroom，并把 recorded samples 换成本仓库证据。",
+        "requiredSupport": [
+          "稳定的参考机或 hosted runner",
+          "多次 fresh 进程采样",
+          "校准测试框架",
+          "内存压力重跑环境"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-budget-calibration-and-file-deadlines",
+      "verification": {
+        "positive": [
+          {
+            "check": "recorded hosted samples 全部通过预算，且预算常量断言值未被改动。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把某个 recorded 中位数放大 26% 后，校准测试必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复正确预算或记录新的参考样本并说明理由后，校准测试重新通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "2× 与 1.25 是源仓库在特定 arm64/x64 机器上的事实，不是通用常数；浏览器预算只使用 CI 期望与 headroom。记录样本会过期，目标仓库必须重新校准。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-fixture-provenance-and-validity",
+      "title": "合成输入的来源约束、测量分布与 fixture 自校验",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 9,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/corpus-shape.ts",
+          "start": 1,
+          "end": 76,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/synthetic-corpus.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/synthetic-corpus.ts",
+          "start": 198,
+          "end": 260,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/synthetic-corpus.ts",
+          "start": 313,
+          "end": 340,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/synthetic-corpus.ts",
+          "start": 455,
+          "end": 484,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.worker.ts",
+          "start": 191,
+          "end": 215,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.worker.ts",
+          "start": 242,
+          "end": 267,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.bench.ts",
+          "start": 169,
+          "end": 190,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/user-text/user-text.worker.client.ts",
+          "start": 110,
+          "end": 135,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-open/synthetic-released-v0-session.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-open/synthetic-released-v0-session.ts",
+          "start": 160,
+          "end": 205,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/synthetic-history.bench.ts",
+          "start": 1,
+          "end": 39,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/conversation-fold/conversation-fold.worker.client.ts",
+          "start": 275,
+          "end": 290,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/workload.ts",
+          "start": 9,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/workload.ts",
+          "start": 66,
+          "end": 114,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/long-session-browser/synthetic-history.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "用真实 Session、用户材料或随手抓取的语料会让 benchmark 不可复现并泄露内容；手工编造的 fixture 又可能偏离生产格式，让计时落在错误路径上，或让两个被比较的 workload 在非目标维度上不等。",
+      "triggers": [
+        "新增 corpus、synthetic history 或 adversarial 输入",
+        "需要让 workload 的代表性可审计",
+        "fixture 格式随生产 Session 格式升级",
+        "比较两个 workload 的 scaling 比值"
+      ],
+      "obligations": [
+        "固定输入必须由受评审常量合成；禁止使用录制的 Session、用户材料、ambient repository 或网络服务。",
+        "从真实语料提取分布时只允许保留计数与字节总量，不得保留内容、身份或路径；源仓库来自 1,650 个本地 Session、2026-09-28 的聚合分位。",
+        "corpus 必须在每个 rank 上不小于测得分布，各维度单调不减，并覆盖全部 anchor；同一 anchor 的 body 在多个 Session 间复用，以有限磁盘得到真实长度分布。",
+        "author 完成后先用生产解析器与投影折叠校验（如 Session.create + coldSnapshot），再写入 corpus；不要在未验证的 body 上计时。",
+        "fixture 必须保留生产不变量：turn-one system head 在后续 prompt 替换后仍可恢复，session/title 与 tool/result 的 sourceEventSeqs 指向正确事件。",
+        "比较两个 workload 的 scaling 时，非目标维度必须相等（例如事件数与 compact record 数一致），否则比值测到的是窗口大小而不是目标行为。",
+        "凭证与对抗输入在运行时拼装，仓库中不得出现完整凭证格式字面量；每个样本使用 fresh matcher，避免跨样本状态。",
+        "已发布旧代际 fixture（如版本 0 的 released-v0 Session）是冻结输入，由 fixture builder 写出，不能让被测运行时重新生成。",
+        "浏览器脚手架使用的 session id 与 cwd 用占位符替换，保证每个样本拥有私有世界。"
+      ],
+      "actors": [
+        "性能作者",
+        "fixture 维护者",
+        "安全评审者",
+        "评审者"
+      ],
+      "steps": [
+        "确认输入来源：只用常量、聚合统计或运行时拼装的合成数据。",
+        "为 corpus 选定 anchor 与 rank→anchor 的映射，断言单调性与覆盖。",
+        "用生产 Session API 或格式模块 author，再用生产解析器校验。",
+        "为 fixture 写自校验测试（保护头、sourceEventSeqs、字节数、parity）。",
+        "把 fixture 写入私有 mkdtemp 世界，测量前不再读取 ambient 数据。",
+        "升级生产格式时更新 fixture builder，并重新证明 fixture 仍能通过生产解析。"
+      ],
+      "enforcement": {
+        "mode": "fixture builder + 分布断言 + 生产解析校验",
+        "implementation": "corpus-shape.ts 定义 anchor 与 rank 选择；synthetic-corpus.ts author/校验/写 corpus；session-corpus.bench.ts 断言分布下限与 anchor 覆盖；synthetic-history.bench.ts 校验 seed 的保护头；conversation-fold worker 校验 parity。",
+        "trust": "分布与 parity 可机械断言；fixture 与真实用户语料的语义相似度无法证明，只证明长度与结构下限。",
+        "failure": "分布低于测量值会让 list/search/fork 偏乐观；未校验 body 会让 benchmark 测到解析错误路径；泄漏真实内容或凭证是安全缺陷；parity 漂移让 scaling 结论失效。",
+        "exceptions": [
+          "released-v0 fixture 故意使用旧代际格式，仅作为 migration 输入。",
+          "LLM/provider 边界可以用 synthetic adapter，但 tool、session、persistence 必须真实。",
+          "聚合分布只有计数与字节，不要求逐 Session 复刻。"
+        ]
+      },
+      "applicability": "任何需要可复现语料、长度分布或对抗输入的基准体系。没有真实语料时可以从结构常量出发，但必须声明“未校准到生产分布”。",
+      "relationships": [
+        "testing-snapshot-corpus-policy",
+        "testing-benchmark-workload-hygiene",
+        "testing-snapshot-normalization",
+        "benchmark-contracts-workload-fidelity-and-completion-proof"
+      ],
+      "migration": {
+        "strategy": "retain-and-recalibrate",
+        "implementation": "保留“合成来源 + 聚合分布 + 生产解析校验 + parity”结构；目标仓库用自己的聚合统计重算 anchor，并替换 release 代际与凭证格式。",
+        "requiredSupport": [
+          "生产 Session/格式解析 API",
+          "聚合统计的合法来源",
+          "确定性随机数与并发上限",
+          "fixture 自校验测试"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-fixture-provenance-and-validity",
+      "verification": {
+        "positive": [
+          {
+            "check": "生成的每个 corpus 在全部 rank 上满足测得分布，anchor 全覆盖且维度单调。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把某个 anchor 的 events 下调后，分布断言必须失败；把 compared workload 的 record 数改成不等，parity 检查必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复 anchor 数据或重新校准聚合统计后，断言重新通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "聚合分位来自特定日期与特定用户机器；它只约束长度分布，不约束消息语义、工具组合或真实 provider 行为。released-v0 fixture 会随格式退役而失去代表性，需要定期复核。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-workload-fidelity-and-completion-proof",
+      "title": "生产入口保真、私有适配器边界与完成度证明",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 15,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/agent-continuation/agent-continuation.worker.ts",
+          "start": 96,
+          "end": 120,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/profile-continuation.worker.ts",
+          "start": 1,
+          "end": 88,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/profile-adapter.ts",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/agent-continuation/child-catalog.worker.ts",
+          "start": 20,
+          "end": 100,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/active-stream-reconnect/reconnect.worker.client.ts",
+          "start": 1,
+          "end": 49,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/terminal-io/session-adapter.ts",
+          "start": 1,
+          "end": 2,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/terminal-io/terminal-io.worker.ts",
+          "start": 60,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.worker.ts",
+          "start": 147,
+          "end": 215,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/session-corpus.worker.ts",
+          "start": 133,
+          "end": 175,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/projection-list.worker.ts",
+          "start": 300,
+          "end": 315,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-corpus/README.zh.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "benchmark 很容易测到复制出来的算法、为测量新增的生产导出或只完成一半的管线；这样数字会变好，但测的不是用户路径。合成的 model/provider 又可能悄悄替换掉真实 tool 与 persistence，让结论无法迁移。",
+      "triggers": [
+        "新增需要真实 tool、session 或客户端组合的 case",
+        "某个 case 的耗时异常偏低",
+        "考虑为 benchmark 新增生产导出",
+        "使用 synthetic LLM/provider adapter"
+      ],
+      "obligations": [
+        "通过生产入口与构建产物测量；不得把产品算法复制进 worker，也不得仅为测量新增生产导出。",
+        "不得把 benchmark 完成变成重复的语义断言；完成度证明用计数或端点输出，而不是复制产品测试。",
+        "只有无公开 Node 导出的被测路径才允许编译私有集成适配器；包 import 保持 external，产品服务仍通过 built package exports 解析。",
+        "合成只用于昂贵或非确定的 model/provider 边界；tool registry、session、persistence、Agent loop 必须尽量真实。",
+        "用可观察计数证明被测路径走完：model 请求数、tool 调用数、session seq、catalog 长度或 tool result 内容必须与 workload 常量一致，否则抛错。",
+        "显式拒绝被测路径之外的服务调用（如 search），避免偶然把额外工作计入或掩盖缺失依赖。",
+        "测量区间只包含目标操作；fixture 构造、seed、GC、warm-up 与 dispose 放在计时之外。",
+        "retained-memory 端点必须在最后一次 GC 时仍被引用，dispose 之前不得丢弃该引用。",
+        "浏览器 case 通过共享 shipped-composition scaffold 驱动 built Client bundle，并把 source-resolved test Host 与 published-Host 证据分开报告。",
+        "feature-gated 部署（如 content search 的 openAt: first-search）只能在 README 明示的 opt-in 配置下测量，并同时报告 shipped profile 默认关闭；不得把 opt-in 成本当作默认用户体验。"
+      ],
+      "actors": [
+        "性能作者",
+        "模块所有者",
+        "评审者"
+      ],
+      "steps": [
+        "先定位真实用户入口（CLI、SDK、Agent loop、Web scaffold），确认它可由 built 产物启动。",
+        "只替换 model/provider；保留 tool、session、persistence 与组合层。",
+        "为 workload 建立预期计数，并在 result 返回前校验。",
+        "把 setup、warm-up、GC 与清理移出计时区间。",
+        "需要私有导出时写最小 adapter，并在注释说明为何没有公开 Node 导出。",
+        "审查报告时先确认完成度计数，再解读时间与内存。"
+      ],
+      "enforcement": {
+        "mode": "生产组合 + 完成度计数 + 私有 adapter 白名单",
+        "implementation": "agent-continuation.worker 校验 requests/toolCalls；child-catalog.worker 拒绝 search 并校验完整 catalog；profile-continuation.worker 启动 built CLI bin 并校验 tool result；profile-adapter 只替换 model；session-open.worker 保留 measured endpoint 到 GC 之后。",
+        "trust": "计数能证明路径被执行与工作量一致；不能证明合成 model 与真实 provider 的延迟分布相同。",
+        "failure": "路径短路或部分执行会让时间偏低并产生假绿；复制算法测到的是副本；为测量新增导出扩大生产 API；替换真实 tool/persistence 会让结论无法迁移；过早释放端点会得到错误的内存差值。",
+        "exceptions": [
+          "model/provider 边界允许 synthetic adapter。",
+          "无公开 Node 导出时允许 bundle 私有适配器，但必须在源码注释说明。",
+          "纯内存 fold 可以不启动完整 Host，但必须使用生产 fold 实现。"
+        ]
+      },
+      "applicability": "任何声称代表用户路径的性能门禁。若目标仓库没有可启动的生产入口，本机制只能降级为组件基准，并必须明确声明不代表端到端。",
+      "relationships": [
+        "testing-real-implementation-mock-boundary",
+        "testing-real-entry-composition",
+        "testing-source-built-entry-modes",
+        "benchmark-contracts-fixture-provenance-and-validity"
+      ],
+      "migration": {
+        "strategy": "retain-and-rebind",
+        "implementation": "保留“生产入口 + 只替换 model/provider + 完成度计数 + 端点保留”的结构；把入口命令、profile 名称、计数常量与私有 adapter 清单换成目标仓库事实。",
+        "requiredSupport": [
+          "可由 plain Node 启动的生产 bin 或 SDK 入口",
+          "真实 tool/session/persistence 组合",
+          "可观察的完成度计数",
+          "私有 adapter 的明确白名单"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-workload-fidelity-and-completion-proof",
+      "verification": {
+        "positive": [
+          {
+            "check": "profile/SDK case 启动 built bin，真实 tool 返回预期内容，requests 与 toolCalls 等于 workload 常量。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 tool 替换成 no-op 或让 worker 少跑一轮，完成度计数断言必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复真实组合与完整轮数后，计数与预算断言重新通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "合成 model 不证明真实 provider 的 wire、限流与网络行为；完成度计数只覆盖被显式统计的步骤。源码中 `profile-adapter` 的 provider 名称与工具名是源仓库事实，迁移时必须替换。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-per-sample-isolation-and-cleanup",
+      "title": "每样本独立世界、fresh 对象图与失败也清理",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 10,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/agent-continuation/agent-continuation.bench.ts",
+          "start": 164,
+          "end": 186,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-corpus/projection-list.bench.ts",
+          "start": 31,
+          "end": 44,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/conversation-fold/conversation-fold.worker.client.ts",
+          "start": 160,
+          "end": 180,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/conversation-fold/conversation-fold.worker.client.ts",
+          "start": 207,
+          "end": 250,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/active-stream-reconnect/reconnect.worker.client.ts",
+          "start": 38,
+          "end": 49,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-corpus/projection-list.worker.ts",
+          "start": 220,
+          "end": 295,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 344,
+          "end": 360,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 436,
+          "end": 444,
+          "kind": "test"
+        }
+      ],
+      "problem": "复用同一个 root、同一个 Host 或同一个已变异的对象图，会把上一轮的缓存、临时文件和全局钩子带进下一轮；失败路径不清理则留下孤儿进程、目录和被污染的下一次运行。",
+      "triggers": [
+        "新增需要 seed 或写盘的案例",
+        "一个案例的多次 attempt 结果互相影响",
+        "纯同步 fold 的重复样本耗时递减",
+        "临时目录或 worker 进程在失败后残留"
+      ],
+      "obligations": [
+        "进程级 wall-clock 与 retained-memory 样本在 fresh child 中运行，每个样本使用私有 mkdtemp root；不得读取 ambient repository、共享私有 home 或网络服务。",
+        "需要预置数据的案例先 seed 一个源世界，再为每次 attempt 复制独立 root；在 finally 中删除 root，失败也清理。",
+        "纯同步 fold 每个样本创建 fresh 对象图，不复用已变异的 assembler/client；不得修改进程全局状态。",
+        "确需临时全局钩子（如计数 scheduler.yield）时，必须在 finally 恢复原 descriptor，并让恢复失败同样可见。",
+        "每个 child 必须有 deadline；调用方 await close/exit，测试 deadline 晚于 child deadline。",
+        "浏览器样本每轮 fresh browser + 私有 scaffold world，并在每层 finally 关闭与删根。",
+        "清理失败要与主失败一起聚合并报告，不能静默吞掉。"
+      ],
+      "actors": [
+        "性能作者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "为案例建立一次 seed 源世界。",
+        "每次 attempt 复制/新建独立 root，并记录其归属。",
+        "纯同步 fold 每样本构造新对象图，避免跨样本缓存。",
+        "需要临时全局改动时保存 descriptor 并在 finally 恢复。",
+        "child 设 deadline，await exit，再删除 root。",
+        "失败时聚合清理错误，保留首个主错误。"
+      ],
+      "enforcement": {
+        "mode": "每次尝试独立 root + fresh 对象图 + finally 清理 + child deadline",
+        "implementation": "agent-continuation.bench.ts 在 mkdtemp 中 seed 后按 attempt 复制/删除 root；projection-list.bench.ts 每 attempt 新建 mkdtemp 并 finally rm；conversation-fold worker 的 foldOnce 每样本新建 assembler；projection-list worker 保存并恢复 scheduler.yield；浏览器每样本新建 root/scaffold/browser。",
+        "trust": "root 与进程隔离可观察；‘对象图是否真的 fresh’只能通过重复样本稳定性与代码评审判断。",
+        "failure": "共享 root 造成跨样本干扰；复用对象图产生递减耗时；未恢复全局钩子污染后续样本；失败不清理导致磁盘与进程泄漏；child deadline 缺失让测试挂死。",
+        "exceptions": [
+          "只读的纯函数 fixture 可以在样本间共享，但不得携带可变状态。",
+          "同一进程内多个同步 fold 可共享只读常量，但不能共享 assembler 或 client 实例。",
+          "失败清理中的次生错误可以聚合，但不得覆盖主错误。"
+        ]
+      },
+      "applicability": "所有做多次采样、写盘、启动子进程或临时全局钩子的基准体系。目标仓库必须按自己的临时目录与进程模型重写清理；没有 mkdtemp 的平台要提供等价的私有世界。",
+      "relationships": [
+        "testing-benchmark-workload-hygiene",
+        "testing-resource-isolation",
+        "testing-execution-topology",
+        "benchmark-contracts-browser-measurement-integrity"
+      ],
+      "migration": {
+        "strategy": "retain-and-rebind",
+        "implementation": "保留‘一样本一世界 + fresh 对象图 + finally 清理 + child deadline’结构；把临时目录 API、seed/copy 方式与全局钩子恢复机制换成目标平台实现。",
+        "requiredSupport": [
+          "私有临时目录或等价隔离",
+          "可复制的 seed 世界",
+          "子进程 deadline 与 exit 等待",
+          "错误聚合机制"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-per-sample-isolation-and-cleanup",
+      "verification": {
+        "positive": [
+          {
+            "check": "多次 attempt 各自使用不同 root，全部删除；重复样本耗时稳定，无线程/目录残留。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让两个 attempt 共享同一可变 assembler 或同一 root，观察结果互相污染或清理失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复独立 root 与 fresh 对象图后，重复样本恢复稳定，清理错误消失。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "隔离只能证明样本之间没有共享可变状态；它不证明样本内部测的是生产路径。浏览器与子进程的真实清理仍依赖操作系统与服务行为。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "benchmark-contracts-browser-measurement-integrity",
+      "title": "浏览器样本世界、可见性等待与真实输入证据",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/long-session-browser/long-session.bench.ts",
+          "start": 1,
+          "end": 454,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/long-session-browser/synthetic-history.ts",
+          "start": 1,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/long-session-browser/README.md",
+          "start": 7,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/long-session-browser/README.zh.md",
+          "start": 7,
+          "end": 17,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "浏览器计时很容易把 DOM 存在误当成已渲染，把 Playwright 合成事件误当成用户输入，或让选择器准备、共享浏览器和上一轮状态污染样本；这些偏差都会让预算通过但用户路径并未变快。",
+      "triggers": [
+        "新增或修改 Web GUI 的打开、分页、Trajectory、流式回复基准",
+        "浏览器 benchmark 出现无法复现的波动",
+        "从 DOM 断言改为可见性断言",
+        "需要证明输入在流式期间仍可用"
+      ],
+      "obligations": [
+        "首次运行浏览器案例前，通过该案例所属的 benchmark workspace 安装 Chromium，并先具备构建后的 library、worker 与 Web 产物；目标仓库须把安装与构建入口绑定到自己的工具链，不能把缺浏览器或未构建当作已执行的性能样本。",
+        "浏览器 case 必须在 keyless replay 模式下运行（webSnapshotMode() === 'replay'）；不得依赖真实网络或凭据。",
+        "每个 sample 使用 fresh browser、私有 mkdtemp 根目录与私有 scaffold world；结束后无论成功失败都关闭 browser、scaffold 并删除根目录。",
+        "通过共享 shipped-composition Web scaffold 驱动 built Client bundle；报告必须把 source-resolved test Host 与 published-Host 证据分开。",
+        "渲染机会用两次 requestAnimationFrame 判定，并明确它不等于硬件呈现或 GPU presentation 时间。",
+        "等待可见文本或控件，而不是只等待 DOM 节点；使用 checkVisibility 与唯一可操作控件，隐藏元素不能算完成。",
+        "分页计时在控件就绪后开始，选择器查找与准备在计时之外；保留真实 trusted click，并在点击前后校验 tail 数量。",
+        "流式期间输入必须是 trusted input，并记录 witness；晚到的输入必须有负向对照（不得报告 overlap）。",
+        "同时记录 wall time、CDP TaskDuration 与 GC 后的 JSHeapUsedSize；分页、打开、Trajectory 与 streamTask 分别设预算。",
+        "断言 console 无 page error、无 warning；每个 sample 的失败聚合后统一抛出，清理仍要执行。",
+        "含 paced replay 的 streamWall 使用绝对预算（基准预算 + 回放时长），不参与 CPU 缩放。",
+        "强制 GC 后的 heap 与 DOM 计数只作诊断，不是泄漏预算；只有 README/预算常量声明的端点参与 verdict。stream 端点额外开销预算不随时间缩放，分页门禁是各样本最慢页时间的中位数。",
+        "流式交互细节：Enter 从已聚焦 composer 提交，草稿键入保留焦点且不加鼠标点击；witness 在提交前安装，首个标记可见即开始键入，不额外等待输入前动画帧；标记与文本观察器只读最新 Assistant 步骤；首次观察在浏览器内记录状态与焦点，诊断在键入后取回且不暂停回放；首个真实输入必须看到未完成回复，完成后等待 Host 结算后的新 turn-tail，测量后在 DONE 后按键仍须触发同一个重叠失败。"
+      ],
+      "actors": [
+        "Web 性能作者",
+        "QA/浏览器测试维护者",
+        "评审者"
+      ],
+      "steps": [
+        "首次运行前在 benchmark workspace 安装 Chromium，确认所需 built 产物、replay 模式与 keyless scaffold 可用；已有产物时才使用定向运行入口。",
+        "每个 sample 新建 mkdtemp、replay override、scaffold、browser 与 page。",
+        "seed 合成历史，打开页面并等待可见 frame。",
+        "用唯一控件执行 open/page/trajectory，计时前先等待控件就绪。",
+        "对回复使用可见 marker 等待；在流式期间注入真实键盘输入并记录 overlap witness。",
+        "采集 wall、TaskDuration、GC 后 heap；断言 console 干净。",
+        "聚合失败、清理所有资源，再计算中位数与预算。"
+      ],
+      "enforcement": {
+        "mode": "replay-only + 每样本私有世界 + 可见性/trusted-input 断言 + 独立清理",
+        "implementation": "long-session.bench.ts 的 painted、waitForReplyMarker、waitForTrajectory、measureOlderPage、watchInputOverlap 与 per-sample mkdtemp/scaffold；synthetic-history.ts 提供固定 marker 与 pace。",
+        "trust": "能证明测量等待的是可见渲染与真实输入；浏览器时间仍受机器、字体、Chromium 版本与 headless 影响，不能外推为所有用户。",
+        "failure": "只等 DOM 会在绘制前停止计时；合成 input 不进入真实输入路径；选择器准备计入时钟会夸大分页；共享 browser/scaffold 会跨样本污染；不清理会留下进程与目录；console 错误被忽略会掩盖回归。",
+        "exceptions": [
+          "paced replay 的 streamWall 用绝对预算，不参与缩放。",
+          "负向对照（晚输入）故意让断言失败，用于证明 witness 有效。",
+          "source-resolved test Host 的结果只能作为测试 Host 证据，不能冒充 published Host。"
+        ]
+      },
+      "applicability": "任何对 Web GUI 做端到端性能预算的仓库。没有 shipped-composition scaffold 或 replay 基础设施时，只能做组件级基准，并必须声明不覆盖浏览器组合路径。",
+      "relationships": [
+        "testing-web-performance-and-stress",
+        "testing-benchmark-gate",
+        "testing-resource-isolation",
+        "benchmark-contracts-measurement-attribution-and-report"
+      ],
+      "migration": {
+        "strategy": "retain-and-rebind",
+        "implementation": "保留 replay-only、每样本私有世界、可见性等待、trusted input witness 与独立清理；把 scaffold 入口、marker、选择器、pace 与浏览器版本换成目标仓库事实。",
+        "requiredSupport": [
+          "可编程的 replay scaffold",
+          "通过 benchmark workspace 安装的 headless Chromium 与 CDP，以及所需 library/worker/Web 构建产物",
+          "每样本 mkdtemp 与进程清理",
+          "可见性与 trusted input 断言工具"
+        ]
+      },
+      "reference": "references/benchmark-contracts.md#benchmark-contracts-browser-measurement-integrity",
+      "verification": {
+        "positive": [
+          {
+            "check": "在 replay 模式下跑完整长会话样本，open/page/trajectory/streamTask 有报告，console 无错误，输入 overlap witness 为 true。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让 marker 保持 visibility:hidden 或让分页按钮歧义，等待/严格模式断言必须失败；晚输入不得报告 overlap。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复可见性与唯一控件并重新清理资源后，样本重新通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "源仓库的 scaffold、选择器、marker 与 240 轮历史是本地事实；两次 rAF 不证明 GPU 呈现；headless 结果与真实用户硬件存在差距。",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

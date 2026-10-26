@@ -1,0 +1,273 @@
+{
+  "domain": "subtree-instructions",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "subtree-instructions.schedule-durable-tasks",
+      "title": "定时任务是持久 Host 状态：单一扫描器、非原子投递、无通用重试",
+      "sources": [
+        {
+          "path": "packages/schedule/AGENTS.md",
+          "start": 1,
+          "end": 11,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "定时任务跨会话与重启存活。把它实现为内存定时器、隐式重试或执行记录状态机，会丢失记录、重复投递，或把非原子入队说成模型完成。",
+      "triggers": [
+        "新增或修改 schedule 存储、活动任务扫描器、重复规则、投递、关停或历史 schedule 事件",
+        "恢复含 schedule 记录的 Session"
+      ],
+      "obligations": [
+        "Host schedule 存储域拥有 active 与 ended 任务；每条记录保存原始 Session id 与全局唯一 task id。",
+        "只有显式删除才移除任务；浏览器与 Agent 管理使用同一服务；读与删除不得激活 Session。",
+        "只有一个 Host 运行时在启动时扫描 active 任务并调度下一目标；ended 任务永不重新武装。",
+        "通过既有 Session controller 恢复到期 Session，保留 preset 组合与并发激活的单一所有者。",
+        "保留 after、at、every、daily、weekly、cron；daily 保存显式时间与 IANA 时区，不得当成固定 86400 秒。",
+        "缺失的本地日期/时间跳过；重叠时每个日期只选择较早的一次。",
+        "重复任务只贡献最近一次错过的发生，然后推进到未来目标；同一 Session 内同时到期的重复任务共享一条消息。",
+        "以 producer kind schedule 入队，等待 Session 持久化，再 retire 或 advance。",
+        "这些写入不是原子的：崩溃可能造成重复投递；不得把入队描述为模型完成，也不得新增执行记录状态机。",
+        "投递失败保留任务并报告失败；不得加入通用重试循环。关停先排空已接受的工作再关闭存储。",
+        "历史 schedule/change 事件保留原始三 kind LegacyScheduleRecord；当前 Host 解码器拥有新增规则种类。",
+        "加载含活动历史提醒的 Session 时告警；不得隐式扫描或迁移所有历史 Session，也不得从一次性提示推断 daily 意图。",
+        "重复计算保持纯函数；生产使用平台墙钟与分段定时器，测试使用显式样本或恢复的 fake timers。"
+      ],
+      "actors": [
+        "Schedule 包维护者",
+        "Host 运行时所有者",
+        "评审人"
+      ],
+      "steps": [
+        "定义持久记录：原始 Session id、全局唯一 task id、规则、状态与下一目标。",
+        "实现唯一启动扫描器；对 active 任务计算下一目标，ended 任务排除。",
+        "用纯函数实现重复规则与本地时间语义，注入时钟与时区数据。",
+        "到期时通过既有 Session controller 恢复 Session，并共享同一 Session 的到期消息。",
+        "以 producer kind schedule 入队并等待持久化，然后 retire/advance；失败保留并报告。",
+        "关停时排空已接受工作；加载历史时告警但不隐式迁移。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 产品测试",
+        "implementation": "schedule 产品测试覆盖存储、重复与投递；未观察到针对这些语义规则的专用仓库校验器。",
+        "trust": "评审信任产品测试；崩溃窗口重复与重复规则边界仍由评审负责。",
+        "failure": "仅内存任务、通用重试循环、隐式迁移历史事件，或把投递说成完成，均阻断变更。",
+        "exceptions": [
+          "入队与 retire/advance 之间崩溃可能重复投递；设计接受该窗口而不是引入事务。",
+          "历史 LegacyScheduleRecord 保持原始三 kind 形状，不隐式迁移。"
+        ]
+      },
+      "applicability": "适用于任何跨会话持久化定时任务的 Host；存储、id 生成与墙钟来源需参数化。",
+      "relationships": [
+        "补充 packages/AGENTS.md 的生命周期所有者与提交点发布规则",
+        "依赖通过既有 Session controller 恢复 Session"
+      ],
+      "migration": {
+        "strategy": "保留持久记录与单一扫描器；把重复语义移植为注入时钟的纯函数。",
+        "implementation": "以 Host 存储域承载记录，以服务暴露读写删；扫描器只保留一个；投递复用既有 Session 恢复路径。",
+        "requiredSupport": [
+          "持久 Host 存储",
+          "全局唯一 id 生成",
+          "IANA 时区数据",
+          "平台墙钟与分段定时器"
+        ]
+      },
+      "reference": "references/subtree-instructions.md#subtree-instructions.schedule-durable-tasks",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "创建跨重启任务后，重启 Host 仍能扫描并按规则恢复一次",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把任务只放内存或加通用重试循环时，评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "入队后崩溃造成重复投递时，记录仍完整且失败可见",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "仓库未观察到针对重复语义与时区的专用校验器；测试覆盖范围需在目标项目复核。"
+    },
+    {
+      "id": "subtree-instructions.native-contract-first",
+      "title": "原生能力以契约、矩阵与打包验证为中心，失败关闭",
+      "sources": [
+        {
+          "path": "native/system/AGENTS.md",
+          "start": 1,
+          "end": 28,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "原生绑定与沙箱启动器跨平台、跨 libc，容易在扩展能力时漂移契约、静默放宽限制，或用安装期编译掩盖缺失载荷。",
+      "triggers": [
+        "修改 landlock-run 的参数、退出码、诊断或限制行为",
+        "修改 system.node 绑定、flock 语义、平台包内容或发布流程"
+      ],
+      "obligations": [
+        "Landlock 的 argv、退出码、诊断与 fail-closed 限制定义在 docs/cli-contract.md；扩展其他能力时不得改动它们。",
+        "启动器只依赖 libc，静态链接 musl；内核 UAPI 定义保留在受评审的 C 源中。",
+        "Node 绑定使用稳定 Node-API v8，禁止 NAN、V8 C++ API 或实验性 Node 接口；Linux glibc 与 musl 是不同二进制，macOS 使用自己的 Mach-O。",
+        "flock 只在异步工作中尝试 LOCK_EX | LOCK_NB，并在该 worker 捕获 errno；调用方在完成前拥有 fd，通过关闭释放锁。",
+        "./landlock-run 与 ./flock 是独立能力导出；包没有根导出；导入都不加载 addon；./flock 仅在调用时加载；Windows 保留既有 semaphore 实现。",
+        "运行期二进制选择没有环境变量覆盖；NALR_REQUIRE_LANDLOCK 仅用于测试强制。",
+        "没有安装期编译回退；缺失 Landlock 二进制探测为不可用；缺失 flock 绑定拒绝获取，绝不静默授予锁。",
+        "os/cpu 与 prebuilds.json 是签入的包矩阵；CI 从矩阵派生 runner，在每个架构原生构建，并在多个 Node 版本下测试相同 addon 字节。",
+        "Linux 包恰好包含 bin/landlock-run、bin/glibc/system.node、bin/musl/system.node；macOS 包包含 bin/system.node；这些能力不需要 Windows 平台包。",
+        "平台 prepack 拒绝缺失、未声明、格式错误、架构错误与非 Node-API 载荷；启动器可执行位单独检查。",
+        "平台 tarball 使用 npm pack 保留可执行权限；entry 使用 pnpm pack 做 workspace 版本转换。",
+        "打包安装验证检查 manifest、无 registry 安装本地 tarball、字节固定载荷，并实际运行已安装的 flock 与 Landlock 功能探测。",
+        "构建输出保持忽略；源/消费者变更与其行为测试同批落地；保留双语 README 与独立原生发布。"
+      ],
+      "actors": [
+        "Native 维护者",
+        "平台包维护者",
+        "评审人",
+        "发布执行者"
+      ],
+      "steps": [
+        "先确认契约文档与矩阵，再改实现；契约变更单独评审。",
+        "在目标平台原生构建 addon，按矩阵组装平台包。",
+        "运行 prepack 校验载荷格式/架构/Node-API 标记与可执行位。",
+        "无 registry 安装本地 tarball，字节固定并运行 flock 与 Landlock 探测。",
+        "按 publish-order 先平台包后 entry；预发布使用 next dist-tag。"
+      ],
+      "enforcement": {
+        "mode": "构建/打包脚本 + 进程与锁测试 + 评审",
+        "implementation": "verify-release、assemble-prebuilds、prepack、packed-install 与 package-matrix 测试覆盖矩阵、载荷、导出与真实进程行为。",
+        "trust": "机械检查覆盖载荷与导出；契约语义、libc 选择与平台差异仍由评审负责。",
+        "failure": "安装期编译回退、环境变量覆盖、缺失载荷静默授予、契约漂移或错误平台载荷均阻断发布。",
+        "exceptions": [
+          "macOS 使用 cc 构建，Linux 完整构建需要 musl-gcc",
+          "仓库测试只为宿主机构建 addon，不跨平台编译",
+          "独立 syscall 夹具仅测试用，永不进入发布包"
+        ]
+      },
+      "applicability": "适用于带原生 addon、平台包与沙箱启动器的项目；矩阵、契约文档与打包脚本需按目标工具链替换。",
+      "relationships": [
+        "依赖发布域的 tag/版本一致与发布顺序规则",
+        "与供应链域的载荷/来源验证共享证据边界"
+      ],
+      "migration": {
+        "strategy": "先固定契约与矩阵，再移植实现；保持失败关闭与无安装期编译。",
+        "implementation": "建立 cli-contract/flock-contract 文档作为权威；以 os/cpu + prebuilds.json 派生 CI；用 prepack 与 packed-install 验证真实载荷。",
+        "requiredSupport": [
+          "按平台原生构建环境",
+          "Node-API v8 头文件",
+          "npm/pnpm pack",
+          "可执行位保留的文件系统"
+        ]
+      },
+      "reference": "references/subtree-instructions.md#subtree-instructions.native-contract-first",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按矩阵构建并在目标平台运行已安装 flock 与 Landlock 探测成功",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "缺失/错架构/非 Node-API 载荷在 prepack 被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "平台包先发布、entry 后发布；失败时按顺序补齐而不覆盖已发布字节",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行任何原生构建或跨平台测试；契约语义与平台差异仍为评审证据。"
+    },
+    {
+      "id": "subtree-instructions.profile-test-placement",
+      "title": "Profile 集成测试按证据边界放置，产品场景走真实入口",
+      "sources": [
+        {
+          "path": "apps/cli/tests/profiles/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "跨包 profile 行为若用测试专用 Loader 或包内夹具替代真实入口，会证明不了发布组合；放置错位还会让夹具与产品资产混淆。",
+      "triggers": [
+        "新增跨包 profile 行为测试",
+        "决定使用 CLI 入口、测试专用 Loader、包内夹具、快照回放或 expected 输出"
+      ],
+      "obligations": [
+        "产品场景通过 apps/cli/src/bin.ts 加 --profile <name> 或 <name> 简写启动。",
+        "仅当公开 profile 输出无法暴露所断言内部证据时，才允许测试专用 Loader 驱动。",
+        "只有当 CLI profile 组装本身是被测对象时，才在此保留 composition。",
+        "包专用 Loader 配置与驱动移到该包的 tests/fixtures/。",
+        "录制会话回放放在顶层 snapshots/；其他 expected 输出使用 *.expected.e2e.ts 与 owner 本地 expected/ 目录。",
+        "面向用户的可选 overlay 放在 apps/cli/config/examples/，并在 docs/user/ 有发布指南；它们是产品资产，不是测试夹具。"
+      ],
+      "actors": [
+        "Profile 测试作者",
+        "包维护者",
+        "评审人"
+      ],
+      "steps": [
+        "先判断断言需要公开输出还是内部证据。",
+        "需要公开行为时走 bin.ts --profile；只有内部证据不可见时才用测试专用 Loader。",
+        "按归属放置 composition、包夹具、快照与 expected 输出。",
+        "可选 overlay 作为产品资产随用户指南发布。"
+      ],
+      "enforcement": {
+        "mode": "评审（放置策略）",
+        "implementation": "未观察到针对该放置策略的专用机械校验器；测试运行本身不检查放置理由。",
+        "trust": "评审人需检查入口选择与目录归属；测试通过不能证明放置正确。",
+        "failure": "用包内夹具冒充跨包 profile 行为、把回放放进包测试、或把用户 overlay 当夹具，均应在评审阻断。",
+        "exceptions": [
+          "公开 profile 输出无法暴露内部证据时允许测试专用 Loader",
+          "CLI 组装本身是主题时 composition 可留在此树"
+        ]
+      },
+      "applicability": "适用于有多个发布 profile、真实入口与共享快照库的项目；目录名与命令需按目标项目替换。",
+      "relationships": [
+        "与测试域的录制回放与 expected 输出权威规则相连",
+        "与文档域的用户指南发布义务相连"
+      ],
+      "migration": {
+        "strategy": "把入口选择写成评审清单，并按证据类型分目录。",
+        "implementation": "在测试指南中固定 bin.ts 入口、Loader 例外、包夹具、snapshots 与 expected 的归属；评审按清单检查。",
+        "requiredSupport": [
+          "可启动的真实产品入口",
+          "按包划分的测试夹具目录",
+          "集中快照库"
+        ]
+      },
+      "reference": "references/subtree-instructions.md#subtree-instructions.profile-test-placement",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "跨包 profile 场景经 bin.ts --profile 启动并断言公开输出",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "仅有测试专用 Loader 而无公开输出不可见理由时，评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把错位夹具移回包 tests/fixtures 后重跑该 profile 测试",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "该规则明确没有机械强制；本次未运行任何 profile 测试，放置正确性仅为文本证据。"
+    }
+  ]
+}

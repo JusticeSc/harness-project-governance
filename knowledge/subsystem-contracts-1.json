@@ -1,0 +1,1156 @@
+{
+  "domain": "subsystem-contracts-1",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "subsystem-contracts-1-page-ownership-and-index",
+      "title": "子系统页所有权索引与包组归属",
+      "sources": [
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 1,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 17,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-subsystem-pages.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-subsystem-pages.ts",
+          "start": 34,
+          "end": 61,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-subsystem-pages.ts",
+          "start": 62,
+          "end": 137,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 40,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1131,
+          "end": 1190,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 846,
+          "end": 846,
+          "kind": "config"
+        }
+      ],
+      "problem": "子系统事实没有唯一主页时，服务/事件会落在无人拥有的页面，包组会没有任何子系统引用，索引表与实际页面逐渐分离；陈旧映射与静默豁免会让这种漂移无法在评审中被发现。",
+      "triggers": [
+        "新增包组或新增主干包",
+        "新增或删除 ctx.<key> 服务、事件作用域",
+        "拆分或合并子系统页",
+        "评审发现某包组没有子系统引用",
+        "verify-subsystem-pages 或 verify-cordis-catalog 报错"
+      ],
+      "obligations": [
+        "每个子系统恰有一个主页；页首说明它拥有什么，docs/subsystems/README.md 的 Page|Owns 表同步一行",
+        "每个包组要么从英文组 README 直接链接至少一个存在的 docs/subsystems/*.md，要么在 GROUPS_WITHOUT_SUBSYSTEM_PAGE 中带非空理由",
+        "包组没有组 README 本身是违规；链接到不存在的页面是违规",
+        "每个被发现的 ctx 服务必须恰好映射到一个页面（SERVICE_PAGE），每个事件作用域必须恰好映射到一个页面（EVENT_SCOPE_PAGE）",
+        "映射了但投影发现不到、声明了但既未渲染也未具名豁免、已渲染却仍在豁免表，都是必须修复的错误",
+        "索引表的 Owns 描述是否准确没有机械检查，由评审负责"
+      ],
+      "actors": [
+        "子系统所有者",
+        "包组所有者",
+        "文档评审者",
+        "CI 门禁"
+      ],
+      "steps": [
+        "用 packages/*/README.md 与 packages/*/*/package.json 找出包组并确认是否已有拥有页",
+        "在索引表加行，并在页首写清拥有的词汇、类型、服务/事件",
+        "在英文组 README 写直接相对链接 ../../docs/subsystems/<page>.md",
+        "若新增服务/事件，在 scripts/gen-cordis-catalog.ts 的 SERVICE_PAGE 或 EVENT_SCOPE_PAGE 增加条目",
+        "运行 pnpm run verify-subsystem-pages 与 pnpm run verify-cordis-catalog",
+        "评审 Owns 描述与页面实际内容是否一致"
+      ],
+      "enforcement": {
+        "mode": "自动门禁 + 评审",
+        "implementation": "pnpm run verify-subsystem-pages 审计包组 README 链接与 GROUPS_WITHOUT_SUBSYSTEM_PAGE；pnpm run verify-cordis-catalog 的 walkPartitionProblems 双向检查 SERVICE_PAGE/EVENT_SCOPE_PAGE 与具名 walk 豁免；两者都在 doc-sync 聚合中",
+        "trust": "链接存在性、缺口、陈旧条目、映射双向性可机械验证；页面是否真的拥有它声称的内容、索引表描述是否同义、拆页粒度是否合理只能评审",
+        "failure": "verify-subsystem-pages 退出 1 并逐条打印 no reader-visible direct docs/subsystems/*.md link、linked subsystem page does not exist、no matching package group; remove the stale entry、missing justification、links a subsystem page but remains exempt; remove the stale exemption；目录侧打印 service ctx.<key> ... has no SERVICE_PAGE entry 或 SERVICE_PAGE maps ... but the projection discovers no such service",
+        "exceptions": [
+          "acp、bundle、sdk、test-support、util 有显式豁免理由；理由为空是错误",
+          "新包组不能静默继承豁免，必须新增带理由的条目",
+          "本域只覆盖 33 个页面；索引页中的其余页面不在本域证据范围"
+        ]
+      },
+      "applicability": "任何以“一页一子系统 + 包组入口链接 + 服务/事件到页面的映射”组织参考文档的仓库。没有 ctx 概念的仓库可把映射换成模块/导出符号到页面的映射，但必须保留双向失败。",
+      "relationships": [
+        "subsystem-contracts-1-tier-home-and-page-scope",
+        "subsystem-contracts-1-same-change-type-authority",
+        "subsystem-contracts-1-generated-cordis-region",
+        "subsystem-contracts-1-doc-sync-gates"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留单一所有权、直接链接、双向映射与陈旧条目失败；把包组发现 glob、页面目录、豁免表、映射表参数化。目标项目若没有 ctx，改用模块/符号映射并保留 rendered/declared 双向校验。",
+        "requiredSupport": [
+          "统一的包组 README 约定",
+          "一个可枚举页面与链接的审计脚本",
+          "一个能枚举服务/事件声明的投影或扫描器",
+          "把审计接入文档聚合门禁"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-page-ownership-and-index",
+      "verification": {
+        "positive": [
+          {
+            "check": "新包组在英文 README 链接拥有页后，verify-subsystem-pages 报告 all conform；新增 ctx 服务加入 SERVICE_PAGE 后目录检查通过",
+            "evidence": "planned",
+            "note": "需在目标仓库真实运行并保留输出"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除包组 README 的子系统链接（且无豁免）时审计失败；映射存在但投影无此服务时目录检查失败；豁免理由为空时失败",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补链接或移除陈旧映射/豁免后重跑两项门禁并保留绿色输出",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "未执行门禁。verify-subsystem-pages 只检查英文组 README 的直接相对链接，忽略 README.md、.zh.md 与代码块；它不校验索引表或页首描述。目录映射检查依赖投影能发现服务/事件，因此需要具名豁免来覆盖扫描盲区。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-tier-home-and-page-scope",
+      "title": "事实单一归属：参考层级与页作用域",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 17,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 41,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 67,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/compaction.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/storage.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/web.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/skills.md",
+          "start": 1,
+          "end": 6,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一规则散落在架构页、子系统页、包 README 与决策记录中时，读者无法判断哪份是权威，修改会改一处漏一处；把可选能力的词汇塞进主干页会让主干承担不该承担的可选依赖。",
+      "triggers": [
+        "决定一条新事实写在哪一层",
+        "发现同一措辞出现在两处",
+        "想把可选能力写进 core.md 或 architecture.md",
+        "评审质疑页面越界解释实现细节"
+      ],
+      "obligations": [
+        "每个事实只有一个家；其他位置只链接，不复述",
+        "subsystems/ 拥有类型定义、语义与生成的 Cordis API；architecture.md 拥有跨子系统行为地图；Agent Notes 拥有理据；包 README 拥有单包契约与限制",
+        "子系统页只描述自己的主题，后代只按用途/职责/高层行为提及并链接到拥有者",
+        "可选能力（web、compaction、storage、skills 等）的词汇定义在子系统页而非 core.md，并链接能力 seam 决策记录",
+        "文档写当前状态，不写历史、迁移计划或实现状态标注",
+        "重复规则用独特短语全库搜索，保留一个家"
+      ],
+      "actors": [
+        "页面作者",
+        "子系统所有者",
+        "评审者"
+      ],
+      "steps": [
+        "先判定事实类型：类型/行为/理据/包契约/生成数据",
+        "把事实写到拥有者；在子系统页只保留跨包契约与一句链接",
+        "把行为叙述移到 architecture.md，把理据移到 Agent Note，把配置细节移到包 README",
+        "全库搜索独特短语，删除重复副本",
+        "评审确认没有同义两处"
+      ],
+      "enforcement": {
+        "mode": "评审",
+        "implementation": "docs/AGENTS.md 的分层表与 slop checklist；没有针对事实归属的自动检查器",
+        "trust": "页作用域、重复、历史混入只能由评审判断；链接有效性另有 verify-md-links，但链接存在不等于归属正确",
+        "failure": "没有自动失败；错层会导致重复、矛盾或上下文膨胀，通常在评审或后续阅读中暴露",
+        "exceptions": [
+          "跨页通用模式可留在 core.md 并被其他页链接",
+          "包 README 拥有生成目录之外的配置与限制",
+          "生成区文字由生成器拥有，不作为作者事实判断对象"
+        ]
+      },
+      "applicability": "使用分层文档（架构、子系统参考、包 README、决策记录）的仓库。若目标项目没有这些层级，可压缩为“行为/契约/理据”三层，但必须给每层写清“不放什么”。",
+      "relationships": [
+        "subsystem-contracts-1-page-ownership-and-index",
+        "subsystem-contracts-1-capability-seam-ownership",
+        "subsystem-contracts-1-doc-sync-gates"
+      ],
+      "migration": {
+        "strategy": "retain-conceptual-structure",
+        "implementation": "保留“单一归属 + 上层链接下层 + 可选词汇在能力页”的语义；层名与目录可改。把“这里不放什么”写进每层的入口文档，并在评审清单加入重复规则搜索。",
+        "requiredSupport": [
+          "分层文档结构",
+          "一个可全库搜索的短语检索习惯或工具",
+          "评审清单"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-tier-home-and-page-scope",
+      "verification": {
+        "positive": [
+          {
+            "check": "任取三条规则，每条的独特短语只在一个权威位置出现，其他位置是链接；可选能力词汇不出现在 core.md",
+            "evidence": "planned",
+            "note": "抽样验证，非全库证明"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "故意在 architecture.md 与子系统页各写一份字段级定义，评审应能指出重复并保留唯一家",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除重复副本、改为链接后再次抽样确认",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "完全评审强制，没有源仓门禁证据。本域只抽样读了 4 个页首的分层表述，不能证明 33 页都遵守；生成区内容的归属由生成器规则决定，不是本机制主张。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-same-change-type-authority",
+      "title": "类型权威与同变更更新义务（type-equiv 与清单）",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 43,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 76,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/compaction.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/session.md",
+          "start": 250,
+          "end": 523,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-type-equiv.ts",
+          "start": 280,
+          "end": 391,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/type-equiv.manifest.json",
+          "start": 1,
+          "end": 3,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/type-equiv.manifest.json",
+          "start": 588,
+          "end": 614,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 824,
+          "end": 824,
+          "kind": "config"
+        }
+      ],
+      "problem": "子系统页上逐字粘贴的类型会与源声明漂移，而读者把页面当权威；同时自动漂移检查无法发现“从未被记录的新类型”，导致新契约只存在于代码里。",
+      "triggers": [
+        "修改 packages/**/src/** 的导出类型或其 JSDoc",
+        "新增公开类型或公开类",
+        "把类型声明粘贴进子系统页",
+        "评审发现页面类型与源不一致",
+        "verify-type-equiv 报告 DRIFT 或孤儿条目"
+      ],
+      "obligations": [
+        "重塑已文档化类型时，拥有它的子系统页在同一变更内更新",
+        "完整类型声明及其原始 JSDoc 用 ts type-equiv；去方法体的公开类声明用 ts public-api；两者都登记到 scripts/type-equiv.manifest.json",
+        "块与清单 1:1：每个块有唯一条目，每个条目有唯一块；同一文档同一符号同一投影重复出现是错误",
+        "清单条目指向不存在或扫描范围外的文档是错误；符号在源文件中不存在是错误",
+        "比较规范化结构与规范化 JSDoc；不等即 DRIFT，修复方式是改块或改清单，不是放宽比较",
+        "中文页的同一块是字节一致的派生副本，不单独登记",
+        "新增类型没有自动发现机制，必须由作者主动补页并由评审确认，不得把 verify-type-equiv 的绿当成完整性证明",
+        "合并声明（declare module）里的变体不能用 type-equiv 粘贴，改在散文目录/表格记录并链接目录所有者"
+      ],
+      "actors": [
+        "类型所有者",
+        "页面作者",
+        "评审者",
+        "CI 门禁"
+      ],
+      "steps": [
+        "改源类型后找到声明包组拥有的子系统页",
+        "用完整声明块替换旧块，同步 JSDoc 的 param/returns/throws",
+        "在 scripts/type-equiv.manifest.json 增加或更新 doc/symbol/source；public-api 条目设置 projection",
+        "同步中文页同一块并保持字节一致",
+        "运行 pnpm run verify-type-equiv；必要时运行 pnpm run doc-typecheck",
+        "评审确认没有从未记录的新类型"
+      ],
+      "enforcement": {
+        "mode": "自动门禁 + 评审补位",
+        "implementation": "pnpm run verify-type-equiv（doc-sync 成员）：提取所有文档中的 ts type-equiv/ts public-api 块，与 scripts/type-equiv.manifest.json 做 1:1 匹配，按名字从源文件取声明并比较规范化结构与 JSDoc；配对中文块作为派生副本校验",
+        "trust": "已粘贴块的漂移、重复、孤儿、源缺失可机械验证；是否漏记新类型、注释语义是否完整、清单 source 是否选对拥有包只能评审",
+        "failure": "退出 1 并逐条打印 DRIFT（含两侧结构与 JSDoc）、has no manifest entry、has no matching type-equiv block、duplicate type-equiv block、manifest references ... which does not exist、symbol ... not found",
+        "exceptions": [
+          "声明合并的事件负载变体不走 type-equiv，因为提取器只按名字匹配顶层声明",
+          "public-api 用于公开类，普通块用于完整声明",
+          "本域只覆盖 subsystems/ 页面；其它文档中的 type-equiv 块由文档域拥有"
+        ]
+      },
+      "applicability": "用逐字类型块把源码类型暴露给读者的参考文档。若目标语言没有 TS，仍可用等价的结构化 AST 比较或生成的 API 文档替代，但必须保留清单 1:1 与孤儿/重复失败。",
+      "relationships": [
+        "subsystem-contracts-1-page-ownership-and-index",
+        "subsystem-contracts-1-generated-cordis-region",
+        "subsystem-contracts-1-bilingual-triplet",
+        "subsystem-contracts-1-doc-sync-gates"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留逐字粘贴、清单 1:1、结构+JSDoc 比较、派生翻译副本；把清单路径、围栏语言、源根参数化。新增类型补一条评审清单项，因为自动检查看不到不存在的块。",
+        "requiredSupport": [
+          "源类型声明可被程序定位（按文件与符号名）",
+          "一个清单文件记录 doc/symbol/source/projection",
+          "把检查接入文档聚合门禁",
+          "中文派生的字节一致校验"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-same-change-type-authority",
+      "verification": {
+        "positive": [
+          {
+            "check": "在目标仓库粘贴一个与源一致的类型块并登记，verify-type-equiv 报告该块匹配且与清单 1:1",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "改动源类型的一个字段而不改文档块，检查报 DRIFT；删除清单条目后报孤儿块；重复登记同一符号报 duplicate",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "同步块与 JSDoc、修正清单后重跑直至 1:1 通过",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "未运行验证器。清单在本快照含 493 条 docs/subsystems/ 条目（机器读取 JSON 统计）；本域只覆盖其中 33 页。提取器只匹配顶层命名声明，因此合并声明、匿名类型、类型别名内部的复杂结构完整性都依赖评审。doc-typecheck 只证明围栏可编译，不证明等价。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-generated-cordis-region",
+      "title": "生成区边界与 Cordis API 新鲜度",
+      "sources": [
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 33,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/session.md",
+          "start": 812,
+          "end": 820,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/credentials.md",
+          "start": 65,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/credentials.md",
+          "start": 490,
+          "end": 493,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1,
+          "end": 32,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1189,
+          "end": 1200,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1262,
+          "end": 1307,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 825,
+          "end": 825,
+          "kind": "config"
+        },
+        {
+          "path": "packages/typert/generator/src/cordis-catalog.ts",
+          "start": 958,
+          "end": 962,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/typert/generator/src/cordis-catalog.ts",
+          "start": 1056,
+          "end": 1067,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/typert/generator/tests/cordis-catalog.spec.ts",
+          "start": 41,
+          "end": 64,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/translation-pairing-record.ts",
+          "start": 152,
+          "end": 163,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 50,
+          "end": 54,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "子系统页同时承载作者散文与从源投影的 API 参考；手工编辑生成区会立刻与源不一致，而在被记录符号上方插入行会改变 file:line 指针，使输出即使语义没变也变陈旧。",
+      "triggers": [
+        "修改服务类、事件声明或它们的 JSDoc",
+        "在任一被投影记录的源文件中增删行",
+        "新增或删除 ctx 服务/事件作用域",
+        "页面新增或缺失 BEGIN/END GENERATED 标记",
+        "verify-cordis-catalog 报告 stale"
+      ],
+      "obligations": [
+        "作者只改 BEGIN GENERATED cordis-surface 与 END GENERATED cordis-surface 之外；标记内不得手改",
+        "修改被记录源文件后必须运行 pnpm run gen-cordis-catalog 并提交结果；页面生成区的 Source 链接只到文件（sourceLink 剥掉 :line），但同一次 --check 也覆盖保留 file:line 的 docs/cordis-api/inherited.md，所以在符号上方插入行仍会让已提交产物集陈旧",
+        "映射页缺少标记、未映射服务/作用域、映射指向不存在的页、投影不再发现的陈旧映射都失败",
+        "生成器同时写英文与中文两侧，只本地化配对文档路径；仅生成区变化时不需要新配对记录（生成器不写 .i18n.yaml，配对记录按设计排除生成区），区域外正文变化或记录漂移才用 verify-translation-pairing --write <pair> 重录",
+        "新鲜度由 pnpm run verify-cordis-catalog（gen-cordis-catalog --check）在 doc-sync 中强制",
+        "生成区内的签名块使用 ts cordis-catalog 围栏并保留原始 JSDoc；不要把它改成作者手写类型块"
+      ],
+      "actors": [
+        "生成器所有者",
+        "服务/事件所有者",
+        "页面作者",
+        "CI 门禁"
+      ],
+      "steps": [
+        "改源声明与 JSDoc，确保事件模式、参数/返回 JSDoc 完整",
+        "运行 pnpm run gen-cordis-catalog",
+        "检查 diff：生成区变化；仅区域变化时配对记录不变（生成器不写 .i18n.yaml），区域外正文变化才需要 --write 重录",
+        "运行 pnpm run verify-cordis-catalog",
+        "若页面本应有区却无标记，先补标记再生成"
+      ],
+      "enforcement": {
+        "mode": "自动门禁",
+        "implementation": "scripts/gen-cordis-catalog.ts 计算继承层页、运行时 API 模块、每个映射页的两语言文档，main 追加 core API 页；--check 逐字节比较所有产物；doc-sync 通过 verify-cordis-catalog 运行该检查。生成器全文只有一处 writeFileSync，没有 .i18n.yaml 写入者；头注释 7-8 行的重录声明是实现未兑现的设计声明",
+        "trust": "区域边界、映射完整性、双向陈旧、字节新鲜度可机械验证；生成器不判断映射选择是否合理、页面是否应该存在、生成区展示的语义是否易读。页面生成区不含行号，位置敏感性来自 inherited.md；配对记录排除生成区，所以区域变化不会让记录失效——这是记录算法的性质，不是生成器重录",
+        "failure": "stale 时打印 gen-cordis-catalog: stale — <paths>. Run pnpm run gen-cordis-catalog and commit the result. 并以 1 退出；分区/标记问题以聚合错误抛出",
+        "exceptions": [
+          "30/33 页有生成区；scope、slots、sidebar-right 没有，因为 SERVICE_PAGE/EVENT_SCOPE_PAGE 的并集不含这三页（映射表直接后果，非逐页声明）",
+          "追加服务后需先加 SERVICE_PAGE 映射并补标记",
+          "credentials 证明生成区不必在文件末尾：END GENERATED 后仍有作者尾段",
+          "docs/cordis-api/inherited.md 的继承/内核层不在本域范围"
+        ]
+      },
+      "applicability": "任何把机器生成 API 参考嵌入双语作者页的仓库。若没有服务/事件目录，可省略生成区，但必须在页面形态清单中记录“无生成区”的理由。",
+      "relationships": [
+        "subsystem-contracts-1-page-ownership-and-index",
+        "subsystem-contracts-1-same-change-type-authority",
+        "subsystem-contracts-1-bilingual-triplet",
+        "subsystem-contracts-1-doc-sync-gates"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留标记边界、单一生成器、双向映射、--check 字节新鲜度与两语言同写；把标记字符串、生成命令、输出清单参数化。CI 中单独设“重跑生成器后无 diff”的 job。",
+        "requiredSupport": [
+          "可枚举服务/事件声明的投影器",
+          "页面目录与服务/事件到页面的映射表",
+          "生成器的 --check 模式",
+          "双语同时写入与按区域排除的配对记录（区域变化不需要重录）"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-generated-cordis-region",
+      "verification": {
+        "positive": [
+          {
+            "check": "改一个服务 JSDoc 后重新生成，--check 报告全部产物 up to date，且英文/中文区域除配对链接外一致",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "对 26 组 EN/ZH 生成区只替换配对文档链接目标后逐字节相等，且重建表（EN 区域套用全部替换）逐字节等于 ZH 区域",
+            "evidence": "verification/evidence/raw/p1-subsystem-one-strict-locale.json#/counts",
+            "note": "结构等价，不涉及译文质量或生成器执行"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "手改生成区一个字节后 --check 报 stale；在被记录符号上方插一行而不重新生成也报 stale；映射页删掉 END 标记报聚合错误",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "在含链接的行上改动散文、标签、空格、片段或非配对 URL 必须被拒；仅替换全部配对文档目标必须通过；只替换其中一个目标只被独立的 locale 检查拒绝",
+            "evidence": "verification/evidence/raw/p1-partial-localization-after.json#/controls",
+            "note": "364条对照、0预期不符；18项部分本地化现保留其余原始英文URL且不含内部规范化URL，8项因仅有一个目标不适用。旧strict-locale的这18项误写内部dsh-translation-target值；其主比较与其他有效对照保留，新before/after及不利复核均保留。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复标记、运行 pnpm run gen-cordis-catalog、提交生成结果并重跑 --check",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "未运行生成器。53 个被报告的生成区缺口（26 英文 + 27 中文，含 skills.zh.md）已做完整结构解析（语法、锚点、Types/Source 尾部、映射归属）。两语言比较采用源消费者算法：只归一化配对文档链接目标，再要求整区逐字节相等，0 行豁免；26 对全部通过，87 处允许替换、190051 字节参与比较，原始记录见 verification/evidence/raw/p1-subsystem-one-strict-locale.json。此前“逐行比较、仅允许本地化链接”的表述已撤回：旧探针会整行丢弃含 ]( 或以 Types: 开头的差异行（67/67 差异行未真正比较），该旧记录保留在 p1-subsystem-one-tails-structure.json 中不改。这不是逐行语义审阅；JSDoc 含义与产品行为未验证。三页无生成区由映射表并集推出。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-bilingual-triplet",
+      "title": "双语三件套与外区哈希配对",
+      "sources": [
+        {
+          "path": "docs/i18n/README.md",
+          "start": 8,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 50,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 45,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/session.md",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/session.zh.md",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/filesystem.i18n.yaml",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 1,
+          "end": 80,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 5,
+          "end": 8,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "双语文档若只改一侧，另一种语言的读者会读到过期或矛盾的契约；全文件哈希又会把代码块与生成区噪音变成无意义冲突，导致维护者不愿更新对应页。",
+      "triggers": [
+        "修改任一语言侧正文",
+        "修改标题、表格、列表或代码块结构",
+        "新增子系统页或配对记录",
+        "生成区重新生成",
+        "合并冲突发生在同一标题节",
+        "评审发现中文页缺英文回链"
+      ],
+      "obligations": [
+        "一对是三个同目录兄弟文件：foo.md、foo.zh.md、foo.i18n.yaml；PR 不得只落一种语言",
+        "两种语言权威相等，任一语言可先写，另一侧翻译自它",
+        "对另一侧按已编辑侧的 diff 做最小补丁，不得整篇重译；扩展流程 gen-translation-brief 只在用户显式调用时使用",
+        "例行工作由当前代理加载 terminology.md 后一次直接更新，不调用翻译技能、不生成简报、不做独立翻译评审，也不委派子代理",
+        "配对记录按标题节保存 en/zh 哈希，排除围栏代码块与生成区；编辑任一侧语言相关内容后必须用 pnpm run verify-translation-pairing --write <pair> 重录",
+        "结构镜像：标题深度与顺序、列表种类、有序列表起点、条目数、表格行列数、语义链接目标（含查询/片段）、逐字代码块",
+        "中文页 H1 后保留 [English](foo.md) | 中文；作者英文页写 English | [中文](foo.zh.md)；被列为生成源的英文页豁免该行",
+        "相对文档链接按活动语料换 locale：英文 .md，中文 .zh.md；语料内缺对应页是错误，不是回退",
+        "生成区由生成器同时写两侧；仅区域变化不需要人工翻译或新记录（生成器不写侧车，配对记录排除生成区）",
+        "门禁检查配对完整性、记录哈希、中文回链/英文源切换器（生成源例外）与文档化结构签名；签名未编码的译文含义、术语与结构由评审负责",
+        "`--write` 必须逐对点名已确认的 pair；`--write --all` 是显式全语料确认，yaml diff 就是确认动作"
+      ],
+      "actors": [
+        "文档编辑代理",
+        "译者/评审者",
+        "CI 门禁",
+        "生成器（区域两语言同写，不写侧车记录）"
+      ],
+      "steps": [
+        "读 docs/i18n/terminology.md",
+        "改一侧正文并保持结构、代码块逐字一致",
+        "同步另一侧，修正链接 locale 与语言切换器",
+        "运行 pnpm run verify-translation-pairing --write docs/subsystems/<page>.md 重录",
+        "用 pnpm run verify-translation-pairing <pair> 局部检查",
+        "PR 级运行无参数全量检查",
+        "评审译文含义与术语"
+      ],
+      "enforcement": {
+        "mode": "自动门禁 + 评审",
+        "implementation": "pnpm run verify-translation-pairing：发现范围文档、要求三件套完整、校验规范记录与当前内容计算值、语言切换器、链接 locale、结构签名；doc-sync 与 CI 运行全量形式；--write <pairs> 只重录指定对",
+        "trust": "文件存在性、记录相等、结构签名、链接 locale、切换器可机械验证；两侧是否说同一件事、术语是否正确、译文是否自然不可机械验证。生成区变化不会让记录失效是记录算法排除区域的直接结果",
+        "failure": "missing/out-of-sync 行在正常检查中导致失败；--list 只报告不失败；局部 --write 成功不代表 PR 级全量通过",
+        "exceptions": [
+          "docs/AGENTS.md、terminology.md、style-samples.md、translation-prompt.md、.github/review-ownership/README.md、cordis-api/inherited.md、archived Agent Notes 被排除；本域 33 页不在排除表",
+          "生成英文源豁免语言切换器",
+          "手动维护的中文页可改写生成/维护自指陈述，但技术内容仍须忠实"
+        ]
+      },
+      "applicability": "任何要求双语平等的文档语料。若目标项目只维护单语，则本机制不激活；但若存在机器生成区与人工译文混合，仍应保留“生成区不参与人工翻译哈希”的语义。",
+      "relationships": [
+        "subsystem-contracts-1-same-change-type-authority",
+        "subsystem-contracts-1-generated-cordis-region",
+        "subsystem-contracts-1-doc-sync-gates"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留三文件、按标题哈希、结构签名、局部重录与全量检查；哈希算法、CLI 名、排除清单可参数化。把 --write <pair> 纳入编辑循环，PR 必须全量。",
+        "requiredSupport": [
+          "术语权威文档",
+          "生成区标记可被配对检查识别并排除",
+          "按标题解析 Markdown 与结构签名的实现",
+          "配对记录重录与校验命令"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-bilingual-triplet",
+      "verification": {
+        "positive": [
+          {
+            "check": "改一节英文并同步中文、重录后，局部与全量配对检查均通过；仅重新生成区域时侧车记录不变",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只改英文正文不重录时检查报 out-of-sync；中文删掉回链或链接写成 .md 时检查失败；表格少一行时结构签名失败",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "同步另一侧、修正链接与结构、--write 重录该对，再跑全量检查",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "未运行配对门禁。中文作者区逐页阅读、中文生成区抽样，侧车逐文件读完但只作为哈希/结构证据。33 页配对节计数由行数机械推算。绿灯不能证明译文质量。生成区缺口的结构解析不等于译文语义评审。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-doc-sync-gates",
+      "title": "doc-sync 门禁组合与按触发执行",
+      "sources": [
+        {
+          "path": "docs/i18n/README.md",
+          "start": 30,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 42,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 61,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 122,
+          "end": 134,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 805,
+          "end": 874,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 881,
+          "end": 883,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 9,
+          "kind": "config"
+        }
+      ],
+      "problem": "文档变更涉及类型等价、生成区、配对、链接、换行、页面归属等多个独立不变量；没有单一聚合入口时，贡献者只跑自己记得的检查，CI 与本地结果不一致。",
+      "triggers": [
+        "任意文档改动",
+        "准备 PR 或合并前",
+        "CI 文档 job 红灯",
+        "新增文档门禁叶子",
+        "需要快速循环但不想跑全量"
+      ],
+      "obligations": [
+        "文档变更本地运行 pnpm run doc-sync；CI 运行穷尽组合",
+        "局部配对检查的绿不能替代 PR 级全量检查",
+        "ts 围栏必须可编译（doc-typecheck）；每段一个物理行（verify-md-wrap）；本地链接由 verify-md-links 检查",
+        "维护文件中的真实提交 ID 与被禁组织 URL 由参考验证拒绝",
+        "子系统页不在 doc-budgets.manifest.json 中，因此没有字面预算；预算外层级由评审治理，不要编造上限",
+        "doc-quick 只跑 quick 叶子并省略 doc-typecheck，不能当完整验证"
+      ],
+      "actors": [
+        "文档作者",
+        "CI",
+        "评审者",
+        "门禁所有者"
+      ],
+      "steps": [
+        "编辑后先跑最相关叶子（如 verify-type-equiv、verify-cordis-catalog）",
+        "运行 pnpm run verify-translation-pairing --write <pair> 重录配对",
+        "运行 pnpm run gen-cordis-catalog 并提交结果",
+        "提交前运行 pnpm run doc-sync",
+        "按失败叶子修复，不跳过阻塞门禁"
+      ],
+      "enforcement": {
+        "mode": "自动门禁",
+        "implementation": "scripts/run-gates.ts 的 docSyncLeafGates 构造叶子列表；pnpm run doc-sync 运行聚合；阻塞叶子失败或被跳过会返回非零；doc-quick 过滤 quick 叶子并关闭 doc-typecheck",
+        "trust": "叶子执行与退出码可机械验证；门禁是否覆盖某条规则、例外是否合理、预算外质量由评审负责",
+        "failure": "聚合打印每个门禁结果与总结；阻塞叶子失败或被跳过返回 1；allowFailure 叶子不阻塞",
+        "exceptions": [
+          "配对检查可用 <pair> 参数加速局部循环，但 PR 必须全量",
+          "生成英文页省略语言切换器；.zh.md 仍受 markdown 门禁",
+          "子系统页没有词数上限"
+        ]
+      },
+      "applicability": "使用聚合门禁的文档仓库。目标项目可换 runner 与脚本名，但应保留单一入口、叶子可单独运行、局部绿不替代全量三条语义。",
+      "relationships": [
+        "subsystem-contracts-1-page-ownership-and-index",
+        "subsystem-contracts-1-same-change-type-authority",
+        "subsystem-contracts-1-generated-cordis-region",
+        "subsystem-contracts-1-bilingual-triplet"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留聚合入口、阻塞/允许失败分类、局部与全量区分；脚本名与 runner 参数化。把生成器无 diff 与配对全量设为独立 required check 便于定位。",
+        "requiredSupport": [
+          "一个聚合 runner 与叶子注册表",
+          "CI 中运行全量聚合",
+          "本地可运行同一命令"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-doc-sync-gates",
+      "verification": {
+        "positive": [
+          {
+            "check": "在目标仓库制造一处仅类型漂移，doc-sync 在类型叶子失败并汇总；修复后全绿",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "跳过 doc-typecheck 只跑 doc-quick 不应被视为完整验证；阻塞叶子被跳过时聚合返回非零",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按叶子消息修复并重跑聚合，保留完整输出",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "未运行任何门禁；未验证 CI 配置、分支保护或实际耗时。门禁清单绑定固定提交，目标项目会演化。子系统页无预算这一事实来自 manifest 只有 7 个条目，不能推断“页面可以无限长”是鼓励。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-capability-seam-ownership",
+      "title": "可选能力 seam 的 Definition/Provider/Consumer 文档归属",
+      "sources": [
+        {
+          "path": "docs/subsystems/filesystem.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/web.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/compaction.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/storage.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/skills.md",
+          "start": 1,
+          "end": 6,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/shell.md",
+          "start": 1,
+          "end": 4,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/spill.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/client-modules.md",
+          "start": 1,
+          "end": 4,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/credentials.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/office-to-pdf.md",
+          "start": 1,
+          "end": 8,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "可选能力若没有明确的 Definition/Provider/Consumer 归属，能力词汇会被写进主干页，消费者会耦合到某个 provider，替换实现会改变模型可见的工具契约。",
+      "triggers": [
+        "新增可选能力或新 provider",
+        "替换 provider 实现",
+        "评审发现消费者 import provider 实现",
+        "能力词汇同时出现在 core.md 与能力页",
+        "决定 seam 级不变量写在哪里"
+      ],
+      "obligations": [
+        "页首写清 Service Definition 包与 ctx 键、至少一个 Provider、Consumer，以及该能力可选/不在 agent loop 主干的事实",
+        "能力词汇定义在能力页；core.md 只保留跨能力模式并链接",
+        "替换 provider 不得改变模型提交查询的方式或工具 schema；模型可见名称、schema、提示、展示归唯一 Consumer 所有",
+        "显式写出 seam 级不变量：如空存储值视为不存在、spill 原样保存全文且不负责保留/检索/替换、storage hub 不做 IO",
+        "用能力 seam 决策记录承载理据，不在页面重写历史",
+        "Consumer 拥有边界与展示；Provider 拥有实现与配置细节；页面链接包 README 而不是复制配置",
+        "多 provider 的 seam 必须用共享一致性套件验证每个实现（如 storage 的 contract 测试）；重复注册在注册期失败；单槽决策 waterfall 为 first-wins，注册顺序是部署约定而非强制不变量"
+      ],
+      "actors": [
+        "能力所有者",
+        "Provider 所有者",
+        "Consumer 所有者",
+        "页面评审者"
+      ],
+      "steps": [
+        "列出 Definition/Provider/Consumer 及包路径，确认 ctx 键与页面映射一致",
+        "写可选性判定与必要依赖例外",
+        "写 seam 级不变量与失败语义",
+        "写 Consumer 拥有的模型契约与边界",
+        "评审替换 provider 的影响面是否被隔离"
+      ],
+      "enforcement": {
+        "mode": "评审 + 实现行为",
+        "implementation": "页面散文声明三角色；工具 schema 与消费方由实现包拥有；没有检查器验证页首完整性",
+        "trust": "页面是否写全三角色只能评审；provider 替换是否真的不影响消费者需要代码评审或测试；seam 不变量是否被执行取决于实现",
+        "failure": "无自动失败；症状是词汇重复、消费者耦合 provider、替换后工具 schema 变化",
+        "exceptions": [
+          "compaction 必然依赖 dsh-session 与 dsh-llm，但仍是可选能力",
+          "tools 等核心词汇页不属于可选能力页",
+          "office-to-pdf 不创建模型工具或 Session 事件，消费者拥有授权与展示"
+        ]
+      },
+      "applicability": "使用能力 seam（Definition/Provider/Consumer）拆分可选能力的仓库。若目标项目没有可选能力，机制不激活；若只有单一实现，仍应写清消费者契约与替换边界。",
+      "relationships": [
+        "subsystem-contracts-1-tier-home-and-page-scope",
+        "subsystem-contracts-1-exclusive-provider-registration",
+        "subsystem-contracts-1-page-ownership-and-index"
+      ],
+      "migration": {
+        "strategy": "retain-conceptual-structure",
+        "implementation": "保留三角色、能力词汇在能力页、Consumer 拥有模型契约、替换 provider 不改 schema；包名与 ctx 键参数化。给每页加“替换 provider 后哪些文档需要改”的评审问题。",
+        "requiredSupport": [
+          "定义/实现/消费分层或等价的模块边界",
+          "能力页与包 README 的分工约定",
+          "代码评审检查消费者不 import provider"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-capability-seam-ownership",
+      "verification": {
+        "positive": [
+          {
+            "check": "替换一个 provider 实现后，模型可见工具 schema 与消费方代码不变，只需改 provider 配置",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让消费方 import provider 实现并读取其私有配置，评审应拒绝；或把能力词汇复制进 core.md，评审应指出重复",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复消费者对 ctx 契约的依赖、删除重复词汇并改链接",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "三角色完整性与替换隔离没有机械检查；33 个英文页的作者区已逐页阅读，但页首三角色是否同等完整仍需评审；provider 实现是否真的解耦未读代码。存储一致性套件与 filesystem first-wins 只按页面陈述记录，未执行测试。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "subsystem-contracts-1-exclusive-provider-registration",
+      "title": "唯一提供方槽与会话资源所有权",
+      "sources": [
+        {
+          "path": "docs/subsystems/browser-use.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/browser-use.md",
+          "start": 41,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/computer-use.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/computer-use.md",
+          "start": 33,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 43,
+          "end": 44,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "浏览器与桌面是单例、有外部副作用且跨轮保留的资源；若允许多提供方静默注册或把注册当可用，两个 Session 会争用同一浏览器/桌面，关闭时又可能遗留进程或撤销已交付动作。",
+      "triggers": [
+        "接入第二个浏览器/桌面提供方",
+        "热重载或重载提供方插件",
+        "Session fork、恢复或释放",
+        "同一浏览器被两个 Session 附加",
+        "关闭时仍有工具调用在飞",
+        "跨 DSH 进程共享桌面"
+      ],
+      "obligations": [
+        "共享服务只注册提供方名称；第二次注册失败，即使名字与当前相同；槽在 effect 生命周期内保留",
+        "提供方释放注册前先停止接收工具调用并等待自有工作与资源清理完成",
+        "启动的浏览器属于确切实时 Agent/Session，跨轮复用；Session 释放关闭自有资源；重载/fork 创建全新浏览器状态",
+        "附加浏览器归外部所有；提供方在同一实例内保留给一个 Session 并拒绝并发附加；清理只断开，不杀外部浏览器",
+        "取消无法撤销已交付的浏览器/桌面动作，文档必须写明不可逆性",
+        "computer-use 的注册不为任何 Session 预留桌面；调用方协调跨 Session 与独立进程",
+        "MCP 提供方为每个活动 Agent 初始化客户端；agent/created 等待连接与发现结束；附加连接被占用时激活继续但不静默重试"
+      ],
+      "actors": [
+        "共享服务所有者",
+        "提供方所有者",
+        "Session/Agent 所有者",
+        "部署者"
+      ],
+      "steps": [
+        "组合时只挂一个提供方，并声明启动或附加模式",
+        "注册时占用唯一槽，用 effect disposer 绑定生命周期",
+        "Session 释放时关闭自有资源；附加模式只断开",
+        "关闭顺序：停止接收调用 → 等待自有工作 → 释放注册",
+        "在页面与生成 JSDoc 中写清唯一槽、取消不可逆与会话所有权"
+      ],
+      "enforcement": {
+        "mode": "实现拒绝 + 文档契约",
+        "implementation": "BrowserUseRegistry/ComputerUseRegistry 的 register(name) 保留唯一槽并返回 disposer；生成 JSDoc 声明第二次注册失败、释放前必须先停工具与等待自有工作；Session 所有权由运行时管理",
+        "trust": "重复注册与关闭顺序由实现强制（本域只读文档，未读实现）；跨进程共享、外部浏览器所有权、桌面协调只能靠部署与评审",
+        "failure": "第二次注册抛错；附加连接被占用时激活不使用浏览器但继续；清理失败单独报告；取消不撤销已交付动作",
+        "exceptions": [
+          "独立 DSH 进程与其他客户端不受 Session 保留约束",
+          "computer-use 明确不预留桌面",
+          "重载提供方不会接管已经活动的 Session"
+        ]
+      },
+      "applicability": "把单例外部资源（浏览器、桌面、设备、专用进程）接入多 Session 代理的仓库。多提供方场景必须改为显式多实例模型并定义选择/清理，不能放宽唯一槽。",
+      "relationships": [
+        "subsystem-contracts-1-capability-seam-ownership",
+        "subsystem-contracts-1-generated-cordis-region"
+      ],
+      "migration": {
+        "strategy": "retain-contract-and-parameterize",
+        "implementation": "保留唯一槽、同名也失败、关闭顺序、会话所有权与取消不可逆；把资源类型与生命周期接口参数化。为第二次注册失败与关闭顺序写测试，并在文档引用测试。",
+        "requiredSupport": [
+          "注册即 effect 生命周期",
+          "唯一槽注册器",
+          "Session/Agent 所有权句柄",
+          "关闭顺序的可等待清理接口"
+        ]
+      },
+      "reference": "references/subsystem-contracts-1.md#subsystem-contracts-1-exclusive-provider-registration",
+      "verification": {
+        "positive": [
+          {
+            "check": "同一组合只挂一个提供方时可注册；Session 释放后自有浏览器关闭，外部附加浏览器仍运行",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "同一服务第二次注册（含同名）抛错；关闭时先释放注册再停工具会导致调用失败或在飞工作丢失",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "卸载第二个提供方或用 effect disposer 按序关闭，再重跑注册/清理验证",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "唯一槽抛错、关闭顺序与会话所有权来自页面与生成 JSDoc 的契约陈述；本域未读 BrowserUseRegistry/ComputerUseRegistry 实现或测试，因此不能声称已观测到这些失败。",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

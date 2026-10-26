@@ -1,0 +1,2300 @@
+{
+  "domain": "persistence-current-records",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "persistence-current-records.record-quadruple",
+      "title": "持久化变更记录的四件套与所有权",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 31,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 31,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-12-auto-review-error-metadata.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-13-working-directory.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.i18n.yaml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        }
+      ],
+      "problem": "只写散文无法机器校验“哪个根从哪一版变成哪一版”；只存生成物又丢失兼容性理由与验证证据。把作者声明、双语对侧、分段哈希与完整 after schema 分成四个同目录文件，各自有单一所有者，才能同时满足可读、可验证与可生成。",
+      "triggers": [
+        "新增、修改或删除被 Session 持久化的声明类型",
+        "新建一条带日期的变更记录",
+        "评审一条记录是否完整",
+        "生成物与文档或声明不一致"
+      ],
+      "obligations": [
+        "每条记录恰有四个同目录文件：英文 .md、中文 .zh.md、生成的 .i18n.yaml、生成的 .schema.json",
+        "英文文件承载 kind: persistence-change、一份机器声明、兼容性推理与验证证据",
+        "中文文件承载与英文逐字节相同的机器声明",
+        ".i18n.yaml 是按标题分段的英/中哈希记录，由配对命令生成",
+        ".schema.json 是受影响根在变更后的完整快照，只包含仍存在的根",
+        "记录模板定义人工编写的格式；记录创建接受双语散文输入并生成声明、快照、目录对与一致性记录",
+        "添加后继时保留已接受记录的机器声明与 schema 快照"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "记录生成器",
+        "验证器与 doc-sync",
+        "CI"
+      ],
+      "steps": [
+        "确认受影响的根（见根清单机制）",
+        "按模板创建英文记录，填写 Summary 与机器声明",
+        "创建中文对侧并保持声明逐字节相同",
+        "生成 after-schema 快照与配对侧车",
+        "运行验证器与 doc-sync；失败则修文档或重新生成，不手改生成物",
+        "评审 Compatibility 与 Verification 是否描述真实读取器行为与实际执行的检查"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：生成侧车 + 验证器 + 双语门禁 + 人工评审。",
+          "README 规定四文件所有权与生成/校验分工；验证器从英文读取一次声明并检查中文相等；快照与 i18n 侧车由工具生成；doc-sync 覆盖持久化历史与翻译配对"
+        ],
+        "trust": "文件结构、声明相等、快照根集合与配对哈希可自动检查；创建命令如何生成、是否有人评审不可由验证器证明",
+        "failure": "缺文件、中文声明不等或快照根集合与声明不符时，验证器/doc-sync 失败；删除根若缺少显式 tombstone 会被当作缺失",
+        "exceptions": [
+          "基线记录没有前驱，但仍是四件套",
+          "删除根没有 after schema，必须保留显式 tombstone",
+          "生成的 .i18n.yaml 与 .schema.json 永远不手改"
+        ]
+      },
+      "applicability": "适用：有声明式的持久化契约，需要跨版本兼容决策；需要机器可读的变更历史与可复查的生成快照；文档存在英文/中文或其他双语对侧。不适用：一次性脚本没有持久化契约；至少保留单一声明与当前快照，或明确声明本机制不适用。",
+      "relationships": [
+        "persistence-current-records.machine-declaration",
+        "persistence-current-records.bilingual-pairing",
+        "persistence-current-records.root-inventory"
+      ],
+      "migration": {
+        "strategy": "先固定四件套与声明字段，再实现生成与验证；不要先写散文再补机器声明。",
+        "implementation": [
+          "定义记录文件名规则 YYYY-MM-DD-slug",
+          "实现英文/中文模板与声明解析",
+          "实现 after-schema 生成器与摘要",
+          "实现逐标题段哈希侧车与 --write 重记命令",
+          "把声明相等、根集合与配对检查接入必过门禁"
+        ],
+        "requiredSupport": [
+          "确定性摘要算法",
+          "YAML 声明解析",
+          "生成器与可重复的节点图输出",
+          "双语分段哈希工具",
+          "评审清单"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.record-quadruple",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "为新变更创建四件套后，声明中的每个根在快照中存在且摘要一致，中文声明与英文逐字节相等，配对侧车按标题分段齐全。",
+            "evidence": "planned",
+            "obligation": "为新变更创建四件套后，声明中的每个根在快照中存在且摘要一致，中文声明与英文逐字节相等，配对侧车按标题分段齐全。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "故意让中文声明改一个摘要，或删除快照中的一个根；验证器/配对检查必须失败并指出具体根或文件。",
+            "evidence": "planned",
+            "obligation": "故意让中文声明改一个摘要，或删除快照中的一个根；验证器/配对检查必须失败并指出具体根或文件。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正中文声明并重新生成快照/侧车后重跑同一检查，从失败转为通过，且其他记录无变化。",
+            "evidence": "planned",
+            "obligation": "修正中文声明并重新生成快照/侧车后重跑同一检查，从失败转为通过，且其他记录无变化。"
+          }
+        ]
+      },
+      "limitations": [
+        "验证器只证明文件形状与声明相等，不证明创建命令确实使用了双语输入。",
+        "记录模板与配对实现属于其他域；本域只依据 README 的声明。",
+        "生成物的完整性依赖生成器版本；过期生成物可能通过结构检查但与当前源码不符（由当前根一致机制捕获）。",
+        "跨域依赖：documentation：记录模板、翻译配对与 doc-sync 由文档域拥有；release：验证器与定稿 helper 的实现由发布域拥有。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.machine-declaration",
+      "title": "机器声明：id、baseline、root、previous、after、decision",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 40,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 40,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.md",
+          "start": 24,
+          "end": 265,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-12-auto-review-error-metadata.md",
+          "start": 24,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 24,
+          "end": 85,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-13-user-rpc-principal.zh.md",
+          "start": 1,
+          "end": 60,
+          "kind": "history"
+        }
+      ],
+      "problem": "散文式的兼容性说明无法驱动历史图、摘要比对与 CI 决策。需要一个稳定、极小、可从英文读取一次的机器声明，把每个受影响根绑定到前驱记录、after 摘要与决策。",
+      "triggers": [
+        "新建或修订记录",
+        "复制历史记录作为新变更模板",
+        "验证器读取记录",
+        "中文对侧需要与英文对齐"
+      ],
+      "obligations": [
+        "声明位于围栏代码块 ```yaml persistence-change，含 schemaVersion: 1",
+        "id 与记录文件名去扩展名后一致",
+        "baseline: true 只用于初始清单，其余为 false",
+        "changes[] 每项含 root、previous、after、decision",
+        "previous 指向记录 id；新根为 null",
+        "after 是该根变更后的 64 位十六进制摘要；删除为 null 并保留显式 tombstone",
+        "一次记录可包含多个受影响根（基线 59 个；V4 记录 14 个；image-offload 13 个）",
+        "验证器只从英文读取一次，并检查中文声明相等"
+      ],
+      "actors": [
+        "改动作者",
+        "验证器",
+        "评审者"
+      ],
+      "steps": [
+        "从模板复制声明骨架",
+        "为每个受影响根写一行，previous 取该根最新记录 id",
+        "从生成的 after 快照取摘要，不手算",
+        "同步中文声明，保持逐字节相同",
+        "核对 id 与文件名、根名格式（SessionHeader/JsonlHeaderLine/SessionEventEnvelope/event:<type>）"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：声明解析 + 历史图校验 + 双语相等检查。",
+          "验证器解析英文声明一次；历史图检查 previous 存在且无环/无重复后继；摘要与快照逐根比对；中文声明做相等比较"
+        ],
+        "trust": "声明结构与相等可自动验证；摘要是否真实反映源码类型由生成器与当前根一致检查共同保证",
+        "failure": "YAML 不可解析、id 与文件名不符、previous 缺失、after 与快照不符、中文声明漂移都会失败",
+        "exceptions": [
+          "删除根 after: null，但必须在记录中保留显式 tombstone",
+          "新根 previous: null，即使记录本身是 version-bump"
+        ]
+      },
+      "applicability": "适用：任何需要纳入历史图的持久化类型变更；需要由 CI 读取决策而不是解析散文。不适用：纯运行时行为变化且不改变声明类型；仍建议记录在别处，但不需要本声明。",
+      "relationships": [
+        "persistence-current-records.record-quadruple",
+        "persistence-current-records.history-graph",
+        "persistence-current-records.compatibility-decision",
+        "persistence-current-records.bilingual-pairing"
+      ],
+      "migration": {
+        "strategy": "把声明当成唯一机器真源，散文只解释声明；不要让 CI 解析自然语言。",
+        "implementation": [
+          "定义 YAML schema 与根名规则",
+          "实现英文读取一次的解析器",
+          "实现中文声明逐字节比较",
+          "把摘要来源限定为生成器输出",
+          "为删除定义 tombstone 语法"
+        ],
+        "requiredSupport": [
+          "YAML 解析",
+          "摘要生成",
+          "记录 id 命名规则",
+          "双语文件布局"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.machine-declaration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新记录声明可被解析，previous 指向存在的记录，after 与快照 digest 完全一致，中文声明相等。",
+            "evidence": "planned",
+            "obligation": "新记录声明可被解析，previous 指向存在的记录，after 与快照 digest 完全一致，中文声明相等。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 previous 改成不存在的 id，或把 after 改一位；验证器必须报缺失前驱或摘要不匹配。",
+            "evidence": "planned",
+            "obligation": "把 previous 改成不存在的 id，或把 after 改一位；验证器必须报缺失前驱或摘要不匹配。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复正确 previous/after 并重新生成快照后，同一验证从失败转为通过。",
+            "evidence": "planned",
+            "obligation": "恢复正确 previous/after 并重新生成快照后，同一验证从失败转为通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "声明只描述声明的持久化类型，不描述运行时验证或行为。",
+        "本域 16 条记录的 schemaVersion 均为 1，未观察到其他版本的迁移语义。",
+        "after 摘要的可信度取决于生成器；验证器不重新推导源码类型。",
+        "跨域依赖：release：声明解析/校验实现；documentation：双语配对。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.compatibility-decision",
+      "title": "兼容性决策：同版本条件、评审与版本提升",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 46,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 46,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-13-working-directory.md",
+          "start": 36,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-14-workspace-changes-event.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-18-schedule-optional-title.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-30-job-session-lifecycle.md",
+          "start": 40,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 24,
+          "end": 106,
+          "kind": "history"
+        }
+      ],
+      "problem": "持久化类型变化既有安全演进也有破坏性变化。若把“类型不同”直接等同破坏性，会制造无谓的版本提升；若一律同版本，旧读取器可能误解、丢数据或在恢复时截断。需要可判定的分类表、明确的安全标准，以及把语义判断留给人而只让机器校验形式的边界。",
+      "triggers": [
+        "检测到任何结构性变化",
+        "分类器报告需要兼容性评审",
+        "准备写 decision 字段",
+        "CI 拒绝或接受 same-version",
+        "需要改变 SessionHeader.version"
+      ],
+      "obligations": [
+        "每个检测到的结构变化都必须有确认记录",
+        "保持 Session 版本的条件：旧读取器保留必要含义，或安全忽略可选功能并保留不透明记录，或在执行/修改/恢复截断前拒绝不受支持的必要数据",
+        "新读取器必须保留历史含义与可读性",
+        "只有不安全解释无法被有效判别信息阻止时才提升版本",
+        "未知字段/值只有在现有读取器实际安全处理时才计入；类型差异本身不能证明行为",
+        "已确立的同版本情形按记录要求表直接记录：可选新增、必选改可选、新普通事件、更高 data.version 且保留旧分支、同策略下的显式归属 kind",
+        "可选改必选、加必选、改类型、删除/重命名属性或事件：兼容性评审后 same-version，或显式 version-bump",
+        "改 header 或 envelope：评审后 same-version；header 版本变化必须 version-bump",
+        "被分类器标记的变更若要同版本，必须显式 --decision same-version",
+        "CI 读取记录的 decision: same-version，在历史/schema/header 约束成立时接受，不区分生成或手编",
+        "version-bump 必须自带递增的 SessionHeader.version 转换；same-version 不能豁免 header 变化",
+        "定稿记录不可变，后续记录不能复用已接受的 3→4 转换"
+      ],
+      "actors": [
+        "改动作者",
+        "分类器",
+        "评审者",
+        "CI",
+        "版本管理员"
+      ],
+      "steps": [
+        "列出每个受影响根与变化类别",
+        "对照记录要求表得到已确立 same-version、需评审或必须 bump",
+        "需评审时先写双向读取器行为，再决定同版本（显式 CLI 选择）或 bump",
+        "bump 时同时给出 header 版本递增与迁移边",
+        "把决策写入声明；CI 只做形式接受",
+        "评审同时发生的变化，避免只看单个字段"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：分类器 + 显式 CLI 选择 + CI 声明校验 + 人工语义评审。",
+          "分类器识别已确立情形与需评审变更；CLI 要求 --decision same-version；CI 读取记录的 decision 并检查历史/schema/header 约束；header 版本变化由 bump 记录承载"
+        ],
+        "trust": "形式约束可自动检查；语义安全、读取器真实行为与人类评审不可由检查器证明（README 明说验证无法确定记录如何编写或是否经人评审）",
+        "failure": "缺少决策、把 header 变化标为 same-version、或未记录结构变化时，记录被拒绝或当前根一致检查失败；语义误判只能由评审拦截",
+        "exceptions": [
+          "新增读取时必需的事件仍可 same-version，前提是旧读取器拒绝整条日志而不是误解",
+          "必选改可选可 same-version，但必须解释缺失值处理",
+          "纯展示元数据或仅日志字段可 same-version，即使新增字段"
+        ]
+      },
+      "applicability": "适用：有跨版本读取的持久化格式；旧读取器仍可能遇到新记录；CI 需要形式化接受某条兼容性声明。不适用：没有旧读取器或格式完全内部且可重建；仍应保留变更记录，但版本提升条件可简化（需明确声明）。",
+      "relationships": [
+        "persistence-current-records.machine-declaration",
+        "persistence-current-records.same-version-evidence",
+        "persistence-current-records.version-bump-migration",
+        "persistence-current-records.finalized-checkpoint"
+      ],
+      "migration": {
+        "strategy": "先把变化分类表写成项目规则，再实现分类器与显式选择开关；语义安全永远留给评审。",
+        "implementation": [
+          "列出本项目的根与变化类别",
+          "为五类安全演进定义自动 same-version 规则",
+          "为需评审类别要求显式 --decision",
+          "在 CI 读取声明并校验 header 版本",
+          "把 header 版本变化强制绑定 bump"
+        ],
+        "requiredSupport": [
+          "类型级差异分类器",
+          "声明解析",
+          "header 版本检查",
+          "评审清单与双向行为证据模板"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.compatibility-decision",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "对可选字段新增、必选改可选、新普通事件、更高 data.version 且保留旧分支、同策略归属 kind 五类变化，分类器均给出 same-version 且记录被接受。",
+            "evidence": "planned",
+            "obligation": "对可选字段新增、必选改可选、新普通事件、更高 data.version 且保留旧分支、同策略归属 kind 五类变化，分类器均给出 same-version 且记录被接受。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把新增必选属性标为 same-version，或在 header 版本不变时写 version-bump；分类器/验证器必须拒绝该记录。",
+            "evidence": "planned",
+            "obligation": "把新增必选属性标为 same-version，或在 header 版本不变时写 version-bump；分类器/验证器必须拒绝该记录。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为兼容性评审并显式 --decision same-version（附双向证据），或补齐 header 版本递增与迁移边后，记录被接受。",
+            "evidence": "planned",
+            "obligation": "改为兼容性评审并显式 --decision same-version（附双向证据），或补齐 header 版本递增与迁移边后，记录被接受。"
+          }
+        ]
+      },
+      "limitations": [
+        "分类器不能判定语义安全；它只识别已确立情形与需评审情形。",
+        "CI 接受 same-version 只说明形式约束成立，不说明读取器行为已验证。",
+        "版本提升并非所有破坏性变化的唯一选项；评审可以批准同版本，但必须给出有效判别/拒绝信号。",
+        "跨域依赖：release：分类器与 CLI 实现；automation：CI 是否真正执行该检查。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.same-version-evidence",
+      "title": "同版本说明的双向证据与验证段落",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-12-auto-review-error-metadata.md",
+          "start": 40,
+          "end": 49,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-14-image-offload.md",
+          "start": 84,
+          "end": 93,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-18-schedule-optional-title.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-13-user-rpc-principal.md",
+          "start": 48,
+          "end": 57,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-05-ptc-operation-metadata.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-13-deepseek-search-thinking.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        }
+      ],
+      "problem": "同版本决策最容易退化成一句“向后兼容”。真正需要回答的是：旧记录在新读取器下是否保留含义；旧读取器遇到新记录是忽略、拒绝还是截断；拒绝是否发生在执行/修改/恢复之前。缺少双向说明时，CI 的形式接受会掩盖语义风险。",
+      "triggers": [
+        "撰写 decision: same-version 记录",
+        "评审同版本记录",
+        "判断旧读取器是否会误解新记录",
+        "为既有行为补记录"
+      ],
+      "obligations": [
+        "说明旧记录如何保持可读（旧→新方向）",
+        "说明旧读取器如何处理新记录（新→旧方向），包括无需显式 CLI 决策的已确立情形",
+        "日志未使用某功能时必须保留旧行为",
+        "可舍弃功能必须能安全忽略",
+        "必要功能必须有有效的拒绝信号",
+        "不受支持功能的拒绝不得变成损坏恢复或尾部截断",
+        "必选改可选时说明读取器如何处理缺失值",
+        "Verification 记录实际执行的检查与观察结果，不写“应当通过”",
+        "评审者判断行为与证据；检查器只校验声明与类型分类"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "测试/验证执行者"
+      ],
+      "steps": [
+        "在 Compatibility 先写旧→新方向",
+        "再写新→旧方向：忽略、拒绝或截断，并给出发生位置",
+        "对照三种安全行为给出结论",
+        "在 Verification 写命令、文件/用例数量与观察结果",
+        "评审覆盖同时发生的变化与相邻事件"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "执行组合：文档义务 + 评审 + 验证证据索引。",
+          "README 规定双向说明与拒绝边界；每条记录自带 Compatibility 与 Verification 段落；检查器不解析这些段落的语义"
+        ],
+        "trust": "段落存在与命令可复跑可人工核对；语义真实性依赖评审，自动化只校验声明与类型分类",
+        "failure": "旧读取器会静默丢数据或先截断后拒绝时，同版本决策不成立；评审应阻塞并要求判别信息或 bump",
+        "exceptions": [
+          "已定稿的历史记录不重写说明；新记录引用并保留其声明与快照",
+          "纯日志事件可以说明“没有读取方回放该字段”作为安全理由"
+        ]
+      },
+      "applicability": "适用：任何 same-version 决策；评审需要判断跨版本读取行为；CI 形式接受后仍需语义兜底。不适用：version-bump 记录不要求证明旧读取器可读，但仍需说明迁移与拒绝行为。",
+      "relationships": [
+        "persistence-current-records.compatibility-decision",
+        "persistence-current-records.payload-version-evolution",
+        "persistence-current-records.attribution-policy",
+        "persistence-current-records.verifier-trust-boundary"
+      ],
+      "migration": {
+        "strategy": "把双向说明做成记录模板的必填段落，并在评审清单里逐项打勾；不要接受“类型兼容”作为证据。",
+        "implementation": [
+          "在模板中固定旧→新/新→旧两个小标题",
+          "要求写出拒绝发生的阶段（执行前/修改前/恢复截断前）",
+          "要求 Verification 粘贴实际命令与结果",
+          "评审清单加入同时变化与相邻事件检查"
+        ],
+        "requiredSupport": [
+          "旧读取器或历史日志样本",
+          "可复跑的聚焦测试",
+          "拒绝/截断路径的代码位置"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.same-version-evidence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "一条可选字段新增记录同时给出旧→新与新→旧说明，并附实际测试命令与通过数量；评审可复跑。",
+            "evidence": "planned",
+            "obligation": "一条可选字段新增记录同时给出旧→新与新→旧说明，并附实际测试命令与通过数量；评审可复跑。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除 Compatibility 的新→旧方向，或把“旧读取器会截断后拒绝”写成同版本理由；评审必须阻塞。",
+            "evidence": "planned",
+            "obligation": "删除 Compatibility 的新→旧方向，或把“旧读取器会截断后拒绝”写成同版本理由；评审必须阻塞。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补充前置拒绝路径或改判 version-bump，并附对应测试/迁移证据后通过评审。",
+            "evidence": "planned",
+            "obligation": "补充前置拒绝路径或改判 version-bump，并附对应测试/迁移证据后通过评审。"
+          }
+        ]
+      },
+      "limitations": [
+        "验证段落是证据索引，不是自动证明；检查器不解析其语义。",
+        "读取器行为可能随版本演化，记录只描述当时观察。",
+        "没有旧读取器可执行时，只能依赖代码审查与历史样本。",
+        "跨域依赖：testing：读取器行为测试与快照证据的所有者。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.payload-version-evolution",
+      "title": "普通事件的 data.version 载荷分支演进",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 65,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 65,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-20-unknown-child-catalog.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-19-external-subagent-catalog.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-20-unknown-child-catalog.schema.json",
+          "start": 1,
+          "end": 250,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-19-external-subagent-catalog.schema.json",
+          "start": 1,
+          "end": 290,
+          "kind": "config"
+        }
+      ],
+      "problem": "给普通事件扩展载荷时，直接改现有形状会让旧日志无法解释；一律 bump Session 版本又会把局部演进升级为全局格式变更。需要一个局部版本判别字段，让新读取器接受多代载荷而旧读取器明确拒绝新代。",
+      "triggers": [
+        "普通事件需要新增一种载荷形状",
+        "想在不提升 Session 版本的情况下扩展事件体",
+        "旧读取器可能遇到新载荷"
+      ],
+      "obligations": [
+        "新载荷使用必需、非负整数 data.version",
+        "新版本必须严格大于所有已有载荷版本",
+        "所有旧载荷分支在既定同版本规则下保持可读",
+        "可选属性新增与必选改可选可以伴随新版本，但每个保留分支独立比较",
+        "其他载荷改动需要兼容性评审",
+        "接受旧读取器拒绝新载荷版本这一事实",
+        "同一 wire kind 的多个上下文形式分支归为一组（归属策略比较时）"
+      ],
+      "actors": [
+        "改动作者",
+        "分类器",
+        "评审者"
+      ],
+      "steps": [
+        "确认事件属于普通事件，不是 header/envelope",
+        "给新分支一个严格更大的非负整数 version",
+        "逐字段保留所有旧分支，不借机修改",
+        "在 Compatibility 说明旧读取器拒绝新版本、新读取器接受哪些版本",
+        "重新生成快照并核对联合分支与版本字面量"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：类型分类器 + 快照比对 + 评审。",
+          "分类器只允许在所有旧分支保持不变时接受更高载荷版本；验证器比较保留分支；快照记录每个分支的 version 字面量"
+        ],
+        "trust": "分支保留与版本递增可自动比较；旧读取器的实际拒绝行为依赖评审与测试",
+        "failure": "版本不是严格更大、非整数/负数、旧分支被改或删除、header/surface 变化时，记录被拒绝或要求评审",
+        "exceptions": [
+          "旧读取器拒绝新载荷是预期行为，不是缺陷",
+          "新版本可以同时携带可选新增与必选改可选"
+        ]
+      },
+      "applicability": "适用：普通事件已有稳定的 data.version 判别字段；需要在局部扩展载荷而不提升全局格式版本。不适用：事件没有 data.version 判别字段；此时应走兼容性评审或 header 版本提升；header 或 envelope 本身变化；不属于本机制。",
+      "relationships": [
+        "persistence-current-records.compatibility-decision",
+        "persistence-current-records.root-inventory",
+        "persistence-current-records.digest-scope"
+      ],
+      "migration": {
+        "strategy": "为每个可演进事件引入严格的 data.version 判别字段，先把现有形状冻结为 v0，再逐代追加。",
+        "implementation": [
+          "盘点可演进事件的现有载荷形状",
+          "把现有形状固定为版本 0/1",
+          "新增分支时复制旧分支并只改必要字段",
+          "在记录中列出保留分支与版本上限",
+          "用快照比较防止旧分支漂移"
+        ],
+        "requiredSupport": [
+          "严格整数版本判别字段",
+          "联合类型与快照比较",
+          "旧读取器拒绝路径的测试"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.payload-version-evolution",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "给 catalog 事件新增 version 2 分支且保留 v0/v1 全部分支；分类器接受 same-version，快照联合包含所有版本。",
+            "evidence": "planned",
+            "obligation": "给 catalog 事件新增 version 2 分支且保留 v0/v1 全部分支；分类器接受 same-version，快照联合包含所有版本。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除 v1 分支或把新分支版本写成不大于旧值；分类器必须拒绝或要求评审。",
+            "evidence": "planned",
+            "obligation": "删除 v1 分支或把新分支版本写成不大于旧值；分类器必须拒绝或要求评审。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复旧分支并修正版本号后，快照比较与分类器通过。",
+            "evidence": "planned",
+            "obligation": "恢复旧分支并修正版本号后，快照比较与分类器通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "旧读取器拒绝新版本意味着跨版本读取不是双向的；这被接受但必须显式记录。",
+        "分类器不能证明所有旧分支在语义上仍可读，只证明形状保留。",
+        "本域只观察到 catalog 一种事件的演进；其他事件的版本策略需单独设计。",
+        "跨域依赖：release：分类器实现与载荷版本规则测试。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.attribution-policy",
+      "title": "归属来源策略：@persistenceSource 与 @persistenceAttribution",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 67,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 67,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-21-user-question-reply.md",
+          "start": 48,
+          "end": 57,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-05-working-directory-attribution.md",
+          "start": 48,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-13-user-rpc-principal.md",
+          "start": 48,
+          "end": 57,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 98,
+          "end": 104,
+          "kind": "history"
+        }
+      ],
+      "problem": "消息来源字段常被生产者当作私有扩展点。若读取器需要认识每个 kind 才能保留消息，历史会被生产者版本绑架；若随意放宽，未知 kind 可能被误当作需要校验或回放的数据。需要显式的核心/生产者归属区分与可记录的保留承诺。",
+      "triggers": [
+        "新增消息来源 kind",
+        "把生产者私有信息写进用户/开发者消息源",
+        "比较两个带来源策略的 schema 快照",
+        "迁移旧的 plugin wrapper 来源"
+      ],
+      "obligations": [
+        "核心拥有的 source 属性必须显式写 @persistenceSource，绑定到字面量 user 或 developer 角色；不得从无注解类型推断",
+        "生产者用 @persistenceAttribution 限定 MessageSourceMap 成员",
+        "限定承诺：未知 kind 与其 JSON 元数据在无生产者时也能保留；该 kind 不引入校验、回放或权限要求",
+        "生产者可以检查自己的 kind 以恢复去重；其他读取器必须在不用该投影的情况下保留并派生消息",
+        "记录 schema 保留绑定、策略版本、字面量 kind 判别字段、保留承诺与符合条件 kind 集合",
+        "清单 format 2 保存策略承诺；没有绑定策略的提取保持 format 1",
+        "Session 格式版本独立于策略版本",
+        "比较双方快照必须携带兼容的策略状态",
+        "已有 kind 分组仍做常规结构比较；删除、未标记新增、策略更改与无关结构变更需要兼容性评审",
+        "同一 wire kind 的多个上下文形式分支归为一组"
+      ],
+      "actors": [
+        "核心类型所有者",
+        "消息生产者",
+        "提取器",
+        "评审者"
+      ],
+      "steps": [
+        "判定核心拥有还是生产者拥有",
+        "写显式注解与字面量 kind 判别字段",
+        "写下保留承诺并确认未知 kind 的 JSON 元数据可完整保留",
+        "更新策略版本与符合条件 kind 集合",
+        "在记录中声明 before/after 策略状态兼容",
+        "对删除、未标记新增或策略变化走兼容性评审"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：提取器注解 + 策略快照比较 + 评审。",
+          "提取器只接受显式绑定；schema 快照携带策略状态与 kind 集合；比较要求双方策略兼容；分类器把删除/未标记新增/策略变化标为需评审"
+        ],
+        "trust": "注解与策略状态可机器比较；未知 kind 的真实保留行为需要读取器测试",
+        "failure": "无注解类型被当作已绑定、策略状态不兼容或未标记新增时，提取/比较/评审失败",
+        "exceptions": [
+          "System/model/tool source 保持严格语义规则，不适用归属宽松策略",
+          "PTC 的 ptc-mode 被策略保留，不能只作归属限定"
+        ]
+      },
+      "applicability": "适用：消息来源是开放集合，生产者可能独立演进；需要在不认识生产者的情况下保留历史消息；需要在 schema 中记录来源保留承诺。不适用：来源集合封闭且由核心严格校验；此时保持严格语义，不加归属策略。",
+      "relationships": [
+        "persistence-current-records.compatibility-decision",
+        "persistence-current-records.same-version-evidence",
+        "persistence-current-records.root-inventory"
+      ],
+      "migration": {
+        "strategy": "先把来源分成核心绑定与生产者归属两类，再引入策略版本与 kind 集合；不要用“未知字段一律忽略”替代显式承诺。",
+        "implementation": [
+          "为核心 source 属性添加显式绑定",
+          "为生产者来源添加归属注解与保留承诺",
+          "在快照中记录策略状态",
+          "实现策略兼容比较与需评审分类",
+          "迁移旧 plugin wrapper 时保留历史查找键"
+        ],
+        "requiredSupport": [
+          "注解与提取器",
+          "策略版本字段",
+          "kind 判别字段",
+          "未知 kind 的保留测试"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.attribution-policy",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增一个归属 kind，未知读取器在不安装生产者时仍保留消息与 JSON 元数据；两个快照策略状态兼容，记录为 same-version。",
+            "evidence": "planned",
+            "obligation": "新增一个归属 kind，未知读取器在不安装生产者时仍保留消息与 JSON 元数据；两个快照策略状态兼容，记录为 same-version。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除一个已有 kind、给来源加无注解新成员，或改变策略版本；分类器必须要求兼容性评审。",
+            "evidence": "planned",
+            "obligation": "删除一个已有 kind、给来源加无注解新成员，或改变策略版本；分类器必须要求兼容性评审。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补上显式注解与兼容策略状态，或改判 version-bump 并迁移后，记录被接受。",
+            "evidence": "planned",
+            "obligation": "补上显式注解与兼容策略状态，或改判 version-bump 并迁移后，记录被接受。"
+          }
+        ]
+      },
+      "limitations": [
+        "归属承诺只保证保留，不保证任何业务语义；读取器仍需自行派生消息。",
+        "本域记录展示了 user/developer 与 PTC 的案例，未覆盖所有来源种类。",
+        "策略比较的实现细节属于提取器所有者。",
+        "跨域依赖：release：提取器与注解解析实现；subsystem-contracts：消息来源类型的所有者。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.reserved-field",
+      "title": "禁止字段保留：可选 never + @persistenceReserved",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 71,
+          "end": 71,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 71,
+          "end": 71,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 96,
+          "end": 96,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.schema.json",
+          "start": 1,
+          "end": 16212,
+          "kind": "config"
+        }
+      ],
+      "problem": "读取器按属性名拒绝某字段时，如果直接从 schema 删除该字段，以后重新允许它会被误判为普通可选字段新增；如果保留为普通字段，又表达不出“出现即拒绝”。需要一个既保留字段名又表达禁止的标记，并保证提取器不会把它优化掉。",
+      "triggers": [
+        "读取器按名称拒绝旧 JSON 属性",
+        "要把既有拒绝事实固化进 schema",
+        "以后可能重新允许该字段",
+        "评审旧字段移除"
+      ],
+      "obligations": [
+        "把被拒绝属性声明为可选 never",
+        "加无参数 @persistenceReserved",
+        "提取器必须保留该禁止字段",
+        "以后允许 JSON 值属于已有字段类型变更，需要兼容性评审或显式 bump",
+        "必选属性或允许 JSON 值的属性不能携带该标记",
+        "未标记的可选 never 与 undefined 属性保留既有省略行为"
+      ],
+      "actors": [
+        "类型所有者",
+        "提取器",
+        "评审者"
+      ],
+      "steps": [
+        "把拒绝规则写成可选 never 属性，保留字段名",
+        "加无参数 @persistenceReserved",
+        "在记录中说明这是记录既有拒绝，不是新增行为",
+        "重新生成快照并确认 never 节点存在",
+        "以后允许值时按已有字段类型变更评审"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：注解 + 提取器保留 + 分类器已有字段变更检测。",
+          "提取器保留 never 字段；快照以 primitive never 记录；分类器把“允许该字段值”识别为已有字段类型变更而非可选新增"
+        ],
+        "trust": "字段形状与标记可机器检查；读取器是否真的按名称拒绝需由原生读取测试证明",
+        "failure": "把 never 写成必选、给允许 JSON 值的属性加标记，或去掉标记，都会产生非法/语义错误",
+        "exceptions": [
+          "未标记的可选 never/undefined 保持普通省略行为，不属于禁止字段"
+        ]
+      },
+      "applicability": "适用：读取器有按名称拒绝的历史字段；需要把拒绝事实保留在机器可读 schema 中。不适用：字段从未被拒绝，只是可选缺省；不要滥用 never 标记。",
+      "relationships": [
+        "persistence-current-records.machine-declaration",
+        "persistence-current-records.digest-scope",
+        "persistence-current-records.same-version-evidence"
+      ],
+      "migration": {
+        "strategy": "把每个“出现即拒绝”的字段迁成可选 never + 无参数标记，并在同一条记录里说明这是既有拒绝。",
+        "implementation": [
+          "盘点读取器按名称拒绝的字段",
+          "改为可选 never 并加标记",
+          "更新快照与记录",
+          "为“允许值”准备评审路径"
+        ],
+        "requiredSupport": [
+          "支持 never 与注解的提取器",
+          "原生读取拒绝测试",
+          "分类器的已有字段类型变更检测"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.reserved-field",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "request/header 的 system 字段在快照中为可选 never，原生读取器仍拒绝该键，记录声明没有改变存储语义。",
+            "evidence": "planned",
+            "obligation": "request/header 的 system 字段在快照中为可选 never，原生读取器仍拒绝该键，记录声明没有改变存储语义。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 never 改成可选 string 并标为普通可选新增；分类器必须判为已有字段类型变更并要求评审/ bump。",
+            "evidence": "planned",
+            "obligation": "把 never 改成可选 string 并标为普通可选新增；分类器必须判为已有字段类型变更并要求评审/ bump。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复 never 与标记，或补齐兼容性评审与读取器接纳后，记录通过。",
+            "evidence": "planned",
+            "obligation": "恢复 never 与标记，或补齐兼容性评审与读取器接纳后，记录通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "快照不携带注解文本，无法从快照区分哪些 never 由 @persistenceReserved 标记。",
+        "本域只在 V4 快照观察到 system 与 11 个 tool 的 never 属性，未覆盖注解语法的全部形式。",
+        "跨域依赖：release：提取器对注解与 never 的处理。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.history-graph",
+      "title": "基线、前驱链与历史图完整性",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 76,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.md",
+          "start": 24,
+          "end": 265,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-12-auto-review-error-metadata.md",
+          "start": 24,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-14-image-offload.md",
+          "start": 24,
+          "end": 81,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-19-external-subagent-catalog.md",
+          "start": 24,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 24,
+          "end": 85,
+          "kind": "history"
+        }
+      ],
+      "problem": "多分支并行修改同一持久化根时，很容易出现两条互不知晓的后继、断掉的前驱或摘要跳跃。没有单一基线和一个有向历史图，就无法判断“当前根是否等于最新记录”，也无法阻止两条互斥转换同时被接受。",
+      "triggers": [
+        "新增后继记录",
+        "合并两条修改同一根的分支",
+        "验证器报告缺失前驱、环、重复后继或摘要不匹配",
+        "新增根或删除根"
+      ],
+      "obligations": [
+        "只有一条基线记录完整初始清单",
+        "后续记录把前驱的 after schema 当作 before schema",
+        "验证器拒绝缺失前驱、环、同一根的重复后继、摘要不匹配、当前根与最新记录不一致",
+        "独立根可以独立演进",
+        "同一前驱上的两个变更在集成后必须形成一条有序历史",
+        "添加后继时保留已接受记录的机器声明与 schema 快照",
+        "基线不依赖 Git 引用、远端服务或已发布版本的检出目录"
+      ],
+      "actors": [
+        "改动作者",
+        "集成者",
+        "验证器",
+        "评审者"
+      ],
+      "steps": [
+        "找到该根的最新记录，previous 指向它",
+        "新根写 previous: null",
+        "同一根已有未合并记录时，先整理成一条有序历史",
+        "重新生成快照并核对逐跳摘要",
+        "运行验证器；不改他人已接受记录的声明"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：声明图校验 + 摘要比对 + 集成约定。",
+          "验证器检查前驱存在、无环、无重复后继、摘要匹配与当前根一致；声明中的 previous 是唯一链依据"
+        ],
+        "trust": "图结构与摘要可自动验证；两条分支的语义冲突需集成者/评审处理",
+        "failure": "缺失前驱、环、重复后继、摘要不匹配或当前根不一致时验证失败",
+        "exceptions": [
+          "删除根用 after: null 保留 tombstone",
+          "记录 id 的日期不保证等于历史顺序；以声明图为准",
+          "独立根不需要互相等待"
+        ]
+      },
+      "applicability": "适用：持久化类型有多次历史变更；多分支/多作者可能并发改同一根；需要从树内文件独立验证历史。不适用：只有一次基线且无后续演进；仍保留基线声明与快照。",
+      "relationships": [
+        "persistence-current-records.machine-declaration",
+        "persistence-current-records.current-root-agreement",
+        "persistence-current-records.finalized-checkpoint",
+        "persistence-current-records.terminal-refresh"
+      ],
+      "migration": {
+        "strategy": "先建立单基线，再强制每个新变更声明 previous；合并冲突时重排声明而不是删记录。",
+        "implementation": [
+          "为完整根清单创建 baseline 记录",
+          "实现前驱存在/无环/无重复后继检查",
+          "实现逐跳摘要比对",
+          "在集成流程中加入“同一根只允许一条后继”的检查",
+          "为删除定义 tombstone"
+        ],
+        "requiredSupport": [
+          "记录 id 索引",
+          "摘要比较",
+          "图遍历",
+          "分支合并评审规则"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.history-graph",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在最新记录后新增一条后继，previous 正确、摘要逐跳匹配，验证器通过；独立根的其他链不受影响。",
+            "evidence": "planned",
+            "obligation": "在最新记录后新增一条后继，previous 正确、摘要逐跳匹配，验证器通过；独立根的其他链不受影响。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为同一前驱添加第二条后继，或把 previous 指向不存在的 id；验证器必须报重复后继/缺失前驱。",
+            "evidence": "planned",
+            "obligation": "为同一前驱添加第二条后继，或把 previous 指向不存在的 id；验证器必须报重复后继/缺失前驱。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把两条记录串成一条有序历史（后一条 previous 指向前一条）后，验证器通过且两条语义都保留。",
+            "evidence": "planned",
+            "obligation": "把两条记录串成一条有序历史（后一条 previous 指向前一条）后，验证器通过且两条语义都保留。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域 16 条记录中所有 previous 都存在且无重复后继，但这是声明层核对，不是运行验证器。",
+        "记录 id 日期与链顺序可能不一致（catalog 案例）；不要用文件名排序推断历史。",
+        "验证器是否在执行前拒绝尾截断等运行时行为不在本机制内。",
+        "跨域依赖：release：验证器实现；collaboration：分支合并与评审流程。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.current-root-agreement",
+      "title": "当前根与最新记录一致，以及 --check 的盲区",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 63,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 63,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 76,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-10-05-ptc-operation-metadata.md",
+          "start": 36,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 107,
+          "end": 117,
+          "kind": "history"
+        }
+      ],
+      "problem": "声明与快照可以自洽，却与当前源码不一致；反过来，只跑当前树检查又会漏掉“已经被某条确认记录覆盖”的转换。需要同时约束当前根与最新记录，并在评审时看 base/head 差异，而不是只看单点检查。",
+      "triggers": [
+        "改完持久化类型后的本地检查",
+        "CI 报当前根与最新记录不一致",
+        "准备只跑 --check 就提交",
+        "评审 base/head 清单"
+      ],
+      "obligations": [
+        "验证器拒绝当前根与最新记录不一致",
+        "评审者用 persistence-review 比较 base 与 head 清单",
+        "--check 只验证当前树一致性，不能显示已被确认记录覆盖的转换",
+        "摘要描述声明类型，不描述运行时验证或行为",
+        "类型真的变化时必须新增记录；只是生成物过期则重新生成"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "验证器",
+        "CI"
+      ],
+      "steps": [
+        "重新生成目录/清单",
+        "运行验证器",
+        "若不一致，比较当前生成根摘要与该根最新记录的 after",
+        "生成物过期则重新生成；类型变化则新增记录",
+        "评审用 persistence-review 看 base/head，不只依赖 --check"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：当前树验证器 + base/head 评审工具。",
+          "验证器比较当前生成清单与最新记录；--check 只做当前树一致性；persistence-review 输出 base/head 差异供评审"
+        ],
+        "trust": "当前根一致可自动验证；--check 的盲区由评审工具补偿，但评审是否执行不可证明",
+        "failure": "不一致时验证失败；只跑 --check 会让已覆盖转换逃避复核",
+        "exceptions": [
+          "生成文本/源码位置变化不影响摘要，重新生成即可，不新增确认"
+        ]
+      },
+      "applicability": "适用：持久化类型从当前源码生成；CI 需要阻止未记录的结构变化；评审需要区分已确认转换与新变化。不适用：类型不是从源码生成或没有当前树生成器；此时只能人工比对。",
+      "relationships": [
+        "persistence-current-records.history-graph",
+        "persistence-current-records.digest-scope",
+        "persistence-current-records.terminal-refresh",
+        "persistence-current-records.verifier-trust-boundary"
+      ],
+      "migration": {
+        "strategy": "先实现“当前清单 vs 最新记录”的逐根比较，再把 --check 定位为快速自检，评审另用 base/head 工具。",
+        "implementation": [
+          "生成当前根清单与摘要",
+          "按根找到最新记录 after",
+          "实现逐根比较与失败报告",
+          "实现 base/head 清单差异工具",
+          "在评审清单中要求 base/head 证据"
+        ],
+        "requiredSupport": [
+          "当前清单生成器",
+          "历史记录索引",
+          "base/head 比较工具"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.current-root-agreement",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "当前生成清单逐根等于最新记录 after，验证器通过；base/head 评审显示没有未记录转换。",
+            "evidence": "planned",
+            "obligation": "当前生成清单逐根等于最新记录 after，验证器通过；base/head 评审显示没有未记录转换。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "改一个字段但不加记录：当前根与最新记录不一致，验证器失败；同时 --check 对已被记录覆盖的另一次转换不报错，证明盲区存在。",
+            "evidence": "planned",
+            "obligation": "改一个字段但不加记录：当前根与最新记录不一致，验证器失败；同时 --check 对已被记录覆盖的另一次转换不报错，证明盲区存在。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "新增对应记录（或还原字段）并重新生成后，当前根一致检查通过。",
+            "evidence": "planned",
+            "obligation": "新增对应记录（或还原字段）并重新生成后，当前根一致检查通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未执行验证器；结论来自 README 的声明。",
+        "--check 的盲区是设计属性，不是实现缺陷；必须靠 base/head 评审补偿。",
+        "摘要不覆盖运行时行为，当前根一致不代表行为兼容。",
+        "跨域依赖：release：验证器与 persistence-review 实现；documentation：目录/清单元数据生成器。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.root-inventory",
+      "title": "根清单、传递类型与快照节点模型",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 29,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 29,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.md",
+          "start": 24,
+          "end": 265,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.schema.json",
+          "start": 1,
+          "end": 13557,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-13-working-directory.schema.json",
+          "start": 1,
+          "end": 76,
+          "kind": "config"
+        }
+      ],
+      "problem": "持久化格式不是单一类型，而是 header、物理 JSONL 头行、事件信封与每个事件组成的多个根，且共享类型会传递影响多个根。若只盯一个根或只比较文本，会漏掉共享类型变化与新增事件。",
+      "triggers": [
+        "决定一次改动影响哪些根",
+        "新增事件类型",
+        "评审快照根集合",
+        "实现清单生成器"
+      ],
+      "obligations": [
+        "根覆盖逻辑 Session header、物理 JSONL 头行、事件信封与每个仓库内声明的事件",
+        "被引用类型传递地贡献到每个受影响根的摘要",
+        "生成的目录提供可读声明与摘要，schema 清单提供规范化类型",
+        "快照为每个根记录 key、kind、digest 与节点图",
+        "删除的根不出现在 after 快照中，并由 tombstone 表达"
+      ],
+      "actors": [
+        "类型所有者",
+        "生成器",
+        "评审者"
+      ],
+      "steps": [
+        "从事件类型映射到 event:<type> 根",
+        "找出被引用类型并传递标记所有受影响根",
+        "新增事件类型时加入清单并写新根记录",
+        "生成快照并核对根集合与声明完全一致"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：生成器 + 根集合比对 + 摘要。",
+          "目录/清单由生成器产出；快照按根内联规范化节点图；验证器比较声明根集合与快照根集合"
+        ],
+        "trust": "根集合与摘要可自动比较；节点图语义依赖生成器的规范化规则",
+        "failure": "共享类型变化只记录一个根、新增事件未进清单、或删除根仍出现在快照中，都会导致摘要不一致或根集合不符",
+        "exceptions": [
+          "opaque 类型不暴露内部结构，无法比较隐藏结构",
+          "基线快照的根对象省略 event/surface 字段（较早生成器形态），不回填旧文件"
+        ]
+      },
+      "applicability": "适用：持久化格式有多个顶层入口；类型之间存在共享引用；需要机器可读的根清单。不适用：单一自包含类型且无共享引用；可退化为单根，但仍保留摘要与快照。",
+      "relationships": [
+        "persistence-current-records.machine-declaration",
+        "persistence-current-records.digest-scope",
+        "persistence-current-records.current-root-agreement"
+      ],
+      "migration": {
+        "strategy": "先枚举全部顶层根，再让生成器做传递闭包；不要把根清单写死在文档里。",
+        "implementation": [
+          "列出 header/envelope/event 根",
+          "实现引用遍历与传递标记",
+          "生成规范化节点图与每根摘要",
+          "为删除定义 tombstone",
+          "在验证器比较根集合"
+        ],
+        "requiredSupport": [
+          "类型提取器",
+          "传递引用遍历",
+          "规范化节点图格式",
+          "摘要算法"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.root-inventory",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增一个事件类型后，生成的根清单包含它，声明根集合与快照根集合一致，共享类型变化传递到所有受影响根。",
+            "evidence": "planned",
+            "obligation": "新增一个事件类型后，生成的根清单包含它，声明根集合与快照根集合一致，共享类型变化传递到所有受影响根。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "改共享 Message 类型却只记录一个事件根；其他受影响根出现摘要不一致，验证失败。",
+            "evidence": "planned",
+            "obligation": "改共享 Message 类型却只记录一个事件根；其他受影响根出现摘要不一致，验证失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把共享类型影响的所有根补进声明并重新生成快照后，根集合与摘要一致。",
+            "evidence": "planned",
+            "obligation": "把共享类型影响的所有根补进声明并重新生成快照后，根集合与摘要一致。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域对 schema 快照采用结构解析（根集合、节点种类、摘要、never/union 分支），不是逐行散文阅读。",
+        "基线 59 个根 = 2 header + 1 envelope + 56 event；这是该提交的事实，不是通用数量。",
+        "surface 字段在这些文件中没有定义文本；仅观察到消息承载根为 true。",
+        "跨域依赖：documentation：目录/清单生成器；release：schema 提取与规范化实现。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.digest-scope",
+      "title": "摘要口径与重排/别名/位置等例外类",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 80,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 80,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.schema.json",
+          "start": 1,
+          "end": 13557,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-12-auto-review-error-metadata.schema.json",
+          "start": 1,
+          "end": 910,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.schema.json",
+          "start": 1,
+          "end": 16212,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-18-schedule-optional-title.schema.json",
+          "start": 1,
+          "end": 302,
+          "kind": "config"
+        }
+      ],
+      "problem": "如果把注释、源码位置、别名或声明顺序都算进摘要，生成物会不断“变脏”，团队会为无语义变化写确认记录；如果把兼容性注解也算作无关，又会丢失策略差异。必须精确定义摘要覆盖范围与例外类。",
+      "triggers": [
+        "生成物看起来过期",
+        "重排声明后摘要变化/不变",
+        "判断某改动是否需要新增确认",
+        "评审摘要差异"
+      ],
+      "obligations": [
+        "摘要描述声明的持久化类型，不描述运行时验证或行为",
+        "不影响摘要：普通注释、源码位置、别名名称、无害声明重排、目录文本与源码位置变化",
+        "影响摘要：兼容性注解（记录的策略数据）",
+        "对象字段、联合分支、交叉操作数、索引签名只有在解析类型不变时才可重排",
+        "元组位置与数字枚举值始终显著",
+        "未注解的 version-1 快照保留原有规范化与指纹；带策略的图使用独立指纹域",
+        "不透明类型不暴露可比较的隐藏结构",
+        "纯行为变化与不透明值中隐藏的结构不在本机制范围",
+        "目录文本/源码位置变化时重新生成陈旧产物，不为未变摘要新增确认"
+      ],
+      "actors": [
+        "生成器实现者",
+        "改动作者",
+        "评审者"
+      ],
+      "steps": [
+        "先重新生成，排除只是文本/位置过期",
+        "比较摘要：变了才考虑记录",
+        "若只是重排，确认解析类型相同；元组位置/数字枚举值不算无害重排",
+        "若加入或修改兼容性注解，按策略数据变更处理"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：规范化算法 + 摘要比较 + 评审。",
+          "生成器对声明类型做规范化，忽略注释/位置/别名/无害重排；注解进入摘要；新旧指纹域分开"
+        ],
+        "trust": "生成器实现决定摘要是否稳定；本域只能观察到快照与声明的摘要一致，无法独立证明规范化规则",
+        "failure": "把行为变化当类型变化会制造冗余记录；手改摘要会与其他产物冲突；为未变摘要新增确认会被评审拒绝",
+        "exceptions": [
+          "opaque 类型内部结构不比较",
+          "纯行为变化不在本机制范围",
+          "别名掩盖的重排依赖提取器规范化，属于实现细节"
+        ]
+      },
+      "applicability": "适用：持久化类型由源码生成摘要；多人并行重排声明；需要区分生成物过期与真实类型变化。不适用：摘要不是从声明类型生成；此时本机制不适用。",
+      "relationships": [
+        "persistence-current-records.root-inventory",
+        "persistence-current-records.current-root-agreement",
+        "persistence-current-records.attribution-policy",
+        "persistence-current-records.reserved-field"
+      ],
+      "migration": {
+        "strategy": "先定义“摘要覆盖什么”的规范，再实现规范化与两个指纹域；不要把生成器输出当作规范。",
+        "implementation": [
+          "列出摘要输入（解析类型 + 策略注解）",
+          "实现忽略注释/位置/别名/无害重排的规范化",
+          "为未注解旧快照保留旧指纹域",
+          "实现生成物过期检测",
+          "在评审清单区分重排与真实变化"
+        ],
+        "requiredSupport": [
+          "类型解析器",
+          "稳定排序与规范化",
+          "旧指纹域兼容",
+          "摘要比较工具"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.digest-scope",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "只重排对象字段并改注释/别名/位置后重新生成，摘要保持不变；加入兼容性注解后摘要变化。",
+            "evidence": "planned",
+            "obligation": "只重排对象字段并改注释/别名/位置后重新生成，摘要保持不变；加入兼容性注解后摘要变化。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "交换元组元素位置或改数字枚举值；摘要必须变化并触发记录需求。",
+            "evidence": "planned",
+            "obligation": "交换元组元素位置或改数字枚举值；摘要必须变化并触发记录需求。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "还原语义变化或补一条记录后，摘要与历史重新一致。",
+            "evidence": "planned",
+            "obligation": "还原语义变化或补一条记录后，摘要与历史重新一致。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域只核对快照 digest 与声明一致，未复算规范化算法。",
+        "别名/重排的无害性依赖提取器实现；不同实现对“解析类型相同”的判定可能不同。",
+        "摘要不覆盖运行时行为或 opaque 内部结构。",
+        "跨域依赖：release：schema 提取与指纹实现；documentation：目录文本生成。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.finalized-checkpoint",
+      "title": "定稿检查点、不可变历史与 latestFinalizedVersion",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 40,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 61,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 78,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 40,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 24,
+          "end": 85,
+          "kind": "history"
+        }
+      ],
+      "problem": "写入器会继续演进，但已同意的兼容性基线不能被后续编辑悄悄改变；同时检查点又不能把散文、别名和源码位置一起冻结，否则任何文档润色都会破坏哈希。需要一个只追加、只覆盖机器声明与 after schema 的定稿层。",
+      "triggers": [
+        "把一个已同意格式标记为已接受",
+        "写入器继续演进但需保护旧声明",
+        "有人想修改已定稿记录",
+        "推进 latestFinalizedVersion"
+      ],
+      "obligations": [
+        "finalized/vN.json 记录已接受基线的完整根分类/摘要与其已接受记录的语义哈希",
+        "定稿记录要求其检查点存在",
+        "当前 schema 可以兼容演进；检查点保护已接受机器声明与 after schema，即使写入器已推进",
+        "记录哈希排除散文、别名和源码位置",
+        "用 createPersistenceFinalizationCheckpoint 捕获已同意格式",
+        "写入按版本命名的新检查点而不替换旧文件",
+        "推进配对（双语）文档中的 latestFinalizedVersion",
+        "helper 要求当前 schema 与完整确认历史一致",
+        "提交前运行常规验证器",
+        "定稿记录不可变；后续记录不能复用已接受的 3→4 转换"
+      ],
+      "actors": [
+        "维护者",
+        "评审者",
+        "定稿 helper",
+        "验证器"
+      ],
+      "steps": [
+        "确认所有转换都有已接受记录且当前 schema 与历史一致",
+        "运行常规验证器",
+        "调用 createPersistenceFinalizationCheckpoint 生成新的 finalized/vN.json",
+        "不覆盖旧 vM.json",
+        "在英/中双语文档同时推进 latestFinalizedVersion",
+        "提交前再跑验证器"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：只追加检查点 + helper 前置条件 + 验证器哈希检查。",
+          "helper 生成新版本文件并推进双语版本字段；验证器检查保留检查点的哈希；定稿记录不可变由评审与工具共同约束"
+        ],
+        "trust": "哈希与版本推进可自动检查；检查点与其权威记录是否被联合篡改不可由验证器证明",
+        "failure": "当前 schema 与历史不一致时 helper 拒绝；覆盖旧检查点或复用已定稿转换会被评审/不可变性阻塞",
+        "exceptions": [
+          "散文可改，只要配对哈希同步；别名/源码位置不进入记录哈希"
+        ]
+      },
+      "applicability": "适用：有已同意的格式基线需要长期保护；写入器会继续兼容演进；需要给审计提供不可变的历史锚点。不适用：格式仍在快速试错且没有已同意基线；可先用记录历史，暂不定稿。",
+      "relationships": [
+        "persistence-current-records.history-graph",
+        "persistence-current-records.digest-scope",
+        "persistence-current-records.version-bump-migration",
+        "persistence-current-records.terminal-refresh",
+        "persistence-current-records.verifier-trust-boundary"
+      ],
+      "migration": {
+        "strategy": "先有完整确认历史，再定稿；检查点只追加，永不重写。",
+        "implementation": [
+          "实现只追加的 finalized/vN.json 格式",
+          "实现 helper 的“当前 schema 与历史一致”前置条件",
+          "在双语文档维护 latestFinalizedVersion",
+          "验证器检查保留哈希",
+          "禁止覆盖旧检查点"
+        ],
+        "requiredSupport": [
+          "稳定语义哈希",
+          "历史完整性与当前 schema 校验",
+          "只追加存储",
+          "双语版本字段"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.finalized-checkpoint",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在完整确认历史后生成新 finalized/vN.json，旧文件不变，双语文档 latestFinalizedVersion 同步，验证器哈希检查通过。",
+            "evidence": "planned",
+            "obligation": "在完整确认历史后生成新 finalized/vN.json，旧文件不变，双语文档 latestFinalizedVersion 同步，验证器哈希检查通过。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "当前 schema 与历史不一致时调用 helper，或试图覆盖旧检查点；helper/评审必须拒绝。",
+            "evidence": "planned",
+            "obligation": "当前 schema 与历史不一致时调用 helper，或试图覆盖旧检查点；helper/评审必须拒绝。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐缺失记录或还原生成物后重新生成新检查点，旧检查点保持只读。",
+            "evidence": "planned",
+            "obligation": "补齐缺失记录或还原生成物后重新生成新检查点，旧检查点保持只读。"
+          }
+        ]
+      },
+      "limitations": [
+        "finalized/v4.json 与 helper 实现属于发布域，本域只依据 README 的声明。",
+        "验证器不能证明检查点与其权威记录未被一起修改。",
+        "检查点保护机器声明与 after schema，不保护散文语义。",
+        "跨域依赖：release：finalized/vN.json、persistence-finalization.ts 与 session-format-status 的所有者；documentation：双语文档版本字段。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.terminal-refresh",
+      "title": "末端未接受记录的显式刷新",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 78,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 78,
+          "end": 78,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "还在评审中的末端记录可能需要按最新源码刷新，但一旦刷新已有后继或被检查点锁定的记录，就会改写历史。需要把“可刷新”严格限制在未接受、无依赖的末端记录。",
+      "triggers": [
+        "记录尚未被接受但声明/快照需按最新源码刷新",
+        "记录已被后续记录依赖",
+        "记录已被检查点锁定"
+      ],
+      "obligations": [
+        "只有未被接受的末端记录可以显式刷新",
+        "命令在产出物前拒绝基线记录",
+        "拒绝带依赖者（有后继）的记录",
+        "拒绝被检查点锁定的记录",
+        "刷新只影响目标记录及其生成物"
+      ],
+      "actors": [
+        "改动作者",
+        "验证器/刷新命令",
+        "评审者"
+      ],
+      "steps": [
+        "确认目标是末端（无后继）",
+        "确认不是基线、不是任何记录的 previous、未被 finalized 锁定",
+        "显式刷新并重新生成快照/侧车",
+        "重新运行验证器与 doc-sync"
+      ],
+      "enforcement": {
+        "mode": "manual",
+        "implementation": [
+          "执行组合：刷新命令前置条件 + 验证器。",
+          "刷新命令检查基线/依赖者/检查点锁定后拒绝；验证器再次检查历史与摘要"
+        ],
+        "trust": "前置条件可自动检查；“是否已接受”依赖记录状态与评审语境",
+        "failure": "有依赖者或被锁定时刷新被拒绝；基线永不刷新",
+        "exceptions": [
+          "已接受但未定稿的记录仍按历史处理：新增后继而不是刷新"
+        ]
+      },
+      "applicability": "适用：记录仍在评审中且需要跟随源码变化；需要避免制造虚假历史。不适用：记录已有后继或被检查点锁定；只能新增后继。",
+      "relationships": [
+        "persistence-current-records.history-graph",
+        "persistence-current-records.finalized-checkpoint",
+        "persistence-current-records.current-root-agreement"
+      ],
+      "migration": {
+        "strategy": "把“可刷新”实现为显式状态判断，而不是默认允许编辑记录。",
+        "implementation": [
+          "记录是否末端/基线的判定",
+          "检查点锁定查询",
+          "刷新命令与重新生成",
+          "刷新后验证"
+        ],
+        "requiredSupport": [
+          "记录图索引",
+          "检查点查询",
+          "生成器"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.terminal-refresh",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "刷新一条无后继、未被锁定的末端记录，只有它的声明与生成物变化，验证器通过。",
+            "evidence": "planned",
+            "obligation": "刷新一条无后继、未被锁定的末端记录，只有它的声明与生成物变化，验证器通过。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "对基线或带后继记录执行刷新；命令必须在产出物前拒绝。",
+            "evidence": "planned",
+            "obligation": "对基线或带后继记录执行刷新；命令必须在产出物前拒绝。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为新增后继记录，保留原记录声明与快照，验证器通过。",
+            "evidence": "planned",
+            "obligation": "改为新增后继记录，保留原记录声明与快照，验证器通过。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域只覆盖记录文档，不覆盖刷新命令实现。",
+        "“已接受”的判定可能需要评审/检查点信息，单靠文档无法确定。",
+        "跨域依赖：release：刷新命令实现。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.bilingual-pairing",
+      "title": "双语对侧、分段哈希侧车与重记命令",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 35,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-21-user-question-reply.md",
+          "start": 53,
+          "end": 57,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-11-initial.i18n.yaml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/README.i18n.yaml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.zh.md",
+          "start": 1,
+          "end": 120,
+          "kind": "history"
+        }
+      ],
+      "problem": "双语文档容易只改一侧；代码块里的机器声明又不应被翻译。需要一种按标题分段、排除代码块的哈希记录，让“散文同步”与“声明相等”分别可检查，同时不把翻译差异误报成结构变化。",
+      "triggers": [
+        "编辑英文或中文任一侧",
+        "i18n 侧车缺失或过期",
+        "doc-sync 报翻译配对失败",
+        "新增记录需要生成侧车"
+      ],
+      "obligations": [
+        "每条记录有中文对侧，机器声明与英文相同",
+        "验证器从英文读取一次声明并检查中文相等",
+        ".i18n.yaml 按标题分段记录英/中哈希",
+        "哈希覆盖代码块与生成区域之外的块",
+        "编辑任一侧后带另一侧并重新记录",
+        "重记命令为 pnpm run verify-translation-pairing --write <英文文件>",
+        "doc-sync 覆盖持久化历史与翻译配对"
+      ],
+      "actors": [
+        "文档作者",
+        "配对工具",
+        "验证器",
+        "doc-sync"
+      ],
+      "steps": [
+        "先改英文，再改中文，保持声明逐字节相同",
+        "运行 pnpm run verify-translation-pairing --write <文件> 重记侧车",
+        "运行验证器与 doc-sync",
+        "评审侧车分段哈希是否只在改动段落变化"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：分段哈希侧车 + 声明相等 + doc-sync。",
+          "配对工具按标题段计算英/中块哈希并写侧车；验证器比较中英声明；doc-sync 跑翻译配对与持久化历史门禁"
+        ],
+        "trust": "分段哈希与声明相等可自动检查；哈希算法细节与“生成区域”语法由文档域实现决定",
+        "failure": "只改一侧、手改侧车或中文声明漂移都会失败；代码块变化不触发配对哈希，但会触发声明/快照检查",
+        "exceptions": [
+          "代码块内容不参与配对哈希",
+          "标题文字可不同（英/中各一套 slug 在侧车中成对）"
+        ]
+      },
+      "applicability": "适用：文档有英文/中文或其他双语对侧；代码块中包含不可翻译的机器声明；需要防止单侧编辑。不适用：单语项目；仍需声明相等与快照检查，但不需要配对侧车。",
+      "relationships": [
+        "persistence-current-records.record-quadruple",
+        "persistence-current-records.machine-declaration"
+      ],
+      "migration": {
+        "strategy": "先实现“按标题分段 + 排除代码块”的哈希格式，再把重记命令纳入文档流程；声明相等单独检查。",
+        "implementation": [
+          "定义侧车键语法 / 与 /<heading-slug>",
+          "实现代码块与生成区域排除",
+          "实现 --write 重记",
+          "验证器比较中英声明",
+          "doc-sync 接入配对与持久化历史"
+        ],
+        "requiredSupport": [
+          "标题分段解析",
+          "稳定哈希",
+          "代码块排除",
+          "双语文件布局"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.bilingual-pairing",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同时修改英/中同一段后重记侧车，配对检查通过；声明逐字节相等。",
+            "evidence": "planned",
+            "obligation": "同时修改英/中同一段后重记侧车，配对检查通过；声明逐字节相等。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只改英文段落不更新中文与侧车；配对检查失败并指出该标题段。",
+            "evidence": "planned",
+            "obligation": "只改英文段落不更新中文与侧车；配对检查失败并指出该标题段。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐中文并重记侧车后，配对检查通过且其他段落哈希不变。",
+            "evidence": "planned",
+            "obligation": "补齐中文并重记侧车后，配对检查通过且其他段落哈希不变。"
+          }
+        ]
+      },
+      "limitations": [
+        "配对证明分段哈希一致，不证明中文语义等价。",
+        "本域观察到声明段哈希在 16 条记录中相同，说明代码块被排除；具体算法未复算。",
+        "doc-sync 的实际 CI 接线属于自动化/文档域。",
+        "跨域依赖：documentation：translation-pairing/verify-translation-pairing 与模板；automation：doc-sync 是否在 CI 必过。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.archive-separation",
+      "title": "预发行归档、格式参考与当前确认的分离",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 11,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 11,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 94,
+          "end": 94,
+          "kind": "history"
+        }
+      ],
+      "problem": "旧 tag/RC 的类型差异看起来像兼容性证据，但它们描述的是历史快照；把归档观察当成当前确认，会让评审用过期事实替代当前读取器行为。同时，已发布校验器与前驱代际必须冻结，不能被新格式顺手改写。",
+      "triggers": [
+        "想用旧 tag 或 RC 归档证明当前兼容",
+        "查阅历史格式参考",
+        "准备修改归档比较或旧 generation 校验器"
+      ],
+      "obligations": [
+        "预发行归档只用于历史阅读与格式校验",
+        "归档观察不作为当前兼容性确认",
+        "格式参考覆盖由写入器常量决定，包括无 tag 的中间格式",
+        "当前兼容性只看当前树记录、最新记录与定稿检查点",
+        "已发布的 V0–V3 校验器与已记录的前驱代际保持不变",
+        "已有 V4 文件不重新运行迁入边"
+      ],
+      "actors": [
+        "评审者",
+        "发布维护者",
+        "归档工具"
+      ],
+      "steps": [
+        "当前兼容性结论只引用当前记录与检查点",
+        "归档只回答“旧版本当时长什么样/如何校验旧文件”",
+        "需要引用旧差异时标注为历史证据",
+        "不修改冻结的归档比较与旧 generation 校验器"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "执行组合：文档边界 + 归档只读约定 + 评审。",
+          "README 明确归档用途与当前确认的边界；V4 记录声明已发布校验器/代际不变；归档目录由发布域维护"
+        ],
+        "trust": "边界是文档/评审约束；没有自动检查能阻止把归档写进当前论证",
+        "failure": "用 RC 归档证明当前兼容会被评审拒绝；修改旧 generation 会破坏冻结",
+        "exceptions": [
+          "格式参考可覆盖未打 tag 的中间格式，但仍是历史阅读材料"
+        ]
+      },
+      "applicability": "适用：存在多个历史 tag/RC 与当前格式；评审需要区分历史证据与当前确认。不适用：没有历史归档；本机制退化为“当前记录是唯一依据”。",
+      "relationships": [
+        "persistence-current-records.finalized-checkpoint",
+        "persistence-current-records.verifier-trust-boundary"
+      ],
+      "migration": {
+        "strategy": "把历史比较与当前确认放在不同目录、不同文档，并在归档入口写明用途；不要在同一份文件里混用。",
+        "implementation": [
+          "建立只读归档目录",
+          "标注“不作为当前确认”",
+          "当前记录只引用当前树证据",
+          "冻结旧 generation 校验器"
+        ],
+        "requiredSupport": [
+          "归档存储",
+          "当前确认记录",
+          "评审清单"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.archive-separation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "当前兼容性记录只引用当前读取器/记录证据；归档文件保持未修改。",
+            "evidence": "planned",
+            "obligation": "当前兼容性记录只引用当前读取器/记录证据；归档文件保持未修改。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "用某个 RC tag 的归档差异作为 same-version 的主要证据；评审必须拒绝并要求当前行为证据。",
+            "evidence": "planned",
+            "obligation": "用某个 RC tag 的归档差异作为 same-version 的主要证据；评审必须拒绝并要求当前行为证据。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补充当前读取器测试与记录引用，把归档降级为历史背景后通过评审。",
+            "evidence": "planned",
+            "obligation": "补充当前读取器测试与记录引用，把归档降级为历史背景后通过评审。"
+          }
+        ]
+      },
+      "limitations": [
+        "归档目录内容与旧校验器实现属于发布域，本域未读取。",
+        "没有自动检查能强制“不得引用归档作为当前确认”。",
+        "跨域依赖：release：releases/、historical-formats/ 与旧校验器的所有者。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.version-bump-migration",
+      "title": "版本提升：header 转换、迁移边与拒绝条件",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 51,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 51,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 24,
+          "end": 106,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 107,
+          "end": 117,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.schema.json",
+          "start": 1,
+          "end": 16212,
+          "kind": "config"
+        }
+      ],
+      "problem": "版本提升不是改一个数字：header 版本必须递增，迁移要保留旧事件/切分点，子日志缺失或冲突要有确定的跳过/拒绝规则，且拒绝时不能发布半成品。若把 bump 当成一次普通字段修改，旧文件会不可读或静默丢内容。",
+      "triggers": [
+        "分类器/评审决定必须 bump",
+        "需要修改 SessionHeader.version",
+        "需要实现 V3→V4 之类的迁移边",
+        "旧读取器需要明确拒绝新 generation"
+      ],
+      "obligations": [
+        "显式 version-bump 必须自带递增的 SessionHeader.version 转换",
+        "same-version 决策不能豁免 header 版本变化",
+        "记录必须覆盖整个转换，包括同时发生的多个根变化",
+        "迁移保留每个已接纳源事件与继承切分点",
+        "子日志补全要求显式 child-evidence 集合；没有子日志也要传空集合",
+        "descriptor 缺失/多条/版本未知时跳过该子项补全",
+        "身份、时间戳或模式冲突时拒绝迁移且不发布",
+        "写入打开在重新校验子成员与修订后发布后继",
+        "delivery-generation 检查防止历史确认变成活动水位",
+        "已发布校验器与旧 generation 保持不变",
+        "已有新版本文件不重新运行迁入边",
+        "V4 迁移为 forked 的 turn/end.reason 增加变体；精确切分的 fork 在继承标记后追加子自有错误结果与结束事件；V4 接纳经校验的 not-started fork 结果，使用确定性分支 ID 与措辞。",
+        "developer 事件保留角色并要求 open step；每次新增存 toolName，developer/message.headerSeq 指向此前恰好包含一个完整匹配 ToolSchema 的历史 request/header；同一事件的所有新增共享该历史 header 修订；替换、重启、fork、surface replacement 与压缩保留历史 schema 身份，不咨询最新 header 或 registry。"
+      ],
+      "actors": [
+        "格式维护者",
+        "迁移实现者",
+        "评审者",
+        "验证器"
+      ],
+      "steps": [
+        "在声明中列出所有受影响根并统一 version-bump",
+        "修改 SessionHeader.version 字面量并生成快照确认递增",
+        "实现迁移边：保留旧事件/切分点，定义跳过与拒绝条件",
+        "明确历史读取与写入打开的语义",
+        "保持旧 generation 校验器不变",
+        "记录退役/保留字段与查找键映射",
+        "运行聚焦测试与清单比较，把实际数字写进 Verification"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": [
+          "执行组合：header 版本检查 + 迁移测试 + 清单比较 + 评审。",
+          "声明与快照记录 header 版本递增；迁移实现保留/跳过/拒绝；验证器比较受影响根与未变指纹；记录写入实际测试数字"
+        ],
+        "trust": "header 版本、根集合与测试数字可核对；迁移语义与拒绝路径的真实性依赖测试与评审",
+        "failure": "只 bump header 不迁移、冲突时发布后继、或拆散同一转换，会导致旧文件不可读或历史不完整",
+        "exceptions": [
+          "没有 shipped profile 发出的记录类型可以只定义持久化形状，provider/UI 支持延后",
+          "新根可以在 bump 记录中以 previous: null 出现"
+        ]
+      },
+      "applicability": "适用：旧读取器无法安全解释新数据且没有有效判别信息；header 版本需要变化；需要跨代迁移历史 Session。不适用：安全演进可由 same-version 规则覆盖；不要无谓 bump。",
+      "relationships": [
+        "persistence-current-records.compatibility-decision",
+        "persistence-current-records.history-graph",
+        "persistence-current-records.same-version-evidence",
+        "persistence-current-records.finalized-checkpoint",
+        "persistence-current-records.reserved-field"
+      ],
+      "migration": {
+        "strategy": "先写迁移的保留/跳过/拒绝矩阵，再改 header 与声明；不要把迁移逻辑藏在读取器分支里。",
+        "implementation": [
+          "列出旧事件、切分点与子日志来源",
+          "定义 child-evidence 集合与冲突判定",
+          "实现历史读取内存准备与写入发布后继",
+          "保留旧 generation 校验器",
+          "用聚焦测试覆盖跳过/拒绝/成功三类路径"
+        ],
+        "requiredSupport": [
+          "旧格式解析器",
+          "子日志证据集",
+          "冲突检测",
+          "发布原子性",
+          "旧 generation 冻结"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.version-bump-migration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "V3→V4 迁移保留全部已接纳事件与切分点，子日志齐全时补全父级 catalog，header 版本递增，旧 generation 校验器不变，测试通过。",
+            "evidence": "planned",
+            "obligation": "V3→V4 迁移保留全部已接纳事件与切分点，子日志齐全时补全父级 catalog，header 版本递增，旧 generation 校验器不变，测试通过。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "子日志身份/时间戳/模式冲突时执行迁移；实现必须拒绝且不发布后继。",
+            "evidence": "planned",
+            "obligation": "子日志身份/时间戳/模式冲突时执行迁移；实现必须拒绝且不发布后继。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正冲突证据或提供空 child-evidence 集合后重跑，迁移成功且未修改前代文件。",
+            "evidence": "planned",
+            "obligation": "修正冲突证据或提供空 child-evidence 集合后重跑，迁移成功且未修改前代文件。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域只读到 V4 记录的散文与快照；迁移实现属于发布/子系统域。",
+        "记录中的测试数字（1,523/447/884 等）是历史观察，不是本域复跑结果。",
+        "没有 shipped profile 的记录类型其运行期行为未验证。",
+        "跨域依赖：release：session-format 迁移包与旧校验器；testing：迁移/拒绝路径测试。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "persistence-current-records.verifier-trust-boundary",
+      "title": "验证器能证明什么、不能证明什么",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 61,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 63,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.zh.md",
+          "start": 78,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/2026-09-16-session-format-v4.md",
+          "start": 96,
+          "end": 96,
+          "kind": "history"
+        }
+      ],
+      "problem": "CI 绿灯容易被当成“兼容性已证明”。实际上验证器只做形式一致性：历史图、摘要、声明相等、header 约束与检查点哈希；它不判断语义安全、读取器真实行为、作者身份或人类评审，也不能发现检查点与权威记录的联合篡改。",
+      "triggers": [
+        "准备宣称“验证通过所以兼容/安全”",
+        "评审 CI 绿灯",
+        "设计迁移验收",
+        "解释 --check 的结论"
+      ],
+      "obligations": [
+        "把验证器当形式一致性门禁，不是语义安全证明",
+        "Verification 段落是证据索引，评审要能复跑命令",
+        "涉及安全解释的结论必须由人给出双向读取器论证",
+        "不把 CI 绿灯写成“兼容性已被证明”",
+        "记录验证器无法证明作者身份与人类评审",
+        "记录验证器无法证明检查点与权威记录未被一起修改",
+        "记录验证器无法发现已被确认记录覆盖的转换（--check 盲区）",
+        "基线只在树内，不依赖 Git ref/远端/发布检出"
+      ],
+      "actors": [
+        "评审者",
+        "CI 维护者",
+        "验证器实现者",
+        "安全/审计"
+      ],
+      "steps": [
+        "列出自动检查实际覆盖的断言",
+        "列出它不覆盖的语义/行为/权限断言",
+        "把语义结论转交人工评审与测试",
+        "对检查点篡改走权限/审计，而不是重跑验证器",
+        "在评审记录中区分“形式通过”与“语义已论证”"
+      ],
+      "enforcement": {
+        "mode": "knowledge-only",
+        "implementation": [
+          "执行组合：文档化信任边界 + 评审职责分离。",
+          "README 明说验证无法确定记录如何编写或是否经人评审、检查点哈希不能证明未被联合修改、--check 无法显示已覆盖转换"
+        ],
+        "trust": "边界本身是文档约束；没有自动检查能强制评审者不误用绿灯",
+        "failure": "把形式通过当语义证明会导致错误接受；联合篡改需要权限审计而非验证器",
+        "exceptions": [
+          "声明构造为记录既有拒绝时可以只做形式声明（v4 的 system 键案例）"
+        ]
+      },
+      "applicability": "适用：任何依赖验证器/CI 结论的评审；设计审计或权限模型；解释 --check 与 persistence-review 的差异。不适用：纯机械格式检查且不涉及语义结论；仍应知道其边界。",
+      "relationships": [
+        "persistence-current-records.current-root-agreement",
+        "persistence-current-records.finalized-checkpoint",
+        "persistence-current-records.same-version-evidence",
+        "persistence-current-records.archive-separation"
+      ],
+      "migration": {
+        "strategy": "在评审模板中并列“自动检查通过”与“语义证据已评审”，禁止用前者替代后者。",
+        "implementation": [
+          "列出自动断言清单",
+          "列出人工断言清单",
+          "在 PR 模板要求两类证据",
+          "把检查点篡改纳入权限审计"
+        ],
+        "requiredSupport": [
+          "可复跑验证器",
+          "评审清单",
+          "权限/审计流程"
+        ]
+      },
+      "reference": "references/persistence-current-records.md#persistence-current-records.verifier-trust-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "评审记录同时给出验证器通过输出与人工双向行为论证，并明确后者不由 CI 证明。",
+            "evidence": "planned",
+            "obligation": "评审记录同时给出验证器通过输出与人工双向行为论证，并明确后者不由 CI 证明。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "仅凭 CI 绿灯宣称兼容性已证明；评审必须要求语义证据。",
+            "evidence": "planned",
+            "obligation": "仅凭 CI 绿灯宣称兼容性已证明；评审必须要求语义证据。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补充旧读取器/历史日志测试与人工论证后，结论可被接受，但仍标注自动化边界。",
+            "evidence": "planned",
+            "obligation": "补充旧读取器/历史日志测试与人工论证后，结论可被接受，但仍标注自动化边界。"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未运行验证器，也未检查 CI 配置；所有“能/不能证明”来自 README 的声明与记录文本。",
+        "检查点与权威记录的联合篡改只能由权限/审计发现。",
+        "验证器实现属于发布域，其实际断言集合可能比文档更窄或更宽。",
+        "跨域依赖：release：验证器与检查点实现；automation：CI 接线与 required checks。本域只依据 README 与记录声明，未读取对应实现。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

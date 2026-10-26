@@ -1,0 +1,3074 @@
+{
+  "domain": "collaboration",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "collaboration-trusted-default-branch",
+      "title": "可信默认分支与 PR 代码隔离",
+      "sources": [
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 1,
+          "end": 66,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/issue-policy.yml",
+          "start": 1,
+          "end": 58,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/issue-lifecycle.yml",
+          "start": 1,
+          "end": 57,
+          "kind": "config"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 44,
+          "end": 56,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1234,
+          "end": 1331,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 894,
+          "end": 957,
+          "kind": "test"
+        }
+      ],
+      "problem": "安全边界不是运行了哪个 job，而是执行了哪份代码。如果状态写入或策略校验 checkout PR head，PR 作者就能修改评估自己的程序、读取凭据或伪造结论。",
+      "triggers": [
+        "任何 pull_request_target / pull_request_review / issues 事件驱动的检查",
+        "策略或工作流文件在 PR 中被修改",
+        "人工 workflow_dispatch"
+      ],
+      "obligations": [
+        "状态写入与策略校验 job 必须 checkout 仓库默认分支，而不是 PR head；status job 使用 persist-credentials: false。",
+        "PR head 只作为 API 数据读取：reviews、comments、files、commits、head SHA；不 checkout、不执行 PR 中的脚本。",
+        "review-event 交接工作流 permissions 为空对象，只做 echo；真正的权限与状态写入留在 publisher。",
+        "策略变更只有在合并进默认分支后才对该 PR 的后续运行生效；不能用 PR 内未合并的策略评估自身。",
+        "P1 建议（源仓库未强制）：对 .github/workflows/**、.github/review-ownership/**、.github/issue-management/** 配置 CODEOWNERS 或等价 owner review，因为 issue-policy/issue-lifecycle 的 workflow YAML 本身来自 PR head。"
+      ],
+      "actors": [
+        "GitHub Actions runner",
+        "publisher/checker 进程",
+        "仓库维护者",
+        "reviewer",
+        "GitHub forge"
+      ],
+      "steps": [
+        "事件触发后，checkout ref 固定为 github.event.repository.default_branch。",
+        "从默认分支运行 check-approval.mjs / policy.mjs。",
+        "通过 GitHub API 读取当前 PR 的 head SHA、reviews、comments、labels、files 等数据。",
+        "计算并写回 commit status 或 Project；不执行 PR 代码。",
+        "review 事件先由无权限工作流记录，再由 workflow_run publisher 重新读取 live head。"
+      ],
+      "enforcement": {
+        "mode": "workflow configuration + recommended forge owner review",
+        "implementation": "三个工作流的 checkout 步骤均写死默认分支；status job 不注入仓库 secrets；review-event 使用 permissions: {}。",
+        "trust": "默认分支是可信根；PR head 是不可信输入。",
+        "failure": "checkout 失败时状态写入可能不执行；同一 head 的旧 success 会保留，不能把没有新状态当成通过。",
+        "exceptions": [
+          "workflow_dispatch 也走默认分支 checkout。",
+          "PR 中修改的工作流 YAML 在该 PR 的 pull_request_target 运行中不会被执行，但 issue-policy.yml / issue-lifecycle.yml 的 YAML 来自 PR head，源仓库没有 CODEOWNERS 兜底。"
+        ]
+      },
+      "applicability": "所有 GitHub Actions 驱动的审批、Issue 策略与 lifecycle；不适用于本地 hook 或人工评审。",
+      "relationships": [
+        "collaboration-approval-status-contract",
+        "collaboration-review-event-handoff",
+        "collaboration-issue-policy",
+        "collaboration-forge-branch-rules"
+      ],
+      "migration": {
+        "strategy": "先复制并审计工作流，再启用任何 required check。",
+        "implementation": "替换仓库名与默认分支；保留固定 SHA 的 actions/checkout、setup-python、create-github-app-token；检查每个 job 的 checkout ref 和 persist-credentials；把 PR head 仅作为 API 数据。",
+        "requiredSupport": [
+          "GitHub Actions",
+          "固定 SHA 的 actions/checkout、actions/create-github-app-token、actions/setup-python",
+          "可保护默认分支的 GitHub 权限",
+          "建议 CODEOWNERS 或 ruleset 对 .github/** 要求 owner review"
+        ]
+      },
+      "reference": "references/collaboration.md#trusted-default-branch",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "三个工作流的 checkout ref 都是 github.event.repository.default_branch。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "ci-workflow.spec.ts 断言 checkout ref、persist-credentials 和 permissions。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "policy.test.mjs 断言 issue-policy 源文件不含 pull_request.head / pull_request_target checkout。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 checkout 改成 PR head 的 fixture 必须被测试或人工审计拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在 status job 中看到仓库 secrets 或执行 PR 内 node 脚本即失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正 checkout ref 后重跑；若旧 status 仍为 success，重新触发当前 head 的评估。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；由集成阶段运行 node --test 与 ci-workflow 测试并保存输出。"
+      },
+      "limitations": [
+        "仓库内没有 branch protection/ruleset 文件，无法证明 required status 已启用。",
+        "issue-policy.yml 与 issue-lifecycle.yml 的 YAML 来自 PR head；源仓库无 CODEOWNERS。",
+        "check-approval.mjs 的 review-event 工作流本身不能防止 workflow 文件被 PR 修改，只能限制其权限。"
+      ]
+    },
+    {
+      "id": "collaboration-approval-status-contract",
+      "title": "加权审批 commit status 契约",
+      "sources": [
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 10,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 312,
+          "end": 368,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 470,
+          "end": 481,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 522,
+          "end": 529,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 5,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 1,
+          "end": 66,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-09-blocked-weighted-approvals-remain-pending.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 292,
+          "end": 345,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 347,
+          "end": 370,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 476,
+          "end": 487,
+          "kind": "test"
+        }
+      ],
+      "problem": "branch protection 只认所需 context 的状态；如果 job 成功但门禁不足，或 job 失败但分数足够，都会造成错误合并或错误阻塞。",
+      "triggers": [
+        "PR opened/synchronize/reopened/ready_for_review/converted_to_draft/edited",
+        "issue_comment created/edited/deleted 且涉及 /delegate",
+        "review-event 工作流 completed 且 conclusion=success"
+      ],
+      "obligations": [
+        "job 在 checkout 后、评估前先写 pending；pending 的描述为 Evaluating approval points.。",
+        "只有当前 head 上的最终状态才有意义；status context 必须精确等于 weighted approval，description 不超过 140 字符，target_url 必须是 https。",
+        "success 当且仅当 PR 非 draft、无 blocker、没有 error、有效分数（reviewer points + author credit）≥ requiredPoints。",
+        "分数不足、draft、存在 blocker、head SHA 为空：写 pending，不写 failure。",
+        "策略文件缺失/无效、API 失败、历史不完整、分类器失败、参数错误：写 error。",
+        "closed PR、stale head、非订阅事件：不写状态。",
+        "不要把 publisher job 成功当成审批通过；job 在分数 pending 时也会成功。",
+        "评估抛错时必须先把当前 head 上已有的 success 覆盖为 pending，再写 error（description 固定为 `Approval evaluation failed.`），然后继续抛出使 job 失败；不能只抛错而让旧 success 留在当前 head。",
+        "success 的 description 为 `<显示分数>/<requiredPoints> approval points.`，context 固定为 `weighted approval`，target_url 为当前 run URL；reviewer 分数已足够而 author credit 未评估时不得附加 author 段，评估 author credit 时附 `(author N)`。显示保留 3 位小数，但 success 判定使用未舍入分数。",
+        "setup 阶段发布只接受 `pending` 与 `error`；`success` 及其他 phase 必须被拒绝（invalid approval setup phase），防止 setup helper 跳过完整评估直接发布成功。",
+        "GitHub API 非 2xx 响应在错误消息中必须以 JSON 字符串转义（响应体中的换行、引号和 `::error::` 不得原样成为 workflow annotation）；token 以 Bearer 发送，apiUrl 基址在客户端统一拼接。"
+      ],
+      "actors": [
+        "publisher workflow",
+        "check-approval.mjs",
+        "GitHub commit status API",
+        "branch protection/ruleset",
+        "PR author/reviewers"
+      ],
+      "steps": [
+        "工作流触发并 checkout 默认分支。",
+        "publishStatus(pending) 写当前 head。",
+        "解析 policy、读取 PR、reviews、comments、permissions、可选 history/ownership。",
+        "计算 result state；写 success/pending/error 之一，并输出可读日志。"
+      ],
+      "enforcement": {
+        "mode": "commit status + forge required status check",
+        "implementation": "STATUS_CONTEXT=weighted approval；publishStatus 校验 HTTPS URL 与 140 字符；runApprovalCheck 总是先 pending，再根据 result 写终态。",
+        "trust": "publisher 的结论可信度取决于默认分支代码与 GitHub API 返回；不信任 PR 内代码。",
+        "failure": "若 pending 写入本身失败，job 直接失败，同一 head 的旧 success 可能保留；这是源实现的 stale-status 缺口。",
+        "exceptions": [
+          "closed PR 不写。",
+          "review-event 工作流未运行时，同 head 的 review 变化不会刷新状态。",
+          "PR 的 synchronize/edited 等事件会重新计算；draft 状态读取 live PR。"
+        ]
+      },
+      "applicability": "所有需要加权审批门禁的 PR；不适用于已合并/关闭 PR 的最终审计。",
+      "relationships": [
+        "collaboration-approval-eligibility",
+        "collaboration-blocker-pending",
+        "collaboration-forge-branch-rules",
+        "collaboration-review-event-handoff"
+      ],
+      "migration": {
+        "strategy": "先以非 required 运行并观察 pending/success/error，再设 required。",
+        "implementation": "通过 Skill 内 tools/github-approval/install.mjs 安装目标目录参数化的完整评分器与两条工作流（步骤见 references/github-approval.md）；保留 context 并另行配置 expected App/branch rule。安装或局部测试不等于远端已启用。",
+        "requiredSupport": [
+          "GitHub Actions",
+          "statuses: write 与 pull-requests: write 权限",
+          "branch protection 中 context=weighted approval 且 expected source=GitHub Actions",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#approval-status-contract",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "pending 先于评估写入。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "1 个 2 分 approval → success；draft 或分数不足 → pending；策略/API 失败 → error。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 insufficient/draft/blocker 写成 failure 或 success 必须被测试拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "status description 超 140 或非 https 必须拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复参数/API 后重跑；若 pending 写失败，重新触发 workflow 并确认新状态覆盖旧 success。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 pnpm run test:approval-policy 与 workflow tests。"
+      },
+      "limitations": [
+        "status 是 commit status，不是 check run；必须按 context + expected source 配置。",
+        "pending 写入失败不会产生 error 状态。",
+        "review 事件依赖独立工作流，存在 stale-success 窗口。",
+        "review/comment/delegation 列表每页 100,累计达到或超过 3000 条即抛错;超限不返回部分分数。",
+        "pending 与 error 是两次独立 API 调用，测试只固定调用序列，未覆盖第二次写入本身失败的最终状态。",
+        "错误体转义由测试中的字符串断言证明，未验证 GitHub 服务端对 annotation 的全部解析规则。"
+      ]
+    },
+    {
+      "id": "collaboration-approval-eligibility",
+      "title": "审批资格、权限与当前决策",
+      "sources": [
+        {
+          "path": ".github/review-ownership/approval-policy.json",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 21,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 30,
+          "end": 80,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 118,
+          "end": 133,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 456,
+          "end": 468,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 154,
+          "end": 233,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 235,
+          "end": 290,
+          "kind": "test"
+        }
+      ],
+      "problem": "如果把任何 approve 都计分，作者、只读用户、bot 或已被后续 review 覆盖的旧决策都可能制造虚假多数。",
+      "triggers": [
+        "每次 publisher 评估",
+        "策略文件变更合并后",
+        "review submitted/edited/dismissed"
+      ],
+      "obligations": [
+        "approval policy 必须是对象，且只允许合法字段：requiredPoints、defaultPoints、reviewerPoints；未知字段/非法值拒绝。",
+        "requiredPoints 与 defaultPoints 必须是正整数；reviewerPoints 的 login 合法、大小写不敏感唯一、points 为正整数。",
+        "reviewer 必须对仓库有 admin 或 write 权限；只读用户即使 APPROVED 也不计分。",
+        "PR 作者自己的 approval 永不计分，即使作者是 admin。",
+        "type=Bot 或 login 以 [bot] 结尾的账号不计分。",
+        "每个 reviewer 只取当前有效决策：按 GitHub 返回顺序，DISMISSED 清除该 reviewer 的既有决策（包括更早的 APPROVED）；COMMENTED/PENDING 不替换决策。",
+        "review 列表分页取全；达到 3000 条记录上限即失败，不能接受部分历史。",
+        "reviewer permission API 404 视为错误，不能当作 0 分权限。"
+      ],
+      "actors": [
+        "publisher",
+        "GitHub reviews API",
+        "collaborator permission API",
+        "reviewers",
+        "PR author"
+      ],
+      "steps": [
+        "解析 approval-policy.json。",
+        "拉取 reviews 全部分页，构造有效决策 map。",
+        "对每个 APPROVED login 查询 collaborator permission。",
+        "过滤作者、bot、非 write/admin，累加 points。",
+        "与 requiredPoints/author credit 比较。"
+      ],
+      "enforcement": {
+        "mode": "implementation in trusted publisher",
+        "implementation": "parseApprovalPolicy、effectiveReviewDecisions、reviewerPermission 与 listRecords 在默认分支执行。",
+        "trust": "GitHub collaborator 权限与 review 状态是权威；策略文件由维护者合并后生效。",
+        "failure": "policy 解析失败、分页超限、permission API 非 404 错误 → error；404 也 error。",
+        "exceptions": [
+          "DISMISSED review 不撤销更早的 APPROVED。",
+          "作者/bot 不因权限高而计分。",
+          "review 只取当前有效决策；但旧 commit 的 approval 是否失效取决于 forge 的 dismiss stale 设置。"
+        ]
+      },
+      "applicability": "所有使用 weighted approval 的仓库；需要可查询 collaborator 权限的 token。",
+      "relationships": [
+        "collaboration-approval-status-contract",
+        "collaboration-author-credit",
+        "collaboration-ownership-weighted",
+        "collaboration-delegation"
+      ],
+      "migration": {
+        "strategy": "先复制 approval-policy.json，按目标仓库的 reviewer 与阈值重写。",
+        "implementation": "保留 login 大小写不敏感唯一；points 用整数；defaultPoints=1；requiredPoints=2 只是源值，不是通用规则。",
+        "requiredSupport": [
+          "GitHub token 可读 reviews 与 collaborator permissions",
+          "策略文件与脚本同分支",
+          "review 分页上限满足仓库规模"
+        ]
+      },
+      "reference": "references/collaboration.md#reviewer-eligibility-points",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "2 个 1 分或 1 个 2 分 approval 达到 2 分；admin/write 用户计分；只读用户被忽略。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "作者 approve、bot approve、只读用户 approve、404 权限、未知 policy 字段必须不计分或报错。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "3000 条以上 reviews 必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正 reviewer 权限或 policy 后重新触发；API 失败重跑而不是降级。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 check-approval.test.mjs 的 154-233、235-290。"
+      },
+      "limitations": [
+        "review 列表上限 3000 是硬编码。",
+        "旧 commit approval 的失效依赖 GitHub 原生 dismiss stale；代码不处理。",
+        "policy 变更只在合并后生效。"
+      ]
+    },
+    {
+      "id": "collaboration-author-credit",
+      "title": "作者历史合并积分",
+      "sources": [
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/author-weight.mjs",
+          "start": 1,
+          "end": 62,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/author-weight.test.mjs",
+          "start": 1,
+          "end": 47,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 214,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 501,
+          "end": 525,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 570,
+          "end": 667,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-16-author-approval-credit.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        }
+      ],
+      "problem": "新贡献者没有历史积分会被 2 分门槛长期阻塞；但把作者身份当成无限信用又会绕过 review。",
+      "triggers": [
+        "PR 非 draft、无 blocker、reviewer 总分低于 requiredPoints 时懒加载"
+      ],
+      "obligations": [
+        "作者积分公式固定为 min(100, mergedPRCount) × 11 / 1000；100 个及以上合并 PR 得 1.1 分。",
+        "只统计同仓库、MERGED、作者不可变 account ID 与当前 PR 作者相同的 PR；排除当前 PR。",
+        "GraphQL 按 CREATED_AT DESC、每页 100 拉取；数到 100 个匹配即停止。",
+        "PR 编号去重；cursor 必须前进；GraphQL errors 或节点结构不完整即失败，不返回部分分数。",
+        "人类与 bot（包括 Dependabot）同规则；作者自己的 review 仍被排除。",
+        "draft、blocker、reviewer 分数已达标时跳过查询，日志标记 not evaluated 与原因。",
+        "历史查询失败 → error 状态，不能降级为 0 分。"
+      ],
+      "actors": [
+        "publisher",
+        "GitHub GraphQL",
+        "PR author"
+      ],
+      "steps": [
+        "evaluateApproval 判断是否满足懒加载条件。",
+        "用 PR 作者 node_id 查询同仓库 MERGED PR。",
+        "分页累加，排除当前 PR，数到 100 停止。",
+        "按公式转成分数，显示 author <points>。"
+      ],
+      "enforcement": {
+        "mode": "implementation + GraphQL history",
+        "implementation": "author-weight.mjs 的 authorCreditPoints 与 countMergedAuthorPulls；evaluateApproval 仅在分数不足且无 blocker 时调用。",
+        "trust": "合并历史是 GitHub 权威数据；作者 account ID 不可变。",
+        "failure": "不完整历史、非法节点、cursor 不前进 → 抛错 → error。",
+        "exceptions": [
+          "bot 同规则。",
+          "当前 PR 不计入。",
+          "作者积分不能单独满足 2 分阈值（上限 1.1）。"
+        ]
+      },
+      "applicability": "同仓库 PR；跨仓库提交不累计。",
+      "relationships": [
+        "collaboration-approval-eligibility",
+        "collaboration-ownership-weighted",
+        "collaboration-approval-status-contract"
+      ],
+      "migration": {
+        "strategy": "保留公式与懒加载顺序；按目标仓库历史规模调整超时，但不要改上限语义。",
+        "implementation": "可选审批安装器已交付原样 author-weight.mjs；保持 GraphQL repository.pullRequests 权限、同仓库不可变 account ID 匹配、cap 与懒加载。真实目标历史查询仍需执行。",
+        "requiredSupport": [
+          "GitHub GraphQL API",
+          "可读同仓库 merged PR 历史的 token",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#author-credit",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "0/50/90/91/100 合并 PR 分别得到 0/0.55/0.99/1.001/1.1。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "同账号、排除当前 PR、bot 同规则。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "login 改名/账号删除后仍按旧 login 计分必须失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "不完整响应或 cursor 不前进必须 error，不能返回部分分。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复 GraphQL 权限/分页后重跑；不要手工补分。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 author-weight.test.mjs 与 check-approval.test.mjs 相关段。"
+      },
+      "limitations": [
+        "合并数量不等于 review 质量或领域专长。",
+        "100 个 PR 上限意味着高产出作者被封顶 1.1。",
+        "依赖 GraphQL 历史完整性；浅克隆/分页失败会 error。"
+      ]
+    },
+    {
+      "id": "collaboration-ownership-weighted",
+      "title": "生产归属加权评分",
+      "sources": [
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 25,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/blame-ownership.mjs",
+          "start": 1,
+          "end": 86,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/blame-production.py",
+          "start": 1,
+          "end": 135,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 214,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 392,
+          "end": 463,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 501,
+          "end": 525,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/blame-ownership.test.mjs",
+          "start": 8,
+          "end": 52,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/test_blame_production.py",
+          "start": 44,
+          "end": 215,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-11-production-blame-approval-weight.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        }
+      ],
+      "problem": "对所有 reviewer 一视同仁会把熟悉这段生产代码的人与随便 approve 的人视为等价；纯行数权重又会奖励大改动。",
+      "triggers": [
+        "PR 非 draft、无 blocker、reviewer 总分低于 requiredPoints、且至少有一个 default 权重 approval"
+      ],
+      "obligations": [
+        "只对 defaultPoints 权重的 approval 做归属加成；reviewerPoints 固定分不加成。",
+        "测量条件必须同时满足：无 blocker、分数不足、至少一个 default approval；每个 PR 只测量一次，所有 reviewer 共享。",
+        "公式：min(requiredPoints, defaultPoints + (requiredPoints - defaultPoints) × 4 × ownedLines / totalLines)；源参数（required=2、default=1）下 25% 及以上封顶 2；显示保留 3 位小数，但决策用未舍入值。",
+        "ownedLines 按 reviewer login 小写匹配 blame 作者；从 live base 与 exact reviewed head 的 merge base 到 reviewed head 计算。",
+        "分母 totalLines 是所有 eligible production lines 减去 additions；未关联 GitHub 账号的作者仍留在分母。",
+        "只统计生产代码；测试、文档、生成文件、vendor、构建产物等排除。",
+        "Git 历史必须完整；shallow 或 fetch/parse 失败 → error，不产生部分分数。",
+        "author 解析按 50 个一批；Git 子进程有 120 秒上限，禁用 external diff/textconv/replacements，不 checkout PR。"
+      ],
+      "actors": [
+        "publisher",
+        "blame-ownership.mjs",
+        "blame-production.py 分类器",
+        "GitHub commits API",
+        "reviewer"
+      ],
+      "steps": [
+        "条件检查；不满足则跳过。",
+        "fetch live base 与 exact head，找 merge base。",
+        "列出 changed files，分类 eligible production lines。",
+        "对每个 reviewer 统计 owned lines 与总 eligible lines。",
+        "按公式加成并 cap 到 requiredPoints。"
+      ],
+      "enforcement": {
+        "mode": "trusted code + Git history + GraphQL account mapping",
+        "implementation": "blame-ownership.mjs 调用 Python blame-production.py；分类器判定 production，Git blame 归因最后修改者。",
+        "trust": "分类器代码在默认分支；Git 对象作为数据处理；GitHub commit-author 映射解析账号。",
+        "failure": "history incomplete、git 超时、分类器异常、author 查询不完整 → error；无部分分数。",
+        "exceptions": [
+          "totalLines=0 或 reviewer 无 owned lines → 1 分（不加成）。",
+          "reviewer 无匹配账号 → 无 owned lines。",
+          "fixed reviewerPoints 不参与加成。"
+        ]
+      },
+      "applicability": "需要生产代码归属加成的同仓库 PR；依赖完整 Git 历史与 GitHub 账号映射。",
+      "relationships": [
+        "collaboration-production-classifier",
+        "collaboration-approval-eligibility",
+        "collaboration-author-credit",
+        "collaboration-approval-status-contract"
+      ],
+      "migration": {
+        "strategy": "先复制 classifier 并在目标仓库历史样本上验证，再启用加成。",
+        "implementation": "可选审批模块用 production-roots.json 明确目标生产目录；保留 Python3.10+、固定 Pygments、120秒 Git 超时、50批 author 查询与不 checkout PR。根目录自身不继承祖先排除，根内部测试/生成过滤仍保留。",
+        "requiredSupport": [
+          "Python 3.10",
+          "Pygments（requirements.txt）",
+          "完整 Git 历史（非 shallow）",
+          "可读 commits/pulls 的 token",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#production-ownership-weight",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "0/12.5/25% ownership 分别得到 1/1.5/2；cap 到 requiredPoints；author 映射正确。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "shallow history、空分母、分类器异常、author 查询不完整不得提升分数。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "fixed reviewerPoints 被加成必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补全历史/修复分类器后重跑；保留 error 状态直到成功重算。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 test_blame_production.py 与 blame-ownership.test.mjs。"
+      },
+      "limitations": [
+        "git blame 是最后修改者，不等于 review 质量或领域专长。",
+        "分类器是词法/路径规则，不是语义执行分析。",
+        "新增生产目录必须同步扩展 classifier，否则分母失真。"
+      ]
+    },
+    {
+      "id": "collaboration-production-classifier",
+      "title": "生产源分类器与行计数",
+      "sources": [
+        {
+          "path": ".github/review-ownership/blame-production.py",
+          "start": 1,
+          "end": 135,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/test_blame_production.py",
+          "start": 44,
+          "end": 215,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 25,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-11-production-blame-approval-weight.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".github/review-ownership/test_blame_production.py",
+          "start": 1,
+          "end": 43,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/test_blame_production.py",
+          "start": 216,
+          "end": 217,
+          "kind": "test"
+        }
+      ],
+      "problem": "归属权重只有在分母只含生产代码时才公平；测试、文档、生成文件或纯 rename 会稀释 reviewer 的 owned 比例。",
+      "triggers": [
+        "ownership 测量阶段对每个 changed file 的每一行分类",
+        "新增生产目录或 shipped 文件类型"
+      ],
+      "obligations": [
+        "生产路径：packages/、apps/、python/、native/ 下含 src 组件的路径；apps/desktop/renderer/；packages/experimental/code-runtime-python/py/；显式 shipped 文件清单。",
+        "排除：vendor/、node_modules/、dist/、build/、coverage/、生成目录、测试文件/目录、fixtures、snapshots、类型声明（除非 shipped）等。",
+        "注释、docstring、字符串、空白行、预处理指令行不计入生产代码；生成文件头只在 leading comments/docstring 中识别。",
+        "混合行（代码 + 注释）按代码计；删除行全部可计；新增行从分母排除。",
+        "rename 有编辑时使用旧路径内容；纯 rename 不产生 changed lines；二进制替换按 errors=replace 解码后分类。",
+        "Git 历史必须完整；shallow 直接拒绝；分类器失败不得退化为 0 或部分分数。",
+        "验证真实 Git 归因必须在 mkdtemp 临时仓库内运行，显式设置 fixture 身份、禁用 gpg 签名（commit.gpgsign=false）并指向不存在的 hooksPath，避免宿主 git 配置、签名或 hook 影响结果。",
+        "历史无法构成完整区间时必须抛 ValueError('complete history')，不得返回 0 行或部分分数；在 shallow 仓库上 base 与 head 相同也按该错误拒绝。"
+      ],
+      "actors": [
+        "classifier（Python）",
+        "blame-ownership.mjs",
+        "Git",
+        "reviewer"
+      ],
+      "steps": [
+        "读取 merge base..head 的 diff（--no-renames 与 rename 检测分开）。",
+        "对旧/新 blob 解码、按扩展名/路径过滤。",
+        "用 Pygments 去注释/字符串，识别生成头。",
+        "输出每行 eligible 布尔与作者。"
+      ],
+      "enforcement": {
+        "mode": "trusted classifier + unit tests",
+        "implementation": "blame-production.py 以 stdin JSON 接收文件/行，输出分类；blame-ownership.mjs 汇总。",
+        "trust": "分类器在默认分支执行；输入只作为数据。",
+        "failure": "非 UTF-8 路径/blob、解析异常、git 失败 → error。",
+        "exceptions": [
+          "纯 rename 无 changed lines；新增文件行不进分母；空分母不加成。",
+          "二进制以 replacement 解码，changed old lines 若分类为代码仍计。"
+        ]
+      },
+      "applicability": "所有需要 ownership 加成的仓库；路径/扩展名必须按目标仓库调整。",
+      "relationships": [
+        "collaboration-ownership-weighted",
+        "collaboration-approval-status-contract"
+      ],
+      "migration": {
+        "strategy": "先列出目标仓库 production roots 与 shipped files，再写测试固定分类。",
+        "implementation": "通过可选审批安装器交付 classifier/固定 requirements，显式配置真实生产根；保留根内部排除及旧路径/旧内容分类。用真实 Git 历史验证 merge base、rename、删除、混合注释与 shallow 拒绝，不能以配置存在代替验证。",
+        "requiredSupport": [
+          "Python 3.10",
+          "Pygments",
+          "完整 Git 历史",
+          "Git 二进制",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#production-source-classifier",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "混合行、字符串、预处理行按预期计数；生成/测试/vendor 排除；删除行计入；新增行不计。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "纯 rename 产生分母、shallow 被接受、二进制崩溃、非 UTF-8 崩溃必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "扩展 roots/排除并补测试；不要手工调整 reviewer 分数。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 test_blame_production.py 与 uv python -m unittest discover。"
+      },
+      "limitations": [
+        "词法分类无法理解宏、模板语言或运行时生成代码。",
+        "路径规则需要随仓库结构演进维护。",
+        "分类器失败是 error，不是无加成。",
+        "临时仓库夹具只证明分类器在合成历史上可复现；不证明宿主仓库的完整历史或 rename/copy 检测。"
+      ]
+    },
+    {
+      "id": "collaboration-delegation",
+      "title": "/delegate 审批积分委托",
+      "sources": [
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 135,
+          "end": 182,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 184,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 428,
+          "end": 438,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 35,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 669,
+          "end": 1131,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 1,
+          "end": 66,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-15-pr-approval-delegation.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        }
+      ],
+      "problem": "有资格的 reviewer 可能无法亲自审阅；直接共享账号或让代理 approve 会破坏责任归属与积分守恒。",
+      "triggers": [
+        "PR issue_comment created/edited/deleted，body 或 body.from 含 /delegate",
+        "review submitted/edited/dismissed 在命令之后"
+      ],
+      "obligations": [
+        "命令必须整条评论 trim 后精确匹配 /delegate @login；login 允许字母数字连字符与可选 [bot]；大小写不敏感。",
+        "sender 与 delegate 都必须当前对仓库有 admin/write 权限；两者都不能是 PR 作者；self-delegation 删除自己的委托。",
+        "每个 sender 最多一个有效命令；按评论创建顺序取最新；编辑只改变 body，不改变创建顺序；删除较新评论可恢复较旧命令；编辑旧评论不会获得新时间戳。",
+        "最新编辑者必须是评论作者；lastEditedAt 存在且 editor id 与 author id 不一致 → 忽略该命令；元数据不一致 → 评估错误。",
+        "命令之后出现的任何非 PENDING review（包括 DISMISSED、COMMENTED）撤销该 sender 的命令；时间相同则 review 优先；后续 dismissal 不恢复。",
+        "有效委托存在时，sender 的积分只按 delegate 的当前 approval 计算；积分不转发（delegate 自己的委托不再传给上游）。",
+        "dismissal 时，若 sender 有 APPROVED/CHANGES_REQUESTED reviews，必须逐个 dismiss 并确认；失败/未确认 → error 且不发送 review request。",
+        "对尚未 approve 的 delegate 发送 review request；已请求过的不重复；失败只记录，不改变分数，下次评估重试。",
+        "作者积分不能被委托；其他 blocker 仍然适用。"
+      ],
+      "actors": [
+        "sender（有资格 reviewer）",
+        "delegate",
+        "publisher",
+        "GitHub comments/reviews API",
+        "PR author"
+      ],
+      "steps": [
+        "分页读取全部 issue comments，解析候选命令并记录创建/编辑元数据。",
+        "按创建顺序计算有效委托 map。",
+        "结合 reviews 撤销命令。",
+        "用 delegate 的当前 approval 计算 sender 积分。",
+        "dismiss sender 旧 reviews、请求 delegate review、写状态。"
+      ],
+      "enforcement": {
+        "mode": "trusted publisher + human command + GitHub permissions",
+        "implementation": "delegationCommands、effectiveDelegations、requestDelegatedReviews；workflow job 只为含 /delegate 的 issue_comment 运行。",
+        "trust": "评论作者与编辑者是 GitHub 账号；权限实时查询；不信任 PR 内文本。",
+        "failure": "评论分页失败、编辑元数据不一致、dismiss 失败/未确认 → error；不发送请求。",
+        "exceptions": [
+          "self-delegation 删除自己的委托，恢复本人决策。",
+          "命令后的 COMMENTED/DISMISSED 也撤销。",
+          "delegate 的积分不继续转发。"
+        ]
+      },
+      "applicability": "同仓库、有写权限的 reviewer 之间；不适用于跨仓库或外部贡献者。",
+      "relationships": [
+        "collaboration-approval-eligibility",
+        "collaboration-blocker-pending",
+        "collaboration-approval-status-contract"
+      ],
+      "migration": {
+        "strategy": "先在测试 PR 上验证权限、dismiss、request 与撤销，再开放。",
+        "implementation": "可选审批模块保留完整命令解析/评估、creation order 与不可变作者/编辑者核对；目标 App/token 仍须可读评论、写 dismissal/review requests，并在真实测试 PR 上验证权限、撤销和失败路径。",
+        "requiredSupport": [
+          "pull-requests: write",
+          "可读 issue comments 与 collaborator permissions",
+          "GitHub review request API",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#delegation",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "sender 积分跟随 delegate approval；积分守恒；self-delegation 恢复本人决策；评论分页与编辑顺序正确。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只读用户、作者、链式转发、编辑他人评论、命令后的 review、dismiss 未确认必须无效或 error。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重新发表有效命令或 self-delegate；dismiss 失败时修复权限后重跑。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 check-approval.test.mjs 669-1131。"
+      },
+      "limitations": [
+        "命令是整条评论，无法与普通讨论共存。",
+        "依赖评论创建顺序与编辑元数据；shallow/不完整分页会 error。",
+        "delegate 的 approval 仍受当前决策与权限变化影响。"
+      ]
+    },
+    {
+      "id": "collaboration-blocker-pending",
+      "title": "Blocker 保持 pending",
+      "sources": [
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 13,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 214,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 235,
+          "end": 290,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-09-blocked-weighted-approvals-remain-pending.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        }
+      ],
+      "problem": "如果 changes-requested 直接写 failure，reviewer 就失去阻止合并的明确信号；如果写 success，branch rule 会放行。",
+      "triggers": [
+        "评估时存在非 PENDING 的 CHANGES_REQUESTED review"
+      ],
+      "obligations": [
+        "任何当前 CHANGES_REQUESTED 都构成 blocker；即使 reviewer 积分已足够。",
+        "存在 blocker 时状态必须是 pending，不能是 success 或 failure。",
+        "blocker 不阻止 reviewer 分数的计算与显示；author credit 与 ownership 加成在 blocker 下不测量。",
+        "blocker 由 reviewer 自身 dismiss 或提交新的 APPROVED 解除；author 不能替 reviewer dismiss。",
+        "状态描述应说明 blockers 存在（源输出列 blockers 与 review URLs）。"
+      ],
+      "actors": [
+        "reviewer",
+        "publisher",
+        "branch protection"
+      ],
+      "steps": [
+        "收集当前有效决策",
+        "识别 CHANGES_REQUESTED",
+        "计算分数",
+        "写 pending 并列出 blocker"
+      ],
+      "enforcement": {
+        "mode": "implementation + branch rule",
+        "implementation": "evaluateApproval 先收集 blockers；result state 优先级 error > blocker(pending) > draft(pending) > insufficient(pending) > success。",
+        "trust": "reviewer 的当前决策是权威；dismiss 权限在 GitHub。",
+        "failure": "API 失败/记录不完整 → error，不是 pending。",
+        "exceptions": [
+          "dismissed 的 changes-requested 不再阻塞。",
+          "COMMENTED 不阻塞。",
+          "delegation 可 dismiss sender 的旧 blocker，但失败则 error。"
+        ]
+      },
+      "applicability": "所有 weighted approval PR。",
+      "relationships": [
+        "collaboration-approval-status-contract",
+        "collaboration-delegation",
+        "collaboration-approval-eligibility"
+      ],
+      "migration": {
+        "strategy": "保留 pending 语义，不要为了失败可见性改成 failure。",
+        "implementation": "复制 result state 优先级；确保 branch rule 只认 success。",
+        "requiredSupport": [
+          "commit status",
+          "branch protection required context",
+          "reviews API"
+        ]
+      },
+      "reference": "references/collaboration.md#blocking-review-pending",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "blocker + 足够分数 → pending；dismiss 后 → success（若分数仍够）。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "blocker 写 success/failure 必须被测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "reviewer dismiss 或提交新 review 后重新评估。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 check-approval.test.mjs 235-290。"
+      },
+      "limitations": [
+        "blocker 依赖 review 的当前 decision；旧 commit 的 changes-requested 是否失效取决于 forge 设置。",
+        "状态 pending 不会自动提醒 reviewer。"
+      ]
+    },
+    {
+      "id": "collaboration-review-event-handoff",
+      "title": "Review 事件的无权限交接",
+      "sources": [
+        {
+          "path": ".github/workflows/weighted-approval-review-event.yml",
+          "start": 1,
+          "end": 18,
+          "kind": "config"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 371,
+          "end": 397,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 522,
+          "end": 529,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 31,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 84,
+          "end": 135,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1234,
+          "end": 1331,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-10-approval-review-workflow-identity.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        }
+      ],
+      "problem": "pull_request_target 默认不会因 review 提交而重新运行；但让 review 事件工作流直接持有 statuses:write 又会把权限暴露给一个可以记录的上下文。",
+      "triggers": [
+        "pull_request_review submitted/edited/dismissed 且 PR state=open",
+        "review-event workflow_run completed 且 conclusion=success"
+      ],
+      "obligations": [
+        "review-event 工作流只监听 pull_request_review，permissions 为空对象，run-name 精确为 weighted-approval-review-event:<PR number>，步骤只 echo。",
+        "publisher 只接受 workflow_run path 精确等于 .github/workflows/weighted-approval-review-event.yml、event=pull_request_review、conclusion=success 的运行。",
+        "publisher 从 display_title 解析 PR number；GitHub 可能把 run-name 展开到 name，因此用 path 而不是 name 识别来源。",
+        "publisher 重新读取 PR 的当前 head；workflow_run 的 head_sha 必须等于当前 PR head，否则忽略。",
+        "PR 已关闭 → 不写状态。",
+        "workflow_run.pull_requests 为空时可用 run title 的 PR number 继续，但必须仍与当前 PR 关联。"
+      ],
+      "actors": [
+        "reviewer",
+        "GitHub Actions",
+        "review-event workflow",
+        "publisher",
+        "branch protection"
+      ],
+      "steps": [
+        "review 事件触发无权限 echo 工作流。",
+        "GitHub 产生 workflow_run completed。",
+        "publisher 校验 path/event/conclusion/title/head。",
+        "重新读取 reviews，评估并写状态。"
+      ],
+      "enforcement": {
+        "mode": "workflow_run handoff + implementation validation",
+        "implementation": "approvalEventFromWorkflowRun 校验 path、event、conclusion、display_title、head_sha；review workflow 不持有 token。",
+        "trust": "GitHub 的 workflow_run 元数据是权威；但仍需重新读取 live head，不能只信 run 记录。",
+        "failure": "path/title/event/conclusion 不匹配 → 抛错或忽略；head 不匹配 → null，不写状态。",
+        "exceptions": [
+          "PR 关闭不写。",
+          "run 的 pull_requests 数组可能为空，title 提供 number。",
+          "workflow_run 的 head_sha 可能是旧 head；忽略，等待当前 head 的重新评估。"
+        ]
+      },
+      "applicability": "需要 review 后立即刷新的 weighted approval；不适用于没有 Actions 的 forge。",
+      "relationships": [
+        "collaboration-approval-status-contract",
+        "collaboration-stale-head-boundary",
+        "collaboration-trusted-default-branch"
+      ],
+      "migration": {
+        "strategy": "保留两个工作流的名称、路径、run-name 与权限边界。",
+        "implementation": "可选审批安装器原样交付 review-event 与 publisher；保持名称、path、run-name、权限边界和实时 head 校验，不合并成带写权限的 review 工作流；改名仍须同步 path 校验与真实交接验证。",
+        "requiredSupport": [
+          "GitHub Actions workflow_run",
+          "两个独立 workflow 文件",
+          "statuses: write 仅在 publisher",
+          "pull_request_review 事件"
+        ]
+      },
+      "reference": "references/collaboration.md#review-event-handoff",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "review 提交/编辑/dismiss 后 publisher 运行；path/title/head 匹配时刷新同一 head。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "错误 path、错误 event、失败 conclusion、非十进制 title、旧 head 必须被拒绝或忽略。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复 workflow 路径/title 后重跑；或直接触发 publisher 的合法事件。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 check-approval.test.mjs 84-135 与 ci-workflow.spec.ts。"
+      },
+      "limitations": [
+        "依赖 GitHub workflow_run 关联；数组为空时靠 title，需保持 title 格式。",
+        "review-event 工作流未运行时没有替代触发，旧 success 可能保留。",
+        "源仓库没有证明 GitHub 服务端的 workflow_run 行为。"
+      ]
+    },
+    {
+      "id": "collaboration-stale-head-boundary",
+      "title": "Stale head、closed PR 与状态边界",
+      "sources": [
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 400,
+          "end": 425,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 1013,
+          "end": 1045,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.test.mjs",
+          "start": 1133,
+          "end": 1146,
+          "kind": "test"
+        },
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 29,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 17,
+          "end": 19,
+          "kind": "config"
+        }
+      ],
+      "problem": "旧 commit 的审批或状态不能证明当前代码已被审阅；关闭的 PR 也不应再获得新状态。",
+      "triggers": [
+        "comment 事件解析 PR",
+        "workflow_run handoff",
+        "PR 已关闭",
+        "head 在评估期间变化"
+      ],
+      "obligations": [
+        "review 事件的 run head 与当前 PR head 不一致时返回 null；不写状态。",
+        "comment 事件通过 issue number 解析 PR，并读取当前 head；不能用评论所在时间点的旧 head。",
+        "PR 已关闭（state != open）时不写状态；workflow job if 也提前过滤。",
+        "状态只写当前 head SHA；branch protection 的 required status 应只看当前 head。",
+        "源仓库不自动使旧 commit 的 approval 失效；若需要 commit 级 review 语义，必须配置 GitHub 原生 dismiss stale reviews / require latest push。"
+      ],
+      "actors": [
+        "publisher",
+        "GitHub API",
+        "branch protection",
+        "reviewer"
+      ],
+      "steps": [
+        "解析当前 PR 或 run 的 head。",
+        "比较并读取 live PR。",
+        "closed/stale → 不写。",
+        "否则写当前 head 的 pending/终态。"
+      ],
+      "enforcement": {
+        "mode": "implementation + optional forge native rule",
+        "implementation": "approvalEventFromWorkflowRun 比较 head_sha；approvalEventFromComment 读取当前 PR head；workflow job if 过滤 closed。",
+        "trust": "GitHub 的当前 PR head 与 state 是权威；旧 run/评论不是。",
+        "failure": "API 失败 → error；不能把无法读取当成 closed。",
+        "exceptions": [
+          "非订阅事件不写。",
+          "同一 head 的 review 变化依赖 review-event 工作流。",
+          "已写下的旧 head 状态不会被自动删除，但 branch rule 只看当前 head。"
+        ]
+      },
+      "applicability": "所有 commit-status 门禁；对 stack 的每层同样适用。",
+      "relationships": [
+        "collaboration-review-event-handoff",
+        "collaboration-forge-branch-rules",
+        "collaboration-approval-status-contract"
+      ],
+      "migration": {
+        "strategy": "先启用 commit 级 review 失效的原生设置，或明确接受旧 approval 计入当前 decision。",
+        "implementation": "复制 head 校验；在 branch rule 中启用 dismiss stale reviews 与 require latest push（若策略要求）；不要尝试用代码伪造 stale 失效。",
+        "requiredSupport": [
+          "当前 PR head API",
+          "GitHub 原生 stale review/latest push 设置（可选）",
+          "required status 绑定当前 head"
+        ]
+      },
+      "reference": "references/collaboration.md#stale-head-review-boundary",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "comment 事件使用 live head；closed PR 跳过；review run 的旧 head 被忽略。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "旧 head 写入成功、closed PR 写状态、用评论时间点 head 代替当前 head 必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重新触发当前 head；必要时关闭/重开或 push 新 commit 产生事件。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 check-approval.test.mjs 1013-1045、1133-1146。"
+      },
+      "limitations": [
+        "源实现没有 stale review 失效；旧 commit approval 可能仍计入当前 decision。",
+        "review-event 工作流缺失时，同 head 的 review 变化不会刷新状态。",
+        "branch rule 的 stale 设置是 forge-only，仓库内无法证明。"
+      ]
+    },
+    {
+      "id": "collaboration-forge-branch-rules",
+      "title": "Forge 分支规则与 required checks",
+      "sources": [
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 19,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/issue-management/README.md",
+          "start": 11,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 729,
+          "end": 738,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 18,
+          "end": 30,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 48,
+          "end": 63,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-23-portable-required-pull-request-ci.md",
+          "start": 18,
+          "end": 18,
+          "kind": "history"
+        }
+      ],
+      "problem": "仓库文件只能定义状态如何产生，不能定义它是否被要求；没有 required check 的 status 只是装饰。",
+      "triggers": [
+        "迁移启用门禁",
+        "branch protection/ruleset 变更",
+        "新增/重命名 workflow 或 job"
+      ],
+      "obligations": [
+        "weighted approval：required commit status，context 精确等于 weighted approval，expected source 必须是 GitHub Actions；只配 context 会让任意有 statuses:write 的第三方伪造。",
+        "Issue policy：required check，job 名精确等于 Issue policy；它是 PR 元数据校验，不是 Issue lifecycle。",
+        "CI 聚合：required status all checks passed，且所有 blocking job 必须在 needs 中；skipped 显式拒绝，不能冒充 success。",
+        "历史归档记录称 branch protection 也要求 e2e；迁移时必须读取当前设置确认，不能把归档当现状。",
+        "stale review / latest push 若启用，由 GitHub 原生规则完成；代码不替代。",
+        "stacked PR：每个选中层都独立满足 trunk 规则与 CI；merge queue 可能把一次 stack merge 分成多个 landing。"
+      ],
+      "actors": [
+        "仓库管理员",
+        "GitHub branch protection/ruleset",
+        "workflow 维护者",
+        "reviewer"
+      ],
+      "steps": [
+        "读取当前 ruleset/branch protection（需显式授权）。",
+        "校验 required status context/source、required checks、strict/up-to-date、dismiss stale、latest push。",
+        "确认 actions 与 job 名称未被重命名。",
+        "保存只读证据并记录日期。"
+      ],
+      "enforcement": {
+        "mode": "forge-only configuration",
+        "implementation": "仓库内没有 branch protection/ruleset 文件；只能通过 GitHub API/UI 配置。",
+        "trust": "GitHub 服务端设置是唯一权威；仓库文件与归档记录都不是线上证明。",
+        "failure": "缺少 required check 时 PR 可绕过；expected source 缺失时第三方可伪造；聚合遗漏 blocking job 时矩阵失败被忽略。",
+        "exceptions": [
+          "e2e 可能仅历史要求，需现场确认。",
+          "merge queue 下 stack 落地非原子。",
+          "fork/Dependabot 的 job-level skip 需要明确语义。"
+        ]
+      },
+      "applicability": "所有使用 GitHub PR 门禁的仓库；其他 forge 需等价实现 but 不能照搬 context 名称。",
+      "relationships": [
+        "collaboration-approval-status-contract",
+        "collaboration-issue-policy",
+        "collaboration-native-stack-landing",
+        "collaboration-trusted-default-branch"
+      ],
+      "migration": {
+        "strategy": "先只读审计，再逐项启用；每启用一项都验证拒绝路径。",
+        "implementation": "按表设置 required status/check；保留 all checks passed 的 needs 完整性；不要擅自修改生产保护设置。",
+        "requiredSupport": [
+          "GitHub branch protection/ruleset 管理权限",
+          "只读 API/UI 审计权限",
+          "稳定的 workflow/job 名称",
+          "merge queue 若使用则需单独验证"
+        ]
+      },
+      "reference": "references/collaboration.md#forge-branch-rule-contract",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "required context=weighted approval 且 source=GitHub Actions；Issue policy required；all checks passed 聚合完整。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只配 context、不配 source；不要求 Issue policy；聚合遗漏 blocking job；把 e2e 历史当现状。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正设置后重新读取并保存证据；用测试 PR 验证拒绝与通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；必须由有权限的主体用只读 GitHub API/UI 证据完成。"
+      },
+      "limitations": [
+        "源仓库无可审计的 branch protection 文件。",
+        "归档 e2e 记录是历史，不是当前线上配置。",
+        "branch rule 的 exact UI/API 字段随 GitHub 产品变化。"
+      ]
+    },
+    {
+      "id": "collaboration-issue-policy",
+      "title": "PR Issue 引用、标签与 Priority 策略",
+      "sources": [
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 252,
+          "end": 303,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 60,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/pull-request.mjs",
+          "start": 21,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/README.md",
+          "start": 11,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/issue-policy.yml",
+          "start": 1,
+          "end": 58,
+          "kind": "config"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 540,
+          "end": 893,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 370,
+          "end": 380,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 1011,
+          "end": 1077,
+          "kind": "test"
+        }
+      ],
+      "problem": "PR 可以不带 Issue、带多个 kind、带旧标签或优先级不一致；这些元数据会让 release notes、triage 和 Project 状态失真。",
+      "triggers": [
+        "PR opened/edited/synchronize/reopened/labeled/unlabeled/ready_for_review/review_requested",
+        "pull_request_review submitted"
+      ],
+      "obligations": [
+        "强制范围：非 draft、人类作者（非 Bot/App）、且已有至少一个 review request（users+teams）或任一 review；其余豁免。",
+        "正文至少引用一个同仓库 Issue；PR 编号（包括 stack 依赖 PR）不算 Issue 引用；跨仓库引用忽略。",
+        "引用解析前移除 HTML 注释、fenced code、inline code；支持 #N、owner/repo#N、Issue URL；resolving 关键字决定解决型。",
+        "恰好一个允许的 kind/*；未知 kind/*、任何旧别名、任何 source/* 出现在 PR 都失败；至少一个 area/*；最多一个 p0-p3。",
+        "解决型 Issue 的 Priority 规则：PR 无 Priority 但任一 resolving Issue 有 → 报错并给出最高优先级；PR 有 Priority 但并非每个 resolving Issue 都有 → 报错；都有时必须等于最高。informational-only Issue 的 Priority 忽略。",
+        "Project Priority 只对 resolving references 读取；缺失 Issue/Project 或读取失败 → 失败，不回退。",
+        "所有读取都基于 live GitHub 状态；编辑后重新运行，不使用缓存。",
+        "错误以 ::error:: 注解输出并抛错，job 失败。",
+        "parseReferences 返回的 all 按 Issue 编号升序，resolving 与 related 是 all 的子集；测试用正文顺序 Fixes #12 → Related to #4 → Refs <same-repo>#7 断言 all 为 [4,7,12]。",
+        "pullRequestSnapshot 的读取顺序固定为 PR → requested_reviewers → reviews → 按解析后的引用编号升序逐个读取（测试为 2、3、4，其中 3 是随后剔除的 PR）→ 一次 Project GraphQL；测试以精确请求数组固定该顺序。",
+        "被引用编号若是 pull request，必须从 references.all/resolving/related 与 issues Map 中剔除；REST 读取它只用于判定 pull_request，不参与 Issue 关联或 Priority 校验。",
+        "只有 resolving Issue 的 Project Priority 进入快照；informational Issue 的 priority 为 null，不参与 Priority 校验。"
+      ],
+      "actors": [
+        "PR author",
+        "reviewer",
+        "Issue policy checker",
+        "GitHub Issues/Projects API",
+        "release/triage"
+      ],
+      "steps": [
+        "读取 PR、labels、review requests 与 reviews。",
+        "判断 eligibility；不适用则豁免。",
+        "解析正文引用，剔除 PR/跨仓库/代码块。",
+        "读取 resolving Issue 的 Project Priority。",
+        "校验标签与 Priority。",
+        "输出错误或通过。"
+      ],
+      "enforcement": {
+        "mode": "required GitHub Actions check",
+        "implementation": "runPullRequestCheck 调用 pullRequestSnapshot 与 validatePullRequest；错误注解并 throw。",
+        "trust": "GitHub 的 live PR/Issue/Project 数据是权威；token 权限最小化。",
+        "failure": "任何读取失败或校验错误 → job 失败；不缓存、不回退。",
+        "exceptions": [
+          "draft、Bot/App、无 review request/review 豁免。",
+          "纯 informational 引用不要求 Priority。",
+          "选择性 preflight 可跳过 Project token，但最终校验仍重读。"
+        ]
+      },
+      "applicability": "使用 Issue 驱动 triage/Project 的仓库；需要 Issues read 与 organization Projects read。",
+      "relationships": [
+        "collaboration-selective-preflight",
+        "collaboration-label-taxonomy",
+        "collaboration-issue-pr-templates",
+        "collaboration-forge-branch-rules"
+      ],
+      "migration": {
+        "strategy": "先以非 required 运行，观察豁免与错误；建立 label 目录与 Project 字段后再 required。",
+        "implementation": "复制 rules/pull-request/workflow；替换 org/repo/Project 编号；保留 live 读取与 fail-closed；按目标语言调整错误文案但保留 ::error::。",
+        "requiredSupport": [
+          "GitHub App：Issues read + organization Projects read",
+          "可读 PR/Issue/labels/reviews 的 repo token",
+          "ProjectV2 的 Priority 字段",
+          "labels 目录已创建"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-pr-policy",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "1 个 kind + ≥1 area + 同仓库 Issue 引用通过；解决型 Priority 与最高 Issue 一致通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "缺 Issue、PR 编号冒充 Issue、跨仓库、未知 kind、旧别名、source on PR、多 kind、无 area、多 priority、Priority 不一致必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修标签/正文/Priority 后重新触发；读取失败重跑，不回退。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 540-893。"
+      },
+      "limitations": [
+        "reviewCount 只取第一页 100 条；review request 计数含 users+teams。",
+        "引用只在正文解析；标题/评论不算。",
+        "Project 读取需要额外 token 权限；无权限即失败。"
+      ]
+    },
+    {
+      "id": "collaboration-selective-preflight",
+      "title": "选择性 preflight 与 legacy 回退边界",
+      "sources": [
+        {
+          "path": ".github/issue-management/pull-request.mjs",
+          "start": 97,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 894,
+          "end": 957,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/issue-policy.yml",
+          "start": 19,
+          "end": 58,
+          "kind": "config"
+        },
+        {
+          "path": ".github/issue-management/selective-preflight.json",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        }
+      ],
+      "problem": "每个 PR 都需要 Project token 会扩大权限；但直接按作者类型跳过又可能漏掉人类 PR 的策略。",
+      "triggers": [
+        "issue-policy workflow 运行 preflight",
+        "marker 文件存在/缺失",
+        "PR 是否 eligible、是否有 resolving references"
+      ],
+      "obligations": [
+        "marker 文件 .github/issue-management/selective-preflight.json 存在时，运行 node policy.mjs pr-preflight。",
+        "preflight 输出 eligible、exempt、needs-project；只有 eligible 且 resolving references 非空才需要 Project token。",
+        "marker 存在但 preflight 失败时，job 失败；不能回退到 legacy 或跳过。",
+        "marker 缺失时走 legacy：仅 Bot/App 自动豁免；其他 PR 都执行完整校验；needs-project 默认为 true（人类）。",
+        "legacy 分支不读取 Project 字段，但最终校验仍读取 live 状态。",
+        "preflight 的 skip 不是最终豁免；最终校验必须重新读取 current state，编辑后的 PR 不能沿用旧 skip。"
+      ],
+      "actors": [
+        "workflow preflight step",
+        "policy.mjs",
+        "GitHub App token",
+        "PR author"
+      ],
+      "steps": [
+        "检查 marker 文件。",
+        "存在 → preflight；不存在 → legacy shell。",
+        "写 GitHub Outputs。",
+        "按 needs-project 决定是否创建 Project token。",
+        "运行最终校验（除非 legacy Bot/App）。"
+      ],
+      "enforcement": {
+        "mode": "workflow shell + implementation",
+        "implementation": "issue-policy.yml 的 bash 分支；runPullRequestPreflight 写 outputs；最终 runPullRequestCheck 独立重读。",
+        "trust": "marker 文件在默认分支（checkout 默认分支），PR 不能改；但 issue-policy.yml YAML 来自 PR head，见可信默认分支限制。",
+        "failure": "marker 存在但 node preflight 失败 → step 失败；不执行最终校验，也不回退。",
+        "exceptions": [
+          "marker 缺失 → legacy；Bot/App → legacy-automated=true，跳过最终校验。",
+          "eligible=false → exempt，但仍不替代最终读取。"
+        ]
+      },
+      "applicability": "大型仓库希望减少 Project token 使用；小仓库可直接保留 legacy。",
+      "relationships": [
+        "collaboration-issue-policy",
+        "collaboration-trusted-default-branch",
+        "collaboration-forge-branch-rules"
+      ],
+      "migration": {
+        "strategy": "先保留 marker 缺失的 legacy 行为，验证通过后再添加 marker。",
+        "implementation": "复制 preflight 与 marker；确保 marker 在默认分支；测试 preflight 失败不回退、编辑后重读。",
+        "requiredSupport": [
+          "GitHub Actions outputs",
+          "Node 22/24",
+          "Issue policy workflow 默认分支 checkout",
+          "可选 Project read token"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-policy-selective-preflight",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "marker 存在且 eligible/resolving → needs-project=true；无 resolving → false；marker 缺失 → legacy 行为。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "marker 存在但 preflight 失败却继续；编辑后复用旧 skip；Bot/App 被当作人类必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复 preflight/权限后重跑；移除 marker 可显式回到 legacy，但需重新验证。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 894-957。"
+      },
+      "limitations": [
+        "marker 是功能性开关，不是线上策略证明。",
+        "PR 可修改 issue-policy.yml YAML；需要 owner review。",
+        "legacy 分支把人类 PR 都当 needs-project，可能多要 token。"
+      ]
+    },
+    {
+      "id": "collaboration-label-taxonomy",
+      "title": "统一 GitHub 标签分类法",
+      "sources": [
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 210,
+          "end": 245,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 723,
+          "end": 837,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-08-unified-github-label-taxonomy.md",
+          "start": 1,
+          "end": 76,
+          "kind": "history"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 163,
+          "end": 163,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 124,
+          "end": 147,
+          "kind": "test"
+        }
+      ],
+      "problem": "自由标签会分裂 triage：同一概念多个名字、旧标签被重建、PR 与 Issue 类型混用，自动化无法可靠分类。",
+      "triggers": [
+        "Issue/PR 打标签",
+        "Issue lifecycle audit",
+        "PR policy 校验"
+      ],
+      "obligations": [
+        "Issue 类型：Idea、Feature、Bug、Research、Task；不使用 kind/* 作为 Issue 类型。",
+        "PR kind：kind/feature、kind/bug-fix、kind/doc、kind/testing、kind/cleanup、kind/dependency；恰好一个。",
+        "旧别名保留为保留字，不可重建：kind/bug、kind/documentation、feature、bug-fix、doc、cleanup、testing、dependencies、ci、cli、llm、web-search。",
+        "area/* 由仓库自定义；PR 至少一个 area；Issue 的 area/* 可选。",
+        "Priority 只用 p0-p3；Issue 可选，PR 最多一个；PR 有 Priority 时每个 resolving Issue 都必须有，且必须等于 resolving Issues 的最高值；PR 无 Priority 但任一 resolving Issue 有则失败；informational Issue 的 Priority 忽略。",
+        "source/* 只用于 Issue；PR 上的 source/* 失败。",
+        "Issue 审计会删除非法 kind/* 与旧别名；不会自动补 Type/Priority/Status。",
+        "canonical kind 与旧别名拒绝测试必须使用独立 oracle（源含 6 个 canonical kind 与 12 个 legacy label），不得 import 实现的保留集。"
+      ],
+      "actors": [
+        "Issue/PR author",
+        "triage",
+        "label maintainer",
+        "lifecycle audit"
+      ],
+      "steps": [
+        "创建 Issue/PR 时选择类型。",
+        "覆盖 area 与可选 priority/source。",
+        "PR policy 校验；Issue audit 清理非法标签。",
+        "迁移时先创建 label 目录，保留旧别名但不使用。"
+      ],
+      "enforcement": {
+        "mode": "policy validation + issue audit repair",
+        "implementation": "rules.mjs 常量与 validateIssue/validatePullRequest；lifecycle.repairIssueLabels 删除非法标签。",
+        "trust": "GitHub labels 是权威；策略代码在默认分支。",
+        "failure": "未知 kind/旧别名/多 kind/缺 area/PR source → policy error；Issue audit 只修标签，不修字段。",
+        "exceptions": [
+          "Issue 可选 Priority；PR 可选 Priority（但解决型有 Priority 时按规则）。",
+          "area 名称由仓库决定。",
+          "旧别名保留但不可使用。"
+        ]
+      },
+      "applicability": "所有使用该 triage/Project 自动化的仓库；labels 必须先在 GitHub 创建。",
+      "relationships": [
+        "collaboration-issue-policy",
+        "collaboration-issue-audit-repair",
+        "collaboration-issue-pr-templates"
+      ],
+      "migration": {
+        "strategy": "先创建 canonical labels 与保留别名，再启用校验。",
+        "implementation": "复制 label 常量；按目标仓库调整 area/描述/颜色；保留旧别名占位；Issue audit 只删除不重建。",
+        "requiredSupport": [
+          "GitHub labels 管理权限",
+          "与 rules.mjs 一致的 label 目录",
+          "组织级 label 策略（若适用）"
+        ]
+      },
+      "reference": "references/collaboration.md#label-taxonomy",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "canonical kind/area 通过；Issue 审计删除非法 kind/旧别名。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "未知 kind、旧别名、PR source、多 kind、无 area、多 priority 必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修标签后重新触发；不要重建已退役别名。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 723-837 与 258-296。"
+      },
+      "limitations": [
+        "仓库内 label 名称必须与代码常量一致；GitHub 不提供编译期保证。",
+        "Issue audit 只删标签，不修 Type/Priority/Status。",
+        "label 描述/颜色不在策略校验内。"
+      ]
+    },
+    {
+      "id": "collaboration-lifecycle-status",
+      "title": "Issue lifecycle 状态转移",
+      "sources": [
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 76,
+          "end": 120,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/lifecycle.mjs",
+          "start": 130,
+          "end": 155,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/github.mjs",
+          "start": 270,
+          "end": 300,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/README.md",
+          "start": 44,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 613,
+          "end": 691,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 882,
+          "end": 893,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 959,
+          "end": 1010,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-10-event-directed-pr-review-status.md",
+          "start": 1,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 1040,
+          "end": 1054,
+          "kind": "test"
+        }
+      ],
+      "problem": "Issue 在 Project 中的状态若靠人工维护会迅速失真；但无差别自动改写会覆盖人类决定或把已关闭 Issue 拉回活跃。",
+      "triggers": [
+        "issues opened/closed/reopened",
+        "PR opened/edited(仅 body)/reopened/review_requested",
+        "pull_request_review submitted 且 state=changes_requested"
+      ],
+      "obligations": [
+        "Issue opened → Inbox；closed → Done（state_reason=completed）或 No action（not_planned）；reopened → Inbox。",
+        "PR opened/edited(body)/reopened → In progress；review_requested → In review；changes_requested → In progress。",
+        "非 terminal 状态只向前推进；target 在当前状态之前则不变。",
+        "changes_requested 的例外：当前 In review 且 status actor 是 lifecycleActor 时允许退回 In progress；若 In review 由人类设置则保留。",
+        "terminal（Done/No action）不被 PR 事件拉回；currentStatus 不在 active order 时不转移。",
+        "draft PR 的 opened 也会把 resolving Issue 推进 In progress；lifecycle 不按 draft 豁免。",
+        "只看 resolving references；informational/Pure PR references 不驱动状态。",
+        "lifecycle 不调用 Issue policy；它是写 Project 的状态机，不是校验器。",
+        "lifecyclePullRequestSnapshot 对 draft/Bot PR 只读取 PR 与 references 中的 Issue（按引用顺序），不请求 requested_reviewers、reviews 或 Project GraphQL；lifecycle 不获得校验所需的 Project 数据。"
+      ],
+      "actors": [
+        "Issue author",
+        "PR author",
+        "reviewer",
+        "lifecycle workflow",
+        "Project Status field"
+      ],
+      "steps": [
+        "事件进入 runLifecycle。",
+        "issues 事件直接 setStatus 并 audit。",
+        "PR/review 事件解析 command。",
+        "读取 resolving Issue 的当前状态与 actor。",
+        "按 forward/actor 规则写目标状态。",
+        "PR opened 时初始化 Start Date。"
+      ],
+      "enforcement": {
+        "mode": "event-driven workflow + Project GraphQL mutation",
+        "implementation": "runLifecycle、transitionResolvingIssues、nextResolvingIssueStatus、setStatus/updateStatus。",
+        "trust": "GitHub Issue/PR 事件与 Project 数据是权威；lifecycleActor 是守卫。",
+        "failure": "Project 字段缺失/类型不符/token 失败 → workflow 失败；状态可能停在旧值。",
+        "exceptions": [
+          "人类设置的 In review 不被 changes_requested 覆盖。",
+          "terminal 不回退。",
+          "draft 仍推进。",
+          "无 resolving references 不写。"
+        ]
+      },
+      "applicability": "使用 ProjectV2 Status 自动化的仓库；需要 Issues write + organization Projects write。",
+      "relationships": [
+        "collaboration-lifecycle-scheduling",
+        "collaboration-project-fields-start-date",
+        "collaboration-issue-audit-repair",
+        "collaboration-label-taxonomy"
+      ],
+      "migration": {
+        "strategy": "先在测试 Issue/Project 验证 opened/closed/reopened 与 PR 事件，再扩大。",
+        "implementation": "复制 rules/lifecycle/github/config；替换 projectNumber/title/actor/timezone/statuses；保留 terminal 与 human guard。",
+        "requiredSupport": [
+          "GitHub App：Issues write + organization Projects write",
+          "ProjectV2 Status single-select 与选项",
+          "config.json 与 Project 标题/字段一致",
+          "read-only Contents"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-lifecycle-status",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "Issue opened→Inbox；closed→Done/No action；reopened→Inbox；review_requested→In review；changes_requested→In progress（actor guard）。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "人类 In review 被覆盖；terminal 被拉回；无 resolving references 被写；draft 被错误豁免必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修 actor/字段后重新触发；人工修复 Project 状态但不修改代码语义。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 613-691、882-893、959-1010。"
+      },
+      "limitations": [
+        "没有 durable lifecycle state；旧 workflow run 重放会重放旧 command。",
+        "没有 reconciler；漏掉的 webhook 不会自动修复。",
+        "Project mutation 不是 compare-and-swap。"
+      ]
+    },
+    {
+      "id": "collaboration-lifecycle-scheduling",
+      "title": "Lifecycle 事件订阅与并发",
+      "sources": [
+        {
+          "path": ".github/workflows/issue-lifecycle.yml",
+          "start": 1,
+          "end": 57,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1332,
+          "end": 1400,
+          "kind": "test"
+        },
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 60,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 959,
+          "end": 1010,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-08-08-review-driven-issue-lifecycle-triggers.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ],
+      "problem": "过多事件会浪费 runner 并造成重复写入；过少事件会漏掉 review 请求或 body 编辑；并发取消会让状态写一半。",
+      "triggers": [
+        "issue 事件",
+        "PR 事件",
+        "review 事件",
+        "workflow 手动/重放"
+      ],
+      "obligations": [
+        "issues 只订阅 opened、edited、labeled、unlabeled、closed、reopened、typed、untyped、field_added、field_removed。",
+        "pull_request 只订阅 opened、edited、reopened、review_requested；不订阅 synchronize、ready_for_review、labeled 等无关事件。",
+        "pull_request_review 只订阅 submitted，并用 job if 过滤 changes_requested。",
+        "PR edited 仅在 changes.body 非空时运行；title-only 编辑不运行。",
+        "concurrency group 为 issue-lifecycle-<issue|PR number|run_id>，cancel-in-progress: false；同一对象串行，不取消进行中的写。",
+        "permissions 仅 contents: read；Project 写权限来自 App token。",
+        "调度过滤不是安全边界；最终 runLifecycle 仍按 command 与 actor 规则决定写不写。"
+      ],
+      "actors": [
+        "workflow scheduler",
+        "lifecycle job",
+        "GitHub event payload",
+        "Project API"
+      ],
+      "steps": [
+        "事件进入 workflow。",
+        "types 过滤。",
+        "job if 过滤 review state/body change。",
+        "checkout 默认分支、创建 App token。",
+        "运行 node policy.mjs lifecycle。"
+      ],
+      "enforcement": {
+        "mode": "workflow event configuration + concurrency",
+        "implementation": "issue-lifecycle.yml 的 on/types、job if、concurrency；policy.test/ci-workflow.spec 固定。",
+        "trust": "GitHub 事件类型与 payload 是权威；checkout 的策略代码来自默认分支，但 pull_request 事件的 workflow YAML 可能来自 PR head，需 owner review 兜底。",
+        "failure": "漏事件不会自愈；错误 if 会跳过应运行事件；并发不取消可减少半写但增加排队。",
+        "exceptions": [
+          "draft PR 的 opened 仍运行。",
+          "review 的 edited/dismissed 不触发 lifecycle。",
+          "PR synchronize 不触发 lifecycle，只有后续 opened/edited/review_requested 等。"
+        ]
+      },
+      "applicability": "使用 Project lifecycle 自动化的仓库；runner 成本与事件语义需权衡。",
+      "relationships": [
+        "collaboration-lifecycle-status",
+        "collaboration-trusted-default-branch",
+        "collaboration-forge-branch-rules"
+      ],
+      "migration": {
+        "strategy": "先按源订阅列表启用并观察成本；不要为了省 runner 删除 body 编辑/review_requested。",
+        "implementation": "复制 issue-lifecycle.yml；保留 concurrency group 与 cancel=false；按目标事件调整 if 但保留最终校验。",
+        "requiredSupport": [
+          "GitHub Actions",
+          "App token variables/secrets",
+          "Project 写权限",
+          "Node 22/24"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-lifecycle-scheduling",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "opened/closed/reopened/review_requested/body edit 触发；title-only/synchronize/labeled 不触发。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "订阅 ready_for_review/synchronize 浪费 runner；cancel-in-progress=true；review submitted 非 changes_requested 仍运行必须被测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修 workflow 触发/if 后重跑；已漏事件需人工重新触发或重放。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 ci-workflow.spec.ts 1332-1400 与 policy.test.mjs 959-1010。"
+      },
+      "limitations": [
+        "事件订阅是声明式配置，仓库测试只证明文件内容。",
+        "GitHub 可能因 fork/权限不投递事件。",
+        "没有 reconciler 修复漏事件。"
+      ]
+    },
+    {
+      "id": "collaboration-project-fields-start-date",
+      "title": "ProjectV2 字段约束与 Start Date",
+      "sources": [
+        {
+          "path": ".github/issue-management/config.json",
+          "start": 1,
+          "end": 19,
+          "kind": "config"
+        },
+        {
+          "path": ".github/issue-management/github.mjs",
+          "start": 94,
+          "end": 300,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/lifecycle.mjs",
+          "start": 31,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/README.md",
+          "start": 50,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 381,
+          "end": 537,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-02-project-local-issue-planning-fields.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        }
+      ],
+      "problem": "Issue 级自定义字段与 Project 级字段容易混淆；字段类型/标题漂移会让 GraphQL mutation 写入失败或写错字段。",
+      "triggers": [
+        "Issue/PR 进入 Project",
+        "PR opened 初始化 Start Date",
+        "Project 字段重命名/改类型"
+      ],
+      "obligations": [
+        "projectContext 必须找到标题精确匹配的 Project、Status single-select、Priority custom single-select、Start Date custom date；任一缺失/类型不符即抛错。",
+        "状态选项必须包含 config.statuses 中的 In progress 与 In review；lifecycleActor 必须配置。",
+        "Issue item 查询用 first: 20；timeline 用 last: 100；不能假设 Project 只有少量条目。",
+        "Start Date 只在 PR opened 且 Project 中该 item 的 Start Date 为空时写入；已有值永不覆盖。",
+        "Start Date 来源是 PR 的 references.all（不受 policy eligibility 限制），转换为 config.projectTimeZone 的 YYYY-MM-DD。",
+        "时间边界：UTC 时间戳按目标时区取日历日；非法时间戳/非法时区抛错。",
+        "写到 Issue 字段不生效；Priority/Start Date 必须是 Project 字段，不是 organization Issue field。",
+        "读-改-写没有 compare-and-swap；并发 PR 最后写入胜出；重试幂等依赖空值检查。"
+      ],
+      "actors": [
+        "lifecycle workflow",
+        "ProjectV2 GraphQL",
+        "GitHub App token",
+        "Issue/PR author"
+      ],
+      "steps": [
+        "projectContext 查询 Project/fields/item。",
+        "缺 item 时 addProjectV2ItemById。",
+        "按 Status/Start Date mutation 写。",
+        "失败抛错，workflow 失败。"
+      ],
+      "enforcement": {
+        "mode": "GraphQL implementation + workflow failure",
+        "implementation": "projectContext、ensureProjectItem、initializeIssueStartDate、updateStatus；config.json 参数。",
+        "trust": "ProjectV2 返回的字段类型/标题是权威；配置必须与线上一致。",
+        "failure": "缺 Project/字段/选项、类型不符、token 权限不足 → 抛错；workflow 失败；状态可能未写。",
+        "exceptions": [
+          "draft/informational PR 仍初始化 Start Date（opened 事件）。",
+          "已有 Start Date 不覆盖。",
+          "纯 retry 幂等。"
+        ]
+      },
+      "applicability": "ProjectV2 驱动的 Issue/PR 规划；不适用于仅用 Issue labels 的仓库。",
+      "relationships": [
+        "collaboration-lifecycle-status",
+        "collaboration-issue-audit-repair",
+        "collaboration-issue-policy"
+      ],
+      "migration": {
+        "strategy": "先在测试 Project 验证字段类型/标题/选项，再启用写操作。",
+        "implementation": "创建 ProjectV2、Status/Priority/Start Date 字段；复制 config 并替换 organization/repository/projectNumber/projectTitle/timeZone；确保 token 有 org projects write。",
+        "requiredSupport": [
+          "ProjectV2 与字段",
+          "GitHub App：organization Projects write + Issues write",
+          "config.json 与线上标题/类型精确一致",
+          "IANA 时区"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-project-fields-start-date",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "opened PR 写 Start Date；已有值保留；时区边界正确；缺 item 自动添加。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Issue 字段、非 Date、非 single-select、标题不匹配必须失败；覆盖已有 Start Date 必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正字段/配置后重跑；已写错的值需人工修复。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 381-537。"
+      },
+      "limitations": [
+        "读-改-写无 CAS，并发最后写入胜出。",
+        "lifecycle.mjs 内有 TODO 记录缺少 compare-and-swap。",
+        "Project 字段/标题变更会让 context 直接失败。"
+      ]
+    },
+    {
+      "id": "collaboration-issue-audit-repair",
+      "title": "Issue 审计评论与标签修复",
+      "sources": [
+        {
+          "path": ".github/issue-management/rules.mjs",
+          "start": 210,
+          "end": 245,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/lifecycle.mjs",
+          "start": 41,
+          "end": 106,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/github.mjs",
+          "start": 71,
+          "end": 91,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/issue-management/README.md",
+          "start": 55,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 224,
+          "end": 369,
+          "kind": "test"
+        }
+      ],
+      "problem": "标签/状态漂移需要可见、可重复的审计；但每次事件都新建评论会刷屏，自动修复过多又会覆盖人类意图。",
+      "triggers": [
+        "所有 issues 事件（opened/edited/labeled/unlabeled/closed/reopened/typed/untyped/field_added/field_removed）"
+      ],
+      "obligations": [
+        "每个 issues 事件后都执行 auditIssue，即使没有状态转移。",
+        "审计只读 Issue comments 第一页 100 条；找带 marker 的 bot 评论。",
+        "无错误 → 删除已有审计评论；有错误且正文未变 → 不新建/不 patch；正文变化 → patch。",
+        "错误列表包含标签违规与 Project 缺失/字段问题；审计评论用固定 marker 与作者身份识别。",
+        "repairIssueLabels 只删除非法 kind/* 与旧别名；不补 Type/Priority/Status，不修 PR。",
+        "确定性违规（标签）先修复，再把剩余问题写进评论。",
+        "Issue 不是 PR；PR 引用问题由 Issue policy 负责。"
+      ],
+      "actors": [
+        "lifecycle workflow",
+        "bot/App 作者",
+        "Issue author",
+        "Project"
+      ],
+      "steps": [
+        "issueSnapshot 读取 Issue 与 Project。",
+        "repairIssueLabels 删除非法标签。",
+        "validateIssue 生成剩余错误。",
+        "查找/创建/更新/删除审计评论。",
+        "返回错误列表。"
+      ],
+      "enforcement": {
+        "mode": "event-driven audit + comment mutation",
+        "implementation": "auditIssue、repairIssueLabels、issueSnapshot；marker 与 bot 作者过滤。",
+        "trust": "Issue/Project 数据是权威；bot 评论是审计载体。",
+        "failure": "评论读取/写入失败 → workflow 失败；不能静默跳过审计。",
+        "exceptions": [
+          "PR 不审计。",
+          "无错误删除评论。",
+          "只修标签，不修字段。",
+          "评论只查第一页。"
+        ]
+      },
+      "applicability": "自动维护 Issue 标签/Project 的仓库；需要 Issues write 与 Project 读。",
+      "relationships": [
+        "collaboration-lifecycle-status",
+        "collaboration-label-taxonomy",
+        "collaboration-project-fields-start-date"
+      ],
+      "migration": {
+        "strategy": "先在测试 Issue 验证评论创建/更新/删除与标签修复。",
+        "implementation": "复制 audit/repair；配置 marker 与 bot 作者；确保 Issue comments 第一页足够覆盖。",
+        "requiredSupport": [
+          "Issues write",
+          "Project read",
+          "comment API",
+          "固定 marker/bot 身份"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-audit-repair",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "非法标签被删除；错误评论创建；修复后评论删除；正文变化才 patch。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留 kind/旧别名、重复创建评论、PR 被审计、错误正文不更新必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修标签/Project 后重跑审计；手动删除残留评论需按 marker。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 224-369。"
+      },
+      "limitations": [
+        "只查第一页 100 条评论，长 Issue 可能漏掉旧审计。",
+        "bot 作者身份需与 token 匹配；否则审计评论识别失败。",
+        "不自动补 Type/Priority/Status。"
+      ]
+    },
+    {
+      "id": "collaboration-issue-pr-templates",
+      "title": "Issue 与 PR 模板契约",
+      "sources": [
+        {
+          "path": ".github/ISSUE_TEMPLATE/bug.md",
+          "start": 1,
+          "end": 25,
+          "kind": "config"
+        },
+        {
+          "path": ".github/ISSUE_TEMPLATE/feature.md",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        },
+        {
+          "path": ".github/ISSUE_TEMPLATE/task.md",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        },
+        {
+          "path": ".github/ISSUE_TEMPLATE/config.yml",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".github/pull_request_template.md",
+          "start": 1,
+          "end": 21,
+          "kind": "config"
+        },
+        {
+          "path": ".github/issue-management/policy.test.mjs",
+          "start": 159,
+          "end": 223,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-03-semantic-issue-templates-and-policy.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        }
+      ],
+      "problem": "模板是 Issue policy 的输入形态；heading/frontmatter 漂移会让自动解析或人工 triage 失效；过度展示规则又会阻碍填写。",
+      "triggers": [
+        "新建 Issue",
+        "新建 PR",
+        "修改模板/政策"
+      ],
+      "obligations": [
+        "bug/feature/task 模板保留固定 frontmatter 与 headings；policy.test 固定这些文本。",
+        "config.yml 禁用 blank issues。",
+        "PR 模板必须恰好一个 Proof 详情块；Changes 保留占位，提醒写验证证据。",
+        "模板是语义提示，不是运行时校验；policy 不检查标题语言、details 数量、展示格式。",
+        "不要为统一展示重新引入 details/长度/标题语言等格式规则。",
+        "修改模板必须同步更新 policy.test 的精确断言。"
+      ],
+      "actors": [
+        "Issue/PR author",
+        "template maintainer",
+        "policy test",
+        "triage"
+      ],
+      "steps": [
+        "选择模板。",
+        "填写 frontmatter/heading 下的字段。",
+        "PR 填 Proof 与 Changes。",
+        "policy 校验元数据（不校验展示）。"
+      ],
+      "enforcement": {
+        "mode": "repository templates + test-pinned text",
+        "implementation": "三个 Issue 模板、config.yml、pull_request_template.md；policy.test.mjs 159-223 固定 headings/frontmatter。",
+        "trust": "模板文件在默认分支；用户填写内容不可信。",
+        "failure": "模板 heading/frontmatter 改动未更新测试 → 测试失败；blank issue 开启 → 配置违规。",
+        "exceptions": [
+          "展示格式/标题语言可变。",
+          "模板不替代 Issue policy 的标签/引用检查。"
+        ]
+      },
+      "applicability": "使用 GitHub Issue/PR 模板的仓库；不适用于其他 forge。",
+      "relationships": [
+        "collaboration-issue-policy",
+        "collaboration-label-taxonomy"
+      ],
+      "migration": {
+        "strategy": "复制模板与测试；按目标语言调整文案但保留 frontmatter/headings 契约。",
+        "implementation": "替换语言/项目名；保留 blank issues 禁用；PR 模板保留 Proof/Changes；同步测试。",
+        "requiredSupport": [
+          "GitHub Issue/PR templates",
+          "policy.test.mjs 或等价测试",
+          "默认分支"
+        ]
+      },
+      "reference": "references/collaboration.md#issue-pr-templates",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "模板 frontmatter/headings 与测试一致；blank issues 禁用；PR 模板有 Proof/Changes。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "缺 heading、改 frontmatter、开启 blank issue、多个 Proof 块必须被测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修模板并更新测试；不要改 policy 去迁就漂移。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 policy.test.mjs 159-223。"
+      },
+      "limitations": [
+        "测试只证明模板文本，不证明 GitHub UI 解析。",
+        "模板不强制 Issue 质量。",
+        "多语言模板需要额外文件，不在源范围。"
+      ]
+    },
+    {
+      "id": "collaboration-change-scope-report",
+      "title": "change-scope 显式范围报告",
+      "sources": [
+        {
+          "path": "scripts/change-scope.ts",
+          "start": 1,
+          "end": 248,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/change-scope.spec.ts",
+          "start": 99,
+          "end": 241,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 19,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/change-scope.spec.ts",
+          "start": 1,
+          "end": 98,
+          "kind": "test"
+        }
+      ],
+      "problem": "口头说“这次只改 X”不可验证；Git 的默认 base 猜测、dirty worktree 与 rename 会让范围报告失真。",
+      "triggers": [
+        "push 前",
+        "审阅 PR 前",
+        "stack sync 后",
+        "需要枚举改动路径时"
+      ],
+      "obligations": [
+        "必须显式传 --base；缺失 --base 即非零退出，工具不猜、不 fetch。",
+        "从 live PR/stack parent 验证 base ref；其他 commit 可用 --head。",
+        "输出 versioned JSON：resolved.baseSha/headSha/mergeBaseSha、repositoryRoot、paths.committed、paths.staged、paths.unstaged、paths.untracked。",
+        "committed 用 merge base..head 且 --no-renames；staged/unstaged/untracked 分开报告。",
+        "merge base 必须唯一；ref 缺失/歧义/非 commit、非 UTF-8 path、Git 失败 → 非零退出。",
+        "不修改仓库状态；禁用 fsmonitor；确定性 JSON。",
+        "报告只列路径，不判断语义；dirty 路径不声称属于本次 PR。"
+      ],
+      "actors": [
+        "开发者/审阅者/agent",
+        "change-scope.ts",
+        "Git"
+      ],
+      "steps": [
+        "确认分支与 worktree。",
+        "验证 live base ref。",
+        "运行 pnpm --silent run change-scope --base <ref> [--head <ref>]。",
+        "读取 JSON 并选择证据。"
+      ],
+      "enforcement": {
+        "mode": "CLI tool + tests",
+        "implementation": "change-scope.ts 解析参数、调用 git merge-base/diff/ls-files；spec 覆盖不变性/拒绝路径。",
+        "trust": "Git 是路径权威；调用者负责验证 base 语义。",
+        "failure": "缺 base、歧义 ref、多 merge base、非 UTF-8、Git 失败 → 非零退出。",
+        "exceptions": [
+          "dirty worktree 合法；分层报告。",
+          "rename 不用于 committed 路径（--no-renames）。",
+          "只读路径，不保证测试覆盖。"
+        ]
+      },
+      "applicability": "任何 Git worktree；需要 Node + tsx。",
+      "relationships": [
+        "collaboration-pre-push-evidence",
+        "collaboration-code-review-procedure",
+        "collaboration-native-stack-landing"
+      ],
+      "migration": {
+        "strategy": "复制 script/spec 并在目标仓库验证 Git 行为。",
+        "implementation": "保留显式 --base 与 JSON schema；按目标仓库调整脚本命令；不要用 git diff 猜 base。",
+        "requiredSupport": [
+          "Node 22/24",
+          "tsx",
+          "Git",
+          "pnpm scripts"
+        ]
+      },
+      "reference": "references/collaboration.md#change-scope-report",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "JSON schema 稳定；committed/staged/unstaged/untracked 独立；不变性测试通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "缺 --base、歧义 ref、多 merge base、非 UTF-8、fsmonitor 执行必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修 base/worktree 后重跑；不要手工编辑 JSON。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划运行 change-scope.spec.ts。"
+      },
+      "limitations": [
+        "只列路径，不判断行为/测试覆盖。",
+        "不 fetch，base 语义由调用者保证。",
+        "rename 语义有限（--no-renames）。"
+      ]
+    },
+    {
+      "id": "collaboration-pre-push-evidence",
+      "title": "Push 前证据、lease 与 post-rewrite 复核",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 1,
+          "end": 49,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-22-fast-local-git-hooks.md",
+          "start": 1,
+          "end": 37,
+          "kind": "history"
+        }
+      ],
+      "problem": "push 后再让 CI 发现明显错误会浪费 review 轮次；raw force push 会覆盖他人提交；rewrite 后旧 approval/check 不再是当前证据。",
+      "triggers": [
+        "push/force-push",
+        "mark ready for review",
+        "gh stack sync 前后",
+        "声称检查通过前"
+      ],
+      "obligations": [
+        "hooks：pre-commit 做翻译配对、archived notes、staged oxlint fix、diff --check、pi-ai metadata、vendor manifest；pre-merge-commit 做翻译配对与 archived notes；pre-push 只跑 typecheck。",
+        "hooks 故意窄：不跑单测/snapshot/docs/build/hygiene；CI 拥有完整矩阵。",
+        "选最窄、能因该回归失败的证据；文档→doc-sync，UI→snapshot/run example，构建→build+hygiene+smoke，类型→build:check/build，真实 provider→e2e。",
+        "coverage 用 --coverage.include 指定源文件；不得用 --passWithNoTests、降阈值、缩小 include 隐藏未覆盖。",
+        "vitest related 不能覆盖配置/动态加载/子进程/worker/构建产物/外部 provider；这些显式选 owning tests。",
+        "force-push 必须 fetch 当前远端、记录 OID、用 --force-with-lease=<branch>:<observed-oid>；raw --force 永不用。",
+        "gh stack sync 是 fetch+rebase+push 的整体；运行前 clean worktree、记录 stack 顺序与远端 head；运行后重查每个 head、重跑每层证据、不 merge。",
+        "push 后核对 origin HEAD、gh pr checks；no checks reported 且 head 无 run 时先看 mergeable/mergeStateStatus，CONFLICTING/DIRTY 时解决冲突而不是制造空 commit。",
+        "hook 失败不得用 --no-verify 静默跳过；若用户明确同意，报告失败与 CI 预期差异。"
+      ],
+      "actors": [
+        "开发者/agent",
+        "lefthook",
+        "CI",
+        "GitHub",
+        "reviewer"
+      ],
+      "steps": [
+        "确认 live base 与 worktree。",
+        "change-scope。",
+        "选/跑最窄证据。",
+        "lease push。",
+        "核对远端 HEAD 与 checks。",
+        "rewrite 后重读 review/checks。"
+      ],
+      "enforcement": {
+        "mode": "local hooks + agent discipline + CI",
+        "implementation": "lefthook.yml 与 Skill；CI 是 exhaustive matrix；没有单一 pre-push 聚合。",
+        "trust": "本地检查结果需可复现；CI 是最终证据；lease 保护远端。",
+        "failure": "检查失败仍 push、raw force、旧 OID 当证据、跳过 hook 不报告 → 违规。",
+        "exceptions": [
+          "全量本地演练仅在用户明确要求/诊断 CI/横跨仓库时。",
+          "环境特定失败需记录并确认非平台证据。",
+          "hooks 可被绕过但必须报告。"
+        ]
+      },
+      "applicability": "所有 Git 仓库；hook 具体内容按目标仓库调整。",
+      "relationships": [
+        "collaboration-change-scope-report",
+        "collaboration-native-stack-landing",
+        "collaboration-stack-review-propagation",
+        "collaboration-code-review-procedure"
+      ],
+      "migration": {
+        "strategy": "先安装窄 hooks，再补 CI 矩阵；不要重建已删除的聚合。",
+        "implementation": "复制 lefthook.yml 与 install 脚本；按目标语言调整 pre-commit；保留 lease/post-rewrite 规则。",
+        "requiredSupport": [
+          "Node/pnpm",
+          "lefthook（或等价 hooks）",
+          "GitHub Actions CI",
+          "Git lease 支持",
+          "可运行 e2e 的凭据（可选）"
+        ]
+      },
+      "reference": "references/collaboration.md#pre-push-evidence",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "hooks 按预期运行；选定检查通过；lease push 成功；远端 HEAD 匹配。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "检查失败仍 push、raw --force、覆盖他人提交、rewrite 后旧 approval 当证据必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复后重新验证；lease 冲突则 fetch 并重试；rewrite 后重读 live 状态。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划按 Skill 的 verification 段手工执行。"
+      },
+      "limitations": [
+        "Skill 是指导，不是自动检查。",
+        "hooks 只覆盖窄边界；CI 才是完整矩阵。",
+        "本地环境可能与 CI 不同，需记录差异。"
+      ]
+    },
+    {
+      "id": "collaboration-native-stack-landing",
+      "title": "原生 stacked PR 识别与落地",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-02-native-github-stacks-and-optional-rebases.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 162,
+          "end": 162,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "逐 PR merge + 手动 retarget 会绕过 stack 顺序、产生重复 review/CI，且在 merge queue 下不可预测；只靠分支名猜测依赖关系会误判。",
+      "triggers": [
+        "两个及以上相互依赖 PR（A←B←C）",
+        "用户提到 stacked/dependent PRs",
+        "连续 merge"
+      ],
+      "obligations": [
+        "先 gh stack --version；native stack 不可用或 cross-fork → hard-stop，不降级为逐 PR merge。",
+        "读取每个 PR 的 live metadata：author、baseRefName/Oid、headRefName/Oid、isCrossRepository、state、isDraft、reviewDecision、mergeStateStatus、statusCheckRollup。",
+        "查 GraphQL PullRequest.stack 与 stackEntry.position；官方 stack 对象是成员资格/顺序权威；base 链只是期望。",
+        "链未入 stack：所有作者 login 完全一致 → gh stack link --base <trunk> <bottom> ... <top>；作者不同或不可用 → 先问用户；不自动解散/重排/重建已有 stack。",
+        "refresh：gh stack checkout（未跟踪）→ gh stack sync；或 merge-forward bottom-to-top；sync 可能 rebase+force-push 所有 active layer，之后立即验证每层。",
+        "merge：全栈 gh stack merge <stack-number> --yes --merge；partial 用 boundary PR，包含 bottom..boundary。",
+        "不传 --delete-branch、不手动 retarget、不逐个 gh pr merge；merge queue 可能分多组落地，不能假设原子。",
+        "等待每个选中 PR state=MERGED；queued ≠ landed；partial 后重查剩余 stack/head/review/CI。",
+        "分支删除前 gh pr list --state open --base <branch> --json number --jq length 必须为 0。"
+      ],
+      "actors": [
+        "landing operator",
+        "GitHub stack 对象",
+        "gh stack",
+        "reviewers/CI"
+      ],
+      "steps": [
+        "检查 native 能力。",
+        "读取 live PR 与 GraphQL stack。",
+        "必要时 link。",
+        "refresh parent/stack。",
+        "merge 全栈/边界。",
+        "等待 MERGED。",
+        "最后删分支。"
+      ],
+      "enforcement": {
+        "mode": "CLI procedure + forge stack object",
+        "implementation": "dsh-merging-stacked-prs Skill；没有自动化测试证明 gh stack 行为。",
+        "trust": "官方 stack 对象与 live PR 状态是权威；分支名/旧报告不是。",
+        "failure": "native 不可用、cross-fork、组成分歧、冲突、任一 blocker → hard-stop/询问；不能逐 PR merge。",
+        "exceptions": [
+          "merge queue 分组落地。",
+          "partial landing 必须显式 boundary。",
+          "已 merged/queued entry 不能 unstack。"
+        ]
+      },
+      "applicability": "同仓库 stacked PR；cross-fork 不适用。",
+      "relationships": [
+        "collaboration-stack-review-propagation",
+        "collaboration-pre-push-evidence",
+        "collaboration-forge-branch-rules"
+      ],
+      "migration": {
+        "strategy": "确认目标 forge 支持官方 stack；不支持则不要启用该程序。",
+        "implementation": "复制 Skill；保留 native 能力检查与 hard-stop；按目标仓库调整 trunk/命令。",
+        "requiredSupport": [
+          "gh CLI",
+          "官方 gh stack 扩展",
+          "服务端 stack 功能",
+          "merge queue（可选）",
+          "仓库写权限"
+        ]
+      },
+      "reference": "references/collaboration.md#native-stack-landing",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "官方 stack 识别、整栈/边界 merge、所有选中 PR MERGED、分支删除前零依赖。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "cross-fork、native 缺失、逐 PR merge、手动 retarget、queued 当 merged 必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修 link/refresh 后重试；native 不可用则停止并报告。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；计划用真实/测试仓库的 stack 演练，无自动化证明。 实际可用性捕获只显示 extension NOT installed。"
+      },
+      "limitations": [
+        "Skill 是操作程序；仓库内无 gh stack 自动化测试。",
+        "服务端 stack/merge queue 能力未知，需现场验证。",
+        "GraphQL 分页与 stack 对象结构可能变化。",
+        "verification/evidence/raw/gh-stack-availability.json 退出码0但只记录 official extension NOT installed;未运行 --help 或真实 stack。"
+      ]
+    },
+    {
+      "id": "collaboration-stack-review-propagation",
+      "title": "Stack 上 review 修复的传播",
+      "sources": [
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+          "start": 68,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 80,
+          "end": 109,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "在 stack 顶层修下层引入的问题会让每层 diff 失真；共享 worktree 会让并行修复互相覆盖；rewrite 后旧 review 证据失效。",
+      "triggers": [
+        "review comments 落在 dependent stack 的多个 PR",
+        "stack 任一层需要修改"
+      ],
+      "obligations": [
+        "每个 PR branch 一个独立 worktree；并行修复不共享 checkout。",
+        "官方 stack 对象是权威；base 链只给期望顺序；必须查 PullRequest.stack/stackEntry.position。",
+        "修复落在引入问题的 PR，再向上传播；即使上层也带同一文件，也不在上层起源修复。",
+        "每个 review fix 独立 commit；不 amend 已 review 的 fix；只 amend 自己未 push/未 review 的工作。",
+        "merge-forward 或 rebase 都可；rewrite 必须 lease-protected，远端前进则中止；raw --force 禁止。",
+        "逐条 triage review comment 的实质；验证 reviewer 诊断，不因症状对就接受错误原因。",
+        "传播：merge-forward 修复 parent→merge 进 child→验证→向上；native rebase 用 gh stack rebase→验证→gh stack push；sync 可能先发布，之后立即 post-sync 验证。",
+        "delegated fix 是 trust-but-verify：在真实 tree 重跑 gates；回归 guard 先证明在未修复代码上失败。",
+        "在 review thread 回复（comments/{id}/replies），不是顶层评论；说明 fix 与当前 commit/head。",
+        "rewrite 后重读 unresolved threads、approvals、mergeability、checks；旧 OID/inline anchor 不是当前证据。",
+        "落地只通过官方 stack 程序；未 link 时按 §4.3 自动/询问；native 不可用 hard-stop。"
+      ],
+      "actors": [
+        "PR author",
+        "reviewer",
+        "stack operator",
+        "delegated fixer",
+        "gh stack"
+      ],
+      "steps": [
+        "按 PR 建 worktree。",
+        "定位引入层。",
+        "逐条修/回复。",
+        "提交独立 fix。",
+        "向上传播。",
+        "每层验证。",
+        "重读 review/CI。",
+        "官方 stack 落地。"
+      ],
+      "enforcement": {
+        "mode": "human/agent procedure + Git/forge",
+        "implementation": "cookbook 与两个 Skill；无自动化测试。",
+        "trust": "review thread 与官方 stack 是权威；delegated 报告需复核。",
+        "failure": "修错层、共享 worktree、rewrite 后旧证据、native 不可用仍拆栈 → 违规/停止。",
+        "exceptions": [
+          "merge-forward 与 rebase 都允许。",
+          "sync 可能先发布，需 post-sync 验证。",
+          "delegated fix 必须重跑，不信任报告。"
+        ]
+      },
+      "applicability": "同仓库 stacked PR；需要 review threads 与 stack 对象。",
+      "relationships": [
+        "collaboration-native-stack-landing",
+        "collaboration-pre-push-evidence",
+        "collaboration-code-review-procedure"
+      ],
+      "migration": {
+        "strategy": "先培训 worktree/引入层/thread 回复三条硬规则。",
+        "implementation": "复制 cookbook/Skill；按目标仓库调整 worktree 路径与命令；保留 lease 与 post-rewrite 复核。",
+        "requiredSupport": [
+          "Git worktree",
+          "review thread API",
+          "官方 stack",
+          "CI",
+          "gh CLI"
+        ]
+      },
+      "reference": "references/collaboration.md#stack-review-propagation",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "每个 PR 独立 worktree；修复在引入层；每层 gates 通过；thread 有回复；rewrite 后重读。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只修 top、共享 checkout、旧 OID 当证据、raw force、native 缺失仍拆栈必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "在引入层重做并重新传播；修复后重跑每层证据。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；需真实 review/stack 演练，无自动化证明。"
+      },
+      "limitations": [
+        "纯人工程序，无法由仓库测试证明。",
+        "review thread API 与 stack 对象需认证。",
+        "delegated fix 质量仍依赖复核。"
+      ]
+    },
+    {
+      "id": "collaboration-code-review-procedure",
+      "title": "Code review 证据与阻断要求",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 1,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/change-scope.ts",
+          "start": 1,
+          "end": 248,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "只看 diff 或只跑 change-scope 会漏掉语义、生命周期、配置、测试强度与文档同步；review 意见若没有证据就无法执行。",
+      "triggers": [
+        "审阅 deepseek-harness 的 PR",
+        "用户请求 review",
+        "stack 层 review"
+      ],
+      "obligations": [
+        "先验证并 fetch live base 与 exact head；运行 change-scope --base/--head；读 diff 与 surrounding code 后再结论；retarget/merge 后重建 base。",
+        "读 sources of truth：根/packages AGENTS.md、defensive-patterns、docs/AGENTS.md、prose-standard、ci-test-reliability、client-ui-ux、error-handling、testing、Agent Notes、bilingual rules。",
+        "blocking：新 prose 语义 review；docs 与 code 同 diff；spine/seam 词汇更新 type-equiv；Cordis 三条 P0；作者本地证据；CI 矩阵；client UI copy 必须 locale-owned。",
+        "manual checks：intent/interface、error state guarantee、lifecycle/concurrency、capability/consumer、scope/ownership/necessity、config/public choice、model perspective、enforcement denial、borrowed state、bounds、real entry path、test strength、test reliability、negative controls、implemented note、transcript snapshot、bilingual。",
+        "报告：defect/location/impact/evidence；局部缺陷放 inline range，跨切面放 PR-level；区分 blocker 与 suggestion；不重复 green gate 已强制的问题；回复现有 thread。",
+        "收到 review：验证每条 claim，按技术理由 fix 或 rebut，不做表演性同意。",
+        "change-scope 只识别路径，不替代语义 review；短 review 带一个实质 blocker 优于长串 nit。"
+      ],
+      "actors": [
+        "reviewer",
+        "PR author",
+        "CI/approval gates",
+        "sources of truth maintainers"
+      ],
+      "steps": [
+        "fetch/verify base/head。",
+        "change-scope。",
+        "读 diff+context+docs。",
+        "执行 blocking/manual checks。",
+        "写有证据的意见。",
+        "跟踪 fix/re-review。"
+      ],
+      "enforcement": {
+        "mode": "reviewer discipline + forge approvals",
+        "implementation": "dsh-code-review Skill；branch protection 只证明有人 approve，不证明 review 质量。",
+        "trust": "live PR head 与 repo sources 是权威；作者陈述需验证。",
+        "failure": "base 无法验证 → 停止；缺 owning doc → 先读；无法复现 claim → 标注证据限制。",
+        "exceptions": [
+          "Skill 是 guidance，不是完整 checklist。",
+          "Agent Note 与实现冲突是设计讨论，不自动否决。",
+          "翻译扩展 Skill 只在用户明确调用时运行。"
+        ]
+      },
+      "applicability": "deepseek-harness 风格仓库；其他仓库需替换 sources of truth。",
+      "relationships": [
+        "collaboration-change-scope-report",
+        "collaboration-pre-push-evidence",
+        "collaboration-forge-branch-rules",
+        "collaboration-stack-review-propagation"
+      ],
+      "migration": {
+        "strategy": "把 sources of truth 与 blocking requirements 本地化，再培训 reviewer。",
+        "implementation": "复制 Skill；替换 docs/defensive-patterns/AGENTS 路径；保留 live base/head 与 change-scope 步骤。",
+        "requiredSupport": [
+          "Git/gh live PR 访问",
+          "change-scope script",
+          "仓库 docs/skills",
+          "branch protection 仅作最低门禁"
+        ]
+      },
+      "reference": "references/collaboration.md#code-review-procedure",
+      "verification": {
+        "status": "planned",
+        "positive": [
+          {
+            "scenario": "base/head 验证、change-scope、sources 已读、blocker 有证据、thread 回复正确。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "change-scope 路径当语义 review、旧 head 当证据、重复 gate 意见、表演性同意必须避免。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重新 fetch/读 docs/复现后重审。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned",
+        "plannedDetails": "未执行；人工 review 质量无法由仓库测试证明。"
+      },
+      "limitations": [
+        "Skill 明确不是完整 checklist。",
+        "review 质量不可自动证明。",
+        "sources of truth 跨域，更新后需重新读。"
+      ]
+    }
+  ]
+}

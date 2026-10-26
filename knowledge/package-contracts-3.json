@@ -1,0 +1,2443 @@
+{
+  "domain": "package-contracts-3",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "package-contracts-3.readme-package-contract",
+      "title": "包 README 即契约：kind、必填段落、限制非待办、双语配对",
+      "sources": [
+        {
+          "path": "packages/client/store/README.md",
+          "start": 1,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/telemetry/otel/README.md",
+          "start": 1,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/credentials/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/telemetry/otel/README.i18n.yaml",
+          "start": 1,
+          "end": 4,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包没有单一契约面时，读者必须读源码才能知道边界；限制被当成待办、Dev Note 被当成承诺、双语长期漂移，都会让包契约失去可核对性。",
+      "triggers": [
+        "新增包或新增包的公开入口",
+        "审查一个包是否完整声明了能力、限制与模型影响",
+        "判断某条限制是当前约束还是计划修复",
+        "编辑英文或中文 README 任一侧"
+      ],
+      "obligations": [
+        "frontmatter 声明 description 与受控 kind：package-library、package-reference、package-bundle 或 package-group。",
+        "README 包含概述、目录、使用方式、实现说明、进一步探索、模型体验（含 KV Cache effect）、已知限制与待实现事项、开发备注。",
+        "限制段必须是当前包约束而非任务清单；评审不得把限制当作 TODO。",
+        "Dev Note 必须声明非权威；已发布行为、限制与已接受理由写在上文段落、源码与 Agent Note。",
+        "英文与中文成对维护，编辑后运行 verify-translation-pairing --write 重新记录逐标题哈希。",
+        "配置与工具 schema 指向生成目录（config-catalog、tool-catalog），README 不重复枚举。",
+        "独立消费方的构建/依赖义务必须写进限制或使用说明，例如静态 ESM 保留第三方导入、独立消费方自备开发依赖。"
+      ],
+      "actors": [
+        "包作者",
+        "reviewer",
+        "文档维护者"
+      ],
+      "steps": [
+        "选择 kind 并写 description，说明读者与边界。",
+        "在概述中写清本包不做什么。",
+        "给出最小组合与具体服务/入口标识。",
+        "写实现说明与 source map。",
+        "写模型体验：模型看到什么、token 影响、KV cache 影响；没有则写 None 并说明原因。",
+        "逐条写限制的现状、触发条件与当前取舍。",
+        "Dev Note 只放未决问题并声明非权威。",
+        "同步中文并重新生成 i18n 侧车。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "README 段落本身是人工产物；i18n 配对有命令 verify-translation-pairing --write（侧车头部声明）。未观察到 README 段落的自动检查器。",
+        "trust": "文档与评审保证；配对哈希可机械核对，但内容正确性未自动验证。",
+        "failure": "缺段、限制写成 backlog、Dev Note 被当作承诺、双语失配时评审拒绝或要求重配对。",
+        "exceptions": "apps/plugin-market-generator 没有 frontmatter 但仍有完整叙述；组地图只承诺组结构与包表，不承诺运行行为。"
+      },
+      "applicability": [
+        "scope: 任何以 README 作为公开契约的包；组地图用精简模板。",
+        "preconditions: 包有稳定名称与 kind; 存在中英文读者或明确单一语言策略",
+        "reactivation: 采用者若去掉双语，仍需保留限制非待办与 Dev Note 非权威两条文字约束。"
+      ],
+      "relationships": [
+        "package-contracts-3.model-experience-disclosure",
+        "package-contracts-3.configuration-contract",
+        "package-contracts-3.experimental-maturity-and-promotion"
+      ],
+      "migration": {
+        "strategy": "把 README 模板化为固定段落，用受控 kind 枚举，限制段与 Dev Note 用固定措辞，双语用标题哈希侧车。",
+        "implementation": "在仓库根放 README 模板；新增包脚手架生成骨架；评审清单逐段勾选；CI 只检查段落/锚点/链接存在。",
+        "requiredSupport": [
+          "模板文件",
+          "kind 枚举",
+          "配对命令或等价脚本",
+          "生成目录链接"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.readme-package-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "任取一个 package-reference README，包含全部必填段落且 i18n 哈希成对",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除限制段或 Model Experience 段后，仓库检查应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补回段落并重跑配对命令，检查恢复绿色",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "生成目录不校验 README 叙述是否仍正确；只有评审。",
+        "i18n 侧车只证明标题级哈希一致，不证明语义逐行一致。",
+        "组地图不承诺运行行为，不能当作包契约使用。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.model-experience-disclosure",
+      "title": "模型可见面披露：看到什么、token 影响、KV cache 影响",
+      "sources": [
+        {
+          "path": "packages/client/ui-primitives/README.md",
+          "start": 1,
+          "end": 221,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/tool-lsp/README.md",
+          "start": 1,
+          "end": 179,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-title/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/session-reference/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/acp-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent-fork-in-process/README.md",
+          "start": 1,
+          "end": 155,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包可以悄悄改变提示词、工具 schema 或历史前缀；没有所有权与披露时，缓存失效、token 增长和越权注入无法定位。",
+      "triggers": [
+        "包注册工具、添加系统提示段或注入用户消息",
+        "声称本包不影响模型",
+        "改动提示文本、工具定义或注册生命周期",
+        "设计需要复用父级请求前缀的子 agent"
+      ],
+      "obligations": [
+        "Model Experience 必须回答：模型看到什么、token 影响、KV cache 影响；零影响也写 None 并解释。",
+        "系统提示段给出可核对的原文或稳定模板与变量。",
+        "只有拥有该表面的包才能改变它；log-only 与 display-only 状态必须明确声明不进入模型输入。",
+        "流式/异步派生文本不得延迟主响应或改写既有前缀。",
+        "请求前缀稳定性是显式设计目标：为缓存复用可以限制路由选择等能力，并在 README 说明代价。"
+      ],
+      "actors": [
+        "包作者",
+        "reviewer",
+        "提示词所有者"
+      ],
+      "steps": [
+        "列出每个模型可见面：工具 schema、系统提示段、用户消息、上下文注入、派生文本。",
+        "逐面写原文/结构、token 影响与 KV cache 影响。",
+        "对只影响显示或存储的面写不进入模型输入，并指出真正所有者。",
+        "任何改写既有前缀的改动在评审中单独标注。",
+        "用请求快照对照挂载前后差异。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "README 段落与提示段原文常量；部分包声明了 conformance/e2e 测试（如 ACP 公共 SDK 测试），但本提取未运行。",
+        "trust": "文档声明与评审；缓存影响未在本提取中测量。",
+        "failure": "缺少段落、提示原文与代码不一致、悄悄注入时评审拒绝或按缺陷修复。",
+        "exceptions": "纯浏览器壳、组地图、传输层只写 None 或由消费方拥有模型面。"
+      },
+      "applicability": [
+        "scope: 所有注册模型可见面的包；不注册模型面的包也要写 None。",
+        "preconditions: 存在系统提示/工具注册/消息注入路径",
+        "reactivation: 派生文本类包（标题、摘要、遮罩）在改为模型可见时必须重新评估。"
+      ],
+      "relationships": [
+        "package-contracts-3.readme-package-contract",
+        "package-contracts-3.untrusted-content-boundary",
+        "package-contracts-3.consent-and-opt-in-defaults"
+      ],
+      "migration": {
+        "strategy": "把 Model Experience 设为必填段；为每个模型面记录所有者与稳定性目标；提示原文从单一常量生成或对照。",
+        "implementation": "请求快照测试比较挂载前后 system prompt 与 tool schema 字节；对 None 包断言零差异。",
+        "requiredSupport": [
+          "请求快照夹具",
+          "提示常量",
+          "评审清单"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.model-experience-disclosure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "tool-lsp 的 README 提示原文与实现常量一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "包新增提示段但 Model Experience 仍写 None，评审检查应拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补写段落并重跑快照，差异与披露一致",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "披露描述当前实现，不是兼容性承诺。",
+        "实验包的工具 schema 跟随固定上游版本，没有 DSH 稳定性承诺。",
+        "token 与 KV cache 影响在 README 中是设计说明，未给统一测量口径。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.capability-seam-split",
+      "title": "能力 seam 拆分：服务定义、提供方、消费方与共享契约测试",
+      "sources": [
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/credentials/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/plugin-inventory/README.md",
+          "start": 1,
+          "end": 114,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/telemetry/otel/README.md",
+          "start": 1,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/README.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-primitives/README.md",
+          "start": 1,
+          "end": 221,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-runtime/README.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把定义与实现混在一个包里，会让替换后端、独立测试和客户端类型共享都变得不可能；消费方也会被迫依赖提供方实现细节。",
+      "triggers": [
+        "需要可替换后端（持久化、凭据、遥测、沙箱、文件系统、子进程、LSP、标题）",
+        "要把定义与实现分给不同包",
+        "需要让 Host 与 Client 共用 wire 类型",
+        "要防止两个功能插件互相 import"
+      ],
+      "obligations": [
+        "seam 包只导出抽象服务、句柄/请求契约、稳定错误类、纯校验辅助与品牌 token；不导出实现机械。",
+        "提供方拥有完整运行时：句柄类、变更排序、单写者记账、活事件路由与拆卸；提供方之间不共享实现。",
+        "seam 提供可复用契约测试，所有提供方必须通过；失败时修提供方而不是放宽测试。",
+        "消费方只通过注入服务名使用能力；可选能力逐次解析而不是顶层 import 提供方。",
+        "客户端安全类型从 ./types 子路径导出，Host 与 Client 共用同一签名。",
+        "跨包行为只能走注入服务或 slot；功能插件不得运行时 import/re-export 另一个功能插件的值。",
+        "共享契约测试（如 runPersistenceContract/runLiveWritePathContract）由 seam 包提供，所有提供方运行同一套可观察行为测试；不得把实现机械或第二份单例装进消费方。"
+      ],
+      "actors": [
+        "seam 作者",
+        "提供方作者",
+        "消费方作者",
+        "reviewer"
+      ],
+      "steps": [
+        "写服务定义包：抽象类/接口、品牌类型、错误联合、纯校验、契约测试。",
+        "按不变量写契约测试：顺序、所有权、错误、恢复。",
+        "提供方注册服务名并拥有运行时；消费方看不到存储细节。",
+        "消费方声明注入；可选依赖逐次解析并处理缺失。",
+        "客户端类型走 ./types。",
+        "评审检查 seam 是否意外导出实现、提供方是否跑契约测试。"
+      ],
+      "enforcement": {
+        "mode": "test",
+        "implementation": "session-persistence 的 runPersistenceContract 与 runLiveWritePathContract 是共享契约套件；seam 导出抽象服务与稳定错误类；提供方不能被 seam 的导出替代。",
+        "trust": "源声明两套契约测试存在；本提取未运行，无法证明当前提供方全部通过。",
+        "failure": "契约测试失败、seam 导出实现、消费方直接依赖提供方时视为缺陷；不得用放宽测试或加别名绕过。",
+        "exceptions": "telemetry/otel 是创建独立通道的服务，通道归消费方；ssh 家族拆成多个提供方但共享连接。"
+      },
+      "applicability": [
+        "scope: 有多个实现或需要独立演进的能力；单一实现且无替换预期时可不拆。",
+        "preconditions: 能命名稳定的服务接口; 至少一个真实提供方与一个测试提供方",
+        "reactivation: 当第二个提供方出现或客户端需要共享类型时，应补契约测试与 ./types 导出。"
+      ],
+      "relationships": [
+        "package-contracts-3.optional-capability-availability",
+        "package-contracts-3.test-support-tier",
+        "package-contracts-3.configuration-contract"
+      ],
+      "migration": {
+        "strategy": "先定义服务与契约测试，再写内存提供方，最后写真实提供方；消费方只依赖定义包。",
+        "implementation": "契约测试按不变量命名；CI 对每个提供方跑全部套件；seam 包的导出清单由评审冻结。",
+        "requiredSupport": [
+          "服务定义包",
+          "契约测试套件",
+          "至少一个提供方",
+          "注入声明"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.capability-seam-split",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "两个独立提供方都通过同一套持久化契约测试",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "提供方允许 seq 跳号，契约测试失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修提供方后重跑全部契约套件并通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "seam 只保证单后端实例内的写者唯一；跨进程排他由提供方负责。",
+        "提供方之间可以相似，但不得共享实现机械；这会被评审而非自动检查。",
+        "客户端类型共享依赖 ./types 子路径，遗漏时调用方会各自复述 wire 类型。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.optional-capability-availability",
+      "title": "可选能力缺失：具名错误、唯一席位冲突、重载不静默接管",
+      "sources": [
+        {
+          "path": "packages/sandbox/sandbox-local/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/tool-lsp/README.md",
+          "start": 1,
+          "end": 179,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/workspace-files/README.md",
+          "start": 1,
+          "end": 158,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/webserver/README.md",
+          "start": 1,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-title/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/interaction/permission-presets/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/subprocess-ssh/README.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "可选依赖缺失时静默降级会让命令在无隔离、无认证或错误数据下继续运行；唯一席位被覆盖会让组合行为不可预测；重载后旧句柄被悄悄接管会丢写。",
+      "triggers": [
+        "服务/后端/路由/提供方/平台工具可能没有装配",
+        "同一进程可能出现第二个提供方或 fallback",
+        "插件重载或卸载后仍有活会话/活句柄",
+        "派生状态（投影键、设置）可能缺失"
+      ],
+      "obligations": [
+        "缺失变成具名、可分支的错误码，禁止按消息文本分支。",
+        "唯一性席位重复注册必须抛错：重复路由、第二个 fallback、第二个标题 provider 在第一个开始 dispose 前抛。",
+        "重载/卸载不得静默接管旧状态：后端重载让写者大声失败直到会话重启，不重新收养日志。",
+        "派生状态缺失必须显式失败；已存 auto 身份在集成缺席时拒绝发布，不静默降级为 Full access。",
+        "可选服务缺失时给出可执行指引（配置字段、provider 名称、可用 runner 选项）。"
+      ],
+      "actors": [
+        "包作者",
+        "调用方作者",
+        "部署者"
+      ],
+      "steps": [
+        "列出所有可选依赖与唯一席位。",
+        "为每种缺失定义稳定 code 并在类型中暴露。",
+        "决定缺失是拒绝操作还是只禁用该能力（如 watch 不支持时普通读取仍可用）。",
+        "装配期检查唯一席位冲突并抛错。",
+        "写清重载/卸载后的归属：旧句柄失败、需要重启还是可被接管。",
+        "为每种缺失写测试。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "代码路径直接拒绝：SANDBOX_UNAVAILABLE、LSP_UNAVAILABLE、LSP_WORKSPACE_REQUIRED、workspace-file/watch-unsupported、SessionAlreadyOwnedError、duplicate route/fallback throw、permission-presets 的投影键缺失失败。",
+        "trust": "源 README 声明这些拒绝路径；本提取未执行，unavailable 语义需在采用者环境复验。",
+        "failure": "静默降级、覆盖唯一席位、重载后假装成功都是缺陷；若确需降级必须新增显式模式并写入限制段。",
+        "exceptions": "sandbox-ssh 对 danger-full-access 直接绕过 confine；sandbox-local 的 runnerCommand 是操作者断言并跳过探测；workspace-files 无持久化时冷会话无法解析。"
+      },
+      "applicability": [
+        "scope: 可选依赖、可替换后端、唯一席位、可能重载的插件。",
+        "preconditions: 能枚举可选服务与席位; 调用方能处理 typed error",
+        "reactivation: 新增可选依赖或热重载能力时重新评估缺失语义与重启要求。"
+      ],
+      "relationships": [
+        "package-contracts-3.capability-seam-split",
+        "package-contracts-3.fail-closed-boundaries",
+        "package-contracts-3.read-only-projection"
+      ],
+      "migration": {
+        "strategy": "为每个可选能力建表：服务名、缺失 code、是否阻断、提示、重载语义，并逐行测试。",
+        "implementation": "启动日志打印已解析提供方/缺失能力快照（不含凭据）；唯一席位在启动期断言。",
+        "requiredSupport": [
+          "错误码类型",
+          "启动期断言",
+          "缺失路径测试"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.optional-capability-availability",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "不挂 LSP provider 时 lsp 调用返回 LSP_UNAVAILABLE 而非空结果",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "第二个 fallback 注册成功或缺失 provider 时静默成功",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "装配 provider 后同一调用成功且消费方代码不变",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "跨进程排他与重载语义取决于提供方，seam 只保证实例内。",
+        "sandbox-local 的 runnerCommand 跳过功能探测，配置错误可能被误当作已隔离。",
+        "workspace-files 的持久化可选意味着冷会话解析失败是已知限制。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.fail-closed-boundaries",
+      "title": "失败关闭：未签名产物、坏 TLS、误读日志、部分目录一律拒绝",
+      "sources": [
+        {
+          "path": "apps/desktop/windows-signing/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/tests/installed-update/README.md",
+          "start": 1,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/webserver/README.md",
+          "start": 1,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-catalog/README.md",
+          "start": 1,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/schedule/schedule/README.md",
+          "start": 1,
+          "end": 172,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-local/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess-local/README.md",
+          "start": 1,
+          "end": 168,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/sandbox-ssh/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/hooks-codex/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/windows-signature-cache.mjs",
+          "start": 1,
+          "end": 220,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/windows-signature-cache.d.mts",
+          "start": 1,
+          "end": 76,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "安全关键路径上的'继续'会产出看起来成功但不可信的结果：未签名安装包、回落到 HTTP、被误读的日志、部分任务目录、无隔离命令。",
+      "triggers": [
+        "实现签名、TLS、持久化、格式读取、桌面打包或进程启动",
+        "失败后需要决定是否重试/回落/继续",
+        "需要向操作者保留失败证据"
+      ],
+      "obligations": [
+        "签名材料任一不可用时失败而不是输出未签名产物；失败阶段不得启动后续阶段或创建完成记录。",
+        "硬件签名失败建立跨实例联锁；没有定时恢复或自动重试，必须由管理员检查证据后显式授权。",
+        "签名缓存损坏、记录/身份不符、trust/时间戳/thumbprint 不符时拒绝恢复目标，不修复条目、不回退硬件签名；每次命中重新验签。迁移校验记录与摘要；维护只检查两份普通非链接文件的结构，不等于摘要/签名验证，--clear 显式 retire，且没有按年龄失效或自动容量淘汰；目录所有权/DACL/固定盘与 stage 锁由相邻模块强制。",
+        "TLS 材料不可读/为空/格式错误/密钥不匹配/绑定失败都拒绝初始化，绝不回落到 HTTP；通配地址在加载期拒绝。",
+        "未知事件类型除非 envelope 标记 ignorable 否则拒绝；已提交前缀损坏拒绝；更新格式提示升级 harness。",
+        "域在不可读/畸形/不支持版本/非法任务时拒绝启动，不发布部分目录；恢复失败保持原文件不变。",
+        "partial 执行如实报告为 partial；原生失败不通过 fallback 重放命令；模糊启动/变更不自动重放。",
+        "不可逆外部操作（打包/安装验收）要求终端与包含版本/run ID 的精确确认，不提供管道审批；监督构建有总时限，超时或失败不产生 packageVerification 成功。",
+        "外部基础设施的信任前提必须写明：摘要检查、文件效果模式与沙箱不是对抗恶意宿主的安全边界。"
+      ],
+      "actors": [
+        "实现者",
+        "operator",
+        "release owner"
+      ],
+      "steps": [
+        "枚举继续会产生不可接受后果的状态。",
+        "为每个状态选择拒绝点（加载期优先）与稳定错误。",
+        "保证拒绝路径无副作用，已有证据保留不删除。",
+        "对需要人工恢复的状态建联锁/标记，禁止自动清除。",
+        "写清失败证据位置与恢复人。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "代码直接抛错/拒绝：SignTool 失败 fatal.json 与阶段终止、attempt.json 联锁、TLS 激活期拒绝、SessionPersistenceCorruptionError、SessionFormatUnsupportedError、schedule 域启动拒绝、SANDBOX_UNAVAILABLE。",
+        "trust": "源 README 描述这些拒绝路径与顺序；本提取未执行签名、TLS 或崩溃实验。 SSH 主机与已安装 helper 属可信基础设施；摘要检查与文件效果限制不对抗恶意主机。",
+        "failure": "出现回落路径时移除而非加警告；部分状态被发布时改为启动期拒绝；联锁存在时停止并升级。",
+        "exceptions": "ignorable 事件是显式逃生口；schedule 的 dispatch 失败只记录不重试；时间戳允许最多三次正常退出失败重试。；hooks-codex 的 hooks.json 不可读/不可解析时只记录警告并不运行任何钩子，agent 仍启动（有意的失败开放例外）"
+      },
+      "applicability": [
+        "scope: 安全关键、不可逆或会产生对外产物的路径。",
+        "preconditions: 能定义不可接受后果; 有可保留的证据位置",
+        "reactivation: 新增签名/TLS/格式/发布路径时必须加入失败矩阵。"
+      ],
+      "relationships": [
+        "package-contracts-3.format-versioning-and-migration",
+        "package-contracts-3.durability-and-crash-semantics",
+        "package-contracts-3.build-artifact-and-platform-support",
+        "package-contracts-3.credential-custody-and-redaction"
+      ],
+      "migration": {
+        "strategy": "为每个安全关键路径写失败矩阵：状态→拒绝点→错误→证据→恢复人；联锁用文件/租约而非内存标志。",
+        "implementation": "让部分成功在类型上不可表达（完整句柄或错误）；拒绝路径测试断言不产生输出文件。",
+        "requiredSupport": [
+          "失败矩阵",
+          "证据目录",
+          "联锁存储",
+          "恢复 runbook"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.fail-closed-boundaries",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "坏证书导致 webserver 初始化失败且没有 HTTP 监听",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "坏证书时仍以 HTTP 服务，或签名失败仍产出安装包",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复证书/清除联锁授权后 reload，路由或签名恢复",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "签名成功不证明安装或生产就绪；安装验收需要独立操作者证据。",
+        "设备 PIN 重试上限与剩余次数未验证，禁止探测。",
+        "跨账号 Token 隔离与剩余重试次数未验证。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.format-versioning-and-migration",
+      "title": "格式版本与迁移链：不可变历史、相邻 edge、后继不覆盖发布、变更带夹具",
+      "sources": [
+        {
+          "path": "packages/session/session-format-catalog/README.md",
+          "start": 1,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence-jsonl/README.md",
+          "start": 1,
+          "end": 181,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-projection-cache/README.md",
+          "start": 1,
+          "end": 140,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "持久化字段一改就误读旧数据，或迁移不可重复、不可验证，会把历史数据变成不可恢复的损坏；没有夹具时升级故事无法被证明。",
+      "triggers": [
+        "持久化记录、日志、缓存行或导出格式要改字段/语义",
+        "需要读取历史版本数据",
+        "需要发布新格式但仍支持旧版本"
+      ],
+      "obligations": [
+        "发布过的格式不可变；旧版本只读，不可改写。",
+        "迁移链从最早支持版本到当前写入版本，完整无缺口，模块初始化时校验。",
+        "edge 顺序生成期静态固定；profile/插件不能增加、删除或重排 edge。",
+        "当前句柄只暴露 SESSION_FORMAT_VERSION 标识的当前逻辑记录；历史转换在返回句柄前完成。",
+        "后继发布不可覆盖：同目录临时文件、分块编码、独立验证、复查源 revision，源保持字节不变。",
+        "缓存/派生记录必须匹配 live schema 与生命周期身份（formatVersion、createdAt、cwd、isSeeded、inheritedEventCount）。",
+        "每个存储 schema 或 domain version 变更必须在同一 PR 提供上一版磁盘格式的归档夹具，并证明所选处置（read-compat、重写、backup-and-skip）。"
+      ],
+      "actors": [
+        "格式所有者",
+        "provider 作者",
+        "reviewer"
+      ],
+      "steps": [
+        "分配版本号，旧版本只读。",
+        "写相邻 edge 与 codec/validator/fixture。",
+        "在生成文件中固定 edge 顺序并做缺口校验。",
+        "提供 strict 与 recoverable 读入口并明确用途。",
+        "准备→验证→不覆盖发布后继，源字节不变。",
+        "同 PR 提交归档夹具与处置测试。",
+        "更新 formatStatus 语义与 README 限制。"
+      ],
+      "enforcement": {
+        "mode": "test",
+        "implementation": "src/generated.ts 静态拥有 codec/edge 顺序；低层构造器拒绝重复/缺口/超出当前版本；runPersistenceContract 与格式夹具测试（strict/current）验证；JSONL Worker 验证要求自然退出 code 0。",
+        "trust": "源 README 描述模块初始化校验与夹具规则；本提取未运行迁移或夹具测试。",
+        "failure": "缺口导致构建期失败；验证失败保留源并拒绝写 open；schema 变更无夹具时评审拒绝。",
+        "exceptions": "session-format-catalog 只支持第一方构建清单；运行时插件不能补历史 edge；JSONL 换压缩需单独 root，且无自动回退。"
+      },
+      "applicability": [
+        "scope: 任何有历史数据的持久化格式、缓存或导出。",
+        "preconditions: 有版本号; 能保留旧格式语料; 有严格校验入口",
+        "reactivation: 新增格式或改缓存 schema 时重新跑夹具与处置证明。"
+      ],
+      "relationships": [
+        "package-contracts-3.durability-and-crash-semantics",
+        "package-contracts-3.fail-closed-boundaries",
+        "package-contracts-3.test-support-tier"
+      ],
+      "migration": {
+        "strategy": "把格式当公开 API：版本号、fixture、edge 表、严格/宽松入口、后继发布协议都进契约；新仓库也先建 v1 fixture。",
+        "implementation": "迁移写成纯函数 + 属性测试；生成 catalog；把 formatStatus 暴露给运维命令。",
+        "requiredSupport": [
+          "版本化 schema",
+          "归档夹具",
+          "edge 表",
+          "独立验证器"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.format-versioning-and-migration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "v0/v1/v2 文件迁移到当前并通过 strict 验证",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "手工构造缺口 edge，模块初始化失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补 edge 与 fixture、重新生成 catalog 后迁移通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "只支持目录中列出的第一方历史链；外部迁移所有权不支持。",
+        "缓存兼容版本只能结构读取用于重写，不能 seed 当前 hydration。",
+        "迁移保留原压缩编码，换编码需要新 root。",
+        "投影缓存不做冷重折叠；需要冷快照的消费者必须自行提供日志重新折叠。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.durability-and-crash-semantics",
+      "title": "持久性与崩溃语义：flush 屏障、连续 append、单写者、只关闭不续写",
+      "sources": [
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence-jsonl/README.md",
+          "start": 1,
+          "end": 181,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/schedule/schedule/README.md",
+          "start": 1,
+          "end": 172,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-projection-cache/README.md",
+          "start": 1,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/subprocess-ssh/README.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把 append 当持久、允许多写者、或在崩溃后继续未完成轮次，会产生撕裂尾部、丢写、重复投递和无法解释的模型历史。",
+      "triggers": [
+        "设计 append/flush/close",
+        "定义单写者与跨进程排他",
+        "实现崩溃恢复或重放",
+        "声明队列投递语义（至少一次/恰好一次）"
+      ],
+      "obligations": [
+        "append 连续：首个 seq 等于已存 next-seq，缺口拒绝；已提交事件永不重写。",
+        "flush 是唯一持久性屏障；append 尽力而为；服务级 flush 排空所有活句柄并聚合失败。",
+        "撕裂尾部属于未 resolve 的 append；写路径在首次新 append 前持久截断，完整记录先重写。",
+        "单写者：create/open('write') 取得所有权；重复写 open、占用 id、读句柄变更、关闭句柄、永久失去所有权都有稳定错误类。",
+        "崩溃恢复只关闭未完成轮次：合成 interruptedTurnClosers；用 TOOL_NOT_STARTED/TOOL_OUTCOME_UNKNOWN 指导模型。",
+        "非原子对必须声明（enqueue 与任务写、Session flush 与任务 put）；不得声称恰好一次。",
+        "后台写失败保留事件、暂停自动路径、下一次显式 flush 重试并大声失败。",
+        "投影缓存写入先持久化会话缓冲再保存缓存行，保证日志领先、缓存跟随；崩溃可让缓存落后但永不领先，schema/身份不匹配的记录读作不存在。",
+        "连接丢失或结果不明确时拒绝未确认操作，绝不自动重放；done 只报告直接进程退出，不证明托管进程范围已静止，需单独 waitForExit。"
+      ],
+      "actors": [
+        "provider 作者",
+        "消费方作者",
+        "运维"
+      ],
+      "steps": [
+        "定义唯一持久性屏障并在 API 名与 README 写死。",
+        "定义顺序标识与缺口拒绝。",
+        "定义单写者获取点、错误类、关闭排空。",
+        "定义撕裂尾部处理与崩溃修复（只关闭）。",
+        "列出非原子对与可能重复/丢失窗口。",
+        "让后台失败可观察、可重试、不丢事件。",
+        "在限制段写明无删除/无恰好一次等边界。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "SessionHandle 的 seq/read/append/flush/close 语义、SessionAlreadyOwnedError/SessionAlreadyExistsError/SessionReadOnlyError/SessionHandleClosedError/SessionOwnershipLostError、JSONL fsync+回滚、flock/命名信号量、interruptedTurnClosers、投影缓存 log-leads-cache-follows。",
+        "trust": "源 README 与契约测试声明这些不变量；本提取未做崩溃注入，无法证明当前实现全部满足。",
+        "failure": "读者看到撕裂尾部、第二写者成功、静默丢事件时按缺陷处理；不能证明跨进程排他时明确写仅实例内。",
+        "exceptions": "list() 未分页未过滤；无删除/保留 API；崩溃修复不提供部分轮次续跑；schedule 的投递不是恰好一次。"
+      },
+      "applicability": [
+        "scope: 任何持久日志、任务队列、缓存检查点与可恢复会话。",
+        "preconditions: 有顺序标识; 有显式 flush 或等价屏障; 能定义单写者",
+        "reactivation: 增加异步投递或第二持久写时重新评估非原子对。"
+      ],
+      "relationships": [
+        "package-contracts-3.format-versioning-and-migration",
+        "package-contracts-3.fail-closed-boundaries",
+        "package-contracts-3.read-only-projection"
+      ],
+      "migration": {
+        "strategy": "把 flush 写成契约；用错误类而不是布尔返回；崩溃修复实现为可重放合成事件；每个非原子对留一条文档与测试。",
+        "implementation": "崩溃注入测试在 append/flush/close 之间杀进程；队列声明至少一次而非恰好一次。",
+        "requiredSupport": [
+          "顺序标识",
+          "单写者锁",
+          "崩溃夹具",
+          "非原子对清单"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.durability-and-crash-semantics",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "flush 后杀进程，重启读到完整前缀",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "第二个写 open 成功或读者看到撕裂尾部",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "关闭旧句柄/进程后重新 open，未完成轮次被合成 closers 关闭",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "单写者保证仅限后端实例；跨进程依赖提供方。",
+        "JSONL 的 POSIX 首次 append 依赖硬链接与 node-addon-system，缺 addon 拒绝写所有权。",
+        "schedule 的 enqueue 与任务写不原子，可能重复投递；tool-jobs 的待领通知不跨 dispose 存活。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.untrusted-content-boundary",
+      "title": "不受信任内容：固定警告、框架转义、sandbox、同意与可验证结果",
+      "sources": [
+        {
+          "path": "packages/context/session-reference/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-primitives/README.md",
+          "start": 1,
+          "end": 221,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/README.md",
+          "start": 1,
+          "end": 157,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua/README.md",
+          "start": 1,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/hooks-codex/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/sandbox-ssh/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/windows-signing/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "模型输出、网页、文件、远程会话、桌面应用或外部 hook 都可能携带指令或主动内容；没有边界时它们能改变系统指令、访问父文档或自动产生副作用。",
+      "triggers": [
+        "内容来自模型、网页、文件、远程会话、桌面应用或外部 hook",
+        "要在 UI 中渲染不受信任的 HTML/Markdown/ANSI",
+        "要声明宿主或远程基础设施可信",
+        "外部操作会产生不可逆副作用"
+      ],
+      "obligations": [
+        "跨会话引用是 untrusted background：固定警告 + 每个 < 转义为 \\u003c + 不可变快照 + 不伪造工具调用。",
+        "Markdown 丢弃原始 HTML、限制链接、清洗 HTTP(S)；HTML 预览静态模式无 sandbox 权限 + CSP，脚本模式 allow-scripts 不含 allow-same-origin；SVG 只进 <img>。",
+        "桌面操作在 launch/observe/capture/input 前要求应用同意；保存 grant 需平台验证的可执行身份；动作返回 dispatched:true, verified:false，必须读新状态验证；取消后不回放。",
+        "hook 配置不可读/不可解析时不运行任何 hook 但仍启动；纯上下文 hook 不是否决，先 next() 再折叠。",
+        "信任假设必须写明：SSH 主机/helper 是可信基础设施，摘要与文件隔离不构成敌意主机边界；签名 runner 假设可信内部团队与操作者。"
+      ],
+      "actors": [
+        "包作者",
+        "安全评审",
+        "operator"
+      ],
+      "steps": [
+        "给每个输入标注信任级别。",
+        "对不受信任内容加固定警告/框架转义。",
+        "渲染/执行前做能力裁剪：sanitize、sandbox、只读、无网络、无同源。",
+        "对副作用操作要求显式同意与可验证结果。",
+        "把无法消除的信任假设写进 README 限制段。",
+        "为注入尝试写反例测试。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "session-reference 的固定警告与 \\u003c 转义、Markdown sanitizer、DOMPurify+CSP+sandbox 标志、Cua consent 与 dispatched/verified 结果、hooks-codex containment、sandbox-ssh 信任声明。",
+        "trust": "源 README 描述这些实现；本提取未做注入或浏览器执行验证。",
+        "failure": "内容可伪造框架标签、iframe 有同源权限、取消后回放输入时按缺陷处理；信任假设缺失时评审拒绝。",
+        "exceptions": "流式 Markdown 可能暂时把跨冻结边界的引用式链接渲染为字面文本；secret-mask 只覆盖 UserText；hooks-codex 只支持 5 个事件点。"
+      },
+      "applicability": [
+        "scope: 所有消费外部内容或产生外部副作用的包。",
+        "preconditions: 能区分可信/不可信输入; 有隔离或清洗机制",
+        "reactivation: 新增 HTML 预览、远程引用、桌面控制或 hook 桥接时重新评估。"
+      ],
+      "relationships": [
+        "package-contracts-3.model-experience-disclosure",
+        "package-contracts-3.credential-custody-and-redaction",
+        "package-contracts-3.read-only-projection"
+      ],
+      "migration": {
+        "strategy": "建立内容类型→处理策略表；每类不受信任内容指定框架转义、sanitizer、sandbox 标志、同意点与验证方式。",
+        "implementation": "iframe/预览加 CSP+sandbox 自动断言；Markdown 加无原始 HTML 快照；引用加框架标签不可伪造测试。",
+        "requiredSupport": [
+          "sanitizer",
+          "sandbox/CSP",
+          "同意与撤销流程",
+          "信任假设清单"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.untrusted-content-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "快照中的 <referenced-sessions> 文本被转义，模型只看到数据",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "HTML 预览能执行父页面脚本或取消后仍回放输入",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "收紧 sandbox/CSP 后同一内容变为静态展示",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "UI 遮蔽与显示层处理不构成访问控制；消息原文与模型输入保留原字符。",
+        "SSH/签名 runner 的信任假设无法由包内校验消除。",
+        "hooks-codex 对未支持事件静默丢弃，多处行为只实现部分。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.credential-custody-and-redaction",
+      "title": "凭据保管：配置只放引用、describe 不返回值、Host-only、环境清理与 redaction",
+      "sources": [
+        {
+          "path": "packages/credentials/credentials/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/deepseek-account/README.md",
+          "start": 1,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess-local/README.md",
+          "start": 1,
+          "end": 168,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 1,
+          "end": 154,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/telemetry/otel/README.md",
+          "start": 1,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/windows-signing/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-secret-mask/README.md",
+          "start": 1,
+          "end": 99,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "机密进入配置、日志、遥测、子进程环境或渲染层后，同步配置、截图与诊断都会泄露；轮换需要改配置或重启也会促使人们把值写死。",
+      "triggers": [
+        "配置里出现密钥、Token、密码或授权 grant",
+        "日志/遥测/子进程环境/错误消息可能带值",
+        "需要热轮换凭据",
+        "需要向 UI 报告是否已配置"
+      ],
+      "obligations": [
+        "配置只携带引用名；resolve 按操作读取且无跨操作缓存；describe 只报 configured/source/writable，绝不返回值。",
+        "空引用值视为缺失；空记录是有意声明；记录写入走唯一 modifyRecord 的读-决定-替换。",
+        "引用没有枚举；记录可枚举但 owner 是 scope，seam 不验证 scope 是否挂载。",
+        "Host-only token 不进入 renderer bootstrap；请求头只带部署头并限制在配置来源；rejectToken 只移除匹配的当前登录。",
+        "子进程环境清理是名称启发式（*KEY*/*PASSWORD*/*SECRET*/*TOKEN*），必须写明通不过的名称。",
+        "遥测头显式提供，不继承环境 authorization/TLS 身份；scope 由消费者提供。",
+        "签名机密单独处理：PIN 字符限制、环境撤回、只给签名阶段四个输入、诊断 redact。",
+        "显示遮罩只改变绘制，不是安全边界；消息文本、复制与模型输入保留原字符。"
+      ],
+      "actors": [
+        "包作者",
+        "部署者",
+        "operator"
+      ],
+      "steps": [
+        "列出机密与来源（环境、凭据存储、账号、硬件 Token）。",
+        "配置面只接受引用名；UI/诊断只暴露 configured/source/writable。",
+        "按操作解析以支持轮换；写入走独占 mutation。",
+        "定义空值语义并测试。",
+        "逐项检查子进程/日志/遥测/错误消息：清理、redact、不继承、不打印。",
+        "把无法保证的部分写进限制段。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "credentialRef/credentialKey 品牌、resolve/describe/set/unset、modifyRecord 唯一写路径、Host-only 类型与 bootstrap 排除、subprocess 的环境清理、OTel 显式 headers、Windows 签名环境撤回与 redact、UserText 遮罩 matcher。",
+        "trust": "源 README 声明这些边界；本提取未做泄露扫描或轮换实验。",
+        "failure": "值进入日志/配置/遥测、空值被当成已配置、显示遮罩被当作安全控制时按缺陷处理并加回归测试。",
+        "exceptions": "引用命名空间是扁平 POSIX 标识符；进程环境变化不可观察；账号 token 无过期/刷新；显示遮罩只覆盖 UserText。"
+      },
+      "applicability": [
+        "scope: 任何接触密钥、Token、密码、授权记录或签名材料的包。",
+        "preconditions: 有凭据存储或环境回退; 有 UI/诊断暴露面",
+        "reactivation: 新增遥测、子进程、渲染层或签名路径时重新评估泄露面。"
+      ],
+      "relationships": [
+        "package-contracts-3.fail-closed-boundaries",
+        "package-contracts-3.consent-and-opt-in-defaults",
+        "package-contracts-3.untrusted-content-boundary"
+      ],
+      "migration": {
+        "strategy": "先做引用+describe 的最小 seam，再做记录；把所有机密接触点列成表并逐项决定清理/redact/不继承。",
+        "implementation": "CI 加 secret scanning；对子进程清理加 passphrase 未覆盖的已知缺口测试；轮换测试断言下一请求生效。",
+        "requiredSupport": [
+          "凭据存储",
+          "引用类型",
+          "redaction 规则",
+          "Host-only 类型边界"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.credential-custody-and-redaction",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "set 后下一请求使用新值，describe 不返回值",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "空字符串被当成已配置，或值出现在日志/遥测",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "unset 后环境回退生效，下一请求使用环境值",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "环境清理是名称启发式，*PASSPHRASE* 等会通过。",
+        "显示遮罩仅防肩窥/截图，不阻止复制或模型看到原值。",
+        "账号 token 无刷新；退登远端失败不会恢复本地登录，但远端撤销可能失败。",
+        "记录 owner 是 scope，但没有任何层核验该 scope 是否已挂载；识别遗留记录要由调用方把 listRecords 与 registry 关联。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.consent-and-opt-in-defaults",
+      "title": "同意与默认关闭：反馈授权、无隐式别名、实验能力显式选择",
+      "sources": [
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 1,
+          "end": 154,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/telemetry/otel/README.md",
+          "start": 1,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/auto-review/README.md",
+          "start": 1,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/badge-skill-bundle/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-settings-plugin-inventory/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua/README.md",
+          "start": 1,
+          "end": 94,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "默认开启的上传、自动审查或实验能力会让用户在未要求时承担隐私、安全与 token 成本；隐式别名和'挂载即生效'让关闭变得不可信。",
+      "triggers": [
+        "默认开启遥测、上传、自动审查、实验能力、外部登录或桌面控制",
+        "设计授权/撤回流程",
+        "提供 FULL/ON 之类的模式别名"
+      ],
+      "obligations": [
+        "遥测默认 FEEDBACK_ONLY；DISABLED 不构造传输；FULL 被拒绝而不是别名。",
+        "直接 sessionTelemetry.emit() 在所有模式下 no-op；父级反馈不授权子级导出；模型请求/挂载/HMR 不授权捕获。",
+        "定时 flush/shutdown 只能完成已授权批次，绝不捕获新记录。",
+        "挂载共享 OTel 服务本身不创建传输、身份或发送；同意/脱敏/身份/关闭期限归消费者。",
+        "自动审查默认关闭，显式开启；模糊效果与未解决授权冲突拒绝；高风险外泄始终拒绝。",
+        "实验 bundle 默认关闭，需在 Plugins 的 Official 组选择。",
+        "Experimental/Optional/Official 互不等价；发布与默认安装不决定成熟度。",
+        "安装期脚本授权必须显式、具名、限定持久范围：展示准确包名与授权范围；一次点击可批准整个待审列表（可能含更早安装遗留）；关闭页面不授予任何权限。",
+        "桌面应用操作授权绑定所选应用实例；长期许可要求平台验证可执行文件身份；撤销会关闭受影响 Agent 连接；取消、超时或重连后不重放输入。"
+      ],
+      "actors": [
+        "包作者",
+        "部署者",
+        "用户"
+      ],
+      "steps": [
+        "写出默认状态与开启路径；默认不发送/不执行。",
+        "把授权绑定到具体事件，而不是挂载或模型请求。",
+        "禁止隐式别名，非法模式加载期失败。",
+        "区分完成已授权批次与捕获新记录。",
+        "在 UI 与 README 说明代价。",
+        "为未开启状态写零副作用断言。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "SessionTelemetryMode 枚举（FEEDBACK_ONLY/DISABLED，FULL 拒绝）、emit no-op、反馈授权协调器、Auto review 默认关闭与风险策略、badge bundle 默认关闭。",
+        "trust": "源 README 声明授权流；本提取未发送遥测或开启实验功能。",
+        "failure": "挂载即上传、FULL 被接受、子级复用父级授权时按缺陷处理。",
+        "exceptions": "撤回只导出删除事件，不保证远端擦除；已授权批次可在后台完成；插件禁用期间的反馈不会自动重放。"
+      },
+      "applicability": [
+        "scope: 任何默认会产生对外发送、自动决策或显著 token 成本的能力。",
+        "preconditions: 有可识别的用户授权事件; 有可观察的关闭状态",
+        "reactivation: 新增上传/自动执行能力时重新评估默认值与授权事件。"
+      ],
+      "relationships": [
+        "package-contracts-3.experimental-maturity-and-promotion",
+        "package-contracts-3.credential-custody-and-redaction",
+        "package-contracts-3.model-experience-disclosure"
+      ],
+      "migration": {
+        "strategy": "默认值表（能力→默认→开启事件→关闭行为→代价）；授权检查放在记录构造之前。",
+        "implementation": "为每能力加未授权时零请求测试；GUI 显示授权状态与最近授权时间。",
+        "requiredSupport": [
+          "授权事件",
+          "默认关闭的 bundle",
+          "状态展示",
+          "撤回语义"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.consent-and-opt-in-defaults",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "未反馈时无 OTLP 请求；提交反馈后仅释放此前缀",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "挂载插件即开始上传，或 FULL 被接受为别名",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "切到 DISABLED 并卸载 exporter，确认无新发送",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "撤回不等于远端擦除。",
+        "已授权批次的定时投递可能在无新交互时完成。",
+        "auto-review 没有文件沙箱，PTC 外层与直接 Node 副作用不经过内层审查。",
+        "遥测 sharing 只报告策略（feedback-only/disabled），不代表投递回执；没有持久 outbox、投递水位或重试承诺，接收方按 session/format/seq 去重。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.experimental-maturity-and-promotion",
+      "title": "实验成熟度：不是支持承诺、依赖隔离、五项晋升证据",
+      "sources": [
+        {
+          "path": "packages/experimental/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua/README.md",
+          "start": 1,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/hooks-codex/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-runtime/README.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/computer-use-cua-driver-native/README.md",
+          "start": 1,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 1,
+          "end": 154,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把预稳定能力当产品承诺会让用户承担 API 变化与撤回风险；让发布包依赖实验包会把不稳定代码带进默认产品；缺少晋升标准会让实验组永久膨胀。",
+      "triggers": [
+        "把包放进 packages/experimental",
+        "从实验组移出",
+        "发布预稳定能力",
+        "发布包需要实验包的能力"
+      ],
+      "obligations": [
+        "Experimental = 完整公共能力仍在评估、不是产品支持承诺；行为/API 可能变化或撤回；工程、安全、文档、测试与已发布数据义务仍适用。",
+        "只有整个公共契约都实验/内部时才放实验组；产品包内的实验选项留在产品角色。",
+        "Optional（用户显式选择）与 Official（项目维护并列出）不描述成熟度；发布、默认安装、GUI 可见性也不决定成熟度。",
+        "晋升需要：具名产品角色、记录在案的公共行为与限制、当前消费者、发布内容、测试证据；移动包、应用产品组命名并同步更新消费者。",
+        "发布包与应用不得在 dependencies/optionalDependencies/peerDependencies 命名实验包；CI 还检查传递安装、运行时 import 与随附组合。",
+        "实验包可以依赖发布包与其他实验包；测试可用 devDependencies，示例可显式加载。",
+        "发布实验包不等于晋升，也不增加稳定性承诺。",
+        "auto-review 卸载顺序：先关闭选择与 admission，把存活 Auto Session 迁移到 Full access 并持久化 never，再中止并等待在途 review；重装只恢复选项，不把存活 Session 切回 Auto。",
+        "实验原生 SDK 的工具 schema 跟随锁定的上游版本，不构成 DSH 稳定性承诺。"
+      ],
+      "actors": [
+        "包作者",
+        "release owner",
+        "reviewer"
+      ],
+      "steps": [
+        "判定整个公共契约是否实验/内部。",
+        "按实验命名与发布策略设置 private/publishConfig。",
+        "README 写实验状态、可能变化/撤回、仍适用的义务。",
+        "加依赖隔离检查（发布→实验任何边失败）。",
+        "晋升逐项提交五项证据并移动包/改命名/更新消费者。",
+        "晋升后删除实验措辞与默认关闭逻辑。"
+      ],
+      "enforcement": {
+        "mode": "config",
+        "implementation": "experimental-package-policy.ts 的命名/发布策略、实验子树的 AGENTS.md 依赖隔离规则、CI 对传递安装/运行时 import/随附组合的检查（README 引用，未在本提取中运行）。",
+        "trust": "策略与 CI 存在由 README/子树规则声明；本提取未运行策略脚本。",
+        "failure": "发布包依赖实验包时阻断发布；实验包获得产品消费者却未晋升时要么晋升要么移除消费者；'发布即稳定'暗示时修文档。",
+        "exceptions": "cua 因 Windows 支持与平台验证未完成留在实验组；experimental 包内部可以互相依赖。"
+      },
+      "applicability": [
+        "scope: 所有预稳定或仅内部的能力。",
+        "preconditions: 有明确成熟度标签; 有依赖方向检查; 有晋升证据清单",
+        "reactivation: 能力获得产品消费者或稳定性承诺时启动晋升评审。"
+      ],
+      "relationships": [
+        "package-contracts-3.consent-and-opt-in-defaults",
+        "package-contracts-3.build-artifact-and-platform-support",
+        "package-contracts-3.test-support-tier"
+      ],
+      "migration": {
+        "strategy": "建立 experimental/optional/official 标签与依赖方向规则；晋升做成清单；CI 检查隔离。",
+        "implementation": "实验包默认关闭；README 加'可能变化/撤回'段；晋升时删除默认关闭开关并更新消费者。",
+        "requiredSupport": [
+          "策略脚本",
+          "CI 依赖检查",
+          "晋升清单",
+          "成熟度标签"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.experimental-maturity-and-promotion",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "实验包只在 devDependencies 被测试使用",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "发布包 dependencies 出现实验包，CI 依赖检查失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除依赖边或把消费者改为显式示例后检查恢复",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "实验状态不放松工程/安全/文档/测试/数据义务，但也不能被当作产品 SLA。",
+        "发布实验包不等于晋升；GUI 可见性不是成熟度信号。",
+        "上游实验 SDK 的 churn 落在共享适配器，seam 契约不移动。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.test-support-tier",
+      "title": "测试支持层：真实入口冒烟、seam 契约测试、支持包不进产品依赖",
+      "sources": [
+        {
+          "path": "packages/test-support/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/loader-smoke/README.md",
+          "start": 1,
+          "end": 130,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-catalog/README.md",
+          "start": 1,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence/README.md",
+          "start": 1,
+          "end": 165,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "只测内部函数或用假入口，会漏掉真实 Loader 组合、exports 解析与安装后的行为；测试包进入产品依赖又会把夹具与 mock 带进发布物。",
+      "triggers": [
+        "写夹具、mock、回放、冒烟或 seam 契约测试",
+        "不确定测试包是否该进产品依赖",
+        "需要验证安装形态而非源码形态"
+      ],
+      "obligations": [
+        "test-support 是支持层基础设施，不是产品集成；包获得产品契约与产品消费者时移出本组。",
+        "冒烟从真实 bin 与 cordis.yml 启动，使用隔离 cwd/homes，拥有截止时间、终止、EOF 与清理；调用方 cwd 不被删除。",
+        "同时支持 src（tsx + TSX_TSCONFIG_PATH）与 lib（构建后 bin，真实 exports）两种模式；模式来自显式值或 DSH_EXAMPLE_MODE，其他值大声失败。",
+        "设计失败用 expectedExitCode 固定；其他退出方式（包括成功）都失败。",
+        "冒烟只观察不内嵌：子进程在隔离世界运行，测试进程只断言。",
+        "seam 契约测试属于 seam 包并让所有提供方共享；格式夹具用 strict/current 入口。",
+        "生产依赖不得指向 test-support；测试用 devDependency。",
+        "集成测试 patch 只放测试提供方/模型、隔离持久化路径与被测对象改动；production-profile helper 仅限仓库内部；lib 模式要求先构建，且拥有该配置的 manifest 声明配置中点名的每个包。"
+      ],
+      "actors": [
+        "测试作者",
+        "包作者",
+        "CI"
+      ],
+      "steps": [
+        "优先真实 bin + 真实配置冒烟，只 mock 模型/外部网络。",
+        "为每次冒烟建隔离 cwd 与 homes，只清理自己创建的目录。",
+        "固定模式并在 CI 设 lib；缺构建时先构建而不是跳过。",
+        "为设计失败写 expectedExitCode。",
+        "为每个 seam 写不变量级契约测试。",
+        "测试包留在支持组；有产品消费者时按成熟度规则移出。"
+      ],
+      "enforcement": {
+        "mode": "test",
+        "implementation": "runLoaderSmoke/runFixtureTurn/resolveExampleLaunch、DSH_EXAMPLE_MODE、expectedExitCode、runPersistenceContract/runLiveWritePathContract、格式夹具 strict/current。",
+        "trust": "源 README 描述夹具行为；本提取未运行冒烟或契约测试。",
+        "failure": "进程不退出按截止时间终止并报告捕获流；构建模式缺构建时失败；测试包进生产依赖由依赖检查/评审拒绝。",
+        "exceptions": "loader-smoke 的捕获受 execa 100MB maxBuffer 限制；超时只杀直接子进程，逃逸进程树需外部清理。"
+      },
+      "applicability": [
+        "scope: 仓库测试、安装形态验证、seam 提供方验证。",
+        "preconditions: 有真实 bin 与配置; 有隔离临时目录; 有 seam 契约套件",
+        "reactivation: 新增提供方或安装形态时补契约/冒烟层。"
+      ],
+      "relationships": [
+        "package-contracts-3.capability-seam-split",
+        "package-contracts-3.format-versioning-and-migration",
+        "package-contracts-3.experimental-maturity-and-promotion"
+      ],
+      "migration": {
+        "strategy": "分两层：真实入口冒烟 + seam 契约测试；测试支持包单独分组并从发布清单排除。",
+        "implementation": "CI 对安装后的 tarball 跑一次 lib 冒烟；契约测试配一个故意破坏的对照提供方。",
+        "requiredSupport": [
+          "隔离临时目录",
+          "真实 bin",
+          "契约测试套件",
+          "对照提供方"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.test-support-tier",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "DSH_EXAMPLE_MODE=lib 的冒烟通过并使用真实 exports",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 test-support 放进生产 dependencies，依赖检查拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除依赖并把夹具留在测试工程后检查恢复",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "冒烟捕获输出受 maxBuffer 限制。",
+        "超时只杀直接子进程，逃逸进程树需要外部清理。",
+        "llm-mock-server 只模拟 OpenAI 兼容故障，不是通用模型。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.build-artifact-and-platform-support",
+      "title": "构建产物：预编译平台包、manifest+checksum、独立验证器、发布开关",
+      "sources": [
+        {
+          "path": "native/system/README.md",
+          "start": 1,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh-helper-runtime/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/subprocess-ssh/README.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-local/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/workspace-path/README.md",
+          "start": 1,
+          "end": 49,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "让消费方安装时编译原生代码会把工具链、平台差异与失败面推给用户；没有 manifest/checksum 的归档无法证明来源与完整性；默认自动发布会让未验证产物进入用户环境。",
+      "triggers": [
+        "发布原生二进制、SSH helper 或桌面安装包",
+        "声明消费方安装不需要编译",
+        "需要第三方验证归档",
+        "需要区分普通 CI 与手动原生构建"
+      ],
+      "obligations": [
+        "平台包携带预编译二进制，消费方安装从不构建原生代码；导入入口不加载 addon。",
+        "缺失平台二进制时 probe 为不可用、获取锁 reject，不编译也不静默授予不支持行为。",
+        "归档配 .sha256；manifest 记录 source commit、dirty、嵌入 Node 版本、protocol、每个 payload 的 digest 与权限。",
+        "独立验证器在干净消费环境重定位、只读安装、跑真实入口与能力（files/processes/PTY/flock/PTC），macOS 还拒绝 checkout 与宿主 Node。",
+        "普通 PR/主干 CI 不构建原生可执行文件；涉及启动/原生依赖/打包的改动必须手动跑 native workflow 再合并。",
+        "发布工作流默认 publish=false；publish=true 要求匹配 tag 与同一提交的干净构建证据。",
+        "平台支持矩阵命名 builder 与 verification owner；不支持目标写清楚。",
+        "浏览器安全路径工具只做词法解析，不做文件系统访问或 Windows home 推断。"
+      ],
+      "actors": [
+        "构建 owner",
+        "release operator",
+        "验证者"
+      ],
+      "steps": [
+        "为每平台定义产物、架构、基线、验证 owner。",
+        "归档放 manifest 与独立 checksum。",
+        "写干净环境验证器，覆盖真实入口与平台能力。",
+        "把必须手动构建的改动面写进贡献说明。",
+        "发布默认关闭，开启需 tag 与同提交证据。",
+        "README 写不支持目标与可执行文件边界。"
+      ],
+      "enforcement": {
+        "mode": "config",
+        "implementation": "构建脚本与 GitHub workflows（native helper、publish-ssh-helper）、verify-ssh-helper-artifact.ts、verify-ssh-helper-ssh.ts、manifest/.sha256、node-addon-system 的平台包与 probe。",
+        "trust": "源 README 描述工作流与验证器；本提取未构建或发布任何产物。",
+        "failure": "校验和不匹配停止安装；manifest dirty 拒绝发布；验证失败保留归档与报告不覆盖；缺 addon 时拒绝写所有权。",
+        "exceptions": "ssh-helper 只构建 Linux/macOS；sandbox 可用性取决于目标内核；subprocess-ssh 不隔离 payload。"
+      },
+      "applicability": [
+        "scope: 原生二进制、跨平台归档、安装包与需要来源证明的产物。",
+        "preconditions: 有平台矩阵; 有可重复构建; 有独立验证器",
+        "reactivation: 新增平台或原生依赖时更新矩阵、manifest 与验证器。"
+      ],
+      "relationships": [
+        "package-contracts-3.fail-closed-boundaries",
+        "package-contracts-3.market-index-publication",
+        "package-contracts-3.test-support-tier"
+      ],
+      "migration": {
+        "strategy": "把产物当不可变发布物：manifest+checksum+独立验证器+发布开关；没有原生需求不引入构建步骤。",
+        "implementation": "安装后冒烟检查 manifest digest；每目标保存一次干净构建验证报告。",
+        "requiredSupport": [
+          "平台矩阵",
+          "manifest 生成",
+          "验证器",
+          "发布工作流"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.build-artifact-and-platform-support",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "下载归档、校验 .sha256、解包后验证器覆盖 files/PTY/PTC",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "manifest 标记 dirty 仍允许发布，或消费方安装触发编译",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "从干净提交重建并重新验证后发布",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "ssh-helper 不支持 Windows 与 musl Linux。",
+        "自动下载/部署/更新/连接 UI 不在归档生产内。",
+        "可执行文件只接受私有 worker 调用，不是任意 Node CLI。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.market-index-publication",
+      "title": "市场索引：格式即可执行规则、生成器只读、发布前校验与人工审查",
+      "sources": [
+        {
+          "path": "apps/plugin-market-generator/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/plugin-market-index/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "索引把第三方包暴露给用户安装；如果格式没有唯一校验器、生成器不验证输出或发布者把索引当作真实性证明，用户会安装到与声明不符的包。",
+      "triggers": [
+        "生成插件市场索引",
+        "消费/校验索引",
+        "发布索引或修改来源列表"
+      ],
+      "obligations": [
+        "格式 1 的校验器是可执行规则集：parseMarketIndex 在第一条违规规则上抛 MarketIndexError（path+reason）。",
+        "成功解析会丢弃未定义成员、补齐缺失组、按 SemVer 降序排列版本、把相对 icon 换成绝对 URL。",
+        "marketInstallTarget 返回精确安装 spec：npm 的 name@version，或 commit 固定的 git+https URL（可带 path:）。",
+        "生成器只读，从不安装或运行所描述包；版本只在声明 dsh.bundle 且 patch 为路径/路径列表时列出。",
+        "生成器必须用校验器验证输出后再发布；校验器不验证 name/version/publishTimestamp/engines.dsh/展示字段/是否声明 bundle。",
+        "索引内容是包对自己的声明，发布前必须人工审查列表。",
+        "安全边界：tarball 内存读取、64 MiB 上限、integrity 校验、只保留常规文件且不允许越界路径；Git depth 1 裸仓库、按 blob 读取、禁 hooks/文件系统监视/submodule、只允许 https/ssh、限制 GIT_* 继承。",
+        "退出码 0/1/2 分别表示全部读到/某来源读不到/参数或列表非法；不可读来源保留上次成功结果并报告失败。"
+      ],
+      "actors": [
+        "索引生成者",
+        "发布者",
+        "消费者"
+      ],
+      "steps": [
+        "写来源列表（每行一个 npm 名或 Git URL）。",
+        "确认候选声明 dsh.bundle。",
+        "生成后跑 parseMarketIndex，失败修来源/生成器。",
+        "人工审查最终列表与展示字段。",
+        "通过 https 发布输出目录，清理未引用图标。",
+        "消费者把 index.json URL 加为 Discover 索引源，安装走精确 spec。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "parseMarketIndex/MarketIndexError/marketInstallTarget/MAX_INLINE_ICON_BYTES 校验器；生成器的 dsh.bundle 过滤、缓存/确定性、tarball/Git 安全边界与退出码。",
+        "trust": "源 README 描述校验器与生成器行为；本提取未生成或解析真实索引。",
+        "failure": "来源不可读保留上次结果并报告；非法列表 exit 2；生成器/校验器版本不一致先升级；手改索引禁止。",
+        "exceptions": "Git 服务器必须支持按 SHA 取 commit；.npmrc token 不生效；Git 不提示凭据；校验器无大小上限，由调用方先限制。"
+      },
+      "applicability": [
+        "scope: 插件市场索引的生成、校验、发布与消费。",
+        "preconditions: 有格式定义; 有校验器; 有来源列表与发布通道",
+        "reactivation: 格式升级或新增来源类型时更新校验器、生成器与人工审查清单。"
+      ],
+      "relationships": [
+        "package-contracts-3.build-artifact-and-platform-support",
+        "package-contracts-3.untrusted-content-boundary",
+        "package-contracts-3.configuration-contract"
+      ],
+      "migration": {
+        "strategy": "先写格式+校验器+夹具，再写生成器；生成器输出必须过校验器；把未验证声明写进文档。",
+        "implementation": "发布流水线跑 schema/链接检查；来源列表保留人工审查记录；重复运行断言字节一致。",
+        "requiredSupport": [
+          "格式定义",
+          "校验器",
+          "生成器",
+          "发布通道",
+          "人工审查记录"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.market-index-publication",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "生成 → parseMarketIndex 通过 → 重复运行字节一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "http: 或带凭据 URL 被接受为合法来源",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修列表后重新生成，旧索引保留",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "校验器不验证声明真实性或 dsh.bundle 是否存在。",
+        "只支持公开/未认证 registry；需要凭据的 Git 仓库必须由 credential helper/ssh agent 提供。",
+        "Git 服务器拒绝按 SHA 取 commit 时只能按名称取 tags/default，ref 移动会失败。",
+        "校验器不限制索引文档大小，调用方必须在解析前限界；内联 icon 上限为 32 KiB（MAX_INLINE_ICON_BYTES）。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.composition-ownership",
+      "title": "组合所有权：启动器前缀、进程/stdout、路由与 fallback、设置壳各归一处",
+      "sources": [
+        {
+          "path": "packages/boot/cmdline/README.md",
+          "start": 1,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/acp-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sdk/server/README.md",
+          "start": 1,
+          "end": 143,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/webserver/README.md",
+          "start": 1,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/plugin-inventory/README.md",
+          "start": 1,
+          "end": 114,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-settings-plugins/README.md",
+          "start": 1,
+          "end": 79,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent-fork-in-process/README.md",
+          "start": 1,
+          "end": 155,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-runtime/README.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "多个包同时拥有启动参数、进程退出、stdout、路由或设置标签页时，组合行为取决于注册顺序与隐式覆盖，无法预测也无法验证。",
+      "triggers": [
+        "决定启动器参数/应用参数边界",
+        "决定谁负责进程退出与信号",
+        "决定 stdout 用途",
+        "注册路由、fallback 或设置标签页",
+        "替换 profile/组合"
+      ],
+      "obligations": [
+        "启动器只拥有自己的前缀；第一个不认识的 token 开始应用参数；cmdlineArgs 是不可变快照且读取不消耗。",
+        "appExit 接启动器关停控制器；appReady 只在 Loader 树与启动器 setup 成功后提交。",
+        "--help/非法值打印后退出且不发布值，依赖解析值的行不启动；flag 胜过配置 fallback，启动时解析一次。",
+        "stdout 只放协议帧（ACP/JSON-RPC）；部署不得组合 stdout logger；shutdown 冲洗、dispose 到静默、exit 0；EOF/信号归 app bin。",
+        "组合替换是整套的：通过 profile bundle 与 patch 选择，不是另一个 app bin；patch 可替换整行 config。",
+        "路由归功能插件；webserver 只提供具名 exact/prefix、upgrade、index 注入与唯一 fallback；第二个 fallback 抛，重复路由抛。",
+        "只读投影不建第二生命周期真相；设置壳只拥有导航与标签行，内容由功能插件注册。",
+        "后台任务控制器是生产方 ctx.jobs.start() 的启用前提：缺少 tool-jobs 的组合可加载生产方，但 agent 无法启动后台工作。",
+        "fork 子级获得全新工具作用域且不继承父级权限；初始内容只含父级最后一个已完成轮次。",
+        "共享宿主中的 dsh-scope 与 dsh-mcp-client 必须保持 peerDependency；写成 dependency 会装入第二份实例，其作用域标记不被宿主注册表识别，工具注册到全局层并使第二个 Agent 创建失败。"
+      ],
+      "actors": [
+        "组合者",
+        "app bin 作者",
+        "插件作者"
+      ],
+      "steps": [
+        "画所有权表：启动器前缀、应用参数、进程退出、stdin/stdout、配置层、路由、fallback、设置标签、持久化。",
+        "每个表面只设一个所有者。",
+        "启动期检测重复席位并抛错。",
+        "进程退出与信号收口到 app bin；库插件只请求关停。",
+        "声明配置变更需要重启还是热更新，并让实现一致。",
+        "README 写清不要组合什么。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "provideCmdline/parseCmdline 与不可变 cmdlineArgs、appExit/appReady、webserver 的 route/fallback 重复抛错、sdk server 的 stdout 协议与 shutdown/exit 契约、plugin-inventory 直接读 Loader、ui-settings 的 slot 注册。",
+        "trust": "源 README 描述所有权与抛错路径；本提取未启动组合或发送 JSON-RPC。",
+        "failure": "两个 fallback/同名路由成功、插件直接 process.exit、stdout 被日志污染时按缺陷处理。",
+        "exceptions": "cmdline 需要字面 -- 时用 -- --；应用自有服务没有静态 provider，省略时 settlement 失败；sdk wire 无 per-session close/cancel。"
+      },
+      "applicability": [
+        "scope: 多插件组合、启动器/app bin、HTTP 路由、设置/侧栏扩展点。",
+        "preconditions: 能列出所有席位; 有启动期冲突检测",
+        "reactivation: 新增路由、tab、进程边界或 profile 机制时重新画所有权表。"
+      ],
+      "relationships": [
+        "package-contracts-3.configuration-contract",
+        "package-contracts-3.read-only-projection",
+        "package-contracts-3.fail-closed-boundaries"
+      ],
+      "migration": {
+        "strategy": "先写所有权表再写组合；唯一席位实现为启动期断言；进程生命周期收口到 app bin；可替换组合用 profile/patch。",
+        "implementation": "启动时打印已注册路由/席位/标签清单；stdout 纯度集成测试解析每一行。",
+        "requiredSupport": [
+          "所有权表",
+          "启动期断言",
+          "app bin",
+          "profile/patch 机制"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.composition-ownership",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "dsh --profile acp --help 输出帮助并退出，不占用 stdin",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "两个插件注册 fallback 都成功，或 stdout 混入日志",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除重复注册并 reload 后组合恢复",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "sdk server 无 per-session close/cancel，agent 活到进程关闭。",
+        "stdout 纯度是部署责任，插件不检查兄弟 logger。",
+        "acp-app 的用户插件仍可违反 stdout 纯度。",
+        "会话归档准入与后台任务生命周期由拥有者包回答；组合层不替它们决定。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.read-only-projection",
+      "title": "只读投影与快照：单一权威源、带授权地址、不可变、不借用上下文",
+      "sources": [
+        {
+          "path": "packages/api/workspace-files/README.md",
+          "start": 1,
+          "end": 158,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/plugin-inventory/README.md",
+          "start": 1,
+          "end": 114,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-settings-plugin-inventory/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/session-reference/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/README.md",
+          "start": 1,
+          "end": 157,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/schedule/schedule/README.md",
+          "start": 1,
+          "end": 172,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "只读视图一旦缓存成第二真相、借用当前上下文或提供写后门，就会让 UI 与权威源分叉，并绕过授权边界。",
+      "triggers": [
+        "给 UI/诊断提供当前状态视图",
+        "给模型提供其他会话/文件内容",
+        "设计快照、缓存或预览",
+        "需要决定地址/查询的授权主体"
+      ],
+      "obligations": [
+        "读服务不提供写；workspace-files 明确无修改操作，目录列举/监听限定工作区，文件读取走文件系统后端读取权限。",
+        "地址必须携带授权 Session；absolute/<path> 可解析但无授权 Session，以 unknown-workspace 失败，不借当前/Tab Session。",
+        "冷 Session 用持久化 stat 解析，不激活 Agent、不读事件体、不借父 Session 根。",
+        "点时间快照无历史、无变更订阅、不能改状态；null 阶段不假装能区分原因。",
+        "快照不可变且可追溯：捕获一次、源后续变更不影响回放、不伪造工具调用。",
+        "预览不是编辑；字节留瞬态，不持久化到布局或 Session JSONL。",
+        "未建立的事实不编造：不重建缺失历史、不搜索未索引内容、不推断 layer 归属。",
+        "只读投影只经 Remote/服务入口暴露，不声明同进程 Cordis Context 合并；每次调用重读权威 Loader，不建第二生命周期缓存。",
+        "disposed 折叠为 null；不推断条目消失的原因，也不推断它由哪个 bundle/profile/override 引入。",
+        "受信任调用方边界：跨会话引用服务假定宿主有权读取 ctx.sessionQuery 暴露的每个会话，它不是面向模型的搜索工具；候选发现只读投影/检查点，不为补全标题打开整份日志。",
+        "会话归档准入由拥有活动提醒的包回答：存在活动提醒时拒绝归档；停止提醒会删除全部活动提醒；取消归档不恢复它们。"
+      ],
+      "actors": [
+        "投影作者",
+        "UI 作者",
+        "reviewer"
+      ],
+      "steps": [
+        "明确权威源并只读它。",
+        "定义快照边界：何时取、是否订阅、失效刷新。",
+        "每个地址/查询携带授权身份，缺失即失败。",
+        "返回类型区分未知/不支持/不存在。",
+        "不提供写方法；写交给拥有者。",
+        "README 写清点时间/无历史/不可变语义。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "workspace-files 的 no-mutation API 与 unknown-workspace、plugin-inventory 每次直读 Loader、ui-settings 只读投影、session-reference 的捕获/不可变快照、documentpreview 的只读渲染、schedule 的 not-found 语义。",
+        "trust": "源 README 描述只读边界；本提取未调用 Remote 或预览文件。",
+        "failure": "投影缓存成为第二真相、借用当前 Session、UI 写入 settings 时按缺陷处理。",
+        "exceptions": "workspace-files 的 maxEntries 不限制底层列举；plugin-inventory 不自动刷新；session-reference 不支持非文本/实时链接。"
+      },
+      "applicability": [
+        "scope: 任何只读 UI/诊断/模型上下文投影。",
+        "preconditions: 有权威源; 有授权主体; 能定义快照边界",
+        "reactivation: 投影需要写入或实时订阅时，重新设计为独立写服务/订阅服务。"
+      ],
+      "relationships": [
+        "package-contracts-3.untrusted-content-boundary",
+        "package-contracts-3.durability-and-crash-semantics",
+        "package-contracts-3.composition-ownership"
+      ],
+      "migration": {
+        "strategy": "读写分服务；快照带 asOf/版本；地址必须带授权主体；不支持能力返回 typed unsupported。",
+        "implementation": "接口测试断言无写方法；源变更后旧快照不变；地址解析无 Session 必须失败。",
+        "requiredSupport": [
+          "权威源",
+          "授权主体",
+          "快照版本",
+          "typed unsupported"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.read-only-projection",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "absolute/ 地址返回 unknown-workspace，不借用当前 Session",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "插件清单能启用/禁用插件，或读服务提供写方法",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "刷新快照或重新挂载 Settings，不重启 Host",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "点时间快照不自动刷新，可能落后于权威源。",
+        "workspace-files 的 maxEntries 不限制底层列举成本。",
+        "session-reference 只投影文本，不传播图片/工具块。",
+        "插件清单只表示调用当下，不保留失败历史，也不标识引入层。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.bounded-transfer-and-truncation",
+      "title": "有界传输：每个读面有上限，拒绝与截断可区分，标记不越界",
+      "sources": [
+        {
+          "path": "packages/api/workspace-files/README.md",
+          "start": 1,
+          "end": 158,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/session-reference/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/tool-lsp/README.md",
+          "start": 1,
+          "end": 179,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 1,
+          "end": 154,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/README.md",
+          "start": 1,
+          "end": 157,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess-local/README.md",
+          "start": 1,
+          "end": 168,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "无上限的读取/输出/批次会让内存、网络与模型上下文被单个输入拖垮；把截断伪装成完整或把上限放在渲染层会误导调用方。",
+      "triggers": [
+        "读取文件、跨会话引用、LSP 结果、遥测批次或输出收集",
+        "返回可能无限增长",
+        "需要区分数据缺失与被截断"
+      ],
+      "obligations": [
+        "每个读面定义上限与单位：workspace-files 的 maxBytes 2 MiB、maxFileBytes 32 MiB、maxLines 5000、maxEntries 2000。",
+        "超限行为要区分：需要完整数据时拒绝（too-large 带 limit）；可接受近似时截断并给标记。",
+        "标记/计数放进上限内；超出预算的 omission 元数据另给（omittedMessages/omittedBytes/保存位置）。",
+        "cap 只影响呈现，不影响 canonical result value（LSP）。",
+        "可配置上限要写明只能收紧还是可调整；maxRequestBytes 只允许降低。",
+        "通知也受限：tool-jobs 的 outputLimitBytes 限制完整结果，截断通知保留 id/动作或指向 job_list。",
+        "输出收集保留尾部并标记溢出；读超过保留尾部为 lossy 并指向 spill。",
+        "文本页拒绝无效 UTF-8 与 NUL；二进制窗口超长以 too-large 失败而不是截短。",
+        "完整文件读取受 maxFileBytes 约束，但显式 range 窗口不受该上限约束；更大窗口只在 maxBytes 内成功。",
+        "失败以类型化 code + details 暴露；调用方按 code 分支，不按 message 文本。"
+      ],
+      "actors": [
+        "读服务作者",
+        "reviewer"
+      ],
+      "steps": [
+        "为每个返回面定义上限与单位。",
+        "选择拒绝或截断并让类型可区分。",
+        "把标记放进上限，另给 omission 元数据。",
+        "保持 canonical 与呈现分离。",
+        "明确配置上限的收紧方向。",
+        "测试边界：等于上限、上限+1、超大单行/单事件。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "workspace-files 的 Config 与 too-large、LSP 的 maxLocations/maxResultChars、session-reference 的预算与 omission notice、telemetry 的 maxRequestBytes/单事件拒绝、preview 的 Excel/Office/HTML 上限、job outputLimitBytes、subprocess spill/lossy。",
+        "trust": "源 README 声明上限与超限行为；本提取未做边界输入测试。",
+        "failure": "静默截短、标记不计入上限、上限只约束答案不约束工作时按缺陷处理；后两者至少在 README 声明。",
+        "exceptions": "workspace-files 的 maxEntries 不限制底层列举；session-reference 四字节每 token 是启发式；Excel 上限不封顶进程内存。"
+      },
+      "applicability": [
+        "scope: 所有跨进程/跨网络/进模型的返回面。",
+        "preconditions: 能测量返回大小; 调用方能处理拒绝或截断",
+        "reactivation: 新增读面或提高默认上限时重新评估。"
+      ],
+      "relationships": [
+        "package-contracts-3.read-only-projection",
+        "package-contracts-3.untrusted-content-boundary",
+        "package-contracts-3.configuration-contract"
+      ],
+      "migration": {
+        "strategy": "建返回面→cap→超限行为→标记→canonical 表；默认拒绝而非截断，除非调用方能处理近似；cap 放服务边界。",
+        "implementation": "属性测试随机大小；上限+1 显式用例；截断标记快照。",
+        "requiredSupport": [
+          "cap 配置",
+          "typed 超限错误",
+          "omission 元数据",
+          "边界测试"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.bounded-transfer-and-truncation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "超过 maxFileBytes 的完整文件读取返回 too-large 而非截断",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "超大单事件被静默截断后仍标记成功",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "调用方改用分页/窗口读取后成功",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "maxEntries 只限制答案，不限制列举工作。",
+        "四字节每 token 是 sizing heuristic。",
+        "subprocess spill 是 best-effort，目录被清理后退化为内存尾部。",
+        "页只报 eof，不报总行数；超长单行在每个包含它的窗口都以 too-large 失败。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.configuration-contract",
+      "title": "配置契约：生成目录穷尽、加载期失败、无普适默认值必填、保留名",
+      "sources": [
+        {
+          "path": "packages/boot/cmdline/README.md",
+          "start": 1,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/webserver/README.md",
+          "start": 1,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-title/README.md",
+          "start": 1,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/interaction/permission-presets/README.md",
+          "start": 1,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-projection-cache/README.md",
+          "start": 1,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-persistence-jsonl/README.md",
+          "start": 1,
+          "end": 181,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 1,
+          "end": 154,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "配置字段散落在 README、默认值随意、非法值到请求期才失败、保留名被占用，会让部署不可预测且难以排障。",
+      "triggers": [
+        "新增配置字段或改默认值",
+        "决定加载期还是请求期校验",
+        "引入保留名/命名空间",
+        "需要生成配置目录"
+      ],
+      "obligations": [
+        "生成配置目录是穷尽来源；README 只链接，不重复枚举。",
+        "能在加载期判断的错误必须加载期失败：通配 host、TLS 文件、waitTimeoutMs 上限、OTel 非法字节/队列/端点/关闭期限。",
+        "没有普适默认值的字段必填：session-title 三个上限、JSONL root、projection-cache 节奏。",
+        "默认值写明来源与范围；保留名在加载期拒绝（custom/auto），命名空间只接受声明键。",
+        "求值时机明确：!!js 插值在声明注入激活后解析，flag 不被后续 reload 重置。",
+        "只允许收紧的字段写明（maxRequestBytes 只能降低；模型等待被 clamp）。",
+        "服务端/客户端配置分离；改变需要 reload 的配置要写明。",
+        "权限预设保留名 custom/auto 不得出现在配置表；custom 只能推导；存储的 auto 身份在 integration 缺失或拒绝准入时明确失败，不静默改写为 Full access；配置默认值必须指向已配置预设。",
+        "单提供方席位（如 session-title）第二次注册立即抛错，直到前一个开始释放；前一个提供方迟到的结果不得提交。"
+      ],
+      "actors": [
+        "包作者",
+        "部署者"
+      ],
+      "steps": [
+        "为每个字段写类型、默认/必填、范围、求值时机、失败模式。",
+        "加载期能判断的错误前移。",
+        "无普适默认值的字段设必填并解释原因。",
+        "保留名加载期拒绝；命名空间只接受声明键。",
+        "生成配置目录。",
+        "为每个字段写非法值加载期失败测试。"
+      ],
+      "enforcement": {
+        "mode": "config",
+        "implementation": "Config schema 与生成配置目录；webserver 加载期 host/TLS 校验；tool-jobs 的 wait 上限；session-title 必填上限；permission-presets 保留名；projection-cache 必填节奏；JSONL root 必填。",
+        "trust": "源 README 声明这些校验；本提取未加载真实配置。",
+        "failure": "非法值到请求期才失败、默认值导致文件散落、README 与目录不一致时按缺陷处理；以目录/源码为准修 README。",
+        "exceptions": "webserver 不管理证书生命周期；session-title 的 provider 注册是运行时；permission-presets 表在插件生命周期内固定。"
+      },
+      "applicability": [
+        "scope: 所有有用户/部署配置的包。",
+        "preconditions: 有 schema; 能生成目录; 有加载期校验点",
+        "reactivation: 新增字段或改变默认值时重新评估必填/范围/失败时机。"
+      ],
+      "relationships": [
+        "package-contracts-3.readme-package-contract",
+        "package-contracts-3.optional-capability-availability",
+        "package-contracts-3.bounded-transfer-and-truncation"
+      ],
+      "migration": {
+        "strategy": "schema 驱动：类型→校验→生成目录→测试；必填/默认/保留名/求值时机作为 schema 元数据。",
+        "implementation": "启动日志打印脱敏配置摘要；配置目录检查每个字段有 JSDoc。",
+        "requiredSupport": [
+          "schema",
+          "生成器",
+          "加载期校验",
+          "配置目录"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.configuration-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "通配 host 在加载期被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "非法 waitTimeoutMs 到第一次工具调用才失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正配置并重启/reload 后服务恢复",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "生成目录不证明默认值合理。",
+        "TLS 不管理证书生命周期；替换文件需要 reload。",
+        "部分配置在插件生命周期内固定，只有特定集成能改变活目录。"
+      ]
+    },
+    {
+      "id": "package-contracts-3.shared-ui-atoms-and-renderer-registry",
+      "title": "共享 UI 原子与预览注册：单一控件席位、类型化文案、渲染器档位与内容身份",
+      "sources": [
+        {
+          "path": "packages/client/ui-primitives/README.md",
+          "start": 1,
+          "end": 221,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/README.md",
+          "start": 1,
+          "end": 157,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "每个功能插件各写一份控件或预览器，会让样式、无障碍与不可信内容处理漂移；而跨插件 import 组件又会把插件绑成不可替换的整体。预览若没有固定档位与内容身份，同名文件或不同 Session 会互相串台。",
+      "triggers": [
+        "两个以上功能 UI 需要同一个控件",
+        "给工具结果新增渲染卡片",
+        "新增文件预览类型或渲染器",
+        "处理不可信 Markdown、终端或网页内容",
+        "给只读预览增加本地化文案与失败空态"
+      ],
+      "obligations": [
+        "功能插件不得运行时 import 或 re-export 另一个功能插件的组件；共享控件只放在 ui-primitives。",
+        "不得复制已有控件；第二个消费者出现时把控件上移进 ui-primitives，只有真正特殊的控件才留在自己包内。",
+        "原子组件保持零 Cordis、零 slot 知识，只经 React 渲染并通过 props 接收本地化 label，颜色使用 --dsw-* 设计 token。",
+        "面向用户的文案必须由渲染点通过类型化 label prop 提供；遗漏导致类型检查失败，原子组件不拥有 locale 回退。",
+        "预览器以 ctx.documentPreviews.register({id, extensions, binaryExtensions?, priority, title, loading, wrap?}) 声明元数据，并以相同 id 向 sidebar.right.tab.document 注册正文。",
+        "渲染器档位固定：extension 优先于 builtin，再按更长后缀、注册顺序排序；更窄 pattern 接走地址，其余落到 fallback。",
+        "整个文件资源地址是内容身份；同名不同目录或同一路径在不同 Session 下是两个 tab；只接受 Session 地址，不借用当前或 Tab Session。",
+        "not-text、too-large、不支持预览与未知二进制容器必须在空态给出说明与出路（重试或 unpreviewable 子 slot），且不发起读取。",
+        "脚本 HTML 预览的本地依赖按单个 4 MiB、总计 32 MiB、64 个不同资源原子发布；任一失败或超限使预览失败，不发布部分资源包。",
+        "预览不提供编辑或共享搜索；完整字节只留瞬态视图状态，不进入布局或 Session JSONL。"
+      ],
+      "actors": [
+        "客户端库作者",
+        "功能插件作者",
+        "预览器作者",
+        "reviewer"
+      ],
+      "steps": [
+        "先查 ui-primitives 组件目录；能复用就复用，视觉差异做成 prop，而不是复制一份。",
+        "需要新原子时在 ui-primitives 内实现并保持零 Cordis；所有 label 用带类型的 prop，由功能包传入本地化文案。",
+        "渲染工具输出或模型 Markdown 时使用共享卡片、Markdown 与终端组件，不自行拼 HTML。",
+        "注册预览器时声明扩展名、二进制后缀、priority、loading 模式与 wrap 能力；为未知扩展名保留纯文本 fallback。",
+        "只为 Session 地址注册；把授权 Session 放进地址，不读取调用方当前 Tab。",
+        "失败空态按原因给出重试或 unpreviewable 出口，不发布部分内容。",
+        "在 README 的 Model Experience 写 None 并解释浏览器侧原因；限制段写清超长行、Diff 上限与依赖包上限。"
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "ui-primitives 的零 Cordis 导出与类型化 label props；ctx.documentPreviews.register 元数据与同 id 正文注册；extension > builtin > fallback 排序；fileAddressFor/hostFileOf 的 Session 地址解析；HTML 依赖包上限与失败不发布；Excel Worker 生命周期。",
+        "trust": "源 README 描述类型、注册与上限行为；本提取未运行客户端构建或浏览器验证。",
+        "failure": "跨功能插件 import 组件、复制控件、硬编码文案、注册裸 absolute 地址、发布部分资源包时，评审或依赖检查拒绝，按缺陷处理。",
+        "exceptions": "需求确实特殊时可以在自己包内写组件，但不得复制已有控件；MarkdownText 流式期间跨冻结边界的引用式链接暂时为字面文本；TerminalBlock 不是交互式终端模拟器；Excel 上限不封顶浏览器进程内存或解压分配。"
+      },
+      "applicability": [
+        "scope: Web 客户端插件、文件预览器与不可信输出渲染。",
+        "preconditions: React 客户端组合; slot 与资源系统; 类型检查与依赖检查",
+        "reactivation: 即使不用 ui-primitives，也保留四条：唯一共享控件席位、类型化文案由渲染点提供、渲染器固定档位、整地址即内容身份。"
+      ],
+      "relationships": [
+        "package-contracts-3.composition-ownership",
+        "package-contracts-3.untrusted-content-boundary",
+        "package-contracts-3.read-only-projection",
+        "package-contracts-3.bounded-transfer-and-truncation"
+      ],
+      "migration": {
+        "strategy": "建立共享原子包与\"组件目录\"评审规则；把功能包之间的组件依赖改成基座 import 或 slot；建立带档位与内容身份的预览注册表。",
+        "implementation": "客户端基座包只导出原子组件与安全渲染器；功能包只 import 基座；预览注册表实现 extension/builtin/fallback 排序；类型化 label 接口把本地化责任固定在渲染点。",
+        "requiredSupport": [
+          "组件目录",
+          "类型化 label 接口",
+          "预览注册表",
+          "Session 资源地址工具",
+          "不可信内容渲染器"
+        ]
+      },
+      "reference": "references/package-contracts-3.md#package-contracts-3.shared-ui-atoms-and-renderer-registry",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "两个功能包复用 Button 与 Tooltip，各自传入本地化 label，类型检查通过。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "同名文件在两个目录或两个 Session 下打开为两个 tab，地址相同才共享元数据。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "功能包 A 从功能包 B import 组件，或复制一份已有控件；评审/依赖检查拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "注册裸 absolute 地址，或部分 HTML 依赖读取失败仍发布资源包；行为被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除跨包 import，把共享控件上移到 ui-primitives 并更新调用点；重新构建通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "原子组件拿不到 ctx.locale，所有文案由调用方提供，遗漏会在类型检查报错而不是运行时回退。",
+        "MarkdownText 在流式期间可能把跨冻结边界的引用式链接渲染为字面文本，settle 后才解析。",
+        "1,000 UTF-16 单元以上的源码行不着色，且该行开始或结束的注释/模板字符串会使后续行着色错误。",
+        "DiffBlock 在片段增删超过 256 行时退化为粗粒度替换。",
+        "预览不提供编辑；HTML 本地依赖只支持直接引用的经典 .js 与 .css；Excel 上限不封顶浏览器进程内存或解压分配。"
+      ]
+    }
+  ]
+}

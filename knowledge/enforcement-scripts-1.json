@@ -1,0 +1,666 @@
+{
+  "domain": "enforcement-scripts-1",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "enforcement-scripts-1-request-input-durable-boundary",
+      "title": "请求态输入与持久消息的编译期边界",
+      "sources": [
+        {
+          "path": "scripts/request-input-types.spec.ts",
+          "start": 1,
+          "end": 112,
+          "kind": "test"
+        }
+      ],
+      "problem": "LLM 请求可以混合持久消息与仅请求态输入。若请求态输入能流入 Session 写入、followup/inject、title 事件或持久投影，就会产生没有 source/id 的历史，或让投影伪造身份与归属；这类错误在运行时往往只是少一个字段，难以靠测试断言发现。",
+      "triggers": [
+        "修改 RequestMessage、RequestUserInput 或 GenerateOptions",
+        "新增接受消息列表的 API 或事件 payload",
+        "把 provider 请求输入写入 Session 或持久投影",
+        "审查消息投影函数的返回类型"
+      ],
+      "obligations": [
+        "只有 user 角色拥有 request-only 替代；assistant、system、developer、tool 消息必须保留持久身份与来源。",
+        "RequestUserInput 不得携带 id 或 source；exact optional 语义下显式 undefined 也必须被拒绝。",
+        "仅给请求态输入补上 id 或 source 不能把它变成持久消息；session.append('user/message')、agent.followup、agent.inject 与 title 事件只接受持久消息。",
+        "投影函数必须保留请求态输入的性质，不得制造 identity/attribution；窄字面量内容类型不得假定投影会保留。",
+        "编译探针使用真实 tsconfig.host.json；每个拒绝边由 @ts-expect-error 覆盖，探针零诊断才算通过。"
+      ],
+      "actors": [
+        "LLM 消息类型所有者",
+        "Session 持久化所有者",
+        "Provider 适配器作者",
+        "评审者"
+      ],
+      "steps": [
+        "把 provider 请求面拆成持久 Message 与轻量 RequestUserInput 两个类型。",
+        "在所有持久写入与事件签名处要求 Message，而不是宽化的联合。",
+        "让 RequestUserInput 的 id/source 为 exact optional 缺失，禁止显式 undefined。",
+        "为每个拒绝边写 @ts-expect-error 编译探针，并断言探针没有意外诊断。",
+        "把探针放进 unit/coverage 门禁，随类型改动执行。"
+      ],
+      "enforcement": {
+        "mode": "compile-time contract probe",
+        "implementation": "scripts/request-input-types.spec.ts 在内存中创建 TS Program，seed tsconfig.host.json，并直接编译包含正向与 @ts-expect-error 负向断言的 probe。",
+        "trust": "只证明列出的类型边界在编译期成立；运行时的 JSON payload 仍可能绕过类型，provider 的实际投影需另行测试。",
+        "failure": "持久写入开始接受 RequestUserInput、@ts-expect-error 不再报错、或探针出现额外诊断时，spec 失败并阻断 unit/coverage 门。",
+        "exceptions": [
+          "类型层面的 unknown 声明仍合法；本机制只约束直接断言和持久消息位置。"
+        ]
+      },
+      "applicability": "使用 TypeScript 且同时存在 provider 请求平面与 durable Session 日志的项目。若目标语言没有结构类型，需用等价的 schema/构造器约束替代。",
+      "relationships": [
+        "engineering-explicit-state-contracts",
+        "engineering-typed-boundaries",
+        "package-contracts-2.session-persistence-format-chain"
+      ],
+      "migration": {
+        "strategy": "split-request-and-durable-planes",
+        "implementation": "保留两套类型；持久写入签名只接受带 identity/source 的 Message；用真实 host tsconfig 编译负向探针，不使用 any/as unknown 绕过。",
+        "requiredSupport": [
+          "可运行的 TypeScript 编译探针",
+          "Session 写入与事件签名的单一 owner",
+          "unit 或 coverage 门禁执行该 spec"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-request-input-durable-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "混合持久消息与 RequestUserInput 的请求可以编译，投影函数接受请求态输入。",
+            "check": "request-input-types.spec.ts 的正向探针零诊断。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 RequestUserInput 传给 session.append、followup、inject 或 title 事件，或给请求态输入补 id/source。",
+            "check": "对应 @ts-expect-error 必须命中；删除保护后探针出现诊断。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "误放宽持久写入签名后门禁变红。",
+            "check": "恢复 Message 参数类型并重跑 spec。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "只覆盖编译期；运行时反序列化、跨进程 wire 与第三方 provider 仍可能构造缺字段对象。未逐一证明所有投影函数都保留请求态语义。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-generated-workflow-guest",
+      "title": "生成的 Workflow guest 必须自包含且 --check 不写回",
+      "sources": [
+        {
+          "path": "scripts/gen-workflow-guest.spec.ts",
+          "start": 1,
+          "end": 43,
+          "kind": "test"
+        }
+      ],
+      "problem": "PTC workflow guest 在受限的 workflow 运行时加载，不能依赖生成时存在的源文件或外部依赖。若生成器允许未解析导入，产物会在运行期才失败；若 --check 会写回，陈旧产物会被静默修复，评审看不到真实 diff。",
+      "triggers": [
+        "修改 workflow guest 源或打包逻辑",
+        "新增 guest 依赖或相对导入",
+        "运行 verify-workflow-guest / gen-workflow-guest --check",
+        "审查生成源是否可独立加载"
+      ],
+      "obligations": [
+        "bundle 必须把相对源码导入内联，使删除源文件后模块仍可加载；输出不得包含绝对 repository root。",
+        "无法解析的导入必须让生成失败，而不是生成依赖缺失的产物。",
+        "--check 只比较已提交产物与当前源，不重写文件；stale 时失败并保留原文件。",
+        "生成产物由生成器拥有；手工编辑会在下一次 check 中暴露为 stale。",
+        "正向测试要在删除源文件后动态 import 生成模块，证明自包含而非仅字符串匹配。"
+      ],
+      "actors": [
+        "Workflow 运行时所有者",
+        "生成器维护者",
+        "评审者"
+      ],
+      "steps": [
+        "用真实 bundler 配置打包 guest 入口。",
+        "断言输出不含 repository root，并在删除源码后 import 成功。",
+        "加入无法解析依赖的负向用例。",
+        "生成一次产物；修改源；以 check 模式运行并断言失败且字节不变。",
+        "把生成器接入 verify-workflow-guest 或等价门禁。"
+      ],
+      "enforcement": {
+        "mode": "generator + freshness check + negative import test",
+        "implementation": "gen-workflow-guest.ts 的 bundleWorkflowGuest/generateWorkflowGuest；spec 覆盖内联、未解析导入、--check 不写回。",
+        "trust": "自包含与 stale 检测是机械的；生成器是否覆盖全部运行时版本、产物是否语义正确仍靠评审与下游执行。",
+        "failure": "未解析导入、输出泄露绝对路径、check 写回或 stale 未失败时 spec 变红。",
+        "exceptions": [
+          "内置 node: 模块可以保留为外部导入；测试只验证声明范围内的导入图。"
+        ]
+      },
+      "applicability": "把运行时代码生成并提交到仓库、且消费环境不能访问生成时文件系统的项目。",
+      "relationships": [
+        "rationale-process-2/generated-reference-catalogs",
+        "documentation-generated-reference-freshness",
+        "engineering-source-artifact-plane"
+      ],
+      "migration": {
+        "strategy": "generate-and-verify",
+        "implementation": "保留单一生成器；提交产物；CI 使用 --check；负向用例证明未解析依赖与 stale 都会失败。",
+        "requiredSupport": [
+          "可运行的 bundler",
+          "生成器与已提交产物的单一 owner",
+          "check 模式门禁"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-generated-workflow-guest",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "生成模块删除源码后仍可加载，且输出不含仓库绝对路径。",
+            "check": "gen-workflow-guest.spec.ts 的自包含用例。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "guest 引入不存在的依赖，或源改动后以 check 模式运行。",
+            "check": "生成必须抛出 unresolved import / stale，且不重写文件。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "产物过期导致门禁失败。",
+            "check": "重新生成并审查 diff，再以 check 模式确认。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "spec 只覆盖 bundleWorkflowGuest 与 generateWorkflowGuest；未证明所有 workflow 运行时版本、所有 loader 查询或 sourcemap 组合。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-office-runtime-closure",
+      "title": "独立 CLI 的 Office 运行时闭包与引擎选择",
+      "sources": [
+        {
+          "path": "scripts/libreoffice-packages.mjs",
+          "start": 1,
+          "end": 80,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/libreoffice-engine.spec.ts",
+          "start": 1,
+          "end": 24,
+          "kind": "test"
+        }
+      ],
+      "problem": "独立 CLI 进程不能依赖 workspace 的 node_modules 布局。只复制顶层 Office kit 会漏掉传递依赖或平台引擎，问题要到用户机器上才暴露；可选依赖若不按目标 os/cpu 过滤，会把不兼容的原生包带进发布物。",
+      "triggers": [
+        "为 standalone executable 准备 Office 资源",
+        "新增 LibreOffice kit 依赖或支持新平台",
+        "发布物在目标机器上报缺库",
+        "审查 officePackageDirectories 的输出"
+      ],
+      "obligations": [
+        "引擎选择：installed kit manifest 的 optionalDependencies 声明 @deepseek-ai/libreoffice-kit-<platform>-<arch> 时使用 native，否则使用 wasm；Linux 声明 native target 时无需改变策略。",
+        "从 staging/node_modules/@deepseek-ai/libreoffice-kit 开始，沿 dependencies、optionalDependencies、peerDependencies 递归收集闭包。",
+        "任何解析结果逃出 staging 立即失败，不能把宿主路径带进发布物。",
+        "必需依赖缺失必须失败；optional 依赖只有在目标 os/cpu 受支持时才纳入。",
+        "选中的 engine 包必须存在；结果按绝对路径排序，保证输出稳定。",
+        "闭包函数只负责定位，不执行 LibreOffice；执行验证属于渲染/导出测试。"
+      ],
+      "actors": [
+        "Packaging 所有者",
+        "Office 能力所有者",
+        "发布评审者"
+      ],
+      "steps": [
+        "读取 installed kit manifest 并选择 engine。",
+        "从 kit 入口遍历依赖图，按目标平台过滤 optional/peer。",
+        "拒绝逃出 staging 的路径与缺失的必需依赖。",
+        "确认 engine 目录存在并排序返回。",
+        "把返回目录复制进 executable 资源目录，并用真实入口 smoke。"
+      ],
+      "enforcement": {
+        "mode": "closure walker + platform matrix test",
+        "implementation": "officePackageDirectories/selectOfficeEngine；libreoffice-engine.spec.ts 覆盖 darwin/win32/linux/freebsd 与声明 native 的情形。",
+        "trust": "包闭包、路径边界与引擎选择是机械的；LibreOffice 实际可执行性、字体与渲染结果不由该函数证明。",
+        "failure": "缺少必需依赖、路径逃出 staging、声明了 native 却缺 engine、未知目标回退错误时抛错或 spec 失败。",
+        "exceptions": [
+          "未声明的平台回退 wasm；optional peer 仅按 manifest 的 os/cpu 元数据过滤。"
+        ]
+      },
+      "applicability": "把原生/可选依赖打包进独立可执行文件或离线运行时的项目。平台矩阵必须按产品实际支持范围重设。",
+      "relationships": [
+        "supply-chain-runtime-closure",
+        "package-contracts-2.office-progressive-loading",
+        "release-python-executable-builder"
+      ],
+      "migration": {
+        "strategy": "derive-closure-from-installed-manifest",
+        "implementation": "保留 installed-manifest 作为真源；遍历完整依赖图；对 optional/peer 做 os/cpu 过滤；输出排序并复制到资源目录。",
+        "requiredSupport": [
+          "已安装的 kit manifest 与 node_modules 布局",
+          "目标平台/架构输入",
+          "真实入口 smoke"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-office-runtime-closure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "darwin-arm64、win32-x64、linux-x64 等目标选出正确 engine 并收集完整闭包。",
+            "check": "selectOfficeEngine 矩阵与 officePackageDirectories 输出。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "必需依赖缺失、路径逃出 staging、声明 native 但 engine 缺失。",
+            "check": "函数必须抛错而不是返回部分闭包。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "发布物缺 Office 库。",
+            "check": "用同一闭包函数重算目录，补齐依赖或修正 optional 元数据后重新打包。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "只验证包目录闭包与引擎选择；不证明 LibreOffice 在目标机器可启动、渲染正确或 PDF 导出成功。未覆盖所有 npm 安装布局。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-packed-install-cache-ownership",
+      "title": "packed-install 验证器独占 npm 缓存写入并清理消费者",
+      "sources": [
+        {
+          "path": "scripts/release/verify-packed-install.spec.ts",
+          "start": 1,
+          "end": 82,
+          "kind": "test"
+        }
+      ],
+      "problem": "packed-install 验证器会在仓库外创建临时消费者并运行 npm install 与 lifecycle。若它继承 ambient 或 npmrc 配置的 cache，会污染宿主缓存、把外部状态带进验证结果，失败路径还可能留下消费者目录与私有缓存。",
+      "triggers": [
+        "修改 release/verify-packed-install.ts 的 npm 调用或环境",
+        "新增 packed-install 失败路径",
+        "在共享 runner 上排查 npm 缓存污染",
+        "审查发布预演的资源清理"
+      ],
+      "obligations": [
+        "验证器必须让 npm 把 tarball 内容写入 consumer-private 的 .npm-cache/_cacache。",
+        "继承的 npm_config_cache 与 npmrc 指定的 cache 必须保持不变；两者中的 sentinel 文件在运行后仍存在且内容不变。",
+        "success、install failure、entry failure 三种结果都必须在 finally 删除临时消费者及其私有缓存。",
+        "运行前清除继承的 npm_config_*，显式设置 offline、ignore_scripts=false，并把 TMPDIR/TMP/TEMP 指向私有临时目录。",
+        "成功路径退出 0；install 或 entry 失败路径退出 1，且清理仍然发生。"
+      ],
+      "actors": [
+        "Release 工程师",
+        "发布预演维护者",
+        "CI runner 管理员"
+      ],
+      "steps": [
+        "用 tar 构造真实 tarball 与带 postinstall 的包。",
+        "记录 ambient/configured cache 的 sentinel。",
+        "在隔离环境中调用真实 verifier 入口，并在 lifecycle 中记录 consumer 与 cache 内容。",
+        "分别跑 success、install failure、entry failure。",
+        "断言退出码、cache 写入位置、sentinel 未变、consumer 与私有 cache 已删除。"
+      ],
+      "enforcement": {
+        "mode": "real-entry subprocess test with filesystem oracle",
+        "implementation": "scripts/release/verify-packed-install.spec.ts 通过 spawnSync 调用 scripts/release/verify-packed-install.ts；probe.cjs 在 postinstall 记录 consumer 与 cache 文件。",
+        "trust": "真实调用 verifier 入口并观察文件系统；只覆盖 POSIX 与 tar 可用环境，不证明 registry 行为或 Windows npm shim。",
+        "failure": "verifier 未隔离 cache、未清理 consumer/cache、或覆盖 ambient/configured cache 时断言失败。",
+        "exceptions": [
+          "Windows 上跳过，因为 verifier 直接调用 POSIX npm 而非 npm.cmd shim。"
+        ]
+      },
+      "applicability": "任何运行真实安装验证的发布流水线，尤其是共享 runner 或开发者机器。",
+      "relationships": [
+        "supply-chain-packed-install",
+        "release-rehearsal-runner-trust",
+        "testing-resource-isolation"
+      ],
+      "migration": {
+        "strategy": "own-the-cache-and-consumer",
+        "implementation": "每次验证创建独立 consumer；把 npm cache 指向 consumer 内；清除继承 npm_config_*；finally 删除整个 consumer。",
+        "requiredSupport": [
+          "可调用的真实 verifier 入口",
+          "tar 与 POSIX 文件系统",
+          "能在 lifecycle 中写观测文件的测试包"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-packed-install-cache-ownership",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "成功安装后 npm 内容写入 consumer 私有 cache，consumer 被删除，ambient/configured cache 未变。",
+            "check": "verify-packed-install.spec.ts 的 success 用例。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "安装或入口失败时验证器提前返回。",
+            "check": "仍然必须删除 consumer 与私有 cache，并保留 ambient/configured sentinel。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "共享 runner 出现缓存污染。",
+            "check": "检查 verifier 的环境清理与 finally 删除路径，移除继承的 npm_config_* 后重跑。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "spec 在 Windows 跳过；使用 tar 构造输入；未覆盖 registry 网络、pnpm、workspace link 或 npm 版本差异。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-translation-link-locale",
+      "title": "译文正文链接的目标语言选择与切换行豁免",
+      "sources": [
+        {
+          "path": "scripts/translation-links.spec.ts",
+          "start": 1,
+          "end": 281,
+          "kind": "test"
+        }
+      ],
+      "problem": "中文页面若把正文链接指向英文 sibling，读者会在无提示的情况下离开目标语言；普通 Markdown 链接检查只验证目标存在，不验证 locale。语言切换行本身必须指向另一语言，因此需要精确豁免，否则要么误报切换行，要么放过正文中的错误链接。",
+      "triggers": [
+        "编辑 .zh.md 或英文源中的正文链接",
+        "新增或重命名双语配对页面",
+        "翻译 PR 的链接检查失败",
+        "修改 translation-links 的归一化逻辑"
+      ],
+      "obligations": [
+        "中文源（.zh.md）的文档链接必须指向对应的 .zh.md sibling；英文源必须指向英文 sibling。",
+        "只有语言切换行中的 counterpart 链接豁免；正文里指向 counterpart 的链接仍然违规。",
+        "只重写链接 destination，保留 query、fragment、title 与 label 的原字节。",
+        "percent-encoded 文件名先解码再精确匹配，重写时只使用 RFC 3986 unreserved 字符重新编码。",
+        "不把目录目标推断为 index 页面；不处理图片 definition、GFM autolink 或代码围栏内的文本。",
+        "重复 reference definition 只使用第一个。",
+        "目标存在性使用所选 content plane 的查询函数，不从 sibling 是否存在推断检查范围。",
+        "normalize 只折叠已配对页面的 locale 路径，保留 query 的原始转义字节。"
+      ],
+      "actors": [
+        "翻译作者",
+        "文档所有者",
+        "链接门禁维护者"
+      ],
+      "steps": [
+        "解析 Markdown AST，识别 link 与 reference definition。",
+        "按源文件 locale 选择期望的 sibling 文件名。",
+        "对 destination 拆分 path/query/fragment，只改 path。",
+        "豁免切换行的精确位置或链接形态。",
+        "报告违规时给出源文件、行号、原 URL 与期望 URL。",
+        "normalize 仅生成用于比较的规范形式，不回写 authored 正文。"
+      ],
+      "enforcement": {
+        "mode": "pure validation/rewrite functions exercised by spec",
+        "implementation": "translationLinkLocaleViolations/rewriteTranslationLinkLocales/normalizeTranslationMarkdownLinks；spec 覆盖中英文、编码、definition、图片、autolink、目录与 content plane。",
+        "trust": "locale 选择与字节保留是确定性的；翻译语义与网站最终路由仍需评审/站点测试。",
+        "failure": "正文链接指向错误 locale、切换行被误报、query/fragment/title 被改写、或目标存在性范围漂移时 spec 失败。",
+        "exceptions": [
+          "切换行豁免；非文档链接（图片、autolink）不处理；目录目标不改写。"
+        ]
+      },
+      "applicability": "使用 X.md/X.zh.md 配对且正文包含跨文档链接的双语仓库。",
+      "relationships": [
+        "documentation-i18n-pair-contract",
+        "documentation-markdown-links",
+        "documentation-i18n-pair-gate"
+      ],
+      "migration": {
+        "strategy": "locale-aware-link-policy",
+        "implementation": "把 locale 选择实现为纯函数；在配对门禁中先校验再可选重写；切换行按精确形态豁免；保留 URL 后缀字节。",
+        "requiredSupport": [
+          "Markdown AST 解析",
+          "配对页面清单或 content plane 查询",
+          "与链接门禁同一执行入口"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-translation-link-locale",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "中文正文链接指向 .zh.md sibling，英文源链接指向英文 sibling。",
+            "check": "translationLinkLocaleViolations 返回空数组，normalize 保持字节稳定。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "中文正文链接英文 sibling，或英文源链接中文 sibling。",
+            "check": "返回含 sourcePath/line/url/expectedUrl 的违规。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重命名配对页面后链接失效。",
+            "check": "用 rewriteTranslationLinkLocales 只改 destination，再跑配对与链接门禁。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "spec 使用临时 fixture，不覆盖网站投影后的最终 URL；percent-encoding 只覆盖列出的 RFC 3986 边界；不判断译文内容是否正确。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-snapshot-workspace-placement",
+      "title": "快照工作区必须位于自动临时写授权之外",
+      "sources": [
+        {
+          "path": "scripts/snapshot-workspace-parent.ts",
+          "start": 1,
+          "end": 46,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "如果快照 workspace 落在 /tmp 等自动临时写授权内，workspace-write 沙箱测试会在没有真实 workspace grant 的情况下通过，产生假绿；平台 tmp 还可能是 symlink、系统目录或不可写父目录。",
+      "triggers": [
+        "新增需要真实 sandbox workspace grant 的快照场景",
+        "调整临时目录或 home 回退策略",
+        "在 macOS/Windows 上排查快照 workspace 权限",
+        "审查 assertWorkspaceOutsideTemp 的调用点"
+      ],
+      "obligations": [
+        "默认选择 tmpdir 的父目录作为 sibling parent，让 workspace 与系统临时写授权分离。",
+        "当 tmp 就是系统 /tmp、父目录是文件系统根、或父目录落在系统临时目录内时，回退到 home。",
+        "父目录不可写（EACCES/EPERM/EROFS）时回退 home；其他 access 错误必须继续抛出。",
+        "调用者负责原子分配 workspace 并拥有清理；本函数只选父目录。",
+        "assertWorkspaceOutsideTemp 必须先 canonicalize（解析 symlink），再对 workspace-write 模式的 writableRoots 做包含检查。",
+        "命中自动临时写授权时抛出明确错误，而不是跳过或改用更宽松的 sandbox 模式。"
+      ],
+      "actors": [
+        "快照测试作者",
+        "Sandbox 所有者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "用 outsideTempWorkspaceParent 选择父目录。",
+        "用 mkdtemp 原子分配 workspace，并注册清理。",
+        "在启动被测进程前调用 assertWorkspaceOutsideTemp。",
+        "若回退 home，确认 home 不在 sandbox 自动授予的临时写根内。",
+        "在目标平台验证 symlink 与不可写父目录分支。"
+      ],
+      "enforcement": {
+        "mode": "placement helper + fail-closed assertion",
+        "implementation": "outsideTempWorkspaceParent 与 assertWorkspaceOutsideTemp；writableRoots 来自 sandbox 包。",
+        "trust": "对建模的 workspace-write 根是机械的；其他 sandbox 模式、平台策略或未来新增写根不由本函数覆盖。",
+        "failure": "workspace 位于自动临时写根内时抛错；不可写父目录静默使用会让分配失败或权限测试失真。",
+        "exceptions": [
+          "home 回退是允许的，但必须仍通过 assertWorkspaceOutsideTemp。"
+        ]
+      },
+      "applicability": "任何用临时目录承载 workspace、并要证明 workspace-write 权限边界的测试套件。",
+      "relationships": [
+        "testing-snapshot-workspace-oracle",
+        "testing-resource-isolation",
+        "testing-global-state-and-platform-semantics"
+      ],
+      "migration": {
+        "strategy": "place-outside-temp-grants",
+        "implementation": "把 workspace 放在 tmp 的 sibling 或 home；用 canonical path 与 writableRoots 做 fail-closed 检查；保留调用者的分配/清理所有权。",
+        "requiredSupport": [
+          "可查询的 sandbox writableRoots",
+          "mkdtemp 与清理注册",
+          "目标平台的 symlink 语义"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-snapshot-workspace-placement",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "workspace 位于 tmp sibling 或 home，且不在自动临时写根内。",
+            "check": "assertWorkspaceOutsideTemp 不抛错，沙箱测试需要显式 workspace grant。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "workspace 直接位于 /tmp 或解析 symlink 后落入临时写根。",
+            "check": "assertWorkspaceOutsideTemp 必须抛出 must be outside temporary writable root。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "平台 tmp 是系统目录导致回退 home。",
+            "check": "确认 home 可写且不在 writableRoots 内，再重跑快照。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "只检查 workspace-write 模式与 /tmp 根；其他 sandbox 模式、容器内路径映射与未来新增写根未覆盖。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-1-local-bundle-registry",
+      "title": "本地 bundle registry：仅目录根可安装、当前构建、不可变运行目录与完成标记",
+      "sources": [
+        {
+          "path": "scripts/dev-bundle-registry.ts",
+          "start": 1,
+          "end": 170,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "官方按需 bundle 在发布到 npm 前需要被 packaged test app 安装。如果本地 registry 服务旧构建、任意包或半打包目录，测试会验证错误字节；如果运行目录可被后续运行覆盖，失败现场也无法复现。",
+      "triggers": [
+        "在发布前用 packaged test app 安装官方 on-demand bundle",
+        "新增或修改 bundle catalog 成员",
+        "调试本地 registry 的 manifest 或安装列表",
+        "审查 prepare 阶段的信号与清理行为"
+      ],
+      "obligations": [
+        "bundle catalog 是唯一可安装 root 列表；workspace inventory 只用于区分本地包与外部依赖。",
+        "服务前必须运行 build:official 并 verifyBuiltBundles；不得复用更早的构建产物。",
+        "pack 到 run-owned 的不可变目录 <REGISTRY_OUTPUT_ROOT>/<timestamp>-<uuid>；后续运行不得覆盖已有字节。",
+        "manifest 是完成标记：只有全部成员都成功 pack 的运行才写 manifest。",
+        "只有 catalog roots 作为可安装 spec 打印；闭包其余包由 installer 解析并留在 run manifest。",
+        "registry 成功监听后才打印 summary；SIGINT/SIGTERM 取消子进程并关闭 registry，第二次信号强制退出 130。",
+        "该工具不启动 agent、不需要凭据；packing/manifest/validation 仍由既有 release owner 负责。"
+      ],
+      "actors": [
+        "Packaging 测试作者",
+        "Release 工程师",
+        "Bundle 所有者"
+      ],
+      "steps": [
+        "从 catalog 生成 root 列表并读取 workspace/release 成员。",
+        "构建并验证当前 official bundle 产物。",
+        "在唯一运行目录中 pack 闭包成员。",
+        "写入 registry manifest 作为完成标记。",
+        "启动 loopback registry，打印 source/artifact/registry/roots。",
+        "收到信号时关闭 registry 与子进程，保留磁盘产物供复查。"
+      ],
+      "enforcement": {
+        "mode": "build/test utility CLI with completion markers",
+        "implementation": "dev-bundle-registry.ts 组合 generateOfficialBundleCatalog、verifyBuiltBundles、packBundleArtifacts、writeRegistryManifest、startBundleRegistry。",
+        "trust": "当前构建、目录唯一性与 manifest 结构可自动保证；真实安装/运行由 packaged test app 证明，registry 本身不验证产品行为。",
+        "failure": "构建失败、bundle 产物缺失、pack 失败、信号中断都会使命令非零退出；未写 manifest 的运行不是完整运行。",
+        "exceptions": [
+          "工具只服务本地 loopback，不替代 npm registry 或发布验证；summary 中的 roots 不是完整依赖闭包。"
+        ]
+      },
+      "applicability": "需要在发布前用真实包安装路径验证 bundle 的项目；目标环境必须有 pnpm、可构建的 official bundle 与 loopback 端口。",
+      "relationships": [
+        "supply-chain-packed-install",
+        "package-contracts-2.profile-plugin-lifecycle",
+        "release-npm-rehearsal"
+      ],
+      "migration": {
+        "strategy": "rehearse-with-run-owned-registry",
+        "implementation": "保留 catalog 作为根真源；每次运行独立目录；先构建验证再 pack；manifest 作为完成标记；信号路径关闭 registry。",
+        "requiredSupport": [
+          "可构建的 official bundle 产物",
+          "pnpm 与 loopback registry 实现",
+          "packaged test app 的安装入口"
+        ]
+      },
+      "reference": "references/enforcement-scripts-1.md#enforcement-scripts-1-local-bundle-registry",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "完整运行生成 manifest，registry 服务 catalog roots，packaged app 可安装。",
+            "check": "目录含 manifest 与全部 archive；summary 打印 source commit 与 roots。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "使用旧构建、失败 pack 或非 catalog 包作为 root。",
+            "check": "verifyBuiltBundles/pack 阶段失败，或安装 spec 不在 summary 中。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "运行被 Ctrl+C 中断。",
+            "check": "关闭 registry 与子进程，退出 130；不写 manifest 的运行不得被当作成功。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "本分区没有该工具的 spec；构建/安装成功依赖外部 pnpm 与 packaged app。未证明端口冲突、并发运行或 Windows 信号语义。",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

@@ -1,0 +1,1393 @@
+{
+  "domain": "ui-surface-contracts",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "ui-surface-contracts-single-render-derivation",
+      "title": "同一 wire 契约只允许一个渲染派生，并被所有渲染点共用",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md",
+          "start": 10,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md",
+          "start": 10,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-26-web-syntax-highlighting-shiki.md",
+          "start": 14,
+          "end": 21,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-26-web-syntax-highlighting-shiki.zh.md",
+          "start": 14,
+          "end": 21,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.md",
+          "start": 12,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.zh.md",
+          "start": 12,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-new-session-clears-to-empty-state.md",
+          "start": 12,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-new-session-clears-to-empty-state.zh.md",
+          "start": 12,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": "docs/web-styling.md",
+          "start": 14,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/web-styling.zh.md",
+          "start": 14,
+          "end": 16,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一快照结果在聊天行、详情面板和回退卡片各自从 args/content 派生，会出现显示不一致；把读取专属的行号栏、窗口提示或高度上限塞进通用代码块，又会污染所有围栏与程序体。",
+      "triggers": [
+        "新增或修改结构化工具结果卡",
+        "同一快照在多个位置渲染",
+        "新增工具或行为孪生工具",
+        "空态与常驻输入框切换"
+      ],
+      "obligations": [
+        "每个 wire 变体只有一个 model/派生函数把快照视图转成 primitive props；所有渲染点消费它，不各自读取原始字段。",
+        "只有结构或 chrome 真正不同才新增 primitive；窗口行号、计数提示、高度上限等专属关切留在新 primitive，通用 CodeBlock/fence 不增加模式。",
+        "按 card 标签分派，不按工具名写每工具 UI；没有 keyed 行时由通用卡片回退。",
+        "未知/未编译的 wire 变体返回 null 并退到通用或扁平表示，不猜测、不崩溃。",
+        "空态与常驻态共享同一输入框组件，只移动位置或换 variant，不复制第二套 chrome。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "评审者"
+      ],
+      "steps": [
+        "列出该 wire 变体的全部渲染点及当前派生方式。",
+        "写唯一 model/派生函数，集中处理 null、未知 card、运行中、错误与通用回退。",
+        "判断是否需要新 primitive，只复用真正共享的底层。",
+        "让 keyed 行与 fallback 卡都消费同一 model 与 primitive。",
+        "为每个渲染点和 null 分支写组件 spec，并用 fixture/快照覆盖组装表面。"
+      ],
+      "enforcement": {
+        "mode": "组件 spec + 快照 + 评审（Note 未声明机械单一入口检查）",
+        "implementation": "read-card-model.ts 作为唯一派生；ReadBlock 与 CodeBlock 分离；terminal-card-model 按 card 标签映射；空态复用带 variant 的 InputBar。",
+        "trust": "spec 能证明已写路径一致；不能证明未来第三个渲染点一定复用同一 model，也不能证明跨包消费方都走该入口。",
+        "failure": "两处显示不一致时先统一 model；未知 card 退通用卡片并记录版本差异；不要在两处各打补丁。",
+        "exceptions": [
+          "后端已提供通用 content 回退、无需结构化卡片的旧 UI",
+          "只有单一渲染点且无跨位置一致性要求的局部卡片"
+        ]
+      },
+      "applicability": [
+        "when: 有结构化 wire 视图和多个渲染点; 有共享 primitive 包或组件目录; 存在 keyed 行与通用回退两条路径",
+        "whenNot: 只有单一渲染点且没有跨位置一致性要求; 后端只提供最终 HTML 或纯文本，没有可派生结构"
+      ],
+      "relationships": [
+        "ui-surface-contracts-progressive-fallback-parity",
+        "ui-surface-contracts-shell-presentation-parity",
+        "docs/web-styling.md 的复用控件规则"
+      ],
+      "migration": {
+        "strategy": "先抽唯一 model，再判断 primitive，最后替换所有渲染点。",
+        "implementation": [
+          "枚举渲染点与字段来源",
+          "建立 model 与 null/未知分支",
+          "新增或复用 primitive",
+          "替换 keyed/fallback 路径",
+          "用组件 spec 与快照固定"
+        ],
+        "requiredSupport": [
+          "可导入的 wire 类型",
+          "组件测试环境",
+          "共享 primitive 包",
+          "可构造的快照 fixture"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-single-render-derivation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同一快照分别在聊天行和详情面板渲染，输出一致，且未知 card 退通用卡不抛错。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "让第二个渲染点绕过 model 直接从原始字段派生一个不同标题，组件测试应能观察到不一致。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复唯一 model 后，两个渲染点与回退路径重新一致。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Note 未声明强制所有渲染点只调用一个 model 的自动检查；本域未读实现/测试，不能证明第三个渲染点不会漏掉。",
+        "本域只读 Note 与中央文档，未读具体 model/primitive 实现，不能证明当前代码仍保持该形态。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-progressive-fallback-parity",
+      "title": "渐进增强的降级臂必须保持几何与内容等价",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-31-viewport-activated-syntax-highlighting.md",
+          "start": 10,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-31-viewport-activated-syntax-highlighting.zh.md",
+          "start": 10,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-26-web-syntax-highlighting-shiki.md",
+          "start": 18,
+          "end": 21,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-26-web-syntax-highlighting-shiki.zh.md",
+          "start": 18,
+          "end": 21,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md",
+          "start": 16,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md",
+          "start": 16,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-web-superellipse-corner-smoothing.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-web-superellipse-corner-smoothing.zh.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": "docs/web-styling.md",
+          "start": 23,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 52,
+          "end": 56,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/web-styling.zh.md",
+          "start": 23,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.zh.md",
+          "start": 52,
+          "end": 56,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "按视口、语法支持或浏览器能力延迟增强时，未增强的纯文本臂与增强臂若字体、内边距、换行或行高不同，会在激活瞬间跳动；能力缺失时若报错或隐藏内容，用户直接失去功能。",
+      "triggers": [
+        "按视口相交延迟高亮或渲染",
+        "语言不在白名单或语法懒加载",
+        "使用 @supports 守卫浏览器 CSS 能力",
+        "全圆或胶囊形状与全局曲率共存"
+      ],
+      "obligations": [
+        "增强臂与纯文本臂使用相同源码文本、字体、内边距、换行规则和行高，只改变 token 样式。",
+        "未知语言、缺失 IntersectionObserver、缺失 corner-shape 时退化为纯文本、普通圆弧或挂载后激活，不报错、不空白。",
+        "视口激活是单向的：首次相交后保持激活，离开视口不回退；无未激活块时断开共享 observer。",
+        "懒加载语法首帧渲染纯文本，加载完成后通过订阅或计数器触发重渲染，不能同步阻塞或抛错。",
+        "全圆（50%、100%、胶囊）在同一规则内配对 corner-shape: round，不在组件内另造平滑曲线。",
+        "守卫内的全局声明与守卫外的默认行为都必须在无该能力的引擎上保持原样。",
+        "assistant 可控的 fence 语言标签必须使用不会命中 inherited 属性的查找（源实现用 Map；null-prototype 是等价迁移选项，普通对象字面量不合格），不能解析到 inherited 属性（如 constructor）而崩溃；HTML 注入只接受 tokenizer 生成的静态 span tree，不接受用户 HTML。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "评审者",
+        "浏览器验证者"
+      ],
+      "steps": [
+        "确定能力检测点与回退行为。",
+        "让两臂共享源码、字体、内边距、换行与行高。",
+        "实现单向激活、懒加载订阅与 observer 清理。",
+        "为无能力、未知语言、离开视口、重复激活写测试。",
+        "在真实窄视口、无能力引擎与明暗主题下目视复核。"
+      ],
+      "enforcement": {
+        "mode": "jsdom/组件 spec + 真实浏览器评审；几何无自动测量",
+        "implementation": "useViewportHighlighting 共享 observer；highlightToHtml 返回 undefined 即纯文本；lazy grammar 订阅；corner-shape 在 @supports 内通过通用选择器应用；样式扫描 spec 强制全圆配对。",
+        "trust": "spec 能证明状态机与回退分支；不能证明浏览器几何完全稳定或所有引擎表现一致。",
+        "failure": "出现跳动、空白或报错时先恢复纯文本臂并检查共享样式；能力检测失败退化为同步或挂载后路径。",
+        "exceptions": [
+          "不支持该能力的引擎允许功能缺席，但不得空白或报错",
+          "设计明确要求的组件专用平滑需有批准并记录理由"
+        ]
+      },
+      "applicability": [
+        "when: 有渐进增强、懒加载或视口渲染的 UI; 有全局 CSS 能力守卫",
+        "whenNot: 纯同步、无能力分支的静态页面; 增强臂与降级臂结构完全相同、没有激活瞬间"
+      ],
+      "relationships": [
+        "ui-surface-contracts-single-render-derivation",
+        "ui-surface-contracts-bounded-panel-reachability",
+        "docs/web-styling.md 的超级椭圆规则",
+        "docs/ui-radius.md 的形状规则"
+      ],
+      "migration": {
+        "strategy": "先固定共享几何，再加能力检测与单向增强，最后补真实浏览器证据。",
+        "implementation": [
+          "列出两臂盒模型与能力检测点",
+          "共享排版常量与源码",
+          "实现单向激活与懒加载订阅",
+          "写无能力/离开视口测试",
+          "浏览器与明暗主题复核"
+        ],
+        "requiredSupport": [
+          "可替换的能力检测对象",
+          "组件测试环境",
+          "真实浏览器",
+          "明暗主题与窄视口 fixture"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-progressive-fallback-parity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "无 IntersectionObserver 时挂载后激活；未知语言返回纯文本；离开视口不移除已激活高亮。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "让纯文本臂使用不同字体或行高，激活瞬间应观察到几何跳动；或让未知语言抛错。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复共享样式与纯文本回退后，激活前后盒模型一致且无错误。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "jsdom 不测量浏览器几何；源 Note 明确几何稳定性依赖共享样式与真实浏览器验证。",
+        "本域未运行浏览器测试，不能证明当前实现仍无跳动。",
+        "超级椭圆的完整 token/尺度规则以 docs/web-styling.md 与 docs/ui-radius.md 为准。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-derived-view-state",
+      "title": "阅读模式与派生展示状态从日志或快照重算，不写回持久层",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-tui-hidden-mode-assistant-fold.md",
+          "start": 10,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-tui-hidden-mode-assistant-fold.zh.md",
+          "start": 10,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-tui-hidden-mode-assistant-fold.md",
+          "start": 20,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-tui-hidden-mode-assistant-fold.zh.md",
+          "start": 20,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.zh.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.md",
+          "start": 16,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.zh.md",
+          "start": 16,
+          "end": 20,
+          "kind": "history"
+        }
+      ],
+      "problem": "把折叠、时钟、统计等展示状态写进会话日志或后端字段，会让 UI 阅读模式改变模型可见历史、破坏回放，并产生迁移与兼容负担。",
+      "triggers": [
+        "新增阅读模式、折叠或隐藏工具卡",
+        "显示消息时间或日历日",
+        "显示页脚统计或耗时",
+        "transcript 重建、恢复、压缩替换、resize 或主题切换"
+      ],
+      "obligations": [
+        "阅读模式只作为展示标志或派生状态，不写入 session log、deriveMessages 或持久化格式。",
+        "在重建、流式 chunk、结算、失败撤回等所有输入变化处重新推导。",
+        "重建时清空派生映射并重放日志，使恢复、压缩替换、resize、主题切换收敛到同一结果。",
+        "时钟或日历日刷新用组件本地 tick，不新增全局 store 或后端事件。",
+        "统计与耗时从已有快照客户端折算，不为展示新增 session event 或 host 投影。",
+        "派生状态必须可重复计算，不把它当唯一真源或跨入口共享的可变状态。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "评审者",
+        "会话格式所有者"
+      ],
+      "steps": [
+        "区分持久事实与展示派生。",
+        "把派生放进组件或 selector，输入是日志或快照。",
+        "在重建、流式、结算、resize、主题切换处统一重算。",
+        "为收敛与不写回写测试：同一日志多次重建结果一致。"
+      ],
+      "enforcement": {
+        "mode": "单元/快照收敛测试 + 评审",
+        "implementation": "setFoldedContinuation 展示标志；createTuiChat 每轮步骤列表重算；useCalendarDay 本地 timeout；StatsLine 从快照派生；不新增 session event。",
+        "trust": "spec 能证明给定输入的重算结果；不能证明所有未来视图都遵守不写回。",
+        "failure": "发现展示状态进入日志或 schema 时回退为派生并在同一变更修正；重建不一致时以重放日志为唯一输入。",
+        "exceptions": [
+          "真正需要持久化的用户偏好不属于派生状态",
+          "服务端已提供的权威时间或计数可直接消费"
+        ]
+      },
+      "applicability": [
+        "when: 有可重放的会话日志或快照; 存在多种阅读模式或展示格式; transcript 会因恢复、压缩、resize 或主题切换重建",
+        "whenNot: 没有持久历史、每次都是全新渲染的一次性页面; 展示值本身就是需要持久化的用户配置"
+      ],
+      "relationships": [
+        "ui-surface-contracts-temporal-truthfulness",
+        "ui-surface-contracts-single-render-derivation",
+        "decisions 域的会话格式所有者"
+      ],
+      "migration": {
+        "strategy": "先把展示状态从持久层剥离，再统一重算触发点。",
+        "implementation": [
+          "标记持久事实与派生字段",
+          "建立派生 selector",
+          "枚举重算触发点",
+          "写收敛测试",
+          "移除展示字段的持久化"
+        ],
+        "requiredSupport": [
+          "可重放的日志",
+          "稳定的快照输入",
+          "组件测试环境"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-derived-view-state",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同一日志在折叠、展开、重建、resize 后得到相同的派生结果，且日志内容未变。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把折叠标志写入日志或 deriveMessages，回放后应出现模型可见历史变化；该实现应被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除持久化字段并改为重放派生后，历史恢复一致。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源 TUI 在固定提交时已移除；本机制作为通用派生状态规则保留，终端细节需在目标表面重验。",
+        "本域未读 session log 或 schema 实现，不能证明当前代码没有展示字段。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-temporal-truthfulness",
+      "title": "时间、耗时与窗口计数必须说明测量范围",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-assistant-timing-header-trailing.md",
+          "start": 10,
+          "end": 16,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-assistant-timing-header-trailing.zh.md",
+          "start": 10,
+          "end": 16,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.zh.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.md",
+          "start": 16,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.zh.md",
+          "start": 16,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.md",
+          "start": 34,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.zh.md",
+          "start": 34,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md",
+          "start": 14,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md",
+          "start": 14,
+          "end": 26,
+          "kind": "history"
+        }
+      ],
+      "problem": "把耗时、时钟或统计放在错误位置或按固定格式显示，会让用户把元数据当正文、把旧时间当当前、把窗口内统计当全量。",
+      "triggers": [
+        "消息时间戳或时钟",
+        "assistant 步骤耗时",
+        "composer 或页脚统计",
+        "窗口化读取或分页计数"
+      ],
+      "obligations": [
+        "身份标签置顶；计时等测量元数据放在被测内容之后，计时内容与桶隐藏行为不变。",
+        "时钟按日历距离加宽：同一日历日 HH:mm；同年更早 M月D日 HH:mm；跨年 YYYY年M月D日 HH:mm；用户与 assistant 共用规则。",
+        "跨午夜用本地日 tick 重格式化，不要求消息 mutation；memo 行也要更新。",
+        "统计只覆盖已加载事件窗口时必须明确声明该限制，不能暗示全量。",
+        "窗口化内容显示计数或范围提示，并保留展开或分页入口。",
+        "只在已结算、非流式、有非空文本内容的消息上挂测量 chrome；Think-only 与轮次中间叙述不挂。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "评审者",
+        "文档所有者"
+      ],
+      "steps": [
+        "确定测量对象与范围：单条消息、整轮或已加载窗口。",
+        "把标签与测量分开，测量放尾部或带范围说明。",
+        "定义时间加宽与计数格式并抽出格式化函数。",
+        "在午夜、窗口变化、流式结束等边界重算或重渲染。",
+        "用快照或 spec 固定各形态，并在文档写限制。"
+      ],
+      "enforcement": {
+        "mode": "快照/spec + 文档限制 + 评审",
+        "implementation": "formatMessageClock 三形态；useCalendarDay；assistant timing 尾行；formatTokens/formatDuration；README Known Limitation；read 窗口计数提示。",
+        "trust": "spec 能固定格式与挂载门控；不能证明用户理解限制，也不能证明所有统计都标注窗口。",
+        "failure": "时间陈旧先检查 memo 与日 tick；统计误导先补范围说明或改用全量数据源。",
+        "exceptions": [
+          "纯装饰性时间可省略范围说明",
+          "显式全量统计可省略窗口说明"
+        ]
+      },
+      "applicability": [
+        "when: 界面显示时间、耗时或统计; 数据可能是窗口化或分页的; memo 行需要跨午夜更新",
+        "whenNot: 一次性快照、没有历史窗口或日历边界; 纯装饰性文案不承载测量含义"
+      ],
+      "relationships": [
+        "ui-surface-contracts-derived-view-state",
+        "ui-surface-contracts-single-focus-ownership"
+      ],
+      "migration": {
+        "strategy": "先定义测量范围，再统一格式化与刷新边界。",
+        "implementation": [
+          "标注每个数字的测量范围",
+          "抽出时间与统计格式化函数",
+          "接入本地日 tick",
+          "在文档声明窗口限制",
+          "写形态快照"
+        ],
+        "requiredSupport": [
+          "稳定事件时间",
+          "窗口或分页边界",
+          "快照测试"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-temporal-truthfulness",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同一消息在当天、同年更早、跨年分别显示三种时钟形态，跨午夜后 memo 行自动加宽。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把窗口内统计显示为全量且不写限制，或把计时放在回答正文之前，应被评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补范围说明并把计时移到正文尾部后，语义恢复准确。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源时钟格式含中文日期单位，迁移必须按 locale 参数化。",
+        "本域未执行跨午夜或时区边界测试。",
+        "源 TUI 已移除；assistant 计时行位置规则作为通用排版语义保留。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-single-focus-ownership",
+      "title": "指针与键盘共享唯一高亮，动作 chrome 不得只靠 hover 发现",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-web-trigger-menu-presentation-polish.md",
+          "start": 10,
+          "end": 22,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-web-trigger-menu-presentation-polish.zh.md",
+          "start": 10,
+          "end": 22,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-web-trigger-menu-presentation-polish.md",
+          "start": 26,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-web-trigger-menu-presentation-polish.zh.md",
+          "start": 26,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-web-trigger-menu-presentation-polish.md",
+          "start": 36,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.md",
+          "start": 20,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-web-message-icon-actions-and-clock.zh.md",
+          "start": 20,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": "docs/web-styling.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/web-styling.zh.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "CSS :hover 与 reducer 高亮并存会让两行同时看起来是焦点；用 opacity 或 hover 才显示的操作栏容易被漏看，并且与 aria-activedescendant 不一致。",
+      "triggers": [
+        "自定义菜单、列表或命令面板",
+        "新增消息操作栏或图标动作",
+        "键盘导航与指针混合输入",
+        "浮层或抽屉中的可聚焦控件"
+      ],
+      "obligations": [
+        "同一列表只有一个视觉高亮，且与 aria-activedescendant 指向同一项。",
+        "指针与键盘走同一 reducer 或 state，后到输入获胜；hover 用 mousemove 而非 mouseenter。",
+        "移除与共享高亮冲突的 CSS :hover tint。",
+        "动作 chrome 一旦挂载就保持可见或可发现，不用 hover-only 揭示。",
+        "候选 kind 的图标必须来自封闭的 InputTriggerCandidateIcon 联合，不能传任意字符串或字形。",
+        "键盘提示只在对应行持有高亮时显示。",
+        "保留可见焦点与 reduced-motion 行为，焦点环不被裁切。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "可访问性检查者",
+        "评审者"
+      ],
+      "steps": [
+        "找出所有高亮来源：CSS、state、focus、父级 hover。",
+        "收敛到单一 state 或 reducer，并绑定 aria-activedescendant。",
+        "把指针事件改为真实移动事件，删除冲突 CSS。",
+        "为键盘循环、鼠标移动、混合输入写测试或 aria golden。",
+        "在明暗主题与窄视口目视复核。"
+      ],
+      "enforcement": {
+        "mode": "组件 spec + aria golden + 人工评审",
+        "implementation": "hover MenuEvent 与 onMouseMove；删除 :hover；IconChevronRightOutline14 与 caption/keycap 仅在高亮行显示；MessageIconActions 常驻；保留焦点与 reduced-motion。",
+        "trust": "spec 能证明 reducer 与 aria 归属；不能自动证明屏幕阅读器体验或所有浏览器焦点可见性。",
+        "failure": "双重高亮先删除 CSS 来源；键盘抢高亮改用 mousemove；提示噪音改为按高亮显示。",
+        "exceptions": [
+          "原生 select 或系统控件保留平台行为",
+          "移动端无 hover 时以 tap 或焦点为准"
+        ]
+      },
+      "applicability": [
+        "when: 列表同时支持键盘与指针; 存在行内动作或可下钻项; 使用 aria-activedescendant 或 roving focus",
+        "whenNot: 纯静态展示列表，没有选中态; 完全依赖平台原生控件的菜单"
+      ],
+      "relationships": [
+        "ui-surface-contracts-bounded-panel-reachability",
+        "docs/web-styling.md 的焦点与动效规则"
+      ],
+      "migration": {
+        "strategy": "先把高亮收敛到单一状态，再删除视觉重复来源。",
+        "implementation": [
+          "枚举高亮来源",
+          "建立单一 reducer",
+          "绑定 aria-activedescendant",
+          "改为 mousemove 路由",
+          "用 aria golden 固定"
+        ],
+        "requiredSupport": [
+          "可测试的列表状态",
+          "真实指针事件",
+          "可访问名称/状态断言"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-single-focus-ownership",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "键盘移动到某行后，鼠标静止或轻微移动不抢走高亮；aria-activedescendant 与视觉高亮一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留 CSS :hover tint 时，两行可同时呈现焦点；该实现应被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除 CSS :hover 并改为 mousemove 后，单一高亮恢复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未读到自动可访问性门禁；源 Note 只声明 aria golden 与组件 spec，主要靠评审与人工验证。",
+        "本域未运行屏幕阅读器或真实键盘遍历。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-bounded-panel-reachability",
+      "title": "宽高受限的交互面板必须让决策内容、校验与控件保持可达",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-tui-question-dialog-multiline.md",
+          "start": 10,
+          "end": 23,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-tui-question-dialog-multiline.zh.md",
+          "start": 10,
+          "end": 23,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-tui-question-dialog-multiline.md",
+          "start": 38,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-tui-question-dialog-multiline.zh.md",
+          "start": 38,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md",
+          "start": 14,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md",
+          "start": 14,
+          "end": 26,
+          "kind": "history"
+        }
+      ],
+      "problem": "在终端或小视口里按固定高度裁剪问题或读取内容，会静默丢掉选项、描述、校验或控件，用户无法完成决策。",
+      "triggers": [
+        "问题、确认或计划评审面板",
+        "窗口化读取或长输出卡片",
+        "窄或矮视口",
+        "可展开或分页内容"
+      ],
+      "obligations": [
+        "先为编辑器或输入保留空间，再按视口钳制面板高度；resize 时编辑器仍在面板下方。",
+        "内容超限用换行、分页或展开，不用静默省略；显示 N more、lines A-B/N 或 showing N of M。",
+        "分页顺序覆盖所有语义区域，且不遮住选项标记、校验与控件。",
+        "选中项始终可见；固定 chrome 不足时压缩头部或转为分页器，而不是牺牲控件。",
+        "整体 hidden 标记只在低于配置最小值、无法容纳语义布局时作为最后回退。",
+        "高度上限与头尾展开算法在同类卡片间沿用同一实现或同一算法（源实现中 ReadBlock 从 TerminalBlock 照抄），避免同一处折叠不同。"
+      ],
+      "actors": [
+        "UI 实现者",
+        "评审者"
+      ],
+      "steps": [
+        "列出必须可见的语义区域与最小行数。",
+        "先预留编辑器或输入，再分配面板预算。",
+        "实现换行、分页、标记与选中项保持。",
+        "为窄宽、矮高、分页顺序、resize 写 spec 或快照。",
+        "在真实终端或窄视口复核。"
+      ],
+      "enforcement": {
+        "mode": "包 spec + 语义快照 + 人工窄视口复核",
+        "implementation": "InlineModalComponent 宽高钳制；renderOptionBlock 分行；windowBlocks 预算；PageUp/PageDown 顺序；ReadBlock 头尾上限与 aria-expanded；空窗口隐藏 copy。",
+        "trust": "spec 能证明计数、分页与顺序；不能证明真实字体度量下每个视口都可读。",
+        "failure": "内容丢失先改为换行或分页；控件被遮先压缩 chrome；低于最小值时用显式 hidden 标记并保留控件。",
+        "exceptions": [
+          "低于配置最小值的极端视口允许折叠上部行，但必须显示 hidden 标记",
+          "单行不可分内容允许省略号作为安全边界"
+        ]
+      },
+      "applicability": [
+        "when: 面板有明确宽高上限; 内容可能超过可视区域; 存在必须保持可见的选中项或输入控件",
+        "whenNot: 内容很短、不会触发边界的小面板; 可以无限滚动且没有配置上限的页面"
+      ],
+      "relationships": [
+        "ui-surface-contracts-single-focus-ownership",
+        "ui-surface-contracts-temporal-truthfulness",
+        "ui-surface-contracts-single-render-derivation"
+      ],
+      "migration": {
+        "strategy": "先定义必须可见的语义区域，再做预算与分页。",
+        "implementation": [
+          "列出语义区域与最小行数",
+          "预留编辑器空间",
+          "实现预算、分页与标记",
+          "写窄/矮视口测试",
+          "真实终端复核"
+        ],
+        "requiredSupport": [
+          "可配置宽高",
+          "可注入视口尺寸",
+          "快照或终端渲染环境"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-bounded-panel-reachability",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在配置最小高度与窄宽度下，所有选项标记、校验、控件和选中内容都能通过换行或分页到达，编辑器仍可见。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只按选项数量裁剪、隐藏校验或控件，或把整块内容静默截断，应被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为行预算加分页并保留选中项后，所有语义区域恢复可达。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源 TUI 已移除；终端几何需在目标表面重验。",
+        "本域未读 windowBlocks 或 InlineModalComponent 实现。",
+        "语义快照不能证明真实字体度量下每个视口都可读。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-feedback-taxonomy",
+      "title": "反馈分类由单一所有者定义、写入校验，客户端重述必须编译期完备",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-feedback-dialog-and-categories.md",
+          "start": 10,
+          "end": 22,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-feedback-dialog-and-categories.zh.md",
+          "start": 10,
+          "end": 22,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-feedback-dialog-and-categories.md",
+          "start": 38,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-feedback-dialog-and-categories.zh.md",
+          "start": 38,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md",
+          "start": 46,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md",
+          "start": 46,
+          "end": 54,
+          "kind": "history"
+        }
+      ],
+      "problem": "把分类编码进自由文本会让消费方无法分组并污染原样备注；客户端与 Host 各自维护分类会漂移；打开或关闭表单若写事件会产生噪声。",
+      "triggers": [
+        "新增或修改反馈分类",
+        "新增反馈入口",
+        "客户端消费 Host 分类",
+        "发布或回放旧载荷"
+      ],
+      "obligations": [
+        "分类联合与元组由一个包拥有；事件载荷允许空文本或仅分类，日志投递本身是内容。",
+        "服务端按元组校验已存值，分类变化算实质编辑。",
+        "客户端 bundle 不得从 Host 包做值导入；用编译期完备的 Record 重述，键序等于 chip 序。",
+        "打开或关闭表单不写反馈事件；提交才写一条；空白文本记为缺省。",
+        "日志随每个反馈事件投递且不可选；反馈内容不进入模型上下文或遥测。",
+        "不用自由文本前缀编码分类，不在客户端另造第二张分类表。"
+      ],
+      "actors": [
+        "反馈包所有者",
+        "UI 实现者",
+        "评审者",
+        "发布所有者"
+      ],
+      "steps": [
+        "确定分类所有者与客户端安全导出。",
+        "在 Host 事件或 schema 与客户端 Record 两处加分类，并让编译器或元组校验完备。",
+        "路由消息目标与 Session 目标到同一事件生产方。",
+        "固定打开或关闭不写、提交写一条的行为。",
+        "更新词典、goldens 与发布载荷清单。"
+      ],
+      "enforcement": {
+        "mode": "编译器 + Host 元组校验 + 单元/e2e + 评审",
+        "implementation": "FeedbackCategory 与 FEEDBACK_CATEGORIES；sessionFeedback.record；MessageFeedbackItem.category；Record<FeedbackCategory, true>；note-too-large；冻结载荷清单。",
+        "trust": "编译器证明客户端分类完备；不能证明服务端所有写入路径都校验，也不能证明旧版客户端兼容。",
+        "failure": "分类漂移先改所有者与重述表；旧载荷不可携带新成员时按版本化恢复处理并在清单记录。",
+        "exceptions": [
+          "冻结的旧代际载荷只有 text，同版本恢复使用已安装词汇",
+          "反馈插件未加载时入口消失，但不阻塞导出"
+        ]
+      },
+      "applicability": [
+        "when: 有持久反馈或评价事件; 客户端与 Host 分包且不能值导入; 分类需要被消费方分组",
+        "whenNot: 纯自由文本、没有分类需求的一次性反馈; 没有持久化或跨版本回放的临时表单"
+      ],
+      "relationships": [
+        "ui-surface-contracts-feedback-target-cas",
+        "ui-surface-contracts-single-render-derivation",
+        "release 与 session-format 所有者"
+      ],
+      "migration": {
+        "strategy": "先建立单一分类所有者，再让客户端以编译期完备方式重述。",
+        "implementation": [
+          "定义分类联合与元组",
+          "扩展事件载荷与校验",
+          "客户端 Record 重述",
+          "固定写入时机",
+          "更新载荷清单与 goldens"
+        ],
+        "requiredSupport": [
+          "客户端安全类型导出",
+          "Host schema 或事件载荷",
+          "编译器完备性检查",
+          "发布/回放清单"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-feedback-taxonomy",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增一个分类时，编译器要求客户端 Record 与词典同时补齐；提交只写一条事件；打开/关闭不写。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把分类编码进备注前缀，或客户端从 Host 包值导入分类，应被评审/构建拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改回单一分类所有者与编译期重述后，分类可分组且不污染备注。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未读 Host 校验实现与载荷迁移代码，只读 Note。",
+        "反馈对模型/遥测不可见是源 Note 的声明，本域未做运行时验证。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-feedback-target-cas",
+      "title": "反馈目标身份可选且不可伪造，逐条版本冲突从回复收敛",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md",
+          "start": 14,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md",
+          "start": 14,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md",
+          "start": 46,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md",
+          "start": 46,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md",
+          "start": 58,
+          "end": 58,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md",
+          "start": 58,
+          "end": 58,
+          "kind": "history"
+        }
+      ],
+      "problem": "浏览器若不能命名反馈目标，UI 无法记录；用 session 级 revision 会让无关消息互相冲突；在 mount 时为每条消息发 list 会放大请求。",
+      "triggers": [
+        "消息级评分或备注",
+        "多标签页或并发编辑",
+        "重连或 reset",
+        "可选反馈插件"
+      ],
+      "obligations": [
+        "AssistantMessageNode.messageId 可选，只在 finalized assistant/message 物化时复制；中断 partials 与合成 sentinel 保持缺失，使无效目标不可表示。",
+        "声明 assistant-actions slot，owner 为 messageId；messageId 缺失时渲染点整体跳过。",
+        "反馈包只贡献 slot entry，不 import conversation 实现；插件移除时该条渲染为空且不影响其他动作。",
+        "每个 Session 一个 controller，按 MessageId 存条目；mutation 带最后观察到的 ifVersion，未知为 null。",
+        "冲突回复携带权威 current 或 null；current 为 null 时删除本地条目；mutation 在 per-Session 尾部串行。",
+        "list 延迟到首次 hover 或 focus；connection/reset 只刷新非 cold Session。",
+        "再次点击已记录评分等于 delete；切换等于 put 并携带备注；清除未知条目等于无调用成功。"
+      ],
+      "actors": [
+        "客户端状态所有者",
+        "反馈包所有者",
+        "UI 实现者",
+        "评审者"
+      ],
+      "steps": [
+        "确认 Host 目标规则：append-origin、MessageId。",
+        "在客户端节点加可选身份，只在 finalized 物化点复制。",
+        "声明 slot owner 与跳过条件。",
+        "实现 per-item CAS、per-Session 序列化、冲突收敛与延迟 list。",
+        "为缺失身份、冲突、重连、双标签页写测试。"
+      ],
+      "enforcement": {
+        "mode": "controller 单测 + Web E2E + 评审",
+        "implementation": "MessageFeedbackController 按 Session/MessageId 存条目；MessageFeedbackVersionConflict.current；per-Session tail；deferred list；connection/reset 过滤 cold；extraActions 作为 ReactNode。",
+        "trust": "单测/E2E 能证明 CAS 与 UI 挂载；不能证明多标签页实时同步，也不能证明未来第三个物化点复制 id。",
+        "failure": "冲突时用回复 current 收敛而非全量刷新；身份缺失时不渲染控件；list 失败退化为未评分态并保留重试。",
+        "exceptions": [
+          "sidecar 不发布 live frame，第二标签页在重连或冲突时更新",
+          "备注长度不在输入时预校验，保存失败用 note-too-large"
+        ]
+      },
+      "applicability": [
+        "when: 反馈按消息身份寻址; 存在并发编辑或冲突版本; 控件按消息数量挂载",
+        "whenNot: 只有 Session 级反馈、没有消息目标; 单用户单标签页且无并发写入"
+      ],
+      "relationships": [
+        "ui-surface-contracts-feedback-taxonomy",
+        "ui-surface-contracts-single-focus-ownership"
+      ],
+      "migration": {
+        "strategy": "先让无效目标不可表示，再实现逐条 CAS 与延迟读取。",
+        "implementation": [
+          "加可选 messageId",
+          "声明 slot 与跳过条件",
+          "实现 per-item CAS",
+          "串行化 mutation",
+          "延迟 list 与 reset 过滤"
+        ],
+        "requiredSupport": [
+          "消息身份字段",
+          "版本/冲突回复",
+          "per-Session controller",
+          "可模拟多标签页的测试环境"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-feedback-target-cas",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "未完成消息不显示评分；两个标签页并发写入时，失败方用回复 current 收敛；重载后 hover 触发 list 恢复。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "给未完成 partial 伪造 messageId，或用 session 级 revision 让无关消息冲突，应被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除伪造身份并改用 per-item ifVersion 后，冲突只影响目标消息。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源 Note 明确 sidecar 无 live frames；本域未执行多标签页实时同步。",
+        "本域未读 controller 实现。",
+        "AssistantMessageNode 有两个并行物化点，第三个视图可能忘记复制 id，且没有机制强制。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-shell-presentation-parity",
+      "title": "可互换的 shell 工具必须共享解析并呈现为同一种卡片",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.zh.md",
+          "start": 10,
+          "end": 18,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.md",
+          "start": 30,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.zh.md",
+          "start": 30,
+          "end": 32,
+          "kind": "history"
+        }
+      ],
+      "problem": "行为已对齐的孪生工具若各自解析退出状态、各自呈现，UI pill 与颜色会漂移，用户无法从呈现判断同一语义。",
+      "triggers": [
+        "新增或对齐 shell 与终端类工具",
+        "工具结果卡呈现",
+        "跨平台默认 shell 切换",
+        "新增 card 标签消费方"
+      ],
+      "obligations": [
+        "孪生工具的 presentResult 逐调用镜像：完成前台为 terminal 卡；后台 ack 与 error 保持 generic；非单一文本块不改。",
+        "解析与 marker 发出共享实现，放在两个工具都已依赖的 Service Definition 包；不得从兄弟工具私有模块 import。",
+        "客户端按 card: terminal 标签桥接，不为每个工具写 UI；必要时只加分类行。",
+        "验证覆盖双边 presenter 往返、marker-like 输出、后台/错误通用卡片、多块回退与组装后的 keyless e2e。"
+      ],
+      "actors": [
+        "工具所有者",
+        "客户端呈现所有者",
+        "评审者"
+      ],
+      "steps": [
+        "列出孪生工具的执行与呈现差异。",
+        "把解析与 marker 抽到共享包并让两边复用。",
+        "对齐 presentResult 分支与卡片形态。",
+        "在客户端确认 card 标签桥接与分类。",
+        "跑双边 presenter 套件与 keyless 浏览器 golden。"
+      ],
+      "enforcement": {
+        "mode": "双边 presenter 单测 + 覆盖率 + keyless e2e",
+        "implementation": "parseExitStatus 与 ParsedExitStatus 移到共享 Service Definition 包；bash 侧 re-export；terminal-card-model 按 card 映射；classifyTool('pwsh') 归入 shell family。",
+        "trust": "测试能证明 presenter 输出与卡片 golden；不能证明所有组合都挂载同一版本，也不能证明 Windows 默认组合已交付。",
+        "failure": "呈现漂移先统一解析实现；不能共享时记录为兼容缺口，不复制第三份。",
+        "exceptions": [
+          "只有行为不同、没有共同结果语义的工具不适用",
+          "后台 ack 与 error 明确保持 generic"
+        ]
+      },
+      "applicability": [
+        "when: 两个工具行为可互换; 结果卡按 card 标签分派; 跨平台需要一致呈现",
+        "whenNot: 工具结果语义不同、无法共享解析; 只有单一平台或单一 shell"
+      ],
+      "relationships": [
+        "ui-surface-contracts-single-render-derivation",
+        "supply-chain 与包所有者"
+      ],
+      "migration": {
+        "strategy": "先对齐行为，再共享解析，最后用 card 标签与 e2e 固定呈现。",
+        "implementation": [
+          "对齐执行/marker",
+          "抽取共享解析",
+          "镜像 presenter 分支",
+          "确认 card 桥接与分类",
+          "跑双边测试与 e2e"
+        ],
+        "requiredSupport": [
+          "两个工具的共同依赖包",
+          "presenter 测试套件",
+          "keyless 浏览器 lane"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-shell-presentation-parity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "bash 与 pwsh 的完成前台调用在 UI 中都显示 terminal 卡、退出 pill 与 run-state dot，解析结果一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "让 pwsh 从 bash 私有模块 import 解析，或让两者各自实现一份，应被评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把解析移到共享包并 re-export 后，两个 presenter 输出一致且依赖方向正确。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源 Note 明确 Windows 默认组合仍未完成。",
+        "本域未读 presenter 实现，只读 Note。",
+        "未运行 e2e 或覆盖率门禁。"
+      ]
+    },
+    {
+      "id": "ui-surface-contracts-prompt-registry-trust",
+      "title": "插件提示符值用存储字符串与合并通知，并明确 ANSI 信任边界",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.md",
+          "start": 10,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.zh.md",
+          "start": 10,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.md",
+          "start": 34,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.zh.md",
+          "start": 34,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.md",
+          "start": 40,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-configurable-tui-prompt-theme.zh.md",
+          "start": 40,
+          "end": 40,
+          "kind": "history"
+        }
+      ],
+      "problem": "渲染期求值插件回调引入失败边界；全局事件为单一消费者增加总线；把任意 ANSI 当普通文本清洗会丢失 Powerline，而把普通外部内容当 ANSI 会注入控制序列。",
+      "triggers": [
+        "插件向终端提示符或状态行贡献片段",
+        "可变主题或输入前缀",
+        "Powerline 与背景过渡",
+        "插件卸载或订阅清理"
+      ],
+      "obligations": [
+        "注册表存字符串而非回调；set 显式更新，未变化忽略，一次注册、变更或 dispose 合并一次通知。",
+        "渲染器 get 与 subscribe；订阅是服务内直接回调，不走全局事件；订阅与注册由调用方 effect 拥有并在 dispose 时移除。",
+        "拒绝重名；通知容错每个观察者，并在派发中重新校验存活。",
+        "只有注册的提示符插件片段可携带 ANSI 或终端控制；模板字面量与普通外部内容仍清洗。",
+        "宽度计算使用 ANSI-aware 可见宽度；未知或不可用值连同相邻分隔空白消失。",
+        "替换输入前缀保持编辑器文本、光标、历史、补全与焦点，且前缀等宽。"
+      ],
+      "actors": [
+        "终端 UI 所有者",
+        "插件作者",
+        "安全/评审者"
+      ],
+      "steps": [
+        "定义注册表 owner、值类型与通知语义。",
+        "把内置字段迁到同一注册表，保留旧前缀。",
+        "实现 effect 所有权、重名拒绝、容错与合并通知。",
+        "明确 ANSI 信任边界并在文档或评审记录。",
+        "为注册、更新、dispose、ANSI 与前缀替换写测试。"
+      ],
+      "enforcement": {
+        "mode": "注册表单测 + 部署方组装验收 + 评审",
+        "implementation": "上下文全局提示符注册表；register/set/dispose/get/subscribe；errorChain；${name} 插值；ANSI-aware width；inputPrompt 原位替换。",
+        "trust": "单测证明注册表语义；不能证明任意 ANSI 不会破坏布局，也不能证明每个部署的加载顺序。",
+        "failure": "布局被 ANSI 破坏时限制为受支持序列或退回纯文本；通知饥饿先检查观察者容错；加载顺序由部署方验收。",
+        "exceptions": [
+          "任意 ANSI 是有意信任决策，不支持的光标序列可破坏布局",
+          "源 TUI 包在固定提交已移除，迁移前必须重验目标表面"
+        ]
+      },
+      "applicability": [
+        "when: 有插件贡献终端提示符或状态行; 需要合并重绘且避免渲染期插件求值; 需要明确 ANSI 信任边界",
+        "whenNot: 纯 Web DOM 提示符，使用 CSS token; 固定提示符、没有插件贡献"
+      ],
+      "relationships": [
+        "ui-surface-contracts-single-render-derivation",
+        "docs/web-styling.md 的 token 所有权规则"
+      ],
+      "migration": {
+        "strategy": "先定义注册表与通知语义，再迁移内置值并固定信任边界。",
+        "implementation": [
+          "定义字符串值注册表",
+          "实现合并通知与 effect 所有权",
+          "迁移内置字段",
+          "明确 ANSI 信任与清洗范围",
+          "写注册/更新/dispose 测试"
+        ],
+        "requiredSupport": [
+          "上下文服务/effect 生命周期",
+          "ANSI 可见宽度工具",
+          "部署方加载顺序验收"
+        ]
+      },
+      "reference": "references/ui-surface-contracts.md#ui-surface-contracts-prompt-registry-trust",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "注册、set、dispose 各触发一次合并重绘；未知值连同分隔空白消失；Powerline 片段可组合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "在渲染期调用插件回调，或让普通外部内容未经清洗直接输出 ANSI，应被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为存储字符串并恢复清洗边界后，渲染无插件失败边界且控制序列受限。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "源 TUI 已 EOL；本机制作为历史与重启条件保留。",
+        "本域未验证任意 ANSI 对 pi-tui 宽度工具的实际影响。",
+        "未读注册表实现，只读 Note。"
+      ]
+    }
+  ]
+}

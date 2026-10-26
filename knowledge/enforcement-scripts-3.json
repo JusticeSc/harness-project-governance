@@ -1,0 +1,418 @@
+{
+  "schema": "governance-domain/v1",
+  "domain": "enforcement-scripts-3",
+  "bounds": {
+    "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "sourceRoot": "deepseek-harness",
+    "sourceInventorySha256": "4485c550c067b7c13cdec7a6b3036093fa76897c35bacca0fabdbca6fde02a32",
+    "scope": "Residual scripts/ classes: Python SDK/SSH executable builds, client catalog and route gates, plugin metadata, persistence/catalog/snapshot helpers, release plumbing and co-located tests."
+  },
+  "mechanisms": [
+    {
+      "id": "enforcement-scripts-3-snapshot-spill-locator-isolation",
+      "title": "Replay spill locators are stable logical names scoped to one saved run",
+      "sources": [
+        {
+          "path": "scripts/snapshot-spill-locators.spec.ts",
+          "start": 1,
+          "end": 72,
+          "kind": "test"
+        }
+      ],
+      "problem": "A snapshot replay records logical spill locators so a later replay can refer to the same tool result. If two concurrent replays of the same session/call allocate the same physical file, one overwrites the other's bytes; if a locator saved by one run maps into another run, replay reads unrelated content. Keeping locator text stable while routing it to a run-private physical file is the hard part.",
+      "triggers": [
+        "recording or replaying a snapshot that spills a large tool result",
+        "running two snapshot sessions concurrently, including out-of-order allocation",
+        "changing the spill store, filesystem adapter or locator root",
+        "disposing or restoring a replay fork"
+      ],
+      "obligations": [
+        "Concurrent replays with identical owner, source, suggested name and content must produce equal-length logical locators, but distinct physical files inside each run's own root. Allocation completion order must not matter.",
+        "The logical locator must retain the recorded prefix and the UTF-8 byte count; reading through fs.resolve must return exactly the saved content.",
+        "Only locators saved by the current run may resolve or map to a host path. An unknown locator under the locator root must fail with 'not saved by this run' from both resolve and processPathFromHostPath; ordinary paths must pass through unchanged.",
+        "Disposing the locator plugin must remove the mapping. After disposal, resolving the old locator must not stat the old physical file and processPathFromHostPath must treat the locator as an ordinary passthrough value, so stale locators cannot read a previous run's data.",
+        "The test must cover both allocation orders because Promise.all preserves input order, not completion order, and concurrent creation is the failure mode."
+      ],
+      "actors": [
+        "snapshot harness author",
+        "spill store owner",
+        "filesystem adapter owner",
+        "reviewer"
+      ],
+      "steps": [
+        "Allocate a per-run physical root and register a logical-to-physical mapping when a spill is saved.",
+        "Keep the logical locator text stable and equal-length; use a hidden per-run suffix or table rather than embedding the physical path.",
+        "Resolve and reverse-map only through the saved-run table; throw 'not saved by this run' otherwise.",
+        "Pass ordinary host paths through untouched.",
+        "Dispose the mapping with the replay fork and assert the old locator no longer reaches the old file."
+      ],
+      "enforcement": {
+        "mode": "test",
+        "implementation": "scripts/snapshot-spill-locators.spec.ts with the LocalSpillStore, LocalFileSystem and the replay locator plugin",
+        "trust": "Locator length/bytes, physical privacy, saved-run resolution, passthrough and post-dispose behavior are asserted against real temp roots; cross-process collision is not exercised",
+        "failure": "A shared physical path silently returns another run's bytes; an unsaved locator maps to an arbitrary file; disposal leaves a stale mapping that reads deleted or unrelated data",
+        "exceptions": [
+          "ordinary absolute paths are intentionally pass-through",
+          "the locator root may be a synthetic POSIX path on Windows"
+        ]
+      },
+      "applicability": "Replay/snapshot harnesses that virtualize spill files and can run sessions concurrently. Backend-specific details are parameterized; the saved-run scoping rule is generic.",
+      "relationships": [
+        "testing-snapshot-corpus-policy",
+        "testing-snapshot-normalization",
+        "release-session-migrations"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "Keep logical-locator stability and run-private physical allocation. Replace LocalSpillStore/LocalFileSystem with the target harness adapters and keep the same assertions.",
+        "requiredSupport": [
+          "spill store with saveText",
+          "filesystem adapters supporting resolve/processPath/processPathFromHostPath",
+          "concurrent replay runner"
+        ]
+      },
+      "reference": "references/enforcement-scripts-3.md#enforcement-scripts-3-snapshot-spill-locator-isolation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "two concurrent runs save the same content",
+            "check": "equal-length locators, distinct physical paths, both contents readable",
+            "evidence": "planned",
+            "note": "Spec lines 17-67."
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "resolve an unsaved locator under the locator root",
+            "check": "throws 'not saved by this run' from resolve and reverse mapping",
+            "evidence": "planned",
+            "note": "Spec lines 50-51."
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "dispose the locator plugin after saving",
+            "check": "old locator no longer maps to the old physical file; stat is undefined",
+            "evidence": "planned",
+            "note": "Spec lines 56-60."
+          }
+        ]
+      },
+      "limitations": "The spec covers one in-process spill store and filesystem adapter. It does not prove cross-process collision behavior, crash recovery, or that every locator-independent code path uses the mapping. The synthetic locatorRoot may not reproduce every Windows path-shape edge.",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-3-python-wheel-test-pruning",
+      "title": "Python runtime wheels: remove only distribution test trees and rewrite RECORD safely",
+      "sources": [
+        {
+          "path": "scripts/primary-runtime/prune-python-tests.spec.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "test"
+        }
+      ],
+      "problem": "The unpacked Python runtime ships NumPy and pandas wheels. Their test suites dominate the extracted payload, but deleting too much removes testing helpers, compiled extension support modules, licenses or data needed at runtime; rewriting RECORD naively drops quoted comma paths or hashes, and a malformed record can cause deletion before the tool notices the file is corrupt.",
+      "triggers": [
+        "changing the bundled NumPy or pandas version",
+        "changing the primary-runtime wheel unpack/prune step",
+        "adding a distribution whose test directory layout differs",
+        "RECORD parsing or CSV handling changes"
+      ],
+      "obligations": [
+        "Remove only the numpy/tests and pandas/tests directory trees, including nested and empty tests directories. Do not remove similarly named tests under another distribution (other/tests, numpy_extra/tests), nor numpy/testing, pandas/testing, pandas/_testing, compiled *_multiarray_tests or _libs/testing binaries, data files, or dist-info licenses.",
+        "RECORD is CSV with a sha256 digest and size per row. Rewrite it with the original hashes and sizes, preserve quoted paths containing commas, keep the self-row, and keep exactly the retained rows.",
+        "Validate every RECORD before deleting anything for that distribution. Unterminated quotes, empty rows, missing hash/size rows and empty files must abort with 'invalid wheel RECORD' while test files remain intact.",
+        "The second pruning run must be a no-op (byte-identical RECORD), and the source .whl archive must never be modified; pruning is applied to the unpacked site-packages tree only.",
+        "Use the lock-pinned distribution versions in tests; a version mismatch is a test failure rather than a best-effort prune."
+      ],
+      "actors": [
+        "primary-runtime packager",
+        "Python distribution owner",
+        "release engineer",
+        "reviewer"
+      ],
+      "steps": [
+        "Unpack the wheel into site-packages.",
+        "Read and validate each target distribution's RECORD before deleting anything.",
+        "Delete only the target tests directory trees.",
+        "Rewrite RECORD with retained rows and original hashes/sizes, preserving CSV quoting.",
+        "Leave the archive untouched; assert a second run changes nothing."
+      ],
+      "enforcement": {
+        "mode": "test",
+        "implementation": "scripts/primary-runtime/prune-python-tests.spec.ts with prunePrimaryRuntimePythonTests and unpackPrimaryRuntimeWheel",
+        "trust": "File selection, RECORD round-trip, archive immutability, idempotence and malformed-record refusal are asserted on a real zip built per test",
+        "failure": "Pruning removes a runtime helper or license, RECORD disagrees with extracted files, a comma path corrupts the CSV, or a malformed record leads to deleting tests without a valid inventory",
+        "exceptions": [
+          "test directories of distributions other than NumPy/pandas are untouched by design",
+          "the wheel archive keeps its original contents; only the extracted tree is pruned"
+        ]
+      },
+      "applicability": "Packaging pipelines that bundle Python wheels into a single executable or runtime and need to cut test payload without breaking wheel metadata. Distribution names and test-directory conventions are parameterizable. The wheel/platform policy itself is owned by supply-chain-python-runtime; this mechanism owns only pruning and RECORD integrity.",
+      "relationships": [
+        "supply-chain-python-runtime",
+        "release-python-executable-builder",
+        "supply-chain-licenses-notices"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "Keep validate-before-delete and RECORD rewrite semantics. Parameterize the distribution names, version lock and test-directory layout; keep the malformed-record rejection and the archive-untouched assertion.",
+        "requiredSupport": [
+          "wheel unpack step",
+          "CSV/RECORD parser preserving original rows",
+          "lock file with pinned distribution versions"
+        ]
+      },
+      "reference": "references/enforcement-scripts-3.md#enforcement-scripts-3-python-wheel-test-pruning",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "prune NumPy/pandas tests from an unpacked wheel",
+            "check": "removed trees gone; retained files byte-identical; RECORD has retained rows plus self-row",
+            "evidence": "planned",
+            "note": "Spec lines 16-68."
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "malformed RECORD rows or empty RECORD",
+            "check": "throws 'invalid wheel RECORD' and leaves test files intact",
+            "evidence": "planned",
+            "note": "Spec lines 70-85."
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "run pruning twice",
+            "check": "second run leaves RECORD byte-identical; archive unchanged",
+            "evidence": "planned",
+            "note": "Spec lines 61-64."
+          }
+        ]
+      },
+      "limitations": "Only NumPy/pandas are covered. The RECORD validator is exercised on synthetic rows; exotic CSV quoting or a wheel whose RECORD omits rows may behave differently. Pruned RECORD intentionally differs from the archive's original RECORD, so archive-level verification must not be used to validate the extracted tree.",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-3-bounded-client-slot-report",
+      "title": "Client slot catalog: teach every registrable slot within a bounded per-slot report",
+      "sources": [
+        {
+          "path": "scripts/gen-client-catalog.ts",
+          "start": 1,
+          "end": 597,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-client-catalog.spec.ts",
+          "start": 1,
+          "end": 264,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/slot-walk.ts",
+          "start": 1,
+          "end": 432,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "A model asked to add UI to a dynamic package must know which slots exist, which register options each kind accepts, what props the component receives, who already occupies the seat and when the seat exists. That contract is spread across SlotMap merges and register call sites. Dumping the whole client type graph into a catalog makes one slot answer more expensive than reading the source, while an undocumented or unresolvable slot silently produces an unusable catalog entry.",
+      "triggers": [
+        "declaring or changing a SlotMap slot",
+        "changing register/registerFactory options or a slot kind/scope",
+        "changing owner props, standard props or inject context",
+        "adding a registrant that occupies or shadows shipped UI",
+        "regenerating or reviewing the model-facing client catalog"
+      ],
+      "obligations": [
+        "SlotMap merges are the authority. Every catalog key must be declared exactly once across merges; duplicates are a contract violation because the merge is silent. kind must be a literal single/list/keyed/chain and scope a literal root/session/session-maybe.",
+        "Every slot must carry registrant-side JSDoc prose (what to pass, what the component receives, whom a registration replaces, what absence looks like). An owner prop type must resolve to an exported declaration; otherwise the catalog cannot teach what the component receives.",
+        "Every registration must target a declared slot or be a factory; every declared child slot must be typed by some SlotMap merge. A registration into an undeclared slot is dead or the scan has a blind spot.",
+        "Owner props expand only the named owner type plus its top-level composed aliases; field value types stay references so one slot does not expand the Session graph. Declarations longer than 1200 characters are truncated with an explicit marker, never silently cut.",
+        "One slot's expanded report (doc, example, owner props, register-option docs, standard props, owner-prop references, occupants) must stay within 122 lines. Over-budget slots fail the generator; fix by narrowing the owner share or tightening prose, never by raising the budget.",
+        "Register options are curated per cardinality (single none; list id/order/label; keyed key; chain select). Do not teach priority: the browser facade assigns one lower than every shipped entry. Teach inject/remount semantics and the no-import/CSS-theme constraints in the shared notes.",
+        "The generator emits a data module consumed by the host toolset and must not import a client runtime module. Scan all matching .ts/.tsx sources rather than a reachable-export closure; drop ambiguous exported type names; parse .tsx as TSX; restrict registration receivers to slots or *.slots and names to string literals.",
+        "Intentional repetition across seats (register options, framework props) is marked for clone detection with jscpd annotations rather than a config exception. The generated file starts with ignore markers and closes them.",
+        "The normal CLI writes the artifact; --check must fail for stale or missing output and must never write. Regeneration is the only remedy."
+      ],
+      "actors": [
+        "slot owner",
+        "catalog maintainer",
+        "client package author",
+        "reviewer",
+        "CI gate owner"
+      ],
+      "steps": [
+        "Declare the SlotMap member with literal kind/scope and registrant-facing JSDoc.",
+        "Export any owner props interface the slot hands to registrants.",
+        "Register with slots.inject and a literal slot name; name child slots only when they exist while the entry is mounted.",
+        "Run the generator and fix all contract violations; run --check to confirm the committed catalog is fresh.",
+        "Review the per-slot report size and trim owner shares/prose before considering any budget change."
+      ],
+      "enforcement": {
+        "mode": "gate",
+        "implementation": "scripts/gen-client-catalog.ts + scripts/slot-walk.ts; scripts/gen-client-catalog.spec.ts pins validation, truncation, budget and --check behavior",
+        "trust": "Kind/scope liveness, duplicate keys, declaration resolution, budget, truncation and freshness are mechanically checked; whether the prose actually teaches a registrant, and whether the rendered report has the claimed token cost, require review",
+        "failure": "A model receives a catalog entry it cannot register (missing declaration, wrong options, undeclared target), or one slot's answer consumes the context needed to implement it; a stale committed artifact diverges from the source contract",
+        "exceptions": [
+          "factory-registered slots need no ordinary declaration",
+          "slots declared by the runtime itself are described as built-in",
+          "ambiguous exported type names are omitted rather than guessed"
+        ]
+      },
+      "applicability": "Host tool catalogs that project a compile-time registry into model-facing context, especially browser slot systems. The 122-line and 1200-character numbers are source-repo calibrations and must be re-derived for another model/context budget.",
+      "relationships": [
+        "package-contracts-2.ui-slot-extension",
+        "documentation-generated-reference-freshness",
+        "package-contracts-6.model-experience-disclosure",
+        "engineering-client-component-contract"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "Keep SlotMap-as-authority, fail-closed validation, one-level owner expansion and the report budget. Parameterize the slots module name, source globs, kind/scope sets, register-option table and the 122/1200 budgets; keep --check non-writing.",
+        "requiredSupport": [
+          "TypeScript compiler API or equivalent AST parser",
+          "workspace package manifest lookup",
+          "committed generated data module",
+          "CI freshness check"
+        ]
+      },
+      "reference": "references/enforcement-scripts-3.md#enforcement-scripts-3-bounded-client-slot-report",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "a documented literal slot with resolvable owner props and a declared registration",
+            "check": "collectSlotEntries returns an entry; generated catalog matches --check",
+            "evidence": "planned",
+            "note": "Spec covers judgement and generator freshness."
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "duplicate key, non-literal kind/scope, missing JSDoc, unresolvable owner type, registration into an undeclared slot, child key not typed",
+            "check": "each becomes a reported contract violation",
+            "evidence": "planned",
+            "note": "Implemented in validateSlotContracts."
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "a slot exceeds 122 lines",
+            "check": "generator fails; narrow the owner share or prose and rerun; no budget raise",
+            "evidence": "planned",
+            "note": "Implemented in oversizedSlotReports."
+          }
+        ]
+      },
+      "limitations": "Report line count is a proxy for rendered context cost, not a measured token count. The scan is lexical and does not resolve conditional/mapped types; one-level owner expansion can still omit a cross-package shape. Specs assert generator judgement, not the host tool's rendered answer.",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "enforcement-scripts-3-windows-safe-script-plumbing",
+      "title": "Windows-safe script plumbing: JS entrypoints, tar cwd and junction-first cleanup",
+      "sources": [
+        {
+          "path": "scripts/release/process.spec.ts",
+          "start": 1,
+          "end": 51,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/test-fixture-cleanup.ts",
+          "start": 1,
+          "end": 49,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Release and fixture scripts written on POSIX fail or destroy state on Windows: spawnSync cannot start a .cmd shim, GNU tar interprets the colon in C:/... as a remote host, and recursive deletion follows junctions into the repository's real scripts/node_modules/tsx directories. These failures are platform-specific and can be irreversible.",
+      "triggers": [
+        "calling pnpm or another package-manager shim from Node",
+        "reading a tarball by absolute Windows path",
+        "cleaning a fixture tree that contains junctions",
+        "adding a Windows CI lane or moving release helpers"
+      ],
+      "obligations": [
+        "Resolve pnpm to a JavaScript-launchable command: either pnpm itself or a node executable whose first argument names pnpm. Do not depend on pnpm.cmd or a shell. The command must actually run (--version) on the host, not just be assembled.",
+        "When GNU tar reads an archive, set cwd to the archive's directory and pass its basename. Never pass an absolute Windows path containing a drive colon; tar would treat it as a remote host.",
+        "Before recursively deleting a fixture tree, walk it and unlink every junction/symlink. Only then remove the directory. On POSIX the walk is effectively a no-op because unlink/rm do not follow symlinks. Never call rmSync or git worktree remove on a tree that still contains junctions.",
+        "Windows removal must be bounded: rmSync with maxRetries 50 and retryDelay 200ms (10-second window) to absorb asynchronous handle release. Do not retry unboundedly; do not swallow non-EPERM errors; a bounded window must not pin afterEach cleanup.",
+        "The process and tarball helpers must be tested with real processes and real archives: list members and read packed identity beside the archive, and assert pnpm reports a version. Mocks alone do not prove Windows launchability."
+      ],
+      "actors": [
+        "script maintainer",
+        "Windows CI owner",
+        "test author",
+        "release engineer"
+      ],
+      "steps": [
+        "Resolve pnpm to a JS entrypoint and spawn it without a shell.",
+        "For tar, chdir to the archive directory and use the basename.",
+        "For fixture teardown, call the helper that unlinks links first, then removes with the bounded retry.",
+        "Add real-process tests on a Windows runner; do not substitute command-shape assertions for the real probe."
+      ],
+      "enforcement": {
+        "mode": "test + helper",
+        "implementation": "scripts/release/process.spec.ts plus scripts/test-fixture-cleanup.ts (unlinkFixtureLinks/removeFixtureSafely); the release process/tarball helpers under test are separate owner modules",
+        "trust": "Command shape, real pnpm --version, real tar member/identity reads and the cleanup order are mechanically checkable; the destructive junction behavior and handle-release timing depend on a real Windows runner",
+        "failure": "pnpm cannot start, tar reads a drive letter as a host and fails/targets the wrong machine, or fixture cleanup deletes the repository's own scripts/node_modules; alternatively afterEach flakes on EPERM",
+        "exceptions": [
+          "POSIX removes symlinks without following them, so the unlink walk is a no-op there",
+          "a fixture tree known to contain no junctions may skip the explicit walk, but the shared helper should still be used"
+        ]
+      },
+      "applicability": "Cross-platform release/fixture scripts that must run on Windows CI. PNPM_HOME/env resolution and retry counts are environment-specific; the no-shell, no-drive-colon and link-first rules are generic. Link-first deletion specializes engineering-untrusted-subprocess; this mechanism adds the pnpm JS entrypoint, tar cwd and bounded Windows retry.",
+      "relationships": [
+        "testing-resource-isolation",
+        "rationale-testing-1.fixture-lifecycle-ownership",
+        "automation-platform-policy",
+        "release-npm-rehearsal",
+        "engineering-untrusted-subprocess"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "Keep the JS-entrypoint pnpm launch, tar cwd/basename rule, link-first cleanup and bounded retry. Reuse the helper rather than reimplementing rmSync in each suite.",
+        "requiredSupport": [
+          "Node child_process",
+          "tar available on the runner",
+          "Windows CI lane",
+          "fixture directories with junctions"
+        ]
+      },
+      "reference": "references/enforcement-scripts-3.md#enforcement-scripts-3-windows-safe-script-plumbing",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "pnpm --version via the resolved JS entry; tar lists members beside the archive",
+            "check": "version matches and members/identity are returned",
+            "evidence": "planned",
+            "note": "Spec lines 31-50."
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "absolute Windows archive path passed to tar",
+            "check": "long-path/colon failure; use cwd+basename",
+            "evidence": "planned",
+            "note": "The spec comment documents the failure; it does not itself invoke the bad path."
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "fixture deletion hits a junction or EPERM",
+            "check": "unlink links first; bounded retries drain handles; real target directories survive",
+            "evidence": "planned",
+            "note": "Cleanup helper lines 18-48."
+          }
+        ]
+      },
+      "limitations": "The specs prove command shape and real tar/pnpm behavior on the current platform; the destructive junction traversal is not reproduced end to end here. The 50x200ms retry window is tuned to the source repository's runner load and should be re-measured.",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ],
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317"
+}

@@ -1,0 +1,2288 @@
+{
+  "domain": "package-contracts-8",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "package-contracts-8.bilingual-pair-record",
+      "title": "README 双语配对与逐标题哈希记录",
+      "sources": [
+        {
+          "path": "packages/core/agent-loop/README.i18n.yaml",
+          "start": 1,
+          "end": 5,
+          "kind": "config"
+        },
+        {
+          "path": "packages/computer-use/README.md",
+          "start": 1,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/computer-use/README.zh.md",
+          "start": 1,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/agent-loop/README.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包 README 同时承担对外契约与内部维护说明。若英文与中文各自演进，同一包会出现两套不一致的合同；只靠“记得同步”无法证明两侧仍然对应。",
+      "triggers": [
+        "修改任一包 README 的英文正文",
+        "修改或补齐 README.zh.md",
+        "新增包 README 或新增语言版本",
+        "评审发现中英文描述不一致"
+      ],
+      "obligations": [
+        "范围内 README 必须成对存在：README.md、README.zh.md，以及记录两侧逐标题块哈希的 README.i18n.yaml。",
+        "英文页在标题下提供 `English | [中文](README.zh.md)` 切换行，中文页提供 `[English](README.md) | 中文`，且中文页链接指向 `.zh.md` 资源。",
+        "修改任一侧后必须把另一侧同步到同一语义，并重新记录一致性文件；不得只手改一侧。",
+        "一致性记录按标题路径（如 `/`、`/<slug>/summary`）分别保存 en 与 zh 的 16 位十六进制哈希；代码块与生成区域不计入。",
+        "生成记录必须由声明的命令重录，而不是手写哈希。"
+      ],
+      "actors": [
+        "owner: 包所有者/文档所有者",
+        "contributors: 改动包合同的作者; 翻译者",
+        "reviewers: 代码评审者; 文档评审者",
+        "automation: `pnpm run verify-translation-pairing --write <README.md>` 生成/更新 README.i18n.yaml；该命令是否在 CI 中作为阻断门禁执行，本域未取得证据。"
+      ],
+      "steps": [
+        "先改英文 README.md，形成唯一语义真源。",
+        "逐标题同步 README.zh.md：标题层级、章节顺序、锚点与结构化表格保持一致。",
+        "确认语言切换行及相对链接同时正确。",
+        "对该 README 运行 `pnpm run verify-translation-pairing --write <path>` 重录逐标题哈希。",
+        "评审时检查 i18n 文件包含全部标题键，且 en/zh 均有哈希；不要手工编辑生成块。"
+      ],
+      "enforcement": {
+        "mode": "generator-plus-review",
+        "implementation": "README.i18n.yaml 的头部声明配对规则与重录命令；键为标题 slug 路径，值为 en/zh 块哈希。",
+        "trust": "哈希记录能证明提交时两侧被一起重录，但不证明语义等价；生成器是否在 CI 中 fail 也不在本域证据内。",
+        "failure": "只改一侧会使配对记录过期；若门禁执行，则检查报差异；若不执行，则只能靠评审发现。",
+        "exceptions": "代码块、生成区域与不翻译的标识符不计入哈希；纯链接修正仍需重录受影响标题。"
+      },
+      "applicability": [
+        "when: 任何范围内包 README 或其中文对应页的新增、改写、删除章节。",
+        "preconditions: 存在可解析的标题结构; 仓库提供 verify-translation-pairing 脚本; README.i18n.yaml 与 README 同目录",
+        "inapplicable: 上游 vendored README（vendor/cordis、vendor/loader）没有中文页与 i18n 记录，不套用本机制。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.readme-kind-contract; package-contracts-8.limits-authority",
+        "crossDomain: documentation"
+      ],
+      "migration": {
+        "strategy": "先建立“英文真源 + 中文镜像 + 逐标题哈希”的三件套，再把配对检查接入提交/合并路径；不要先造检查器再补文档。",
+        "implementation": "为每个包 README 增加固定切换行；把哈希生成器写成单一命令；i18n 文件由命令独占写入；评审清单加入“i18n 键覆盖全部标题”。",
+        "requiredSupport": [
+          "稳定的标题 slug 规则",
+          "可重复的哈希生成器",
+          "英文/中文目录布局约定"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.bilingual-pair-record",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "对一对已同步的 README 运行重录命令，i18n 键集合等于两侧标题集合，en/zh 哈希均存在。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "中文页的切换行与相对链接在渲染后能跳回英文页。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只修改英文 Summary 而不改中文并重录，配对检查应报告该标题哈希不一致。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "手工增删 i18n 键但不改 README，检查应报告键覆盖不匹配。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "同步中文语义后重新运行 `--write`，差异消失且不残留旧哈希。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "逐标题哈希证明“两侧一起被重录”，不证明译文语义正确。",
+        "本域读取了 53 个 sidecar 的头部规则与生成结构，并全文读取了 53 个中文对应页；但仍未执行 `verify-translation-pairing`、未逐条核对哈希，也未证明 CI 阻断。",
+        "标题结构一致不等于段落内容一致；长段落仍可能漏译。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.readme-kind-contract",
+      "title": "包 README 的 frontmatter 类型与页面职责",
+      "sources": [
+        {
+          "path": "packages/computer-use/README.md",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/computer-use/README.md",
+          "start": 23,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/README.md",
+          "start": 23,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/identity/anonymous-user-id/README.md",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/identity/anonymous-user-id/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v2-to-v3/README.md",
+          "start": 39,
+          "end": 39,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "不同包在系统中承担不同角色（单包参考、bundle、包组地图、库）。若 README 不声明类型，读者无法判断该页应回答“怎么用”“怎么组合”还是“导出什么”，作者也容易把 bundle 写成库文档。",
+      "triggers": [
+        "新增包或包组",
+        "把库改造成 Cordis 插件，或反向改造",
+        "评审发现 README 结构与其包角色不符"
+      ],
+      "obligations": [
+        "每个 README 以 YAML frontmatter 开头，至少含 `description` 与 `kind`；`kind` 取 `package-reference`、`package-bundle`、`package-group` 或 `package-library`。",
+        "`package-group` 页以 `## Packages` 表列出子包、角色与 `ctx` 键，并链接各子包 README；它不复制子包契约。",
+        "`package-bundle` 页说明组合方式、默认内容、覆盖点与加载失败条件，并明确“不是可 import 的库”。",
+        "`package-reference` 页按“Use this package / Understand the implementation / Model Experience / Known Limitations and Deferred Work”组织，正文给可观察行为，内部实现折叠在 details 中。",
+        "`package-library` 页说明直接 import 的入口与生命周期；若没有 Cordis 挂载配置，必须明说。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 包作者; 文档作者",
+        "reviewers: 包评审者; 文档评审者",
+        "automation: frontmatter 被文档/目录消费者读取；本域未发现对 `kind` 取值做机器校验的检查器。"
+      ],
+      "steps": [
+        "先判定包角色：单包能力、组合层、包组索引、还是直接调用的库。",
+        "写 frontmatter：一句面向读者的 description，加正确的 kind。",
+        "按该 kind 的页面骨架组织正文，删除不属于该角色的内容。",
+        "包组页只保留子包表、相关文档与 Dev Note；bundle 页只保留组合与覆盖；库页只保留 import/生命周期。",
+        "评审时用“这页的首要问题是什么”校验 kind 与内容是否一致。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "README frontmatter 的 `kind` 字段与各类型页面的固定章节。",
+        "trust": "主要靠作者与评审；没有证据表明 `kind` 被 schema 校验。",
+        "failure": "kind 错标会使读者按错误预期阅读，并让包组页膨胀成实现文档。",
+        "exceptions": "极小的平台制品页（如 darwin-x64）只需说明制品边界与构建所有者，不强行补齐全部 reference 章节。"
+      },
+      "applicability": [
+        "when: 新增 README、改变包角色、或评审页面结构。",
+        "preconditions: 仓库对四种 kind 有稳定含义; 存在包组/bundle 的目录约定",
+        "inapplicable: 上游 vendored 文档没有本仓库的 frontmatter 约定，不适用。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.limits-authority; package-contracts-8.composition-layering",
+        "crossDomain: documentation"
+      ],
+      "migration": {
+        "strategy": "把 kind 当作契约而不是标签：先定义每种 kind 必须回答的问题，再写页面；不要用同一模板套所有包。",
+        "implementation": "在仓库标准中写明四种 kind 的必填章节和禁止内容；评审模板按 kind 分支；生成目录只读取 frontmatter，不靠正文猜测。",
+        "requiredSupport": [
+          "kind 枚举与语义表",
+          "每种 kind 的页面骨架",
+          "包组与 bundle 的目录布局"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.readme-kind-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "随机抽取一个 package-group 页，能在 Packages 表中找到全部子包与 ctx 键。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "package-library 页明确说明直接 import 的入口及是否存在 Cordis 挂载。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 bundle 写成可按包 import 的库用法，评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "package-group 页复制子包内部实现细节，评审应要求删除并改为链接。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "kind 错标后，改 frontmatter 并按正确骨架重排章节，保留原有可观察事实。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "`kind` 目前是书面约定；没有机器校验能阻止错标。",
+        "平台制品页与极小组件页存在合理的不完整骨架。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.limits-authority",
+      "title": "限制清单是当前约束，Dev Note 非权威",
+      "sources": [
+        {
+          "path": "packages/attachment/attachment/README.md",
+          "start": 116,
+          "end": 135,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-ralph/README.md",
+          "start": 159,
+          "end": 167,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 119,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction/README.md",
+          "start": 152,
+          "end": 163,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包 README 里的“限制”很容易被读成待办清单或营销保留，导致采用方把未实现能力当承诺，或把已交付边界当临时缺陷。维护者的开放问题也会与已交付合同混在一起。",
+      "triggers": [
+        "新增或修改 Known Limitations and Deferred Work",
+        "在正文承诺尚未实现的能力",
+        "把维护者开放问题写进正文",
+        "采用方询问某限制是否会近期消失"
+      ],
+      "obligations": [
+        "`Known Limitations and Deferred Work` 描述当前包约束，明确“不是任务积压/不是路线图”；不得在此承诺交付时间。",
+        "限制必须写清触发条件、可观察后果与可行的绕行或替代包；不要只写“不支持”。",
+        "`Dev Note` 折叠区是维护者工作上下文，明确非权威；已交付行为、限制与理由以正文、代码和链接的 Agent Note 为准。",
+        "开放问题只写在 Dev Note；一旦决定，应迁移到正文并删除过期条目。",
+        "已实现行为与未实现方向必须使用不同的语法位置（正文 vs Dev Note），不得混写。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 功能作者",
+        "reviewers: 包评审者",
+        "automation: 无自动语义检查；结构上依赖章节存在与评审阅读。"
+      ],
+      "steps": [
+        "逐条列出限制：现象、条件、影响、替代方案。",
+        "确认每条限制在正文或代码中有对应事实，而不是推测。",
+        "把未决方向移入 Dev Note，并标注“非权威”。",
+        "删除已解决条目；不要把历史修复叙事留在限制清单。",
+        "评审时区分“当前约束”和“未来计划”，发现承诺性措辞则要求改写。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "固定章节标题与措辞声明（“current package constraints, not a task backlog”）；Dev Note 的 details 折叠。",
+        "trust": "没有检查器验证语义；读者必须理解两块的权威差异。",
+        "failure": "把计划写进限制清单会让采用方误判可用性；把限制写成待办会掩盖真实边界。",
+        "exceptions": "纯实验包的 Dev Note 可保留较多开放方向，但仍不得作为已交付承诺。"
+      },
+      "applicability": [
+        "when: 任何包 README 的限制、延期工作、开放问题与维护者注记。",
+        "preconditions: README 有固定的限制章节与 Dev Note 区块",
+        "inapplicable: 包组索引页只需列出子包与路线级限制；若没有独立能力面，可不写逐条限制。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.readme-kind-contract",
+        "related: package-contracts-8.minimal-surface; package-contracts-8.experimental-opt-in",
+        "crossDomain: documentation; rationale-process-1"
+      ],
+      "migration": {
+        "strategy": "先区分“已交付边界”和“未决方向”，再决定写在正文还是 Dev Note；不要用同一列表承载两者。",
+        "implementation": "为标准章节写一句权威声明；为 Dev Note 加固定前缀“非权威”；评审清单加入“限制是否有可观察后果与替代方案”。",
+        "requiredSupport": [
+          "统一章节标题",
+          "评审问题清单",
+          "链接到拥有决策理由的 Agent Note"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.limits-authority",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "每条限制都能指出对应的可观察行为或代码路径，并给出替代方案。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Dev Note 中的开放问题没有被正文当作已交付能力引用。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "限制条目写“以后会支持”而没有当前行为描述，评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把维护者未决方案写进 Use this package，评审应要求移入 Dev Note。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "已决定的 Dev Note 条目迁移到正文，删除旧条目并更新受影响的限制。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "“当前约束”依赖作者如实描述，评审无法证明没有隐藏限制。",
+        "限制清单会随实现演进过期；没有自动比对实现与文档的检查。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.seam-split-single-provider",
+      "title": "能力 seam：定义、提供方与消费者分离且单一提供方",
+      "sources": [
+        {
+          "path": "packages/shell/shell/README.md",
+          "start": 56,
+          "end": 64,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/shell/README.md",
+          "start": 81,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/jobs/README.md",
+          "start": 71,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill/README.md",
+          "start": 99,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/terminal/README.md",
+          "start": 27,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-deepseek/README.md",
+          "start": 36,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "能力包若把接口、实现与调用方混在一起，替换后端会牵动所有调用方；同时挂载两个实现又会争用同一个 `ctx` 服务，产生隐式覆盖。",
+      "triggers": [
+        "新增能力族（shell、jobs、spill、terminal、compaction 等）",
+        "替换或并列挂载后端实现",
+        "调用方直接 import 具体实现",
+        "评审发现同一 ctx key 被注册两次"
+      ],
+      "obligations": [
+        "能力拆成 Service Definition（契约包）、Service Provider（实现包）与 Consumer（工具/UI）三角色；契约包不实现能力。",
+        "同一组合中每个能力只挂载一个提供方；第二个实现注册必须失败，而不是覆盖。",
+        "抽象服务类被直接实例化或加载时应抛错，避免注册一个空服务。",
+        "消费者只依赖契约包的 API 与 `ctx` key，不 import 具体实现。",
+        "提供方负责自身策略与资源，契约包只声明操作、词汇与生命周期边界。"
+      ],
+      "actors": [
+        "owner: 能力域所有者",
+        "contributors: 契约作者; 提供方作者; 消费者作者",
+        "reviewers: 架构评审者",
+        "automation: 运行时：重复适配器报 `DUPLICATE_ADAPTER`；抽象类直接加载抛错；重复服务注册使加载失败。"
+      ],
+      "steps": [
+        "先写契约：操作、请求/结果词汇、错误与生命周期。",
+        "实现提供方并只注册一个 `ctx` key。",
+        "让消费者依赖契约包与注入的服务，不依赖具体包。",
+        "用加载失败测试验证“第二个提供方”会被拒绝。",
+        "在 README 中写明最小组合与必须成对挂载的包。"
+      ],
+      "enforcement": {
+        "mode": "runtime-load-guard-plus-review",
+        "implementation": "`JobRegistry` 抽象服务直接加载抛错；`spill` 第二个实现加载失败；llm 重复适配器抛 `DUPLICATE_ADAPTER`；shell 组合只允许一个 provider。",
+        "trust": "加载期守卫能阻止重复注册；但“是否真的只应有一个提供方”仍是架构判断，靠评审。",
+        "failure": "重复注册会导致组合加载失败或服务被后写覆盖，具体取决于能力实现。",
+        "exceptions": "某些能力允许多个提供方按 scope 并存（如 MCP 客户端按作用域），但共享工具仍只注册一次。"
+      },
+      "applicability": [
+        "when: 设计或替换任何通过 `ctx` 暴露的能力服务。",
+        "preconditions: Cordis 风格的 service/fiber 模型; 每个能力有稳定 ctx key; 能区分契约包与实现包",
+        "inapplicable: 纯 UI 组件或一次性工具不必强行拆三角色；共享工具注册需按 scope 规则处理。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.scoped-registration",
+        "related: package-contracts-8.explicit-config-resolution; package-contracts-8.durable-log-authority",
+        "crossDomain: engineering; rationale-architecture-1"
+      ],
+      "migration": {
+        "strategy": "先固定 ctx key 与操作契约，再创建一个提供方，最后迁移消费者；不要先把现有实现包当接口用。",
+        "implementation": "建立 `contract/` 与 `provider/` 包边界；在契约包导出抽象类与类型；在提供方注册时检查重复；消费者只 import 契约包。",
+        "requiredSupport": [
+          "服务注册与加载失败测试",
+          "ctx key 清单",
+          "最小组合示例"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.seam-split-single-provider",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "最小组合只加载契约包与一个提供方，消费者调用成功。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "替换提供方而消费者代码不变，行为按新提供方契约工作。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "同时加载两个 shell executor 或两个 spill store，组合应在加载期失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "直接 new 抽象 `JobRegistry`，应抛错而不是得到空服务。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除多余提供方后重新加载，服务恢复且消费者不需要改代码。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "“单一提供方”是能力级约定，不是框架级全局约束；按 scope 并存的能力需要单独说明。",
+        "加载失败只能覆盖被实现的守卫，不能阻止设计上错误的拆分。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.scoped-registration",
+      "title": "贡献按 fiber/scope 注册并可整体撤销",
+      "sources": [
+        {
+          "path": "packages/client/ui-conversation/README.md",
+          "start": 31,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-workspace/README.md",
+          "start": 171,
+          "end": 176,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/remote-access/README.md",
+          "start": 29,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/deepseek-llm-api-extensions/README.md",
+          "start": 26,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-directory-picker-browse/README.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "插件向共享注册表添加 UI slot、策略、字段或事件监听时，如果注册不绑定到所有者生命周期，卸载会留下悬挂贡献；重复键又会静默覆盖或产生不确定顺序。",
+      "triggers": [
+        "向 slot 注册组件、菜单项或悬停按钮",
+        "注册访问策略、请求扩展字段或 locale/theme 贡献",
+        "插件卸载、HMR、slot 声明被替换",
+        "两个插件使用相同注册 id"
+      ],
+      "obligations": [
+        "注册必须是调用方 fiber 的 Cordis effect，返回幂等 disposer；fiber 销毁时贡献自动移除。",
+        "注册表对重复 key 抛错；保持注册顺序；贡献集合变化时重建既有 binding。",
+        "向由其他插件声明的 slot 注册时必须使用 `ctx.slots.inject()`，等待声明出现并在声明移除时取消贡献，恢复后重新注册。",
+        "作用域内注册只影响该 agent/session；全局与 agent-scoped 层分开合并。",
+        "为字段/名称预留独占所有权；重复或非法名称同步失败。"
+      ],
+      "actors": [
+        "owner: 注册表所有者（UI/服务包）",
+        "contributors: 插件作者",
+        "reviewers: 包评审者",
+        "automation: 运行时：重复键抛错；effect 作用域自动清理；`slots.inject()` 管理声明生命周期。"
+      ],
+      "steps": [
+        "确定贡献属于哪个 scope：全局、agent、session、slot 声明。",
+        "用 `ctx.effect()` 或 `ctx.slots.inject()` 包裹注册，保存 disposer。",
+        "为注册提供稳定 id 与明确顺序/优先级。",
+        "用重复 id 与卸载/恢复场景测试幂等性和重建。",
+        "在 README 中写明注册生命周期与拥有者。"
+      ],
+      "enforcement": {
+        "mode": "runtime-registry-guard",
+        "implementation": "`UiConversation.events/views` 拒绝重复键并返回幂等 disposer；`remoteAccess.registerPolicy` 是 fiber effect；扩展注册表按 fiber 预留字段；`slots.inject()` 绑定声明生命周期。",
+        "trust": "运行时能保证作用域清理与重复拒绝；但顺序、优先级与“该不该贡献”仍靠评审。",
+        "failure": "重复键使注册抛错；未用 inject 的贡献在声明被替换后消失且不恢复。",
+        "exceptions": "进程级注册（如 jobs registry、unscoped controller）可跨 fiber 存活，但必须显式说明其所有者与清理时机。"
+      },
+      "applicability": [
+        "when: 任何向共享注册表、slot、ledger、策略表或扩展字段表添加贡献的插件。",
+        "preconditions: 存在可识别的注册表与唯一键; 注册 API 支持 effect/disposer; slot 声明可被观察",
+        "inapplicable: 一次性进程级服务若不支持卸载，应明确其生命周期而不是伪造 effect 语义。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.seam-split-single-provider; package-contracts-8.extension-registries",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先给每个贡献定义键与作用域，再把注册包进 effect；不要依赖手工反注册。",
+        "implementation": "注册表拒绝重复键；slot 消费者统一走 `inject`；为贡献写卸载/恢复测试；在契约包导出注册类型。",
+        "requiredSupport": [
+          "稳定 key 命名规则",
+          "effect/disposer API",
+          "slot 声明生命周期"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.scoped-registration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "插件卸载后其 slot/菜单/策略贡献全部消失，其他插件贡献不受影响。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "slot 声明先移除再恢复，使用 inject 的贡献按顺序重新出现。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "同一注册表重复注册相同 key，应抛错而不是覆盖。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "未使用 inject 的贡献在声明替换后消失，评审应要求改为 inject。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正 key 或改用 inject 后重新注册，贡献恢复且无重复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "fiber effect 只能保证框架管理的资源；外部副作用（网络、文件）仍需提供方自行清理。",
+        "注册顺序与优先级冲突不会被自动判定为错误。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.explicit-config-resolution",
+      "title": "边界处显式解析配置、默认值与整体替换",
+      "sources": [
+        {
+          "path": "packages/shell/shell/README.md",
+          "start": 52,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 72,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-deepseek/README.md",
+          "start": 55,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-deepseek/README.md",
+          "start": 107,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/agent-loop/README.md",
+          "start": 46,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-ralph/README.md",
+          "start": 32,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/README.md",
+          "start": 43,
+          "end": 53,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "隐藏默认值、请求级覆盖与 patch 合并语义会让同一配置在不同层得到不同结果；调用方也无法在运行前知道实际上限。",
+      "triggers": [
+        "新增配置字段或默认值",
+        "profile/bundle patch 覆盖既有行",
+        "调用方传入 cwd、timeout、输出上限等可选参数",
+        "部署方修改模型、凭据、搜索或存储设置"
+      ],
+      "obligations": [
+        "在包边界提供 `resolve(request)` 步骤，把可选请求解析成含显式默认值与上限的 spec；执行函数不再二次补默认值。",
+        "README 必须给出字段、默认值与含义表；生成配置目录是字段的穷尽真源。",
+        "Patch 替换目标行的整个 `config`，不合并；覆盖时必须重述所有想保留的设置。",
+        "无效配置应在产生网络/文件副作用之前失败；可变字段与启动字段要区分。",
+        "调用级覆盖不得超过部署配置声明的上限（如 `maxRounds` 同时是默认值与上限）。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 配置字段作者; 部署方",
+        "reviewers: 包评审者",
+        "automation: 运行时 schema 校验；配置目录由生成器产出；加载期校验可拒绝无效候选。"
+      ],
+      "steps": [
+        "列出字段、默认值、边界与是否可变。",
+        "实现 resolve 步骤并在执行入口只接受已解析 spec。",
+        "为覆写写整体替换语义：新增 patch 时重述全部保留字段。",
+        "用无效配置、越界覆盖与并发请求测试失败路径。",
+        "把字段表与生成配置目录对齐，评审时检查穷尽性。"
+      ],
+      "enforcement": {
+        "mode": "runtime-validation-plus-generated-reference",
+        "implementation": "`ShellExecutor.resolve()`；llm-deepseek 配置校验与字段表；agent-loop 的 `maxParallelToolCalls` 易变字段；session-query 的 `openAt` 等字段；bundle patch 的整体替换。",
+        "trust": "运行时能拒绝非法值；但默认值是否合理、patch 是否重述完整仍靠评审与采用方测试。",
+        "failure": "非法配置在加载/首次操作失败；遗漏重述会让保留设置回到默认值。",
+        "exceptions": "部分能力有意允许 `openAt: never` 等禁用态；禁用仍是显式配置，不是隐式回退。"
+      },
+      "applicability": [
+        "when: 任何有可选字段、默认值、部署覆盖或 profile patch 的包。",
+        "preconditions: 存在 schema 与 resolve 边界; 配置目录可生成; patch 层可识别目标行",
+        "inapplicable: 无配置字段的纯库或平台制品不需要 resolve 步骤，但仍应说明无配置。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.composition-layering; package-contracts-8.failure-taxonomy",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先固定字段与默认值表，再把解析集中到一个入口，最后迁移调用方；不要在各实现里各自补默认值。",
+        "implementation": "引入 request/spec 两类型；execute 只接受 spec；为 patch 写“整体替换”说明与示例；把配置目录生成接入构建。",
+        "requiredSupport": [
+          "schema 校验库",
+          "配置目录生成器",
+          "patch 层语义文档"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.explicit-config-resolution",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "省略可选字段时，resolve 产出文档中声明的默认值与上限。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "调用级覆盖超过部署上限时被拒绝或截断为上限。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "传入非法枚举或负超时，加载/调用应在副作用前失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "patch 只写一个字段，未重述的字段按整体替换语义丢失，测试应显式暴露。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按报错修正字段并让 profile 重新加载后，请求恢复且旧配置不再生效。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "整体替换语义容易让采用方误以为会深度合并；文档必须反复强调。",
+        "字段表与生成目录可能漂移，需生成器检查。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.experimental-opt-in",
+      "title": "实验性能力默认关闭、显式启用",
+      "sources": [
+        {
+          "path": "packages/experimental/agent-team-profile/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/agent-team-profile/README.md",
+          "start": 104,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cot-translation-bundle/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/skill-badge/README.md",
+          "start": 34,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/client-ui-voice-input/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/terminal/README.md",
+          "start": 43,
+          "end": 43,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "实验能力若默认进入 shipped profile，会把不稳定协议、外部服务依赖或未验证平台行为变成所有用户的默认风险。",
+      "triggers": [
+        "新增 experimental 包或 bundle",
+        "考虑把实验能力加入默认 profile",
+        "评审 shipped profile 的默认行"
+      ],
+      "obligations": [
+        "实验性 bundle 在随附 profile 中默认关闭或完全不挂载；启用必须由部署方显式加行/安装。",
+        "README 必须写明“opt-in only”、所需前置包、启用命令与关闭方式。",
+        "实验包不得被默认 profile 隐式依赖；不能作为其他默认能力的唯一提供方。",
+        "实验状态的限制与外部依赖（网络端点、付费查询、平台）必须在正文写清。",
+        "从实验转为默认需要单独的决策与评审，不由 README 文案自行宣布。"
+      ],
+      "actors": [
+        "owner: 实验能力所有者",
+        "contributors: 功能作者; 部署方",
+        "reviewers: 发布评审者; 架构评审者",
+        "automation: 随附 profile 的行清单决定默认状态；没有自动“毕业”检查。"
+      ],
+      "steps": [
+        "把实验包放入 experimental 目录并声明其前置依赖。",
+        "确保默认 profile 不包含该行；提供显式启用示例。",
+        "在 README 写明 opt-in、外部依赖与限制。",
+        "用未启用状态验证：无该行时能力不存在且不影响基础 profile。",
+        "毕业时单独提交 profile 变更与评审，不直接改默认。"
+      ],
+      "enforcement": {
+        "mode": "composition-default-plus-review",
+        "implementation": "`agent-team-profile` 默认关闭；`cot-translation-bundle` shipped profiles 保持禁用；`skill-badge` 默认 composition 不声明；`tool-terminal` 被标为 experimental optional capability。",
+        "trust": "默认行清单能保证未启用；但“是否达到毕业标准”没有自动门槛，靠评审。",
+        "failure": "若实验包被默认 profile 隐式加载，用户会在不知情时承担外部依赖或不稳定行为。",
+        "exceptions": "若实验能力只是可选 UI 且无外部依赖，仍应显式启用，但限制可较轻。"
+      },
+      "applicability": [
+        "when: 任何标为 experimental 的包、bundle 或可选工具集。",
+        "preconditions: 仓库有 experimental 目录/标记; profile 由有序 bundle 列表组成; 存在显式启用命令",
+        "inapplicable: 已稳定的可选包（如 spill-local）可以默认不挂载，但不属于实验状态。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.composition-layering",
+        "related: package-contracts-8.limits-authority",
+        "crossDomain: release; adoption-policy"
+      ],
+      "migration": {
+        "strategy": "先把能力移出默认 profile，再补启用文档与前置依赖；毕业时再单独改默认。",
+        "implementation": "在 profile 行清单中保持禁用；README 写 opt-in 段与关闭方式；用“未启用”快照测试保护默认组合。",
+        "requiredSupport": [
+          "experimental 目录/标记",
+          "profile 行清单",
+          "启用/停用命令"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.experimental-opt-in",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "默认 profile 启动后不出现实验 bundle 的工具、UI 行或服务。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "按 README 显式安装并启用后，能力按文档出现。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "实验 bundle 被加入 shipped profile 默认行，发布评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "实验包被基础能力作为唯一提供方依赖，加载测试应失败或评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除默认行并重启 profile 后，实验能力消失，基础能力不受影响。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "“默认关闭”依赖 profile 行清单，不排除部署方手工加入。",
+        "没有自动的成熟度/毕业判定；实验状态可能长期滞留。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.owner-fencing",
+      "title": "按所有者会话/身份围栏资源访问",
+      "sources": [
+        {
+          "path": "packages/jobs/jobs/README.md",
+          "start": 38,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/jobs/README.md",
+          "start": 71,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-terminal/README.md",
+          "start": 10,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/terminal/README.md",
+          "start": 27,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/terminal-controller/README.md",
+          "start": 26,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/remote-access/README.md",
+          "start": 27,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/credentials-local/README.md",
+          "start": 113,
+          "end": 118,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Job/terminal/策略等资源 id 可预测或出现在工具输出里。若只靠“不要访问别人的 id”，同一进程内的其他 agent 就能读取或终止不属于它的工作。",
+      "triggers": [
+        "新增可被 agent 操作的后台资源（job、terminal、workspace、session）",
+        "把资源 id 暴露给模型",
+        "跨 agent 子会话或 fork",
+        "设计凭据与远程访问策略"
+      ],
+      "obligations": [
+        "每个资源在创建时记录 owner（通常是 Agent 会话 id）；所有读/控制操作都校验 owner，而不是只依赖不可猜测的 id。",
+        "工具层必须为执行中的 agent 自动填充 owner，禁止模型传任意 owner。",
+        "无 owner 的资源是全局资源，必须显式说明谁能访问及生命周期。",
+        "策略失败必须 fail closed：抛错/拒绝，而不是放行。",
+        "文件权限或“模型不知道路径”只能算威慑，不能宣称是安全边界；需要真正隔离时应换存储/提供方。"
+      ],
+      "actors": [
+        "owner: 能力域所有者",
+        "contributors: 工具作者; 策略作者",
+        "reviewers: 安全评审者",
+        "automation: 运行时 owner 校验；`remoteAccess` 对非 owner 逐个资源判定；终端/作业注册表按会话 id 围栏。"
+      ],
+      "steps": [
+        "为资源定义 owner 字段与默认值。",
+        "在所有入口（read/list/kill/write）统一校验 owner。",
+        "让工具在调用时注入当前 agent，而不是从参数读取 owner。",
+        "为无 owner 的全局资源写明确访问规则。",
+        "写拒绝测试：另一个 agent 的 id 即使已知也不能读/停。"
+      ],
+      "enforcement": {
+        "mode": "runtime-authorization",
+        "implementation": "`ctx.jobs` 以 owner session id 授权每次控制；`ctx.terminals` 精确 owner fencing；`remoteAccess` 对非 owner 做策略判定并 fail closed；`tool-terminal` 以执行 agent 为 owner。",
+        "trust": "运行时能阻止通过 API 的跨 owner 操作；但不能阻止同 UID 进程直接读文件（凭据 README 明确承认）。",
+        "failure": "未授权访问返回拒绝/错误；策略异常按拒绝处理，不泄漏资源。",
+        "exceptions": "owner 缺失的全局资源对任何调用者开放，直到服务销毁；这是显式设计而非漏洞。"
+      },
+      "applicability": [
+        "when: 任何把资源句柄/id 交给模型或跨 agent 共享的服务。",
+        "preconditions: 存在稳定的所有者身份（Agent/Session/Peer）; 所有入口汇聚到统一授权点",
+        "inapplicable: 纯读的公共静态资源（如前端静态资产）不需要 owner 围栏，但仍需路径/认证防护。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.failure-taxonomy; package-contracts-8.scoped-registration",
+        "crossDomain: engineering; supply-chain"
+      ],
+      "migration": {
+        "strategy": "先给资源加 owner，再迁移所有控制入口到同一授权函数；不要在不同操作里各写一套判断。",
+        "implementation": "把 owner 放进资源记录；工具层注入 agent；策略层返回 allow/deny 而非布尔猜测；为跨 owner 访问写负向测试。",
+        "requiredSupport": [
+          "所有者身份模型",
+          "统一授权 API",
+          "拒绝路径的日志与错误码"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.owner-fencing",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "owner agent 能读取/停止自己的 job/terminal，其他 agent 的同操作被拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "策略函数抛错时请求被拒绝而不是放行。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把另一个 agent 的 job id 传给 `job_output`，应返回未授权/不存在而不是内容。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "模型尝试伪造 owner 参数，工具层应忽略/拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "以正确 owner 重新调用后操作成功，且失败尝试不改变资源状态。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "同 UID 的进程仍可直接读文件；“路径不告知模型”只是威慑。",
+        "跨进程/跨重启的 owner 语义需要后端重新定义，不能直接复用进程内假设。",
+        "全局无 owner 资源没有隔离保证。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.durable-log-authority",
+      "title": "会话日志是权威，派生状态可重建",
+      "sources": [
+        {
+          "path": "packages/feedback/message-feedback/README.md",
+          "start": 50,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction/README.md",
+          "start": 71,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction/README.md",
+          "start": 93,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/README.md",
+          "start": 87,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/agent-loop/README.md",
+          "start": 75,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 1,
+          "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1,
+          "end": 1318,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1376,
+          "end": 1880,
+          "kind": "test"
+        }
+      ],
+      "problem": "当反馈、搜索索引、压缩结果或 UI 投影各自维护一份“当前状态”，重启、fork 或崩溃后就会出现多个真相；更糟的是把未提交状态当成已发生事实。",
+      "triggers": [
+        "新增需要跨重启保留的数据",
+        "增加搜索索引、缓存或投影",
+        "实现压缩/替换/反馈等会改变派生历史的操作",
+        "崩溃恢复与 fork"
+      ],
+      "obligations": [
+        "持久 Session 日志是权威；新数据以事件写入日志，由投影派生当前状态，不另建第二份权威存储。",
+        "派生索引（如 FTS）必须单独存放、可丢弃、可由日志重建，且不得写入权威存储。",
+        "改变表层历史的操作必须在日志中留下可检测的括号/标记；崩溃留下未配对标记而不是伪装成功。",
+        "日志只追加；修改通过替换事件表达；影子事件保留以便确定性重放。",
+        "接受的事实先写入日志，再让下一步从日志派生。",
+        "A derived read model over the append-only log must define effective-source reconciliation: live overlays are connection-local TEMP state dropped on reopen; a persisted read is observation-only and must not mutate the store; a live owner wins over persisted content for the same id.",
+        "Reconciliation must retry a bounded number of passes when live owners attach/replace, the persistence binding changes, or the snapshot population moves; unchanged generations are not re-read, deleted ids disappear, and a reopened index reloads when the underlying store differs even if opaque revisions collide.",
+        "A search cursor is bound to the request (scope, query, filters, limit and effective source generation); within-scope pages remain valid across unrelated changes, while a target or topology change invalidates with a typed stale/invalid cursor error. Cursors are opaque and out-of-range offsets are rejected. These are library/service continuations: the model-facing search/tool contract still exposes no hidden provider cursor, offset, page size or model-controlled limit; do not leak this cursor into a tool result.",
+        "A failed reconciliation must produce a typed failure rather than partial results; a source or SQLite transaction failure must not poison the next search."
+      ],
+      "actors": [
+        "owner: 持久化/会话域所有者",
+        "contributors: 功能作者",
+        "reviewers: 持久化评审者",
+        "automation: 持久化句柄、事件投影与重建逻辑；派生索引的应用 id/模式版本校验。"
+      ],
+      "steps": [
+        "定义事件类型与载荷，确认只追加。",
+        "实现投影并保证投影可由完整日志重建。",
+        "为跨事件操作加开始/结束标记，定义失败与孤儿标记的处理。",
+        "把缓存/索引放在独立存储，启动时按需重建。",
+        "用崩溃注入、fork、重启与重放测试验证一致性。"
+      ],
+      "enforcement": {
+        "mode": "runtime-persistence-contract",
+        "implementation": "`feedback/message-put` 事件与“no second store”；compaction 的 `compaction/start`/`compaction/end` 锁括号与唯一 surface 替换；session-query 的独立派生库与应用 id；agent-loop 在下一步前追加已接受事实。",
+        "trust": "运行时能保证写入路径与重建；但事件语义是否正确仍需评审与回放测试。",
+        "failure": "未配对标记表示上次操作未完成；派生索引损坏可删除重建，不影响权威日志。",
+        "exceptions": "纯 UI 瞬时状态可以只存在内存；一旦需要跨重启/跨 fork，就必须进入日志或明确标注为可丢弃。"
+      },
+      "applicability": [
+        "when: 任何跨重启、跨 fork 或需要可审计的数据；任何派生索引/缓存。",
+        "preconditions: 存在追加式会话日志; 投影注册表可按事件重建; 派生存储有独立路径/标识",
+        "inapplicable: 进程内 UI 布局、悬停状态等瞬时状态不需要日志化。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.seam-split-single-provider",
+        "related: package-contracts-8.failure-taxonomy; package-contracts-8.minimal-surface",
+        "crossDomain: rationale-architecture-2; testing"
+      ],
+      "migration": {
+        "strategy": "先确定权威日志与事件词汇，再把现有缓存/索引降级为派生；不要先迁数据再补重建。",
+        "implementation": "为每类数据定义事件与投影；把索引放到独立 DB 并写应用 id；实现全量重建命令；加崩溃/重放测试。",
+        "requiredSupport": [
+          "追加式日志与句柄",
+          "投影注册表",
+          "重建/校验工具"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.durable-log-authority",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "删除派生索引后重启，索引从权威日志完整重建且搜索结果一致。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "fork 后子会话保留继承前缀但新写入归属子会话，日志可独立重放。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把派生索引指向权威数据库路径，打开应被应用 id/表检查拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "压缩中途崩溃留下未配对 start，后续操作应报告 busy 而不是继续。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除损坏索引并重建后搜索恢复；权威日志未被修改。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "日志只追加会放大存储与扫描成本，需要单独保留策略。",
+        "删除当前反馈不等于删除历史；隐私擦除需要另外机制。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.failure-taxonomy",
+      "title": "稳定错误码、失败关闭与可恢复提示",
+      "sources": [
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 44,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 46,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-deepseek/README.md",
+          "start": 119,
+          "end": 119,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/README.md",
+          "start": 71,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/frontend-static/README.md",
+          "start": 48,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/remote-access/README.md",
+          "start": 42,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v2-to-v3/README.md",
+          "start": 49,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v2-to-v3/README.md",
+          "start": 120,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v2-to-v3/README.md",
+          "start": 132,
+          "end": 136,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 640,
+          "end": 760,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 895,
+          "end": 1110,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1570,
+          "end": 1880,
+          "kind": "test"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts",
+          "start": 1,
+          "end": 290,
+          "kind": "test"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 415,
+          "end": 534,
+          "kind": "test"
+        }
+      ],
+      "problem": "把不同原因的错误都变成“失败”会让调用方无法决定重试、修复配置还是放弃；把策略异常当放行则会造成安全漏洞；静默回退会掩盖真实故障。",
+      "triggers": [
+        "新增可能失败的 API/工具",
+        "实现策略、超时、网络或存储错误",
+        "评审错误处理与模型可见错误文本"
+      ],
+      "obligations": [
+        "使用稳定的错误码/分类（如 `FS_NOT_OBSERVED`、`FS_STALE_VERSION`、`TOOL_TIMEOUT`、`SESSION_QUERY_STALE_CURSOR`、HTTP 状态）并保留原始 cause。",
+        "策略判定异常必须 fail closed（拒绝/报错），不得静默放行。",
+        "错误文本必须给出可执行的恢复动作（重读、重试、修正配置），同时保留机器可读代码。",
+        "区分“正常业务结果”（非零退出、超时、取消）与“基础设施失败”（不可用路径、缺失 shell）；只有后者 reject。",
+        "不得用静默 SPA 回退或空结果掩盖缺失资源；缺失应显式 404/错误。",
+        "数据/格式准入必须整体失败关闭：不得把阶段的部分输出视为成功；未知事件、未审计成员或畸形块应拒绝整次迁移，且拒绝时保留源字节、不修复源/目标、不回退代次、不发布后继代。",
+        "Derived-search failures use stable typed codes for invalid config/filter/cursor, stale cursor, source conflict, persistence failure, index failure, aborted and not-found; callers distinguish invalid input (no retry) from stale/retryable state and infrastructure failure.",
+        "Non-Error failures (string rejection, non-Error toJSON throw, malformed snapshot object) must be normalized to Error instances before mapping; a stale backend rejection after source unmount is discarded rather than surfaced."
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 工具作者; 策略作者",
+        "reviewers: 包评审者; 安全评审者",
+        "automation: 运行时错误类型/状态码；部分工具把 provider 错误归一化为稳定 code；策略层拒绝。"
+      ],
+      "steps": [
+        "枚举失败类别并为每类分配稳定 code。",
+        "为每类定义调用方动作：重试、修复输入、换提供方、终止。",
+        "实现 fail-closed 的策略路径，并记录首次/聚合失败。",
+        "把错误文本与 code 分离：文本可本地化，code 稳定。",
+        "用注入故障测试错误路径与恢复提示。",
+        "为数据/格式准入定义整体拒绝边界，并验证拒绝后源字节、代次与后继代均未改变。"
+      ],
+      "enforcement": {
+        "mode": "runtime-error-contract-plus-review",
+        "implementation": "fs 策略的 `FS_NOT_OBSERVED`/`FS_STALE_VERSION`/`FS_NOT_FOUND`；timeout 的 `TOOL_TIMEOUT`；DeepSeek 的 `AUTH`/`QUOTA`/`RATE_LIMIT`/`CONTEXT_WINDOW_EXCEEDED`/`INVALID_REQUEST`/`SERVER`/`HTTP_<status>`/`TRANSPORT`/`ABORTED`/`TIMEOUT`/`REQUEST_EXTENSION`/`STREAM_CLOSED`/`MALFORMED_RESPONSE`/`EMPTY_RESPONSE`/`MISSING_CREDENTIAL`/`INVALID_CREDENTIAL`/`UNSUPPORTED_CONTENT`/`IMAGE_OFFLOAD_REQUIRED`；session-query 的 `SESSION_QUERY_*`；frontend-static 的 403/404/405；remote-access 的 `policy-failed`；session-format-v2-to-v3 的 `SessionFormatUnsupportedMigrationError` 与“整体拒绝、源字节不变、不发布后继代”。",
+        "trust": "运行时能产出 code；但 code 是否覆盖全部失败、错误文本是否可执行仍靠评审与测试。",
+        "failure": "未分类错误会让调用方误重试；策略异常若被吞掉会变成越权。",
+        "exceptions": "纯展示层可以用本地化文本替代 code，但必须保留可诊断日志。"
+      },
+      "applicability": [
+        "when: 任何面向模型、UI 或外部调用方的失败路径。",
+        "preconditions: 有统一错误类型或状态码约定; 调用方可以按 code 分支",
+        "inapplicable: 纯内部断言失败可只抛异常，不需要模型可见恢复提示。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.owner-fencing; package-contracts-8.explicit-config-resolution; package-contracts-8.observation-before-write; package-contracts-8.cooperative-timeout",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先列失败分类与调用方动作，再实现 code 与文本；不要先写 catch 再补语义。",
+        "implementation": "建立错误码表；策略异常统一转为拒绝；工具层把 provider 错误映射为稳定 code；为每类错误写恢复测试。",
+        "requiredSupport": [
+          "错误类型/码表",
+          "调用方分支约定",
+          "日志与 cause 链"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.failure-taxonomy",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "注入网络失败、超时与取消，分别返回不同 code 且保留 cause。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "按错误文本中的恢复动作操作后，同一请求成功。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "迁移阶段已产生部分输出但后续事件或 finish() 报错时，整次恢复不被报告为成功。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "策略函数抛错时请求被放行，负向测试应失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "缺失静态文件返回 200 SPA 页面，测试应要求 404。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "未知事件或未审计成员混入 V2 迁移输入时，整次迁移被拒绝且不发布后继代。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正配置或重读文件后重试成功，错误码不再出现。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "迁移拒绝后源字节保持不变；调用方改用受支持的已发布输入重新迁移，而不是就地修复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "稳定 code 需要长期兼容；重命名会破坏调用方分支。",
+        "错误文本的可执行性依赖具体工具，无法统一自动验证。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.minimal-surface",
+      "title": "最小能力面：不提供隐式回退或未声明操作",
+      "sources": [
+        {
+          "path": "packages/spill/spill/README.md",
+          "start": 82,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill/README.md",
+          "start": 135,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-conversation/README.md",
+          "start": 182,
+          "end": 184,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction/README.md",
+          "start": 157,
+          "end": 163,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-terminal/README.md",
+          "start": 175,
+          "end": 177,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-workspace/README.md",
+          "start": 222,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/shell/README.md",
+          "start": 135,
+          "end": 137,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "为了“方便”添加隐式回退、默认目标或未声明操作，会把不确定性藏进框架：调用方以为某事会发生，实际由未声明的兜底决定；能力边界也无法被测试。",
+      "triggers": [
+        "设计新服务 API 或工具 schema",
+        "考虑为缺失目标/缺失提供方加默认回退",
+        "评审 API 是否暴露了不该承诺的能力"
+      ],
+      "obligations": [
+        "契约包只暴露必要操作；不要为未被任何消费者需要的场景添加方法（如 spill 只有 `saveText`）。",
+        "没有注册目标时不得渲染隐式 fallback；没有配置时可显式无操作，但不能假装成功。",
+        "不可处理的输入/单元应明确报错或列为 out of contract，而不是截断、猜测或部分处理。",
+        "schema 不暴露未实现的能力（如终端无 TUI/键序列、无自动启动）。",
+        "删除/保留等危险操作若未实现，应通过“没有该 API”表达，而不是靠文档劝阻。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: API 设计者",
+        "reviewers: 架构评审者",
+        "automation: 类型/schema 层面缺少方法或字段；运行时缺失目标返回空/错误而不是默认值。"
+      ],
+      "steps": [
+        "列出消费者真正需要的操作，删除推测性 API。",
+        "为缺失目标/缺失提供方定义显式行为（空、错误、禁用）。",
+        "检查 schema 是否暴露未实现字段。",
+        "用“未注册/未配置”场景测试不出现隐式回退。",
+        "在限制清单写明 out of contract 的输入。"
+      ],
+      "enforcement": {
+        "mode": "api-shape-plus-review",
+        "implementation": "spill 的单一 `saveText` 与无检索/删除 API；ui-conversation 无隐式 fallback target；compaction 明确不可分单元；tool-terminal 无 TUI schema；ui-workspace 无 Session 删除；shell 无交互输入词汇。",
+        "trust": "缺少 API 是强约束；但“是否应该增加”仍是设计判断。",
+        "failure": "隐式回退会让错误状态显示为成功；未声明 schema 可避免模型调用不存在的能力。",
+        "exceptions": "为兼容旧数据可以保留只读路径，但必须标注 deprecated/兼容层，不能同时作为新写入路径。"
+      },
+      "applicability": [
+        "when: 设计服务契约、工具 schema、UI 回退与危险操作。",
+        "preconditions: 有明确的消费者与用例; API 可版本化",
+        "inapplicable: 内部辅助函数可以宽松，但不得泄漏为公共契约。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.limits-authority",
+        "related: package-contracts-8.failure-taxonomy; package-contracts-8.durable-log-authority",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先删推测性 API 与隐式回退，再为缺失场景补显式错误/禁用；不要用文档解释未实现行为。",
+        "implementation": "审查公开类型与 schema；为每个缺失场景写测试；在 README 限制清单列出 out of contract；危险操作保持无 API。",
+        "requiredSupport": [
+          "API 审查清单",
+          "缺失场景测试",
+          "限制清单模板"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.minimal-surface",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "没有注册任何 View 时，Conversation 不渲染任意默认 target。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "spill 调用方只能保存文本，无法通过公共 API 检索或删除。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为缺失静态文件返回默认页面而非 404，评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "为终端工具添加未文档化的 TUI 键序列字段，schema 评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除隐式回退后，调用方收到显式错误并按提示配置目标。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "最小 API 可能迫使调用方组合多个操作，增加使用成本。",
+        "“未实现”与“暂未实现”在外部看来相似，需要限制清单说明。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.composition-layering",
+      "title": "bundle/profile 分层组合与覆盖规则",
+      "sources": [
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 30,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 84,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 133,
+          "end": 136,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/agent-team-profile/README.md",
+          "start": 37,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/agent-team-profile/README.md",
+          "start": 61,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-workspace/README.md",
+          "start": 98,
+          "end": 104,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-directory-picker-browse/README.md",
+          "start": 28,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "profile 由多个 bundle patch 叠加。若不了解“按行覆盖、整体替换、后写胜出”的规则，作者会把 patch 当深合并，导致设置丢失；同一服务被两个提供方注册又会让 profile 加载失败。",
+      "triggers": [
+        "新增 bundle 或 profile",
+        "在 profile 中添加/覆盖插件行",
+        "为不同 surface 设不同默认值",
+        "组合可选 UI 拾取/目录流程"
+      ],
+      "obligations": [
+        "自定义 profile 以基础 bundle 为第一个 bundle；之后按需追加 bundle。",
+        "patch 按行 id 覆盖，后写胜出；每个 patch 条目替换目标行整个 config，必须重述想保留的字段。",
+        "不同 surface 的默认值放在该 surface 的 bundle，不放进共享 core。",
+        "同一 `ctx` 服务只能由一个提供方注册；同时挂载会双重注册的包应使 profile 加载失败。",
+        "bundle 的运行时内容是 patch 文档；它不导出可 import 的库 API。"
+      ],
+      "actors": [
+        "owner: bundle/profile 所有者",
+        "contributors: profile 作者; 包作者",
+        "reviewers: 组合评审者",
+        "automation: 加载期重复服务注册失败；patch 行覆盖由加载器按 id 执行；base 测试检查 manifest 与平台门控。"
+      ],
+      "steps": [
+        "先写最小 profile：package.json 的 `dsh.profile.bundles` 首个为基础 bundle。",
+        "需要新增能力时追加 bundle 或用 `dsh plugin add`。",
+        "覆盖某行时写完整 config，不假设合并。",
+        "确认没有两个提供方注册同一 ctx key。",
+        "用加载测试验证 profile 能启动、覆盖生效、移除 bundle 后回退。"
+      ],
+      "enforcement": {
+        "mode": "runtime-load-failure-plus-tests",
+        "implementation": "base 的 patch 整体替换与平台门控；`dsh-fs-local` 与 sandboxed provider 同时挂载使 profile 失败；agent-team patch 依赖 base 的行 id。",
+        "trust": "加载失败能阻止明显冲突；但“覆盖是否重述完整”只能靠评审和 diff。",
+        "failure": "双重注册或缺失 base 行导致 profile 无法加载；遗漏重述导致设置回默认。",
+        "exceptions": "mode 专属 bundle 可以重复声明完整配置，以保持每行只有一个 bundle 层。"
+      },
+      "applicability": [
+        "when: 任何 profile/bundle 的新增、覆盖或平台分支。",
+        "preconditions: profile 由有序 bundle 列表组成; patch 支持按行 id 覆盖; 加载器能检测重复服务",
+        "inapplicable: 单包直接组合（无 profile）不需要 bundle 规则，但仍受“一个 ctx key 一个提供方”约束。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.seam-split-single-provider",
+        "related: package-contracts-8.explicit-config-resolution; package-contracts-8.experimental-opt-in",
+        "crossDomain: adoption-policy; engineering"
+      ],
+      "migration": {
+        "strategy": "先把共享 core 与 surface 默认值分开，再写最小 profile，最后加覆盖；不要从现有大 profile 复制。",
+        "implementation": "建立 bundle 目录与 patch 模板；在评审中 diff 目标行完整 config；为双重注册写加载失败测试；记录每个 surface 的 bundle。",
+        "requiredSupport": [
+          "profile schema",
+          "bundle patch 模板",
+          "加载失败测试"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.composition-layering",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "最小 profile 只列基础 bundle，能启动并具备文档声明的核心能力。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "追加一个 bundle 后其行生效，移除后回退到基础行为。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "同时挂载 sandboxed 与 plain filesystem provider，profile 加载应失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "patch 只写一项 config 导致其他设置丢失，评审应要求重述完整 config。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除冲突提供方或补全 config 后重新加载，profile 启动且目标设置保留。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "patch 的整体替换语义容易误用；没有自动合并提示。",
+        "bundle 顺序与行 id 是隐式契约，重命名行会破坏下游 patch。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.test-support-harness",
+      "title": "测试支持包只提供骨架，测试拥有装配与清理",
+      "sources": [
+        {
+          "path": "packages/test-support/agent-loop-testkit/README.md",
+          "start": 12,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/agent-loop-testkit/README.md",
+          "start": 75,
+          "end": 79,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/agent-loop-testkit/README.md",
+          "start": 91,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 12,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 71,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 81,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 95,
+          "end": 98,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "每个测试重复搭建服务拓扑会掩盖装配错误；把生产行为替换成过度宽松的 stub 又会失去对持久事件、恢复与声明的覆盖。快照测试若没有封闭清单与守卫，会把漂移记录成“预期”。",
+      "triggers": [
+        "新增 agent-loop 测试或消费方测试",
+        "引入快照/回放测试",
+        "测试需要持久 Inbox、恢复或声明语义",
+        "夹具与 writer 输出更新"
+      ],
+      "obligations": [
+        "测试支持包只共享必要前置依赖与生产 harness；adapter、可选插件、加载顺序与 context 清理由测试自己拥有。",
+        "需要持久事件/投影/claim 语义时使用生产 harness；只编辑队列时用 process-local stub；不得用 stub 冒充持久行为。",
+        "测试结束必须 dispose 所属 context，让 Agent 达到静止并回卷 scoped 注册。",
+        "快照目录必须有封闭 manifest、父/子命名与版本规则；record/refresh 不得重命名或删除已完成的 generation。",
+        "夹具守卫必须在比较前拒绝孤儿目录、缺文件、重复 pin、未清洗的 prompt/schema 等漂移。"
+      ],
+      "actors": [
+        "owner: 测试基础设施所有者",
+        "contributors: 测试作者",
+        "reviewers: 测试评审者",
+        "automation: harness 创建真实 Agent；快照 suite 的 fixture guard 在比较前失败；record/replay/refresh 模式由环境变量选择。"
+      ],
+      "steps": [
+        "判定测试是否需要生产行为；选择 harness、可变 stub 或 fail-fast stub。",
+        "按固定顺序挂载依赖，在创建 Agent 前注册 load-order-sensitive 插件。",
+        "写场景表与 fixtures 目录，调用一次 suite factory。",
+        "确保测试拥有 adapter、可选插件与 context 清理。",
+        "运行 fixture guard；更新快照时保留旧 generation，除非已审阅替换。"
+      ],
+      "enforcement": {
+        "mode": "test-harness-plus-fixture-guard",
+        "implementation": "`mountAgentLoopTestDependencies` 固定六服务顺序；`mountAgentLoopTestHarness` 暴露生产 claim；`session-snapshot` 的封闭 manifest、身份规范化、fixture guard 与 record/refresh 规则。",
+        "trust": "guard 能在比较前拒绝结构漂移；但测试是否真正覆盖业务语义仍靠测试作者。",
+        "failure": "缺 adapter 时测试失败；stub 用于持久语义会漏测；快照漂移被 guard 拒绝。",
+        "exceptions": "探针式测试可以绕过 helper 直接装配，以验证注入失败或部分拓扑。"
+      },
+      "applicability": [
+        "when: 包/集成/快照测试需要共享装配或录制回放。",
+        "preconditions: 测试运行器支持 fixture 目录; 服务拓扑可编程挂载; 有 record/replay 数据源",
+        "inapplicable: 纯函数单元测试不需要服务 harness 或快照套件。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.scoped-registration; package-contracts-8.durable-log-authority",
+        "crossDomain: testing"
+      ],
+      "migration": {
+        "strategy": "先抽出最小依赖顺序与生产 harness，再让测试显式声明 adapter/插件/清理；快照先建 manifest 与守卫，再录数据。",
+        "implementation": "提供 dependency helper 与 harness；stub 明确能力边界；suite factory 只接受场景表；record 模式单独运行并保留旧 generation。",
+        "requiredSupport": [
+          "测试运行器",
+          "服务拓扑 helper",
+          "fixture 守卫与规范化器"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.test-support-harness",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "使用生产 harness 的测试能观察 durable inbox 事件与 claim 行为，并在 dispose 后无残留注册。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "快照 suite 在 replay 模式对已提交 fixtures 比较通过且无写入。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "用 process-local stub 冒充持久 inbox，测试应无法通过持久事件断言。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除一个 fixture 文件或留下孤儿场景目录，fixture guard 应在比较前失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正 fixture 或按 record/refresh 流程生成新 generation 后，suite 通过且旧 generation 未被静默删除。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "测试支持包不提供 adapter 默认，测试必须自己注册；漏注册会表现为运行失败。",
+        "快照 harness 要求 raw JSONL；压缩日志无法采集。",
+        "本域未执行任何测试，以上为结构合同而非通过证据。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.platform-native",
+      "title": "平台差异显式化与原生制品边界",
+      "sources": [
+        {
+          "path": "native/system/packages/darwin-x64/README.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 88,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/credentials-local/README.md",
+          "start": 113,
+          "end": 118,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/frontend-static/README.md",
+          "start": 64,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/fs-ssh/README.md",
+          "start": 67,
+          "end": 72,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "跨平台包经常假设 POSIX 路径、文件权限或 shell；原生制品又容易把构建脚本和加载器混进发布物。差异若不在包里显式表达，用户会在运行时才遇到不可解释的失败。",
+      "triggers": [
+        "新增平台专用包或原生 addon",
+        "处理 Windows 路径/权限/终端",
+        "为主要平台提供不同执行器",
+        "远程文件系统或 SSH 传输"
+      ],
+      "obligations": [
+        "平台专用包必须声明制品内容与构建/验证所有者；原生包不得夹带 JS loader 或安装构建脚本，除非明确需要。",
+        "平台分支在组合层用显式 `disabled` 表达式或双行互斥表达，避免同时挂载两套执行器。",
+        "文件权限检查在支持的系统上执行，在无法检查的系统上跳过并说明，不得伪造通过。",
+        "路径拼接使用平台分隔符而非硬编码 `/`，否则合法子路径会被误判。",
+        "远程/受限文件系统必须写明字节上限、缺失能力（如 watch）与错误语义。"
+      ],
+      "actors": [
+        "owner: 平台/原生包所有者",
+        "contributors: 构建工程师; 包作者",
+        "reviewers: 平台评审者; 安全评审者",
+        "automation: 原生工作流构建并验证安装产物；加载期平台门控；POSIX 权限检查；路径规范化。"
+      ],
+      "steps": [
+        "列出目标平台与制品内容。",
+        "在组合层为每平台只启用一套执行器。",
+        "实现平台相关检查并写明跳过条件。",
+        "用各平台路径/权限/缺失能力测试失败语义。",
+        "在 README 写平台限制与构建所有者。"
+      ],
+      "enforcement": {
+        "mode": "build-ownership-plus-runtime-checks",
+        "implementation": "darwin-x64 只提供 `bin/system.node`，由 native workflow 构建并验证；base 用 `disabled: !!js process.platform === 'win32'` 门控 shell 行；credentials 在 POSIX 拒绝他人可读文件；frontend-static 用 `sep` 检查；fs-ssh 明文 8 MiB 与无 watch。",
+        "trust": "构建与加载门控能阻止错平台产物；但平台行为仍可能在未测平台失败。",
+        "failure": "权限检查失败会拒绝加载；路径误判会 403；远程能力缺失会显式报错。",
+        "exceptions": "Windows 没有可检查的文件 mode，检查跳过；这是明示的不可验证点。"
+      },
+      "applicability": [
+        "when: 任何跨平台包、原生 addon、文件系统提供方或平台专用组合行。",
+        "preconditions: 有明确的平台矩阵; 能在组合层门控行; 有平台专用测试或构建验证",
+        "inapplicable: 纯 TypeScript 且不接触平台 API 的包不需要平台门控。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.composition-layering; package-contracts-8.failure-taxonomy",
+        "crossDomain: engineering; release"
+      ],
+      "migration": {
+        "strategy": "先列平台矩阵与制品边界，再实现门控与检查；不要在共享代码里用运行时 if 掩盖组合错误。",
+        "implementation": "为每个平台建 bundle/行；原生包只发布构建产物并记录构建工作流；为路径/权限/远程限制写测试与文档。",
+        "requiredSupport": [
+          "平台矩阵",
+          "原生构建流水线",
+          "平台专用测试环境"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.platform-native",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在 macOS/Linux 上只挂载 bash 行，在 Windows 上只挂载 pwsh 行，另一套被 disabled。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "POSIX 上他人可读的凭据文件被拒绝加载并提示 chmod 600。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Windows 上同时启用 bash 与 pwsh 两套行，profile 不应加载或测试应失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用 `/` 判断 Windows 子路径导致合法文件被 403，测试应暴露。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正权限或切换到正确平台行后，加载与访问恢复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未执行任何平台构建或跨平台运行；平台结论来自 README 声明。",
+        "Windows 文件权限无法用 POSIX mode 检查，安全判断存在平台缺口。",
+        "远程文件系统的 watch/大文件限制只能靠调用方绕行。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.extension-registries",
+      "title": "扩展注册表：命名空间、回退链与失败隔离",
+      "sources": [
+        {
+          "path": "packages/client/locale/README.md",
+          "start": 38,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/locale/README.md",
+          "start": 64,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-theme/README.md",
+          "start": 40,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/deepseek-llm-api-extensions/README.md",
+          "start": 26,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/skill-badge/README.md",
+          "start": 67,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/mcp/mcp-resources/README.md",
+          "start": 57,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-title-first-prompt-llm/README.md",
+          "start": 10,
+          "end": 14,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "插件需要向 locale、theme、provider 请求字段、skill、MCP 资源或标题策略添加内容。若没有命名空间、回退终点与重复检测，扩展会互相覆盖；一个扩展失败还可能拖垮整条请求。",
+      "triggers": [
+        "新增语言包、主题、provider 字段或标题提供方",
+        "注册 skill/MCP 资源等共享能力",
+        "扩展准备/接受阶段失败",
+        "卸载或替换扩展"
+      ],
+      "obligations": [
+        "扩展必须使用带命名空间的稳定标识（locale 用类型化 namespace，theme 用 id，DeepSeek 字段用声明合并的 field）。",
+        "注册时做同步校验：重复 id、未知 fallback、循环、非法名称直接失败。",
+        "定义回退链并确保终止于默认（locale 终止于 `en`）；查找按链走，不静默返回空。",
+        "扩展注册绑定生命周期；移除后不得留下半注册状态。",
+        "单个扩展准备失败应被隔离：该字段/提供方被省略并记录首次失败，其他扩展继续；取消应停止等待。"
+      ],
+      "actors": [
+        "owner: 扩展点所有者",
+        "contributors: 扩展作者",
+        "reviewers: 包评审者",
+        "automation: 运行时注册校验；prepare/accept 的并发与失败隔离；MCP 按 scope 解析服务器。"
+      ],
+      "steps": [
+        "定义扩展点的 key 空间、类型与回退规则。",
+        "实现注册 API，拒绝重复/非法/循环。",
+        "为每次请求快照已注册扩展，并隔离单项失败。",
+        "让查找/渲染明确走回退链或报错。",
+        "用重复、循环、未知 fallback、单扩展抛错与卸载测试边界。"
+      ],
+      "enforcement": {
+        "mode": "runtime-registry-validation",
+        "implementation": "locale 要求完整 `zh`/`en` 字典并校验 fallback 终止于 `en`；theme 按注册顺序折叠 alias 覆盖；DeepSeek 扩展 `register` 同步拒绝重复/非法名，prepare 失败仅省略该字段；skill-badge 为不可变单 skill provider；MCP 首个 scope provider 注册共享工具。",
+        "trust": "运行时能保证命名与失败隔离；但扩展内容是否正确、覆盖是否完整仍靠评审。",
+        "failure": "重复/循环注册失败；单 provider prepare 抛错只丢该字段；所有 provider 都失败时请求可能缺字段。",
+        "exceptions": "第三方主题只覆盖同名 alias，不保证覆盖集完整；这是明示的扩展点限制。"
+      },
+      "applicability": [
+        "when: 设计任何可由插件扩展的注册表或 provider 表。",
+        "preconditions: 有稳定 key 空间; 有默认/回退值; 注册与请求处理解耦",
+        "inapplicable: 封闭枚举或单一实现的能力不需要扩展注册表。"
+      ],
+      "relationships": [
+        "dependsOn: package-contracts-8.scoped-registration",
+        "related: package-contracts-8.seam-split-single-provider; package-contracts-8.failure-taxonomy",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先定义 key 空间与回退终点，再实现注册校验，最后接请求期快照与失败隔离。",
+        "implementation": "为每类扩展写类型化 namespace/id；注册即校验；prepare 用快照并聚合失败；查找显式走回退；卸载清理注册。",
+        "requiredSupport": [
+          "类型化 key 空间",
+          "回退链定义",
+          "注册校验与失败隔离测试"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.extension-registries",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "注册一个新语言包后，其命名空间按 fallback 链解析，缺失键回退到 `en`。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "一个 DeepSeek 扩展 prepare 抛错时，其他字段仍被发送且请求继续。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "注册重复 locale id 或循环 fallback，注册应同步失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "两个扩展声明同一 DeepSeek 字段，第二个注册应失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "移除冲突扩展或修正 fallback 后重新注册，查找恢复且无残留。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "失败隔离意味着请求可能缺少某个扩展字段，调用方需能接受该降级。",
+        "第三方主题覆盖集可能不完整，没有完整性校验。",
+        "本域未执行注册/请求测试。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.observation-before-write",
+      "title": "写前观察与版本新鲜度门（read-before-write）",
+      "sources": [
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 28,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 40,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 62,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 74,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 78,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-observation-policy/README.md",
+          "start": 126,
+          "end": 129,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "没有观察记录的写或编辑会盲覆盖并发修改；把观察缓存持久化、或让策略自己做文件 I/O，会把陈旧视图当成授权；把策略做成 provider service 又会造成卸载时工具断裂。",
+      "triggers": [
+        "工具可以覆盖或编辑已有文件",
+        "多个 agent 或会话可能并发修改同一文件",
+        "会话恢复后继续编辑",
+        "为写操作增加权限、审计或沙箱层"
+      ],
+      "obligations": [
+        "覆盖已有文件的 write 与 edit 必须要求同一会话先读取目标；未观察目标拒绝并返回 `FS_NOT_OBSERVED`。",
+        "变更必须携带观察到的版本；文件自读取后变化时拒绝并返回 `FS_STALE_VERSION`，提示重新读取后重试。",
+        "读取不存在的路径记录“确认不存在”，允许受保护的创建；创建必须使用 `createIfAbsent` 之类原子操作，不能覆盖并发创建者。",
+        "观察记录按 owner 会话隔离且不跨会话持久化；恢复的会话必须重新读取目标。",
+        "策略应作为 `fs/*` 事件门而非 provider service：不注册 `ctx.fsPolicy`、不做自己的文件 I/O，由 provider 执行原子新鲜度检查。",
+        "intent 槽只能有一个 decider，按注册顺序 first-wins；权限、审计、沙箱等分层拦截应挂在 `tools/execute`，不要争抢该槽。",
+        "明确边界：无 agent 会话的 actor 无法满足策略；直接调用 `ctx.fs` 的读取不产生观察；窗口读取只证明版本新鲜，不等于全量视图完整。"
+      ],
+      "actors": [
+        "owner: 部署或组合所有者",
+        "contributors: 策略插件作者; 文件工具作者; provider 作者",
+        "reviewers: 安全评审者; 文件系统子系统评审者",
+        "automation: 插件在 `fs/write-intent`/`fs/edit-intent` 槽执行 gate；provider 做版本比较与创建原子性；工具把拒绝归一化为模型可读错误并保留 code/cause。"
+      ],
+      "steps": [
+        "定义观察记录状态：unseen、absent、present@version，键为 owner 会话加目标路径。",
+        "在 write-intent 把 unseen/absent 映射为 `createIfAbsent`，present 映射为 `replaceIfVersion`。",
+        "在 edit-intent 拒绝 unseen/absent，其余把观察版本作为 compare-and-swap 基准。",
+        "在 observed 事件同步记录成功变更后的状态，不做额外 I/O。",
+        "将策略注册为 intent 槽的第一个 decider；卸载或重启时丢弃观察状态，恢复会话重新读取。",
+        "在模型侧工具归一化错误文本但保留 code 与 cause；测试 unseen、stale、absent、并发创建四条路径。"
+      ],
+      "enforcement": {
+        "mode": "runtime-guard-plus-composition-convention",
+        "implementation": "`dsh-fs-observation-policy` 的 `fs/write-intent`、`fs/edit-intent`、`fs/observed` 监听器；错误码 `FS_NOT_OBSERVED`、`FS_STALE_VERSION`、`FS_NOT_FOUND`；provider guard `createIfAbsent`/`replaceIfVersion`；观察记录为 owner-to-target WeakMap。",
+        "trust": "挂载后运行时能拒绝未观察或过期变更，但“先加载策略再加载工具”“策略占住首个 decider”是组合约定，不是事件强制。",
+        "failure": "未挂载策略就没有读前写保护；持久化观察或直接修改 provider 会绕过 gate；槽被其他 decider 抢占会让策略静默失效。",
+        "exceptions": "非 agent 调用者的写入总走 `createIfAbsent`，不能覆盖已有文件；窗口读取被接受为版本新鲜；直接 `ctx.fs` 读取不计数。"
+      },
+      "applicability": [
+        "when: 工具或服务可以覆盖或编辑已有文件，且并发修改或会话恢复会带来盲覆盖风险。",
+        "preconditions: provider 支持版本/CAS 或至少原子创建; 有 owner 会话标识; 工具通过统一 intent 事件派发写或编辑",
+        "inapplicable: 只追加、不覆盖的写入，或完全不允许 agent 修改已有文件的部署；若 provider 无版本能力，需要另行实现原子比较而不是假装满足。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.failure-taxonomy; package-contracts-8.seam-split-single-provider; package-contracts-8.minimal-surface",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先实现观察记录与 provider 版本 guard，再把策略挂到 intent 槽；不要把策略做成 service，也不要缓存跨会话。",
+        "implementation": "为 write/edit 定义 intent 事件与观察事件；引入版本 guard；注册单 decider；在工具层统一错误包装；用并发创建与外部修改测试门禁。",
+        "requiredSupport": [
+          "provider 版本或原子创建能力",
+          "intent/observed 事件词汇",
+          "owner 会话身份",
+          "模型侧错误包装"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.observation-before-write",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "先读取再编辑且文件未变时，编辑成功，观察记录被更新。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "未读取目标直接覆盖或编辑，应返回 `FS_NOT_OBSERVED` 并拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "读取后文件被外部修改，编辑应返回 `FS_STALE_VERSION` 而不是覆盖。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按提示重新读取后重试成功；读取缺失文件后 `createIfAbsent` 可创建，且不覆盖并发创建者。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "观察状态不跨会话持久化，恢复会话必须重读。",
+        "直接 `ctx.fs` 读取不会记录观察，可能反复触发 `FS_NOT_OBSERVED`。",
+        "窗口读取被接受为全文件覆盖的授权，弱于全量视图规则。",
+        "非 agent actor 无法覆盖已有文件；这是设计边界而非缺陷。",
+        "首 decider 约定没有事件级强制，误配会静默绕过。"
+      ]
+    },
+    {
+      "id": "package-contracts-8.cooperative-timeout",
+      "title": "协作式超时：工具声明预算、取消结算后返回超时",
+      "sources": [
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 32,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 46,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 62,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 73,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 104,
+          "end": 104,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/guard/timeout-policy/README.md",
+          "start": 121,
+          "end": 122,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "任意工具无法被安全硬停；若超时结果在取消结算前就返回，会掩盖仍在运行的工作；全局统一预算会把不该截断的工具截断；嵌套超时若共享分类会把外层取消误读成本层超时；信号替换后不恢复会污染后续监听器。",
+      "triggers": [
+        "模型调用的工具可能长时间运行",
+        "工具已声明并遵守 `exec.signal`",
+        "设计重试、取消或超时语义",
+        "多个 `tools/execute` 包装器组合"
+      ],
+      "obligations": [
+        "超时是协作式的：只对声明了 `timeoutMs` 且遵守 `exec.signal` 的工具生效；不得宣称能硬停工具。",
+        "只有在下游响应取消且 `next()` 结算后才返回超时错误；错误结果为 `TOOL_TIMEOUT`，文本为 `Error: tool call timed out after <ms>ms`；按时完成的调用保持不变。",
+        "预算属于工具定义/注册表：从 `ToolDefinition.timeoutMs` 读取，缺失或工具名错误时原样委托；不提供全局统一默认值。",
+        "超时分类必须按本包装器的 code 限定，嵌套的外层 deadline 应被读作普通上游取消，而非本层超时。",
+        "派发时把派生的 deadline 信号换到 `exec` 上，并在 `finally` 恢复调用方信号；`tools/post-execute` 监听器不得看到本插件的可能已中止信号。",
+        "多个 `tools/execute` 监听器按注册顺序决定语义：超时注册在外层覆盖整个重试操作，注册在内层覆盖每次尝试；必须在部署中明确。",
+        "明确限制：忽略信号的工具有超时也无结果、调用方一直等待；未声明预算的工具永不被截断。"
+      ],
+      "actors": [
+        "owner: guard 或部署所有者",
+        "contributors: 工具作者; 包装器作者",
+        "reviewers: 包评审者; 工具子系统评审者",
+        "automation: `tools/execute` 包装器读取注册表中的 `timeoutMs`，派发时替换信号，结算后把结果映射为 `TOOL_TIMEOUT`，并在 `finally` 恢复原信号。"
+      ],
+      "steps": [
+        "让每个长耗时工具在 `ToolDefinition` 声明 `timeoutMs`，并实现 `exec.signal` 取消。",
+        "在 `tools/execute` 包装器中从注册表读取预算；未声明则直接委托。",
+        "用 `deadline(exec.signal, timeoutMs, TOOL_TIMEOUT)` 构建派生信号，派发时替换、`finally` 恢复。",
+        "用 `timeoutOf(signal, 'TOOL_TIMEOUT')` 限定分类，避免嵌套外层 deadline 被误判。",
+        "在取消结算后用结构化错误替换结果；按时完成的调用原样通过。",
+        "按重试语义选择包装器注册顺序，并测试外层/内层两种组合。",
+        "测试忽略信号的工具、未声明预算的工具、按时完成与超时后重试。"
+      ],
+      "enforcement": {
+        "mode": "runtime-wrapper-plus-tool-declaration",
+        "implementation": "`@deepseek-ai/dsh-tool-call-timeout-policy`；`dsh-timeout` 的 `deadline`/`timeoutOf`；`TOOL_TIMEOUT` 分类码；`tools/execute` 监听器；`exec.signal` 替换与恢复；`ctx.tools.get(exec.name, exec.agent)?.timeoutMs`。",
+        "trust": "对已声明预算且遵守取消的工具，运行时能在结算后返回超时；工具是否真正响应取消、调用方是否愿意等待，无法由包装器保证。",
+        "failure": "工具忽略信号会挂住；误加全局默认会截断不该截断的工具；分类不限定会误读嵌套取消；信号不恢复会污染后续监听器。",
+        "exceptions": "未声明 `timeoutMs` 的工具原样委托；需要硬停的工具体系不适合本机制；`bash`/`read`/`write`/`edit` 默认没有预算。"
+      },
+      "applicability": [
+        "when: 模型可调用长耗时工具，工具遵守 `exec.signal`，且团队接受“取消结算后才报超时”的语义。",
+        "preconditions: 工具定义可声明 `timeoutMs`; 工具实现响应 `exec.signal`; 存在统一的 `tools/execute` 包装点",
+        "inapplicable: 需要到点硬杀进程、或希望所有工具共享一个全局预算的部署；这类需求应使用进程级终止或其他机制，而不是假装本包装器能硬停。"
+      ],
+      "relationships": [
+        "related: package-contracts-8.failure-taxonomy; package-contracts-8.composition-layering; package-contracts-8.minimal-surface",
+        "crossDomain: engineering"
+      ],
+      "migration": {
+        "strategy": "先让工具声明预算并响应取消，再实现结算后映射与信号恢复；不要把超时包装成硬停，也不要加全局默认。",
+        "implementation": "在工具定义加 `timeoutMs`；实现 `deadline`/`timeoutOf`；包装 `tools/execute`；注册顺序按重试语义固定；用忽略信号与未声明预算的工具做负向测试。",
+        "requiredSupport": [
+          "可声明预算的工具定义",
+          "取消信号协议",
+          "结构化错误结果",
+          "包装器注册顺序约定"
+        ]
+      },
+      "reference": "references/package-contracts-8.md#package-contracts-8.cooperative-timeout",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "工具在预算内完成时，结果原样通过，不产生超时错误。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "工具在预算内响应取消并结算后，结果为 `TOOL_TIMEOUT`，文本含实际毫秒数。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "未声明 `timeoutMs` 的工具不应被截断；若被包装器强加预算，测试应失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "嵌套外层 deadline 触发时，不应被误报成本插件自己的 `TOOL_TIMEOUT`。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "超时错误返回后，模型按文本重试或调整；调用方信号在 `finally` 中恢复，后续监听器看不到已中止信号。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "协作式而非硬停：工具忽略信号时调用方会一直等待。",
+        "没有全局预算；未声明 `timeoutMs` 的工具永不被截断。",
+        "超时结果必须等下游结算，无法给“仍在运行”一个即时答复。",
+        "包装器注册顺序会改变语义，属于部署约定。",
+        "本域未执行超时或取消测试。"
+      ]
+    }
+  ]
+}

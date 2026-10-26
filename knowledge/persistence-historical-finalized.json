@@ -1,0 +1,1216 @@
+{
+  "domain": "persistence-historical-finalized",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "persistence-historical-finalized.historical-format-coverage",
+      "title": "写入器版本驱动的历史格式全集与完整快照记录",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 23,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.zh.md",
+          "start": 23,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 10,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 10,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.schema.json",
+          "start": 1,
+          "end": 49308,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.schema.json",
+          "start": 1,
+          "end": 49411,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.schema.json",
+          "start": 1,
+          "end": 56466,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.schema.json",
+          "start": 1,
+          "end": 61307,
+          "kind": "config"
+        }
+      ],
+      "problem": "持久化格式前进后，旧 Session 仍可能被读取，但当前 catalog 只描述当前 writer。没有按 writer 常量派生、逐整数完整、可离线验证的历史记录时，旧日志的声明类型会被当前类型悄悄替换，或根本无据可查；同版本内的事件/可选载荷变化又意味着单一叙述不足以代表所有变体。",
+      "triggers": [
+        "SESSION_FORMAT_VERSION 增加或准备增加",
+        "新增/修改任何 vN.md、vN.zh.md、vN.schema.json、vN.i18n.yaml",
+        "需要回答旧 Session 的字段声明、事件存在性或 root 结构",
+        "发布前检查历史参考完整性",
+        "评审发现历史记录缺失、编号错误或生成区过期"
+      ],
+      "obligations": [
+        "每个低于当前 writer 的整数都必须有独立的完整记录；检查器从 SESSION_FORMAT_VERSION 派生必需范围，缺失、多余、编号错误、不完整或不一致都失败",
+        "每条记录包含双语参考、机器声明、配对记录与完整 vN.schema.json；机器声明为每个 root key 绑定捕获时 digest，并与 schema/指纹表一致",
+        "root 覆盖逻辑 SessionHeader、物理 JsonlHeaderLine、SessionEventEnvelope 以及该检查点所有第一方事件；每个 root 包含全部可达声明类型",
+        "历史可选字段与 opaque 值原样保留，不用当前类型替换旧格式；历史标识符只在 schema JSON 与已验证生成区原样保留，人工正文使用当前术语",
+        "历史来源保留文件路径、不保留源码行号；记录必须说明选中的检查点，不能声称格式号代表所有 payload 修订",
+        "索引由已验证快照与 writer 常量生成；当前 catalog 与 schema 必须存在并匹配 writer",
+        "保留所有更早记录；后继记录不能替换前驱"
+      ],
+      "actors": [
+        "格式维护者：选择检查点、撰写双语证据与差异说明",
+        "schema 提取器：生成归一化类型、root 集合与 digest",
+        "验证器/CI：检查范围、声明、schema、生成表、配对记录和当前 catalog 新鲜度",
+        "评审者：判断检查点代表性与历史特征解释是否正确"
+      ],
+      "steps": [
+        "读取 SESSION_FORMAT_VERSION，计算 0..N-1 的缺口",
+        "为每个缺口确定检查点类型（tag、PR 树或已捕获中间树），并记录 writer 常量与来源证据",
+        "用归一化类型模型提取 root 及所有可达类型，生成 vN.schema.json",
+        "在 vN.md/vN.zh.md 写 Summary、Source evidence、Format characteristics、机器声明、生成区、Verification and limitations、Dev Note",
+        "生成指纹表与完整类型区，保留 persistence-format-schema 起止标记",
+        "生成/刷新 vN.i18n.yaml，并核对两侧机器声明完全一致",
+        "刷新索引的格式、来源、参考、机器 schema、root/type 计数",
+        "运行 pnpm run verify-persistence-formats，再运行项目等价的 doc-sync/链接检查",
+        "提交；不修改已存在的更早记录"
+      ],
+      "enforcement": {
+        "mode": "automatic+review",
+        "implementation": "pnpm run verify-persistence-formats 从 SESSION_FORMAT_VERSION 推导必需整数范围，校验每个旧整数的记录完整性、机器声明与 schema/指纹表一致性、当前 catalog 与 writer 匹配、生成区与配对记录是否过期；只使用当前 checkout，不 fetch Git、不查询服务。",
+        "trust": "自动检查证明当前树内的声明/生成数据一致且覆盖完整，不证明历史应用回放、不证明迁移安全；生成类型区只做机器比对。",
+        "failure": "非零退出并报告缺失、多余、编号错误、不完整、不一致或过期生成区；维护者必须补齐或修正机器数据，不得放宽范围或手改生成表。",
+        "exceptions": "当前 writer 使用 catalog 而非 vN 快照；V0/V2 来自 tag，V1 来自中间树，V3 来自初始 PR 树；这些来源差异不豁免完整性要求。"
+      },
+      "applicability": "适用于任何以整数代际保存、且旧代际仍需被读取或审计的持久化格式。迁移时把 SESSION_FORMAT_VERSION 换成项目的 writer 常量，把 root 集合换成项目的 header/envelope/事件根；若旧数据被明确宣布不可读，仍需保留记录并写明废弃理由，而不是删除历史。",
+      "relationships": [
+        "persistence-historical-finalized.format-snapshot-archive：本机制定义覆盖范围，归档机制负责在 writer 推进前生成缺失的 vN.schema.json",
+        "persistence-historical-finalized.schema-fingerprint-equivalence：机器声明/指纹表/schema 的等价由指纹机制定义",
+        "persistence-historical-finalized.bilingual-pairing：每条记录的双语与配对记录由配对机制约束",
+        "release-persistence-format-archive：源项目中该机制的完整实现与发布域证据",
+        "release-session-authority：writer 常量作为唯一当前版本权威"
+      ],
+      "migration": {
+        "strategy": "用单一 writer 常量派生必需历史集合，并把每条历史记录做成'双语参考 + 机器声明 + 完整 schema + 配对记录'四件套；索引由验证过的快照生成，而非手工维护版本列表。",
+        "implementation": "目录建议 docs/<area>/formats/{README.md,README.zh.md,vN.md,vN.zh.md,vN.i18n.yaml,vN.schema.json}；检查器伪逻辑：required=[0..writer-1]；assert current.version==writer；for n in required assert artifacts(n) && declaration(n).roots==schema(n).roots && fingerprintTable(n)==declaration(n)。",
+        "requiredSupport": "归一化类型提取器、稳定 SHA-256 digest、双语模板与配对记录工具、离线检查命令、CI 入口；不需要 Git 历史或远端服务。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.historical-format-coverage",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "writer=4 的 checkout 中 v0-v3 四套四件套齐全，root/type 计数分别为 54/415、54/415、56/435、60/467，运行 verify-persistence-formats 退出 0。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "解析四个 vN.schema.json：顶层键为 formatVersion/roots/types，types 无重复 digest，sources 只含文件路径不含行号；并逐行消费八份 v0-v3 生成 schema 区，把每个渲染定义绑定到 schema.types。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/schemaFacts",
+            "note": "实际执行（只读探针，未运行 verify-persistence-formats/--archive/--write）：四个 schema 顶层键均为 formatVersion/roots/types；roots 54/54/56/60；types 415/415/435/467；每个 root 与 type 的 digest 均用 schemaDigest(canonicalizeSchema(...)) 重算，0 不匹配；无重复 type digest；sources 无行号。八份文档（EN/ZH 各 4）共 41352 行生成区内部行全部被有序语法逐行消费（每语言 20676 行），未分类 0 行、未消费尾部 0 行；3464 个渲染定义逐一绑定 schema.types 并重导出 body（0 不匹配），指纹表 448 行与声明 roots、schema roots 三处 key/kind/digest 0 差异；每份文件切分为声明栅栏 + 生成区 + 人工正文且无重叠；纯渲染逐行比对 8/8 相等。"
+          },
+          {
+            "scenario": "每个 vN 的 EN/ZH 机器投影（root 行、定义 digest/anchor/label/bodyKind/facts、声明体哈希、ledger 类别串）相等，而区域字节不同（本地化标签导致 interior SHA 不同）。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/equivalence",
+            "note": "实际执行：四代 EN/ZH 投影全部相等，声明块体哈希相等，ledger 类别串相等；interior SHA-256 全部不同。旧 coverage 的 zhRegionInteriorEqualsEn=true 是错误标记，已在 observations 更正为 false 并保留字节差异记录。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除 v2.schema.json 或把 v2 记录编号改成 v5，verify-persistence-formats 非零并指出缺失/编号错误。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "只在当前 catalog 增加格式 4 的副本、却缺少 v3 归档记录，检查器仍拒绝（复制新 catalog 不能满足前驱要求）。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在内存中破坏生成区一行（属性行类型/存在性、类型体、属性表头、union 成员、指纹表 kind、定义 digest、wrapper、尾部多余行、重复锚点、标记重复、声明 root 或多余标量）时，穷举语法必须拒绝该文档。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/controls",
+            "note": "实际执行：23 个内存变异控制全部被拒绝（23/23），原始八份文档同时全部通过。这是探针级拒绝，不是 verify-persistence-formats 的 CLI 拒绝。"
+          },
+          {
+            "scenario": "在内存中删除/复制 schema type、改名嵌套属性或改动 root digest（并同步改写引言计数以绕过计数检查）时，定义与 schema.types 的绑定必须拒绝。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/controls",
+            "note": "实际执行：schema-missing-type、schema-duplicate-type、schema-type-body-corruption、schema-root-digest-corruption 四个控制全部被拒绝，且其中两个在引言计数被同步改写后仍由 anchor/body 关联拒绝，证明拒绝不依赖计数。"
+          },
+          {
+            "scenario": "重复V0标签与V3拉取请求声明的source键，EN/ZH各一例均须拒绝；八份原始文档仍通过。",
+            "evidence": "verification/evidence/raw/p1-historical-declaration-duplicates-after.json#/controls",
+            "note": "独立追查发现手写解析器覆盖重复键。修复前四例误接受；赋值前Object.hasOwn检查后拒绝，原23项加4项共27/27拒绝。before、原complete-structure证据与不利复核均保留；不是生产检查器执行。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补回 v2.schema.json 与对应双语记录后重跑，退出 0，且 v0/v1/v3 文件字节不变。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "完整结构解析不等于逐行语义审阅：八份文档共 3464 个渲染定义（每语言 1732）已逐行消费、与 schema.types 绑定并重导出 body，但未判断任何定义的产品语义；vN.schema.json 仍只做 JSON.parse 结构检查与全量 digest 重算，未逐行语义阅读。",
+        "同版本内的事件新增或可选载荷变化可以产生其他有效清单，一份快照不排除同格式的其他变体。",
+        "格式号不标识该格式内的每次 payload 修订；检查点选择必须显式记录。",
+        "自动检查只证明当前树内一致，不证明历史来源真实性或迁移安全。",
+        "本域从未运行 verify-persistence-formats/--archive/--write；所有 CLI 级正向/拒绝/恢复场景仍是 planned，只有只读探针与内存变异控制是 observed。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.format-snapshot-archive",
+      "title": "推进写入器前的只读归档与拒绝式写入",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 47,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.zh.md",
+          "start": 47,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 5619,
+          "end": 5630,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.zh.md",
+          "start": 5619,
+          "end": 5630,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.schema.json",
+          "start": 1,
+          "end": 61307,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 5090,
+          "end": 5101,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.md",
+          "start": 5347,
+          "end": 5358,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "writer 一旦推进，当前 inventory 就不再描述前驱；从 Git 历史重建通常被禁止且不可重复。若归档可覆盖、可手改或在错误 writer 下运行，旧格式证据会被静默破坏；若归档顺手修复无效 schema，则假的兼容证据会进入历史。",
+      "triggers": [
+        "准备把 writer 从 N 推到 N+1",
+        "需要补一份缺失的 vN.schema.json",
+        "生成 Markdown/配对记录需要刷新",
+        "有人要求修改或覆盖旧快照"
+      ],
+      "obligations": [
+        "在 writer 与当前 schema 仍描述 N 时运行 pnpm run verify-persistence-catalog，再运行 pnpm run verify-persistence-formats --archive N",
+        "--archive N 从当前 inventory 创建 vN.schema.json，只保留从 roots 可达的类型，移除源码行号",
+        "归档命令拒绝：目标已存在、N 不是当前 writer、schema 无效或不完整、与 --write 组合；拒绝即停止，不修复、不覆盖、不降级写入",
+        "归档后补 persistence-format 双语记录和来源证据，保留所有更早记录",
+        "后继格式使用当前 catalog；复制新的当前 catalog 不能满足归档前驱要求",
+        "--write 必须先验证机器数据，再更新生成 Markdown 与配对记录；保留人工说明、机器声明和 schema",
+        "默认验证拒绝过期配对记录；catalog 新鲜度由 verify-persistence-catalog 单独负责"
+      ],
+      "actors": [
+        "维护者：在正确时间窗口执行归档并补双语证据",
+        "归档 CLI：执行版本、完整性、目标存在性和模式组合检查",
+        "验证器/CI：拒绝过期生成区与配对记录",
+        "评审者：确认归档没有替换旧证据或掩盖失败"
+      ],
+      "steps": [
+        "确认 writer 仍等于 N，当前 catalog/schema 描述同一份 N 清单",
+        "运行 pnpm run verify-persistence-catalog 并通过",
+        "运行 pnpm run verify-persistence-formats --archive N；确认目标 vN.schema.json 不存在",
+        "核对生成文件的 roots/types 计数、root digest、source 路径无行号",
+        "按模板补 vN.md/vN.zh.md 的来源、特征、机器声明、验证与限制",
+        "生成/刷新 vN.i18n.yaml；确认两侧机器声明一致",
+        "推进 writer、刷新当前 catalog/schema",
+        "按顺序运行 pnpm run verify-persistence-formats --write、pnpm run verify-persistence-formats、pnpm run doc-sync",
+        "提交；旧记录保持不变"
+      ],
+      "enforcement": {
+        "mode": "automatic+review",
+        "implementation": "pnpm run verify-persistence-formats --archive N：读取当前 inventory，断言 version==N==SESSION_FORMAT_VERSION、目标不存在、schema 完整、未与 --write 组合；写出裁剪后的 vN.schema.json。pnpm run verify-persistence-formats --write 先验证机器数据，再刷新生成 Markdown/配对记录。",
+        "trust": "归档只证明'当前 checkout 在 N 时的声明清单被复制并裁剪'，不证明运行时行为或迁移安全；校验基于本地文件，不访问 Git/远端。",
+        "failure": "任一前置条件不满足即非零退出并停止；不得手改 JSON、删除旧快照重来或把 writer 临时改回 N 以绕过检查。",
+        "exceptions": "V0/V2 使用预发布归档 tag，V1 使用中间树，V3 使用初始 PR 树；这些快照可能不是由 --archive 现场生成，但必须完整并标明来源。"
+      },
+      "applicability": "适用于任何需要冻结当前代际 schema 再前进的项目。迁移时把 N 换成项目的 outgoing version，把 catalog/schema 命令换成项目等价命令；若项目没有 generated current inventory，需要先实现'当前完整清单'，否则 --archive 无可靠输入。",
+      "relationships": [
+        "persistence-historical-finalized.historical-format-coverage：归档产物是历史全集的缺口填充",
+        "persistence-historical-finalized.schema-fingerprint-equivalence：归档保留 root digest 与可达类型，裁剪规则由归一化模型定义",
+        "persistence-historical-finalized.bilingual-pairing：归档后需补配对记录",
+        "release-persistence-format-archive：源项目完整实现与 V3 归档执行证据",
+        "release-session-migrations：writer 推进与相邻迁移的发布域机制"
+      ],
+      "migration": {
+        "strategy": "把归档做成单向、不可覆盖、只读输出的 CLI；先验证当前 catalog，再在正确 writer 窗口生成快照；生成后只允许通过 --write 刷新派生数据，不允许编辑快照内容。",
+        "implementation": "archive(outgoing) 读取当前 inventory；断言 inventory.version==outgoing==writer；目标存在则抛错；临时文件写入后原子 rename；输出仅 formatVersion/roots/types，types 只保留 root 可达闭包，序列化时删除 line/start/end；--archive 与 --write 互斥。",
+        "requiredSupport": "当前完整 inventory、root 可达性遍历、稳定序列化、原子写入、离线验证命令、双语模板。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.format-snapshot-archive",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "writer=3 时先通过 verify-persistence-catalog，再运行 --archive 3，生成 v3.schema.json，roots=60、types=467，source 条目无行号。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "再次运行 --archive 3 被拒绝（目标已存在）。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "writer=3 时运行 --archive 2 被拒绝（版本不是当前 writer）。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "运行 --archive 3 --write 被拒绝（模式组合非法）。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "提供无效/不完整 schema 时归档被拒绝，不产生半成品文件。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "归档失败后不覆盖旧文件；补全 catalog/schema 或改用正确版本，在正确窗口重新归档，验证退出 0。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "归档只能捕获当前 checkout 在 N 时的声明，无法凭空重建缺失历史。",
+        "移除行号是有意设计，历史源码位置无法再精确到行。",
+        "归档不判断格式是否应被接受，也不建立迁移安全。",
+        "本域未执行归档命令；V3 的执行记录来自源文档。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.schema-fingerprint-equivalence",
+      "title": "传递性类型指纹与声明/快照/生成表等价",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 115,
+          "end": 117,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 183,
+          "end": 183,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 5090,
+          "end": 5101,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 121,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 193,
+          "end": 195,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 5619,
+          "end": 5630,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 25,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 61,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.schema.json",
+          "start": 1,
+          "end": 49308,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.schema.json",
+          "start": 1,
+          "end": 61307,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/finalized/v4.json",
+          "start": 1,
+          "end": 379,
+          "kind": "config"
+        }
+      ],
+      "problem": "持久化事件的显示类型表达式可以保持不变，而被引用类型已经改变；人工审阅声明文本会漏掉嵌套结构变化。反过来，alias、源码位置、注释或无害重排变化又会制造假差异。需要一种稳定、传递、可解释的指纹，并保证声明、schema 与生成表三处一致。",
+      "triggers": [
+        "比较两个历史格式的 root 是否等价",
+        "判断字段改动是否只是 alias/注释/排序变化",
+        "生成指纹表、机器声明或 schema 对不上",
+        "兼容性评审需要引用 root digest",
+        "刷新过期生成区"
+      ],
+      "obligations": [
+        "每个定义只出现一次；引用保留共享与递归；定义旁 SHA-256 包含完整可达结构",
+        "root digest 覆盖所有被引用字段；源码名称与位置标识声明来源但不参与 digest",
+        "普通注释、源码位置、alias 名称、无害声明重排不影响 digest；对象字段、联合分支、交叉操作数、索引签名在 resolved type 不变时可重排；tuple 位置与数字 enum 值仍然重要",
+        "兼容性注解/策略数据是记录下来的 policy，会影响 digest；未注解的 version-1 快照使用原归一化与指纹，policy 图使用独立指纹域",
+        "yaml persistence-format 的 root digest、vN.schema.json 的 root digest、生成指纹表 SHA-256 三处必须相等",
+        "生成区之外不得手写 digest；过期生成区必须失败，--write 在验证机器数据后重建",
+        "历史标识符只在 schema JSON 与已验证生成区原样保留；人工正文使用当前术语"
+      ],
+      "actors": [
+        "提取器：归一化类型图并计算 digest",
+        "验证器：比较声明、schema、生成表三处投影",
+        "评审者：解释 digest 变化的语义，拒绝把'未变'当作行为保证"
+      ],
+      "steps": [
+        "解析 vN.schema.json：roots[].key/kind/digest/schema 与 types[id].digest/schema/names/sources",
+        "确认比较双方使用同一指纹域（是否带 policy 注解）",
+        "比较 root 集合增删、root digest 变化、types 增删/变化",
+        "按兼容性规则分类变化：可选新增、required→optional、普通事件新增可 same-version；required 化、类型改变、删除/重命名需评审或 version-bump",
+        "发现三处不一致时先修机器数据/schema，再运行 --write",
+        "运行 verify-persistence-formats 与文档检查"
+      ],
+      "enforcement": {
+        "mode": "automatic+review",
+        "implementation": "归一化类型模型生成 root 可达闭包与 SHA-256；机器声明与生成指纹表由同一 inventory 派生；verify-persistence-formats 比较三处投影并拒绝过期生成区；--write 只在机器数据验证通过后刷新生成 Markdown/配对记录。",
+        "trust": "digest 只描述声明的持久化类型，不描述运行时校验、默认值、恢复逻辑或行为；digest 相同只证明归一化后的声明结构相同。",
+        "failure": "digest/声明/schema 不一致或生成区过期时非零退出；不得改 digest 迁就文档，也不得在文档里把未排除的差异解释成等价。",
+        "exceptions": "version-1 快照与 policy 图的指纹域不同，跨域比较无意义；注释/alias/源码位置变化可以改变 catalog 文本但不改变 digest。"
+      },
+      "applicability": "适用于任何需要跨版本比较声明结构的 schema 系统。迁移时参数化：归一化容器集合、排除元数据（源位置/alias/注释）、显著性规则（tuple 下标、enum 数值、policy 注解）、生成区标记、声明/表/schema 的投影函数。",
+      "relationships": [
+        "persistence-historical-finalized.historical-format-coverage：指纹是每条历史记录的核心机器数据",
+        "persistence-historical-finalized.finalized-checkpoint-immutability：finalized 检查点复用同一 root digest 作为接受身份",
+        "release-persistence-schema-policy：源项目对归一化、指纹域和保留标记的完整策略",
+        "release-persistence-records：变更分类与兼容性记录使用这些 digest"
+      ],
+      "migration": {
+        "strategy": "先定义 normalize(type)->canonical graph，再 digest(graph)；把声明、schema、生成表做成同一 inventory 的三个投影，验证器只比较投影结果；生成区只由 --write 重建。",
+        "implementation": "normalize 保持共享/递归引用，按 resolved type 比较容器成员，忽略 source/alias/comment/order，保留 tuple index/enum numeric/policy annotations；digest 前缀包含指纹域版本；生成表由 inventory 渲染并包在标记内。",
+        "requiredSupport": "归一化类型模型、稳定排序/序列化、SHA-256、生成区标记、声明解析器、--write 与只读检查两种模式。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.schema-fingerprint-equivalence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "V0/V1 的 JsonlHeaderLine digest 相同；V2/V3 相同；V0/V1/V2 的 SessionEventEnvelope 相同而 V3 变化；SessionHeader 每代变化；event:agent-preset/selected 四代相同。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/crossVersion",
+            "note": "实际执行：从八份文档的指纹表读出（不是抄写正文）——JsonlHeaderLine 63496702…(V0,V1) → 18ee62b8…(V2,V3)；SessionEventEnvelope 04184edc…(V0,V1,V2) → 5776e555…(V3)；SessionHeader 001ed6f6…/88b77fa5…/15918d78…/2a8b1146… 四代各异；event:agent-preset/selected a10c1747… 四代相同。V3/V4 与 V2/V4 的跨代结论未在本域重算，仍属 planned。"
+          },
+          {
+            "scenario": "只改 alias/源码位置/注释或无害重排，digest 不变；只改嵌套引用类型，root digest 变化被检出。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "对四个 vN.schema.json 的每个 root 与每个 type 重新计算 digest，与记录值比较。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/schemaFacts",
+            "note": "实际执行：V0 54+415、V1 54+415、V2 56+435、V3 60+467 个 root/type 全部重算一致，0 不匹配；可达闭包与 types 集合一致（无不可达类型、无缺失 digest）。这不证明 digest 算法语义正确，只证明记录值与当前归一化实现一致。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只改生成指纹表中的一个 SHA-256，verify-persistence-formats 非零并指出 stale generated region。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "机器声明中的 root digest 与 schema 不一致，验证非零。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "只改生成指纹表中的一个 SHA-256（定义行或 root 行）或声明中的一个 root digest，结构检查必须拒绝。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/controls",
+            "note": "实际执行：definition-digest-corruption 在定义 SHA-256 行被改写时拒绝（digest != schema type digest）；root-row-kind-corruption 在指纹表 kind 被改写时拒绝；declaration-digest-corruption 在声明 root digest 被改写时拒绝；schema-root-digest-corruption 在 schema root digest 被改写时拒绝。均为探针级，verify-persistence-formats 的 stale-region 报错仍是 planned。"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "运行 --write 从已验证 schema 重建生成表，人工说明与机器声明不变，再验证退出 0。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "digest 不覆盖运行时校验、默认值、恢复逻辑或行为。",
+        "opaque/unknown 值不暴露内部结构，内部变化不可检测。",
+        "本域已对 415/415/435/467 个 type 与 54/54/56/60 个 root 全量重算 digest 并逐行核对渲染定义，但 digest 只描述声明结构：不证明运行时校验、默认值、迁移或行为；也未与历史 Git 树中的原始 schema 比对。",
+        "同一段显示声明可以引用不同嵌套类型，必须使用传递性 digest，不能只看文本。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.finalized-checkpoint-immutability",
+      "title": "finalized/vN.json 的接受基线与不可变记录",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/finalized/v4.json",
+          "start": 1,
+          "end": 379,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 40,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 61,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 28,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 5619,
+          "end": 5630,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一 writer 内的兼容性演进会不断修改 schema。如果没有一个独立于发布的'接受基线'，后来者可以静默重写已评审的机器声明与 after schema，或复用旧的版本过渡；发布记录又可能被误当成兼容性接受记录。需要一份紧凑、不可变、可加载验证的检查点。",
+      "triggers": [
+        "某格式被接受为兼容基线",
+        "已 finalized 之后又出现 schema 变更",
+        "决定 same-version 还是 version-bump",
+        "需要生成新的 finalized/vN.json 或更新 latestFinalizedVersion",
+        "有人要求编辑已接受的旧记录/旧检查点"
+      ],
+      "obligations": [
+        "finalized/vN.json 顶层键恰为 schemaVersion、sessionFormatVersion、roots、acceptedRecords；roots 为 key->{kind,digest,event?,surface?}；acceptedRecords 为 recordId->64 位小写十六进制语义哈希",
+        "检查点记录接受基线的完整 root 分类/digest 与 accepted record 语义哈希；不复制完整 schema，不包含 prose/alias/源码位置",
+        "已接受的机器记录与 after schema 不可变；后续变化创建 successor record，不能编辑被 acceptedRecords 锁定的记录",
+        "新版本使用新的 finalized/vN.json，不替换旧检查点；同时推进配对的 latestFinalizedVersion；helper 要求当前 schema 与完整已确认 history 匹配",
+        "finalization 与 publication 分离；finalized 不表示已发布，release record 独立维护 latestReleasedVersion/evidenceTag",
+        "finalization 不冻结未来兼容新增；普通注释、alias、源码位置、保留已接受含义的实现修复不改变基线",
+        "version-bump 必须有自己的更高 writer 与 header transition，不能复用已接受的 3->4 过渡",
+        "验证器检查保留检查点哈希并拒绝缺失/被改动的 accepted record，但不能证明检查点与其权威记录未被协同编辑"
+      ],
+      "actors": [
+        "维护者：确认 history 完整并生成新检查点",
+        "finalization helper：从 history/current schema 生成 roots 与 acceptedRecords",
+        "验证器/CI：加载保留检查点并比对 accepted record 哈希",
+        "评审者：判断 same-version 安全性、版本过渡独立性与协同篡改风险"
+      ],
+      "steps": [
+        "确认 history 完整：baseline + 每个受影响 root 的前驱链，无环、无重复后继、无 digest 不匹配",
+        "运行普通验证器（catalog、schema、history）",
+        "用 createPersistenceFinalizationCheckpoint 或等价 helper 生成 finalized/vN.json",
+        "新增文件，不覆盖任何已存在的 finalized/vM.json",
+        "更新状态记录中的 latestFinalizedVersion，保持 release record 不变",
+        "运行验证器并提交",
+        "后续变更：新增 change record（same-version 或 version-bump），刷新当前 catalog；不得编辑 accepted record"
+      ],
+      "enforcement": {
+        "mode": "automatic+review",
+        "implementation": "源项目由 release 域实现：loadPersistenceFinalization 校验文件名/版本/metadata 键集合、accepted record 存在且语义哈希匹配、至少包含 baseline、前驱闭包完整；persistence-changes 在更新已 finalized 的 acknowledgement 时抛 finalized-record-update。",
+        "trust": "自动检查证明保留检查点与记录内容一致；不能证明 accepted history 从未被重写，不能证明解释在语义上正确，也不改变运行时 unknown-event 处理。",
+        "failure": "缺失/被改动的 accepted record、metadata/版本不匹配、缺 baseline、前驱闭包不完整都导致加载失败；正确做法是新增 successor record 或新版本检查点，而不是修旧 JSON。",
+        "exceptions": "普通注释、alias、源码位置、保留已接受含义的实现修复不需要新检查点；同一 writer 的兼容新增可以继续，只要不改已接受的机器记录与 after schema。"
+      },
+      "applicability": "适用于任何需要'接受基线独立于发布'的版本化 schema 系统。迁移时参数化目录（finalized/）、版本字段、digest 格式、accepted record id 规则、baseline 判定与前驱闭包规则；若项目没有发布流程，仍可保留 finalized 作为纯兼容性接受记录。",
+      "relationships": [
+        "persistence-historical-finalized.schema-fingerprint-equivalence：检查点中的 root digest 复用同一指纹域",
+        "persistence-historical-finalized.historical-format-coverage：历史 vN 快照与 finalized 检查点是两条不同证据链",
+        "release-persistence-records：源项目 finalized checkpoint 的完整实现、兼容性规则与记录链",
+        "release-session-authority：finalized 与 released 两个权威的分离",
+        "persistence-historical-finalized.named-adjacent-migrations：3->4 过渡不能被后续 version-bump 复用"
+      ],
+      "migration": {
+        "strategy": "把'接受'做成独立于发布的不可变账本：检查点只存 root identity 与 accepted record 哈希；loader 在 CI 中校验；新版本写新文件，旧文件只读；发布状态单独记录。",
+        "implementation": "finalized/vN.json = {schemaVersion:1, sessionFormatVersion:N, roots:{key:{kind,digest,event?,surface?}}, acceptedRecords:{id:sha256}}；loader 校验 metadata 键集合、版本=文件名、accepted record 存在且哈希匹配、至少一个 baseline、前驱闭包；更新已接受记录时报错并提示 successor。",
+        "requiredSupport": "稳定 semantic record digest、accepted record history、前驱闭包检查、版本命名文件、状态记录中的 latestFinalizedVersion、CODEOWNERS/评审保护。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.finalized-checkpoint-immutability",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "加载 finalized/v4.json：顶层 4 键、62 个 roots（59 event、5 surface）、5 条 acceptedRecords、哈希均 64 位小写十六进制，退出 0。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "检查点 roots 与 acceptedRecords 覆盖 2026-09-11-initial 至 2026-09-16-session-format-v4 的记录链。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除 2026-09-14-image-offload 或修改其哈希，loader 非零报告 finalized acknowledgement was removed or changed。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 sessionFormatVersion 改成 3、删除 baseline 或改 metadata 键集合，加载失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "尝试更新已 finalized 的 acknowledgement，persistence-changes 抛 finalized-record-update。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复被改记录，或新增 successor record/new version checkpoint；重跑验证退出 0，旧检查点字节不变。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "检查点不含运行时字段，不能发现声明未变但行为改变的情况。",
+        "检查点哈希不能证明检查点与状态记录未被协同编辑；需要人工评审/提交历史。",
+        "finalized/v4.json 的 62 个根少于当前 catalog 的 65 个根，8 个 root digest 与当前值不同；这是后续兼容增量，不是检查点过期。",
+        "本域未执行 loadPersistenceFinalization；执行证据属于 release 域。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.named-adjacent-migrations",
+      "title": "V0→V1→V2→V3→V4 具名转换与边界",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 26,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.md",
+          "start": 26,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.md",
+          "start": 26,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 26,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 47,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.schema.json",
+          "start": 1,
+          "end": 61307,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/finalized/v4.json",
+          "start": 1,
+          "end": 379,
+          "kind": "config"
+        }
+      ],
+      "problem": "相邻格式在物理 framing、stream 位置、系统提示位置、事件名称和 surface 端点上不同；schema digest 只能说明声明差异，不能说明如何迁移。若把类型清单当迁移算法，会漏掉 packed rows、stream 内嵌、PTC 重命名和序号/继承切点，导致日志损坏或静默误读。",
+      "triggers": [
+        "把旧 Session 读成当前格式",
+        "评审 session-format-v*-to-v* codec/spec",
+        "判断类型声明差异是否等于迁移步骤",
+        "准备 V4 写入器变更",
+        "迁移后验证失败或 seeded Session 切点错位"
+      ],
+      "obligations": [
+        "V0：version 为 number；逻辑 header 要求 isSeeded，物理 header 用可选 seedLength + delegationDepth + type:session；assistant/chunk 是独立事件，assistant/message 无 stream，无 assistant/attempt；packed rows 使用 text-chunks/reasoning-chunks/tool-call-chunks、seq0/time0/dt，N 成员有 N-1 个可为负的间隔",
+        "V0/V1 共享 codec 拥有 packed rows 与范围编码 sourceEventSeqs；物理 body 不是声明 root",
+        "V1：沿用 V0 物理布局；SessionHeader.version 为字面量 1，物理 version 仍为 number；保留 assistant/chunk，无 stream/attempt；V1→V2 迁移参考拥有 chunk 消耗、stream 内嵌、序号重映射，不能从 digest 推断",
+        "V2：version 为字面量 2；逻辑与物理 header 都要求 isSeeded，物理无 seedLength；无 assistant/chunk；message 与 log-only attempt 要求内嵌 stream；surface 保留 start/end；系统提示仍在 request/header.data.header.system；V2→V3 spec 拥有 system-message 插入、PTC 事件名称、canonical envelope conversion",
+        "V2 seeded Session：最后一个 data.inherited:true 的 session/end-seed 按序号位置标识 inherited cut；物理 sourceEventSeqs 可范围编码，逻辑 schema 保留展开数组",
+        "V3：version 为字面量 3；system/message、user/message、assistant/message、tool/result 要求 surfaceOp；替换端点为 startSeq/endSeq；assistant 不携带 sourceEventSeqs；stream 仍内嵌；系统提示属于 system/message；PTC 用 tool/ptc-dispatch-start 与 tool/ptc-dispatch；V3 codec 拥有 canonical framing 与 source range encoding",
+        "V3→V4：先在 writer=3 时归档 V3；V4 检查点新增 developer/message、workspace/changes，13 个 root digest 变化；具体转换由 session-format-v3-to-v4 codec/spec 拥有",
+        "任何相邻迁移都必须通过目标格式 validator；失败时拒绝，不 fallback、不降级、不截断日志"
+      ],
+      "actors": [
+        "迁移 codec 所有者：实现与维护相邻转换",
+        "迁移作者：识别源格式、选择正确 codec、使用真实 fixture",
+        "目标格式 validator：验收输出",
+        "评审者：检查双向可读性、拒绝语义以及是否误把 schema 当算法"
+      ],
+      "steps": [
+        "按来源证据识别源格式与 writer",
+        "找到覆盖源→目标的相邻 codec/spec，列出它负责的 framing/stream/event rename/envelope/sequence/surface/PTC 转换",
+        "用源格式 fixture 跑迁移，重点检查 seeded Session 的 inherited cut",
+        "用目标格式 validator 校验输出，不只看类型",
+        "失败时返回明确错误并保留源日志，不做修复性写入",
+        "在 change record/cookbook 记录实际执行命令与输出"
+      ],
+      "enforcement": {
+        "mode": "implementation+review",
+        "implementation": "相邻包 packages/session/session-format-v0-to-v1、v1-to-v2、v2-to-v3、v3-to-v4 的 codec/spec 负责具体转换；catalog generator 校验相邻迁移能到达当前 writer；历史格式文档只声明所有权与格式特征，不是迁移算法。",
+        "trust": "codec/spec 的实现与测试决定转换是否正确；历史 schema 只证明声明形状。迁移输出必须经目标 validator；类型 digest 相同不证明迁移正确。",
+        "failure": "源格式不匹配、继承切点错位、surface 端点非法、缺失新事件或 validator 拒绝时停止；不得回退到更旧格式或截断日志。",
+        "exceptions": "同一格式内可能还有 payload 修订；相邻迁移只保证格式号相邻。外部插件事件、packed body、运行时关系由各自 owner 处理。"
+      },
+      "applicability": "适用于有多个持久化代际、需要相邻迁移的项目。迁移时把 V0-V4 的具体字段换成项目自己的格式特征表；保留'每个相邻对独立 codec/spec + 目标 validator'的结构，不要把多代转换合并成隐式 fallback。",
+      "relationships": [
+        "release-session-migrations：源项目相邻迁移、V3→V4 具名转换与严格恢复",
+        "release-session-authority：writer 常量与版本权威",
+        "persistence-historical-finalized.historical-format-coverage：历史记录提供每代声明",
+        "persistence-historical-finalized.finalized-checkpoint-immutability：3->4 过渡已被接受，后续 version-bump 不能复用"
+      ],
+      "migration": {
+        "strategy": "为每对相邻格式建立独立 migrate_N_to_N+1，显式列出 framing、载荷位置、事件重命名、信封/端点、序号/继承切点；每步断言源版本，转换后由目标 validator 验收，失败即拒绝。",
+        "implementation": "migrate 输入为 header+事件流，输出为目标格式；先 validateSource，再 transform，再 validateTarget；seeded Session 用最后一个 data.inherited:true 的 session/end-seed 定位 cut；V3 surface 使用 startSeq/endSeq；PTC 名称映射到 tool/ptc-dispatch*；V4 增加 developer/workspace 事件。",
+        "requiredSupport": "每代格式特征表、真实旧日志 fixture、损坏样本、目标格式 validator、迁移失败汇总工具、不写回源日志的预写准备流程。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.named-adjacent-migrations",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "V0 fixture 经 V0→V1 后仍是 V1 形状；V1→V2 消费 chunk 并内嵌 stream；V2→V3 插入 system/message、重命名 PTC、生成 canonical envelope；V3→V4 输出可被 V4 validator 接受。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "伪造 V2 seeded inherited cut 或使用错误 surface 端点，迁移/目标 validator 失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "损坏日志输入时迁移明确拒绝，不产生截断或部分输出。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正输入或改用正确 codec/spec 后重跑；不得通过修改 schema/digest 让坏数据通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域只读到 codec/spec 的所有权声明与格式特征，未逐行审阅 packages/session/session-format-* 实现。",
+        "V3→V4 增删/变更清单来自两个 JSON 的结构化比较，不是对 PR diff 的逐行审阅。",
+        "schema 快照不能证明迁移可逆或旧 reader 行为。",
+        "同版本 payload 修订不由格式号区分。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.historical-evidence-limits",
+      "title": "历史快照能证明与不能证明的边界",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 42,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 51,
+          "end": 51,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 5090,
+          "end": 5101,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.zh.md",
+          "start": 5086,
+          "end": 5105,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.md",
+          "start": 5092,
+          "end": 5103,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.md",
+          "start": 5347,
+          "end": 5358,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 5619,
+          "end": 5630,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 24,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 76,
+          "end": 80,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "历史格式文档看起来完整，容易被当作'迁移安全'或'运行时行为'的证据。实际上它们只描述选定检查点的声明类型；同版本可能有其他有效变体，opaque/插件/物理编码/运行时关系不在覆盖内，finalization 也不等于发布。缺少明确边界会导致错误的兼容性声明或未经验证的迁移。",
+      "triggers": [
+        "有人引用历史格式文档支持迁移安全",
+        "发布说明/兼容性评审要引用旧 schema",
+        "判断旧字段是否 required 或旧事件是否存在",
+        "决定是否为旧格式补测试",
+        "需要回答 finalization/release 的区别"
+      ],
+      "obligations": [
+        "历史参考只描述选定 schema，不是历史应用回放，也不建立迁移安全",
+        "同版本内事件新增/可选载荷变化可以产生其他有效清单；一份快照不排除其他变体",
+        "更早 tag 可能有额外类型差异，当前快照不替代它们",
+        "V1 是中间树、无 tag，不得虚构产品发布；V3 是初始 PR 树、非最终树、非发布",
+        "schema 完整性不等于迁移安全；声明字段/可选性不覆盖 codec/restoration 不变量",
+        "历史 surfaceOp 可选只是声明证据，不允许省略 codec/迁移 validator 要求的字段",
+        "verification 只用当前 checkout，不 replay 历史应用、不查 Git/远端",
+        "opaque 值/未知结构不可见；类型图不能证明行为",
+        "finalization 不表示发布；发布证据由 release record/evidenceTag 负责"
+      ],
+      "actors": [
+        "评审者：拒绝把文档当运行时证据",
+        "发布作者：区分已接受基线、已发布、历史声明",
+        "读者：按'能证明'清单使用文档，按'不能证明'清单补测试"
+      ],
+      "steps": [
+        "先判断问题属于声明层、codec/恢复层还是运行时行为层",
+        "声明层问题引用 vN.md/schema；codec/恢复层运行 owning validator；运行时行为做回放/迁移测试",
+        "在 compatibility/verification 段落记录实际命令与输出，而不是'文档说……'",
+        "若无法证明，明确写未验证，并保留限制说明",
+        "发布状态只查 release record；接受状态只查 finalized 检查点"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "每份 vN.md 的 Verification and limitations 段明确列出覆盖/不覆盖维度；兼容性记录要求实际执行证据；自动验证器只证明当前树内声明/生成数据一致。",
+        "trust": "文档本身是声明证据；它不能替代 codec/validator/replay。finalized 检查点不能替代 release record。",
+        "failure": "若评审结论依赖运行时/迁移安全而只有文档，结论无效；必须补测试或降级为未验证。",
+        "exceptions": "纯字段考古（查声明）可以直接使用历史文档；历史文档可以证明'当时这样声明'，不能证明'现在这样运行'。"
+      },
+      "applicability": "适用于所有历史 schema 文档、兼容性记录与发布说明。迁移时保留每个项目的具体限制清单（插件、物理编码、opaque 值、运行时关系、同版本变体），并把'能证明/不能证明'写进模板，防止后人过度引用。",
+      "relationships": [
+        "persistence-historical-finalized.historical-format-coverage：历史文档的完整性不等于语义审阅",
+        "persistence-historical-finalized.named-adjacent-migrations：迁移安全必须由 codec/spec/validator 证明",
+        "persistence-historical-finalized.finalized-checkpoint-immutability：finalization 与 publication 分离",
+        "persistence-historical-finalized.schema-fingerprint-equivalence：digest 不含运行时行为"
+      ],
+      "migration": {
+        "strategy": "在每份历史记录中强制'Verification and limitations'，并把兼容性声明分成两段：旧 reader 看新数据、新 reader 看旧数据；任何安全声明必须附实际命令或明确免责声明。",
+        "implementation": "模板字段：scope covered（声明类型/可选性/root 集合）、out of scope（replay、迁移安全、插件、物理编码、运行时关系、opaque 值）、executed checks、unverified claims。发布/接受状态分别指向 release record/finalized 检查点。",
+        "requiredSupport": "记录模板、评审 checklist、CI 文档措辞检查（安全词必须伴随证据或免责声明）、owning codec/validator 的测试入口。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.historical-evidence-limits",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "用 v0.md 的 Characteristics 回答 V0 是否有 assistant/chunk（有）；用 v3.md 回答 V3 surface 端点（startSeq/endSeq）。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "评审中仅凭 vN.md 声称'V2→V3 迁移安全'，评审拒绝并要求 codec/spec 测试证据。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用 finalized 检查点声称已发布，评审拒绝并要求 release record/evidenceTag。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补跑迁移/回放测试并记录输出，或在结论中降级为未验证并列出限制。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域完整阅读人工正文段；415-467个生成类型已完整结构解析，既有语义抽样不构成逐定义语义审阅。",
+        "来源限制和本次结构解析共同限定证据：未执行源产品运行时、迁移安全或历史Git验证。",
+        "历史来源的 Git 事实无法在无历史 fetch 的环境中复核。",
+        "配对哈希对历史格式页覆盖了生成区（标记形式不被 generatedRegions 识别），因此\"生成区不参与配对\"不是可用的边界声明；证据见 verification/evidence/raw/p1-historical-payload-structure.json#/pairingCoverageProbe。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.bilingual-pairing",
+      "title": "双语记录与配对哈希：只覆盖人工正文",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/README.i18n.yaml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.i18n.yaml",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.i18n.yaml",
+          "start": 1274,
+          "end": 1285,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.i18n.yaml",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.i18n.yaml",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.i18n.yaml",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 42,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 62,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.zh.md",
+          "start": 42,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/README.zh.md",
+          "start": 62,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 1,
+          "end": 4,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.zh.md",
+          "start": 1,
+          "end": 4,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "双语历史文档容易一边更新一边过期；生成区又会让'全文哈希'产生无意义的漂移。机器声明必须两侧完全相同，但翻译文本不应由生成器臆造。需要一种只覆盖人工正文、能定位到 heading、可在编辑后重录的配对记录。",
+      "triggers": [
+        "编辑 vN.md 或 vN.zh.md 任一边",
+        "新增历史格式记录",
+        "运行 --write 刷新生成表",
+        "默认验证报告 stale pairing record",
+        "机器声明两侧不一致"
+      ],
+      "obligations": [
+        "每对 X.md/X.zh.md 有 X.i18n.yaml，按 heading section 记录英文/中文块哈希，范围是代码块与生成区之外的内容",
+        "yaml persistence-format 机器声明必须在两侧完全一致；pair 文档具备 kind: persistence-format 与配对 sidecar",
+        "配对哈希剔除代码块与生成区；但每个 heading 的人工说明、表格标签与来源行仍会翻译，所以同一 section 的 en/zh 哈希通常不同；相等只说明该 section 两侧没有可见差异（例如只有机器生成的简单类型），不是生成区一致性的证明",
+        "改任一边后同步另一边并运行 pnpm run verify-translation-pairing --write <file> 重录",
+        "verify-persistence-formats --write 刷新生成 Markdown 与配对记录，保留人工说明、机器声明、schema",
+        "默认验证拒绝过期配对记录；doc-sync 验证翻译与本地链接"
+      ],
+      "actors": [
+        "作者：双语内容与机器声明",
+        "配对工具：生成/更新 heading 哈希",
+        "验证器：拒绝过期配对与不一致声明",
+        "评审者：判断翻译语义，而不是只看哈希"
+      ],
+      "steps": [
+        "修改英文侧正文",
+        "同步中文侧，保持语义一致；机器声明逐字节一致",
+        "运行 pnpm run verify-translation-pairing --write <md 路径>",
+        "若改 schema/生成区来源，运行 pnpm run verify-persistence-formats --write",
+        "运行 pnpm run verify-persistence-formats 与 pnpm run doc-sync",
+        "检查新 heading 配对条目；不要以 en==zh 判断正确性，含翻译表格/来源标签的 section 两值不同是正常现象"
+      ],
+      "enforcement": {
+        "mode": "automatic+review",
+        "implementation": "配对生成器按 heading slug 记录 {en,zh} 哈希，剔除代码块与生成区；verify-translation-pairing 默认只读比较并拒绝过期条目；verify-persistence-formats --write 在机器数据验证后刷新生成 Markdown/配对；doc-sync 检查翻译与链接。",
+        "trust": "哈希相等只证明两侧人工块内容同步重录，不证明翻译质量或技术正确性；两值不同不等于错误，只表示该 section 有翻译差异；配对记录不验证 schema/声明一致性。",
+        "failure": "只改一边、手改哈希或新增 heading 未重录都会导致非零；机器声明不一致是硬错误。",
+        "exceptions": "只有机器生成内容、没有可翻译表格/标签的 section 可能 en==zh；含 required/必需、Sources/来源 等标签的 section 两侧哈希不同是正常翻译差异；代码块不参与哈希但仍需语义一致。"
+      },
+      "applicability": "适用于任何双语文档 + 生成区的项目。迁移时参数化 heading slug 规则、生成区标记、代码块排除规则、配对文件名与重录命令；若项目只有单语，可省略配对记录，但不能省略'机器声明唯一权威'。",
+      "relationships": [
+        "persistence-historical-finalized.historical-format-coverage：每条历史记录都带配对 sidecar",
+        "persistence-historical-finalized.format-snapshot-archive：归档后需补双语记录与配对",
+        "documentation-i18n-pair-contract：源项目文档域的双语配对契约",
+        "release-persistence-format-archive：历史格式记录的发布域实现"
+      ],
+      "migration": {
+        "strategy": "把配对记录做成生成产物：按 heading 提取块外文本，分别 hash en/zh；提供 --write 与只读检查两种模式；机器声明一致性作为独立硬检查，不依赖哈希。",
+        "implementation": "解析 Markdown heading -> slug 路径；剔除 fenced code 与生成标记区间；对每段规范化空白后 hash；写出 {path:{en,zh}}；新增/删除 heading 时重录；verify 模式比较当前哈希与记录。",
+        "requiredSupport": "Markdown 解析器、heading slug 规则、生成区标记、稳定文本规范化、--write/只读双模式、文档链接检查。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.bilingual-pairing",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "解析并从当前双语文本重算四个历史配对侧车的全部section哈希，逐项比较文件记录。",
+            "evidence": "verification/evidence/raw/p1-historical-payload-structure.json#/sidecars",
+            "note": "实际执行：用 tools/doc-gates/translation-pairing-record.mjs 解析全部 427/427/447/479 个 section 键，并从当前双语文本重算，与文件记录 0 差异（结构 12 + 生成类型 415/435/467）。未运行 verify-translation-pairing 命令本身。 复核（新证据 verification/evidence/raw/p1-historical-payload-complete-structure.json#/sidecars）：四份 sidecar 的 427/427/447/479 个 section 再次全部解析并从当前双语文本重算，0 差异，旧证据各字段逐项复现。",
+            "revalidatedEvidence": "verification/evidence/raw/p1-historical-payload-complete-structure.json#/sidecars"
+          },
+          {
+            "scenario": "同时修改en/zh后实际运行--write和配对检查，确认退出0且配对条目更新。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只改 v0.md 的 Summary，配对检查非零报告 stale。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "两侧 yaml persistence-format 声明不一致，验证失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补 v0.zh.md 并重录，再运行 --write/verify/doc-sync，退出 0，生成区未被人为改写。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "哈希相等不证明翻译质量、术语正确或技术内容正确。",
+        "配对记录不验证 schema 与声明一致性。",
+        "本域对 i18n 文件是全文结构化解析 + 头尾抽样，未逐条人工阅读 400+ 个哈希。",
+        "代码块内容不参与配对哈希。",
+        "历史格式页用 <!-- persistence-format-schema:start/end --> 标记，而配对记录只剔除 <!-- BEGIN GENERATED <slug> --> / <!-- END GENERATED <slug> --> 区域（scripts/translation-pairing.ts:20-25,47-83）。变异实测显示这四份 vN.md 的生成区内容会改变配对哈希，所以\"配对只覆盖人工正文\"对这些页面不成立；只有围栏代码块被剔除。"
+      ]
+    },
+    {
+      "id": "persistence-historical-finalized.source-checkpoint-provenance",
+      "title": "来源检查点声明与不虚构发布",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v0.zh.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.zh.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v2.zh.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.zh.md",
+          "start": 26,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v1.md",
+          "start": 10,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/historical-formats/v3.md",
+          "start": 10,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 20,
+          "end": 26,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "历史格式的树常常没有 tag：V1 是中间树，V3 是 PR 初始树。把这类树写成'发布'会污染兼容性与发布证据；反过来，来源不精确会让后来者无法判断快照是否代表该 writer。需要强制区分 tag、PR 树与中间树，并明确不虚构发布。",
+      "triggers": [
+        "新增历史格式记录",
+        "评审来源证据",
+        "判断快照能否代表'该版本'",
+        "发布说明引用历史检查点",
+        "writer 常量与来源不一致"
+      ],
+      "obligations": [
+        "V0 来源为已发布 tag dsh-v0.1.2-rc.1（writer 0），是预发布归档最后一个 V0 tag；更早 V0 tag 有额外差异，不被本快照替代",
+        "V1 来源为 dsh-v0.1.3-alpha.1 祖先中首次 V2 writer 变更前的最后一个 V1 树，PR #3349、分支 worktree/session-format-03-v0-v1-migration、日期 2026-09-02、标题 fix(session): close live assistant framing races；是中间树，不是最终合并树；无 V1 tag，不得虚构发布",
+        "V2 来源为已发布 tag dsh-v0.1.3-alpha.2（writer 2）；完整清单同时包含未变化和变化的 root",
+        "V3 来源为 PR #4320 在 release/session-log-v4 上的初始树，空提交日期 2026-09-16，标题 chore(session): initialize V4 release integration PR；writer 3，V4 改动前；不是最终 PR 树，也不是产品发布；发布证据由 release-status 记录负责",
+        "历史 source locations 指向历史树，不是当前文件；V3 明确无行号",
+        "alpha/beta/RC 产品发布也建立 released 义务；GitHub prerelease 标记不使持久数据可丢弃；缺失 release record 不是未发布的证据"
+      ],
+      "actors": [
+        "作者：精确记录来源类型与标识",
+        "评审者：拒绝把中间树/初始 PR 树写成发布",
+        "发布维护者：真正发布后更新 release record，而不是改历史来源"
+      ],
+      "steps": [
+        "确定检查点是 tag、PR 树还是本地捕获树",
+        "写清 tag 名、PR 号、分支、提交日期/标题、writer 常量",
+        "中间树/无 tag 时写明确否定句，并引用归档或 PR 证据",
+        "在 Verification and limitations 写清代表性与缺口",
+        "评审时分别检查来源声明与发布声明",
+        "发布发生后只更新 release record，不回溯修改历史来源"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "历史格式模板含 Source evidence 段；release archive/tag record 提供 tag 与 writer 对应；release status 记录独立维护 latestReleasedVersion/evidenceTag。自动验证器检查 writer 常量与索引，不验证 Git 事实的真实性。",
+        "trust": "来源声明是源文档记录，不是当前 checkout 的独立证明；无法 fetch 历史时不能复核 PR/提交细节。",
+        "failure": "虚构 tag/发布、把中间树写成最终树、或 writer 与来源不一致时，评审拒绝；必须改为准确来源或降级代表性声明。",
+        "exceptions": "PR 初始树可以作为声明快照来源，但不是发布证据；同一 writer 可能有多个树，记录必须指明选中检查点。"
+      },
+      "applicability": "适用于任何历史 schema/格式快照项目。迁移时给来源加结构化字段（kind=tag|pullRequest|tree、tag/PR/branch/commit/date/title、isRelease），索引显示 kind；没有历史访问能力时保留原始元数据附件。",
+      "relationships": [
+        "persistence-historical-finalized.historical-format-coverage：来源是每条历史记录的必备段落",
+        "persistence-historical-finalized.historical-evidence-limits：来源声明不等于发布/迁移证据",
+        "release-session-authority：writer/latestReleased/finalized 四权威分离",
+        "release-persistence-release-archive：预发布 tag 归档提供逐 tag 证据"
+      ],
+      "migration": {
+        "strategy": "把来源从自由文本变成结构化字段，并在索引中显示 kind；明确 isRelease；发布状态只写 release record。",
+        "implementation": "source: {kind: tag|pullRequest|tree, tag?, pullRequest?, branch?, commit?, date?, title?, isRelease: false}；渲染索引时显示 kind；评审检查'无 tag 时不得出现发布字样'。",
+        "requiredSupport": "历史格式模板、release archive manifest、tag record、评审 checklist、writer 常量校验。"
+      },
+      "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.source-checkpoint-provenance",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "V0/V2 记录指向 tag；V1 明确无 tag/中间树；V3 明确初始 PR 树、非发布；writer 常量与索引一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 V1 的 Source evidence 改成'发布 tag'，评审拒绝，因为归档没有 V1 tag。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 V3 初始树写成最终 PR 树或产品发布，评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改回中间树/初始树描述，引用 PR/日期/标题；发布状态留给 release record。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域无法从当前 checkout 验证 Git 历史事实（无 fetch、无 reflog）。",
+        "V1 中间树识别与 V3 空提交信息来自源文档。",
+        "来源声明只能证明'文档这样记录'，不能独立证明 tag/PR 存在。"
+      ]
+    }
+  ]
+}

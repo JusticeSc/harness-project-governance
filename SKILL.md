@@ -1,0 +1,174 @@
+---
+name: harness-project-governance
+description: 把 DeepSeek Harness 式项目治理落到任意代码库：识别项目与工具链、建立需求/验收与工作状态、按任务路由到已提取的治理参考、执行变更与独立评审、以真实命令输出完成验证和交接。用于初始化治理、接续任务、日常变更、缺陷修复、设计/文档/发布评审、强制体系核查。
+---
+
+# Harness 项目治理
+
+本 Skill 是从 DeepSeek Harness 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317` 独立提取的**治理知识与操作程序**，不是产品代码副本。它回答两件事：源仓用哪些义务、门禁和反例约束“维护者如何修改、验证、评审、发布这个项目”；这些义务迁移到当前仓库时，怎样在不削弱作用的前提下落地。
+
+**适用**：任何需要建立或收紧工程治理的仓库；尤其是有多包/多工具链、生成文档、双语页面、持久化格式、CI 门禁、评审与发布流程的项目。
+**不适用**：只要一次性答案或与仓库治理无关的产品功能实现；此时直接做事，不要引入治理流程。
+
+## 1. 安装与完整性
+
+安装 = 把本 Skill 目录（`SKILL.md`、`references/`、`knowledge/`、`bin/`、`tools/`、`package.json`、`SOURCE-LICENSE.txt`）原样复制到目标仓库的 `.agents/skills/harness-project-governance/`。核心运行时不依赖源仓、发布者路径或网络；可选执行模块的依赖按其参考单独准备。
+
+从公开仓库获取时，先按 [README.zh.md](README.zh.md) 运行 `npm run verify` 与 `npm run demo`；用 `node scripts/install-skill.mjs <目标仓库>` 安装白名单文件，已有安装座会拒绝，不覆盖。演示使用真实小应用、验收失败与恢复，但不是自主 Agent 采用或 C1–C6 完整验收。当前公开版本的证据与边界见 [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md)。
+
+```bash
+node .agents/skills/harness-project-governance/bin/governance.mjs verify
+```
+
+`verify` 只证明交付内容自洽：全部机制可解析、ID 唯一、每项都有存在的参考文件、锚点和来源区间。锚点可来自 Markdown 标题、标题末尾的 `{#id}` 或 HTML 锚点；普通链接和围栏代码中的示例不算定义。它**不**证明目标项目已落实治理。核心命令需要 Node ≥ 22.19，无第三方依赖；可选 GitHub 审批模块另需 Python/Pygments。
+
+`package.json` 将完整运行面列入离线包：可用 `npm pack --ignore-scripts --offline` 打包，再从本地 tarball 安装。Node 核心无第三方依赖；可选审批模块的 Python 依赖单独固定在其 `requirements.txt`。`private: true` 防止误发布到 registry。安装后的命令名为 `harness-governance`；npm 不自动注册 Agent Skill，实际发现仍需上述 `.agents/skills/harness-project-governance/` 布局。研究、审计、验收项目和缓存不进入运行包；打包成功不代表治理已实现或通过 C1–C6。
+
+命令：
+
+| 命令 | 作用 |
+|---|---|
+| `verify` | 校验本 Skill 的知识与引用完整性；失败退出 1。 |
+| `list` | 按域列出机制数量。 |
+| `cite <id或片段>` | 查机制的标题、参考文件、来源数量；迁移前定位原文。 |
+| `init [仓库]` | 在目标仓库创建 `.governance/`（幂等，不覆盖已有文件）。 |
+| `status [仓库]` | 报告需求、验收、负责人、检查项与下一步的缺口；有缺口退出 2。 |
+
+## 2. 五条硬规则
+
+1. **结论必须有观察到的证据。** “应该能过”“上次通过”“测试数量够”都不算。写结论时附命令、退出码和输出位置；没运行就写“未验证”。
+2. **区分三种陈述。** 【源义务】源仓可定位的强制规则/门禁/冻结约定；【源事实】源仓现状、阈值、历史例子；【迁移设计】本 Skill 为落地补充、源仓无等价物。不得把迁移设计说成源仓保证。
+3. **一个事实只有一个家。** 需求在 `.governance/requirements.md`，当前状态在 `.governance/state.json`。长期决策默认在 `.governance/decisions/`；若采用 Agent Note 生命周期树，把同一决策及链接迁到其 owner，不维护两份同权威记录。参考文件只解释机制，不复制状态。
+4. **不静默降级。** 源仓的自动/CI 强制不能改写成“建议”后宣称等效。确需降低保证时，先写决策记录、列明影响，并由用户明确决定。
+5. **远端与不可逆操作先授权。** 分支保护、审批、发布、历史改写只在获授权的隔离仓库/测试环境实测；不碰生产保护、真实凭据或不可逆数据。工作流文件存在不等于远端已验证。
+
+## 3. 每个任务都走同一循环
+
+**3.1 接续。** 先运行 `governance status`；读 `.governance/requirements.md` 与 `state.json`。没有 `.governance/` 时先 `init`，再把用户本次的真实目标与验收写进 requirements——不要从聊天记录或检查清单猜进度。
+**3.2 分类。** 用第 4 节路由表确定变更类型、受影响域、需要触发的机制。跨域变更列出全部受影响域，不只读最显眼的一份参考。
+**3.3 计划。** 把验收写成可观察条件，写入 `state.acceptance`。每条可机械检查的不变量接入目标已有或新增、实际执行的顶层入口；每条变更验收路径安排正常与无效用例，例外窄且有理由，不全局禁用规则。按[持久规则准入](references/decisions.md#durable-rule-admission)核对入口、执行者和拒绝证据；不能机械校验的语义判断单列评审程序。更新 `state.nextAction`。
+**3.4 实施。** 复用目标仓库已有模式；新增约定前先确认没有第二套并存。改动公共符号前查全部调用点。
+**3.5 验证。** 运行目标项目登记在 `policy.checks` 的真实入口命令；失败就停下修，不以缩小范围或跳过检查收场。只报告实际执行过的验证。
+**3.6 记录与交接。** 更新 `state`（阶段、已完成、未确定、下一动作）；影响长期维护的取舍写 `decisions/`。交接时给下一位执行者可直接继续的命令，而不是“继续完成”。
+
+## 4. 任务路由
+
+| 触发 | 先读 |
+|---|---|
+| 新任务、接续、范围与证据、交接 | `agent-workflows`（§0、§6、§11、§26）、`collaboration`、`decisions` |
+| 代码评审、PR、栈式评审与落地 | `agent-workflows`（§7–§10）、`engineering`、`testing` |
+| 改动指令文件、子树规则、技能入口 | `subtree-instructions`、`agent-workflows`（§1–§4）、`packaged-skill-contracts` |
+| 文档、双语配对、预算、生成区、升级指南 | `documentation`、`documentation-procedures`、`subsystem-contracts-1`、`subsystem-contracts-2`、`upgrade-guides`；采用决策 Note/冻结归档时另读 `agent-notes` |
+| 写、修剪、恢复或审查散文/注释；用户要求编辑校准 | `agent-workflows`（§19.2–§19.3）、`documentation`；先确认显式scope与写权限，interactive仅在用户明确要求时启用 |
+| 持久化格式、Session 兼容、发布归档 | `persistence-current-records`、`persistence-historical-finalized`、`persistence-release-history`、`release` |
+| 本地钩子、门禁运行器、CI、缓存、取消 | `automation`、`enforcement-scripts-1`、`enforcement-scripts-2`、`enforcement-scripts-3`、`enforcement-scripts-4`、`policy-tests-1`、`policy-tests-2` |
+| 包边界、依赖、vendor、发布面 | `package-contracts-1`…`package-contracts-8`、`supply-chain`、`packaged-skill-contracts` |
+| 架构决策、规则演进、事故与归档理由 | `rationale`、`decisions`、`rationale-architecture-1`…`4`、`rationale-process-1`…`2`、`rationale-feature-1`…`4`、`rationale-bug-fix-1`…`2`、`rationale-simplification-1`…`2`、`rationale-testing-1` |
+| UI、前端契约、无障碍与响应式 | `ui-surface-contracts`、`subsystem-contracts-2` |
+| 用户文档、公开站点、第三方可见面 | `user-and-publication-contracts`、`website-contracts` |
+| 基准、快照语料、性能预算 | `benchmark-contracts`、`snapshot-corpus-inventory`、`rationale-testing-1` |
+| 原生启动器、Python SDK、Desktop 打包 | `runtime-residual-authority`、`release` |
+| 采用风险、安全声明、品牌与生态身份 | `adoption-policy` |
+| 无法归类的源码文件该不该算治理 | `policy-source-residual`（判别附录） |
+
+路由只给入口；具体义务、反例、强制位置和验证方式在各参考小节。用 `governance cite <mechanism-id>` 定位参考后，读取小节的来源清单或知识账 `sources` 字段；`cite` 本身不输出来源正文或区间。
+
+## 5. 机制账怎么用
+
+`knowledge/<domain>.json` 是机器可读的机制账，`references/<domain>.md` 是同一域的操作解释。每条机制至少包含：
+
+| 字段 | 用途 |
+|---|---|
+| `problem` / `triggers` | 防哪种失败、什么条件下触发 |
+| `obligations` / `actors` / `steps` | 要求什么、谁执行、顺序与责任边界 |
+| `enforcement` | 失败如何传播、由谁阻断、可信边界与例外 |
+| `applicability` | 目标项目何时激活；不激活时保留判据与重新评估触发条件 |
+| `migration` | 原样保留、参数化还是替代；为什么没有削弱作用 |
+| `verification` | 正向、应拒绝、恢复三种证据要求 |
+| `limitations` | 源仓未证明或本迁移未覆盖的部分 |
+| `sources` / `reference` | 固定提交的路径与行号、可读解释位置 |
+
+查机制时先看 `enforcement` 与 `verification`：它们决定这件事是“硬门禁”还是“评审义务”。两者不能混写。
+
+## 6. 适用性、降级与阻塞
+
+- 目标项目缺少某机制的前提（平台、工具链、权限）时，把该机制标为**阻塞**并写明缺什么、已尝试什么、影响哪个验收条件、最小解阻动作；不得改写为“不适用”后算完成。
+- 只有在目标项目确实不存在该机制的触发面时，才记录“不适用”，并写清判据与重新评估条件。
+- 机制激活与否由项目事实决定，不由本 Skill 的默认清单决定；知识保留完整，执行按条件选择。
+- 任何范围缩减或保证降低都需要用户在当前任务中明确决定，并留下决策记录。
+
+## 7. 强制体系的核实顺序
+
+1. **本地检查**：命令真的失败吗（正向/应拒绝/恢复三个独立场景）？
+2. **CI**：同一个检查在流水线里是否真的阻断，而不是 `continue-on-error` 或被条件跳过？
+3. **平台**：分支保护、审批、规则自修改、历史保护是否在服务端生效？需要隔离测试仓库与书面授权，并保留服务端拒绝的输出。
+4. **人工步骤**：审批人是谁、凭什么权限、决定时间、绑定了哪个产物哈希？
+
+检查失败不等于平台阻断；本地 hook 失败也不等于服务端拒绝。结论必须写清是哪一层观察到的。
+
+**GitHub 加权审批、作者信用、委托或生产代码归属权重触发时**，先读 [可选审批执行模块](references/github-approval.md)。模块按目标项目的真实生产目录安装；部署到受信默认分支、绑定状态发布 App、配置原生评审与历史保护后，仍需分别观察服务端拒绝和恢复。默认安装 Skill 不部署工作流或修改远端权限。
+
+**Agent Note 分类、状态格式或冻结归档触发时**，先读[可选 Note 执行模块](references/agent-notes.md)。原生 Node 门禁在目标 cwd 检查真实语料；归档以受信 Git 基线追加密封，不继承源仓的一次性解封授权。配对、链接和平台保护仍是独立能力，不得把本地检查当成全部文档或远端保证。
+
+**修改 Markdown 段落、链接、标题或双语正文时**，按[文档模块的链接/换行执行与配对配置](references/documentation.md#markdown-gates)声明真实目标语料并运行适用命令。Note 配对只声明活跃生命周期根，冻结归档交给 Note 模块；链接检查仍验证活跃→归档的入站引用。段落门禁不证明标题写作或译文含义正确；解析器、语料或 CI/平台前提缺失时分别记录，不以核心 `verify` 代替。
+
+**修改常驻规则、文档预算或预算清单时**，先读[预算执行与评审程序](references/documentation.md#prose-budgets)，在目标仓库声明受约束文档并运行普通预算检查。`--list` 是报告不是阻断；5% 余量、内容归属和升限理由仍需评审，不能从计数通过推断已经满足。
+
+**修改 TypeScript 文档示例或其引用的公开 API 时**，按[代码等价与可编译示例](references/documentation.md#code-equivalence)配置真实目标语料、tsconfig 和目标自身的编译器，运行文档编译执行器并接入项目实际检查入口。编译不执行示例；类型等价/生成围栏仍须各自门禁，不能借标记逃过普通示例编译。
+
+**改变CI运行器规格或比较预览构建成本时**，先读[容量测量合同](references/rationale-process-2.md#capacity-evidence-benchmarking)。CI owner保留固定输入、冷/热精确缓存和逐作业费用表，reviewer拒绝合计取整、漏失败/开销或build-only发布声明；普通PR缓存fallback不受实验规则替换，真实发布仍须已有preview workflow确认。
+
+**新增或改写包README及Summary时**，按[完整包README合同](references/documentation.md#package-readme)配置真实包根与英文文件名，从安装座运行Summary词数门禁，覆盖包根、组和包三级README。100词是硬上限，缺节/空扫描拒绝；不要把这个零依赖单门禁当完整Metadata、Model Experience或限制节检查，也不要由计数通过推断语义无损。
+
+**声明包能力边界、延迟工作或“已完整/生产可用”时**，同一变更补齐唯一 `## Known Limitations and Deferred Work` 与读者可见顶层条目，运行限制节门禁；确实无延迟工作须逐包审计豁免，指向不存在包或空理由会失败。代码围栏/HTML注释里的条目不算，中文侧与限制真实性仍由评审承担。
+
+**维护历史引用、组织链接或禁用术语时**，按[仓库引用政策执行入口](references/documentation.md#reference-policy)声明语料、实际 Git 对象库和目标规则，运行普通引用门禁；诊断 `--list` 不阻断，关闭的规则和浅历史漏报不得计为已保证。来源脚本按规则排除不同范围：用 `ruleExclusions` 只豁免指名规则、用 `generatedRegions` 豁免标记内的生成内容，不要用整语料 `excludePrefixes` 一并放弃提交号与链接检查。
+
+**撰写、审计或精简散文、JSDoc、注释，或清理会话/评审残留时**，先读[完整命题与泄漏审计程序](references/agent-workflows.md#aw-19)。明确 scope 与写权限，先列命题和 owner，再校准召回探针并语义判断；审计只报告，修复保留义务、假设、必要解释和测量来源。搜索命中不是自动拒绝。
+
+**双语变更时**，常规路径同一 pass 做最小 counterpart 更新并 scoped 重录/检查，不自动生成 briefing 或委派。只有用户明确点名目标已配置的扩展入口，才按[扩展翻译分支](references/agent-workflows.md#aw-15)执行；入口、宿主禁隐式调用策略或执行工具缺失时记录实现缺口，不自动进入该分支。
+
+
+## 8. 完整参考索引
+
+| 文件 | 覆盖 |
+|---|---|
+| `adoption-policy.md` | 采用风险、安全声明、品牌与生态身份 |
+| `agent-workflows.md` | 指令层级、技能路由、任务开工、评审、推送、栈、交接、专项工作流 |
+| `agent-notes.md` | 可选 Note 执行模块：当前触发政策、生命周期/格式检查、可信基线与冻结归档 |
+| `automation.md` | 本地钩子、门禁运行器、CI 工作流、runner/缓存/并发/取消/裁决 |
+| `benchmark-contracts.md` | benchmark 执行契约与证据边界 |
+| `collaboration.md` | 协作、作者/评审者/机器人边界 |
+| `decisions.md` | 决策记录、持久规则、冻结与归档 |
+| `documentation.md` | 文档分层、归属、预算、双语与生成参考 |
+| `documentation-procedures.md` | 页面义务、能力/格式变更、复盘与评审响应 |
+| `enforcement-scripts-1.md` … `-4.md` | `scripts/` 全量分区：构建、生成、校验、发布、打包、快照 |
+| `engineering.md` | 代码与架构约束、错误与生命周期、类型安全、边界校验 |
+| `github-approval.md` | 可选加权审批执行模块：安装、目标生产根目录、信任边界、平台接入与升级 |
+| `package-contracts-1.md` … `-8.md` | 包 README 契约、seam、组合边界、版本与发布语义 |
+| `packaged-skill-contracts.md` | 打包技能的文件、策略与门禁 |
+| `persistence-current-records.md` | 当前持久化变更记录 |
+| `persistence-historical-finalized.md` | 历史 Session 格式与 finalized 检查点 |
+| `persistence-release-history.md` | 预发布持久化历史归档 |
+| `policy-source-residual.md` | 无新机制的残差文件判别与既有机制落点 |
+| `policy-tests-1.md` / `policy-tests-2.md` | 测试分区、Session 语料、发布门禁 |
+| `rationale*.md`（17 份） | 架构、过程、功能、缺陷修复、简化、测试决策的可迁移理由 |
+| `release.md` | npm、原生、Python、Desktop、GitHub 发布链 |
+| `runtime-residual-authority.md` | 原生启动器、Python 发布、Desktop 打包 |
+| `snapshot-corpus-inventory.md` | 快照语料清点与使用边界 |
+| `subsystem-contracts-1.md` / `-2.md` | 子系统参考页、生成区、页面归属 |
+| `subtree-instructions.md` | 子树 `AGENTS.md` 的层级与归属 |
+| `supply-chain.md` | 依赖、vendor、补丁、许可证、凭据与供应链 |
+| `testing.md` | 单元/集成/真实入口/E2E/快照/覆盖率/平台矩阵 |
+| `ui-surface-contracts.md` | UI 表面、主题、响应式、遮罩与可读性 |
+| `upgrade-guides.md` | 升级指南触发、同改动写入、结构与字数 |
+| `user-and-publication-contracts.md` | 用户文档、教程、公开页面 |
+| `website-contracts.md` | 站点实现、样式、期望输出 |
+
+## 9. 证据边界
+
+- 本 Skill 的知识来自固定提交的只读检查；行号以该提交为准，源仓后续提交会漂移。引用格式 `deepseek-harness/<path>:<start>-<end>@687f282e`。
+- 机制账或参考中保留的 `verification/evidence/`、`_working/` 与提取 builder 路径属于发布者内部历史记录，不随公开包分发。不得把这些路径当成安装后可执行的入口或当前目标的已验证证据；公开版本的可复跑命令与本次观察见 `PUBLIC-VERIFICATION.md`。
+- 源仓的产品行为、平台配置和远端效果，只有实际运行或服务端记录才算证据；参考文件里的“源事实”不等于目标项目已具备。
+- 每个目标的验证命令与输出应可由他人复跑；不可复跑的证据（人工审批、远端控制台）要记录操作者、时间、对象和原始输出位置。
+- 未观察到的结果写“未验证”，不写“已通过”。

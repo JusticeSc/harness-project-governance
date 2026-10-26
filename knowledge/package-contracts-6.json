@@ -1,0 +1,2596 @@
+{
+  "domain": "package-contracts-6",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "package-contracts-6.readme-contract-and-group-map",
+      "title": "Package README contract and package-group maps",
+      "sources": [
+        {
+          "path": "packages/core/README.md",
+          "start": 1,
+          "end": 62,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/README.md",
+          "start": 1,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/browser-use/README.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/feedback/README.md",
+          "start": 1,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/README.md",
+          "start": 1,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workflow/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/README.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/ralph-bundle/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A multi-package harness drifts when each package documents itself differently: ownership of a capability becomes ambiguous, group pages duplicate or contradict package contracts, and a consumer mounts the wrong package or expects an API that the owning package never promised.",
+      "triggers": [
+        "Adding a package, package group, bundle, or library to the repository",
+        "Moving a capability between a package group and a runnable bundle",
+        "Reviewing a package README or group map for composition correctness"
+      ],
+      "obligations": [
+        "Every package README carries frontmatter with a one-sentence description and a kind (package-group, package-reference, package-library, package-bundle).",
+        "Every English README pairs with a Chinese README and a consistency sidecar; the language switcher is the first body line.",
+        "A package-group page states the group's Summary, a Table of Contents, a Packages table with each package's Role and ctx key (or the registration/mount relation), Related documentation, and a Dev Note.",
+        "The group page maps the group and defers per-package contract and configuration to that package's README; the group must not restate package internals as a second contract.",
+        "A group page must distinguish the swappable contract pieces from runnable compositions: for example core owns the spine but runnable compositions live under packages/bundle.",
+        "Package READMEs that expose a ctx key state it; packages that register onto another service state the target instead of inventing a new key."
+      ],
+      "actors": [
+        "Package author",
+        "Package-group owner",
+        "Documentation reviewer",
+        "Composition author reading the map"
+      ],
+      "steps": [
+        "Choose the document kind and write the frontmatter description before the body.",
+        "Write Summary in capability terms, not a file inventory.",
+        "Add the Packages table and mark every ctx key or registration relation.",
+        "Link only to the authoritative subsystem page and Agent Note for related contracts.",
+        "Keep group-level Dev Note for maintainer working context, not for new obligations.",
+        "Add the Chinese counterpart and regenerate the pairing record with the repository's translation tooling."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Documentation-review and translation-pairing gates check structure and pairing; there is no checker that proves the group map matches the code's actual ctx keys.",
+        "trust": "The map is trusted only as an index. The owning package README and the generated catalogs are the authority for config and schema.",
+        "failure": "A wrong or stale map sends consumers to the wrong package; no runtime check catches it.",
+        "exceptions": "Archived or experimental packages may use the same shape with a smaller body, but they still declare kind and model experience."
+      },
+      "applicability": "Any repository with package groups, bundle layers, or capability families. Smaller repositories can collapse the group page but should keep the per-package contract and ctx-key declaration.",
+      "relationships": [
+        "package-contracts-6.capability-seam-one-provider",
+        "package-contracts-6.model-experience-disclosure",
+        "package-contracts-6.limitations-and-deferred-work"
+      ],
+      "migration": {
+        "strategy": "Introduce a template directory with the frontmatter fields and a group-map skeleton; migrate one group at a time and make the per-package README the only place where config and schema are described.",
+        "implementation": "Create docs/package-template.md plus a lint that checks frontmatter keys and presence of Summary/Table of Contents/Packages/Related documentation/Dev Note; add a pairing check for translated counterparts.",
+        "requiredSupport": "A documented kind vocabulary, a ctx-key registry or generated catalog, and translation tooling that records per-heading hashes."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.readme-contract-and-group-map",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A new group README passes the structural lint and every row's ctx key resolves in the generated catalog.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "The English/Chinese pair record is regenerated after a heading change and the pairing check is green.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A group README missing frontmatter kind or the Packages table fails the structural check.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A group page restating a package's config table as authoritative is rejected in review and replaced by a link.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A stale ctx key is corrected in the package README, the group table is updated, and the generated catalog is re-run.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The map is prose; no test proves it matches runtime registration.",
+        "Translation pairing checks structural hashes, not semantic equivalence.",
+        "Kind labels are descriptive; nothing prevents a library from carrying a bundle-shaped README."
+      ]
+    },
+    {
+      "id": "package-contracts-6.capability-seam-one-provider",
+      "title": "Capability seams: one provider per service, exclusive names and inert seams",
+      "sources": [
+        {
+          "path": "packages/host/directory-picker/README.md",
+          "start": 1,
+          "end": 111,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/lsp/README.md",
+          "start": 1,
+          "end": 139,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill-local/README.md",
+          "start": 1,
+          "end": 141,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess/README.md",
+          "start": 1,
+          "end": 163,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry/README.md",
+          "start": 1,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/browser-use/README.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 1,
+          "end": 273,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/registry/README.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/README.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "If two packages can silently serve the same capability, routing becomes load-order dependent and a deployment cannot tell which backend executed a request. If a seam ships without a provider, consumers may silently do nothing instead of declaring the capability unavailable.",
+      "triggers": [
+        "Introducing a new ctx.* service or replacing its backend",
+        "Mounting a second implementation of an existing service",
+        "Registering a route, extension, or provider name that another package may also claim"
+      ],
+      "obligations": [
+        "A seam package defines the service contract, capability vocabulary, and typed errors; it does not register a provider or a model-facing tool itself.",
+        "Exactly one provider registers each service per context; loading a second implementation throws the standard duplicate-service error.",
+        "A seam without a provider is inert: the key is absent or the capability kind simply has no UI affordance; it must not pretend to work.",
+        "Provider replacement must not change the consumer request or the model-visible response; provider-owned coordinates (workspace URI, terminal platform) travel in the result.",
+        "Exclusive ownership is declared where it exists: LSP reserves each file extension to one provider, telemetry accepts one backend, subagent providers register under unique names, and browser-use owns exclusive named provider registration.",
+        "A route another adapter already owns fails plugin loading rather than silently replacing it.",
+        "Duplicate endpoints, namespaces, schema keys, or invocation ids are rejected before anything becomes callable."
+      ],
+      "actors": [
+        "Seam owner",
+        "Provider author",
+        "Deployment composer",
+        "Consumer author"
+      ],
+      "steps": [
+        "Name the service and enumerate the capability union and closed error codes.",
+        "Require providers to register through the service with an explicit id and to return a stable capability object.",
+        "Make the consumer switch on the capability kind and hide the affordance when no provider implements it.",
+        "Reject duplicates atomically at registration, before mutating any registry state.",
+        "Test that a second provider fails and that the seam alone produces the documented unavailable behavior."
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": "Cordis duplicate-service errors and per-registry duplicate checks (LSP extension reservation, telemetry single backend, typert duplicate package-face/schema/endpoint, LLM route collision) reject registration.",
+        "trust": "Registration is same-process and cooperative; it prevents accidental conflicts, not a hostile plugin that edits internals.",
+        "failure": "Duplicate load throws and the composition must be fixed; an unregistered seam leaves consumers with no capability, which should be surfaced as unavailable rather than retried silently.",
+        "exceptions": "A deployment-configured selector above registrations is named as intended future work for relaxing exclusive extension ownership; it is not implemented."
+      },
+      "applicability": "Any service with interchangeable backends (filesystem, shell, sandbox, directory picker, LSP, web fetch, spill storage, telemetry, subagent providers).",
+      "relationships": [
+        "package-contracts-6.registration-lifetime-and-scope",
+        "package-contracts-6.fail-closed-enforcement",
+        "package-contracts-6.readme-contract-and-group-map"
+      ],
+      "migration": {
+        "strategy": "Extract the interface first, keep the shipped implementation as one provider, then add alternative providers behind the same contract. Preserve the consumer-visible request/result shape across providers.",
+        "implementation": "Declare an abstract service plus a merge-extensible capability map; register providers as effects; add a registration test that loads two providers and asserts the duplicate error.",
+        "requiredSupport": "A DI container with duplicate-service semantics, a generated ctx-key catalog, and a composition test harness."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.capability-seam-one-provider",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Mounting one directory-picker backend resolves ctx.directoryPicker and capability() returns the declared kind.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Mounting the LSP seam with a stdio provider routes .ts queries without changing the consumer call.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Mounting a second subprocess or telemetry provider throws the duplicate-service/duplicate-load error.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Registering two LSP providers for .ts fails with LSP_CONFLICT before any route is published.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Remove the duplicate provider row, restart the composition, and confirm the remaining provider serves the capability.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Seam-alone inertness is documented per package but not uniformly testable because some registries still publish a key.",
+        "Exclusive extension ownership is per runtime; a deployment-level selector is proposed only.",
+        "Same-process plugins can bypass registry APIs; exclusivity is not a security boundary."
+      ]
+    },
+    {
+      "id": "package-contracts-6.model-experience-disclosure",
+      "title": "Model-experience disclosure: what the model sees, token cost, and KV-cache effect",
+      "sources": [
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-input-trigger/README.md",
+          "start": 1,
+          "end": 91,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-browser/README.md",
+          "start": 1,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/system-prompt/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/agent-instructions/README.md",
+          "start": 1,
+          "end": 236,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-image-offload/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-image-offload/README.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-image-offload/README.md",
+          "start": 88,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-image-offload/README.md",
+          "start": 95,
+          "end": 96,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A package can change the request prefix, add tool schemas, or inject history messages without the deployment noticing; undisclosed model input is both a cost surprise and a cache-invalidation surprise.",
+      "triggers": [
+        "A package registers a tool, prompt section, runtime-context message, or session event that reaches the model",
+        "A package toggles tools or prompt text at runtime",
+        "Reviewing a package for prompt/cache impact"
+      ],
+      "obligations": [
+        "Every package README has a Model Experience section stating exactly what the model sees, or 'None' with the reason.",
+        "The section separates Token effect from KV Cache effect.",
+        "Direct effects (schemas, prompt sections, notices) and indirect effects (through a consumer package) are distinguished; the consumer that owns the request-prefix change is named.",
+        "Prefix-stable content is identified; append-only results are stated not to invalidate existing cache entries; a tool-list or prefix change states that reuse ends at the first changed token.",
+        "Packages with no model surface say so explicitly with the reason (for example browsing or workspace records never enter a model request); saying None is a disclosure, not a claim that the package registers no session events.",
+        "Truncation, spill replacement, and offload decisions that alter model-visible text are described, including whether the omission is permanent.",
+        "An image offload is permanent and model-visible: on `IMAGE_OFFLOAD_REQUIRED` with `offloadImages`, the plugin replaces the named images in request order with text placeholders naming each attachment and its read-only path, records the selection, retries without spending the provider retry budget, and keeps the omission across route changes, resume, and replay; provider cache reuse ends at the first changed message."
+      ],
+      "actors": [
+        "Package author",
+        "Prompt/tooling owner",
+        "Deployment cost reviewer"
+      ],
+      "steps": [
+        "Enumerate every model-visible artifact the package contributes.",
+        "Classify each as fixed per request, repeated until compaction, conditional, or none.",
+        "State cache behavior in terms of the request prefix and append-only history.",
+        "If the effect is owned by another package, link to that package and say so instead of duplicating its numbers.",
+        "Re-check the section when a tool is added or the package becomes enabled by default."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Documentation review checks presence and specificity; no machine check proves the claimed token/cache behavior matches runtime.",
+        "trust": "Claims are advisory to deployments; the generated tool and configuration catalogs remain the authority for schemas and fields.",
+        "failure": "An omitted or wrong disclosure causes unexpected token spend or cache invalidation; it does not fail the build.",
+        "exceptions": "Pure library seams with no request contribution use the explicit None form; indirect contributions link to the owning consumer."
+      },
+      "applicability": "Every package that can be composed into an agent runtime. The section is still required when the answer is None.",
+      "relationships": [
+        "package-contracts-6.model-facing-tool-result-contract",
+        "package-contracts-6.optional-bundle-lifecycle",
+        "package-contracts-6.limitations-and-deferred-work"
+      ],
+      "migration": {
+        "strategy": "Add the section to the package template and audit existing packages by grepping for tool/prompt registration. Record the owner of each request-prefix change.",
+        "implementation": "A checklist in the README template plus a review rule: no package merge without Model Experience and Known Limitations sections.",
+        "requiredSupport": "Access to the runtime's prompt assembly and tool registry to verify what the package actually contributes."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.model-experience-disclosure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A package that registers a tool states its fixed schema cost and that the schema is prefix-stable while the tool view is unchanged.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A pure UI package states None and a runtime check confirms it registers no tool or prompt section.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A README without Model Experience fails the documentation checklist.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A package that injects a prompt section but claims None is rejected in review.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Add the missing section, classify the effect, and re-run the prompt-assembly diff to confirm the claim.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Token estimates are not exact for all providers.",
+        "Cache behavior can depend on the upstream provider and on route changes the package does not control.",
+        "The section is prose; nothing tests that a later code change keeps it true."
+      ]
+    },
+    {
+      "id": "package-contracts-6.limitations-and-deferred-work",
+      "title": "Known limitations, deferred work, and non-authoritative Dev Notes",
+      "sources": [
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-browser/README.md",
+          "start": 1,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/bash-sandbox/README.md",
+          "start": 1,
+          "end": 183,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/tests/fuzz/README.md",
+          "start": 1,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 1,
+          "end": 273,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Without an explicit limits section, consumers infer guarantees the package does not provide (durability, security isolation, crash safety, cross-platform support) and build on them.",
+      "triggers": [
+        "A package cannot meet a guarantee in some deployment (remote, headless, Windows, crash, multi-process)",
+        "A capability is deliberately out of scope or deferred",
+        "A maintainer records an undecided direction"
+      ],
+      "obligations": [
+        "Every package README carries Known Limitations and Deferred Work, phrased as current package constraints rather than a general comparison or a task backlog.",
+        "Each limitation states the operational condition, what still works, and the consequence.",
+        "Security, durability, and compatibility non-guarantees are listed explicitly (for example: file effects only, no reconnect/replay, process-local residency).",
+        "Deferred work is named as deferred, not promised; future behavior must not be described as shipped.",
+        "The Dev Note is explicitly non-authoritative maintainer context and must not carry new obligations."
+      ],
+      "actors": [
+        "Package author",
+        "Reviewer",
+        "Deployment operator"
+      ],
+      "steps": [
+        "List the conditions under which the package is a poor fit.",
+        "For each, state the observable consequence and the reachable workaround if one exists.",
+        "Move genuinely undecided directions into a Dev Note labelled non-authoritative.",
+        "Remove limitations that no longer hold when the implementation changes; do not accumulate stale claims."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Documentation review checks presence and honesty; no checker can prove completeness of a limitations list.",
+        "trust": "Limitations are the package's own risk disclosure; consuming deployments must verify the specific condition they rely on.",
+        "failure": "An unstated limitation becomes a production incident or an unsafe assumption.",
+        "exceptions": "None; even the smallest native addon README states platform support and failure behavior."
+      },
+      "applicability": "Every package README, including group maps and native-addon packages.",
+      "relationships": [
+        "package-contracts-6.trust-boundary-and-residual-risk",
+        "package-contracts-6.durability-and-restart-semantics",
+        "package-contracts-6.generated-artifact-and-evidence-verification"
+      ],
+      "migration": {
+        "strategy": "Add the section to the template and require it in review. Split 'current constraint' from 'deferred work' so readers do not treat a future item as a guarantee.",
+        "implementation": "README checklist plus a review rule; for security-relevant packages, require the threat-model non-guarantees in the same section.",
+        "requiredSupport": "A glossary that distinguishes limitation, deferred work, and accepted residual risk."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.limitations-and-deferred-work",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A sandbox package lists file-effects-only, denial inference, and fail-closed behavior in Known Limitations.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A Dev Note is labelled non-authoritative and points to the shipped sections for authority.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A README that promises reconnect/replay but the implementation document says no reconnect is rejected.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Deferred work described as available behavior is rejected in review.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Move the promised item back to Deferred Work and link the acceptance evidence required to ship it.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The completeness of a limitations list is a human judgement.",
+        "Some limits are discovered only by adversarial testing; the README is not a substitute for that test."
+      ]
+    },
+    {
+      "id": "package-contracts-6.configuration-surface-contract",
+      "title": "Configuration surface: declared fields, defaults, validation boundaries, and exhaustive catalogs",
+      "sources": [
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill-local/README.md",
+          "start": 1,
+          "end": 141,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/web/web-fetch-http/README.md",
+          "start": 1,
+          "end": 145,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 1,
+          "end": 273,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/system-prompt/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/README.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset-registry/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-session-query/README.md",
+          "start": 1,
+          "end": 186,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/system-prompt/README.md",
+          "start": 46,
+          "end": 56,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/system-prompt/README.md",
+          "start": 100,
+          "end": 100,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Undocumented or loosely validated configuration produces deployments that boot with nonsensical limits, silently ignore fields, or fail at the first model request instead of at load.",
+      "triggers": [
+        "Adding or changing a configuration field",
+        "Mounting a package in a new deployment",
+        "A settings form or generated catalog is generated from the schema"
+      ],
+      "obligations": [
+        "The package README lists the fields it accepts, or links the exhaustive generated catalog; a field table is a summary, not a second schema.",
+        "The generated configuration catalog is declared the exhaustive source for accepted fields and JSDoc; the README table is a summary, not a second schema.",
+        "Validation happens at a declared boundary: construction/load for impossible values, assembly/first call for values that depend on other plugins, and execution for request-time route checks.",
+        "Invalid values fail loudly; they must not be coerced into a plausible default.",
+        "Fields that cannot take effect until restart say so; fields resolved per request say so.",
+        "A field that is retired is declared as not read and not rewritten, rather than silently ignored.",
+        "Cap values with security meaning (URL length, redirects, image bytes, timeouts, frame sizes) are explicit and range-checked.",
+        "Prompt assembly exposes `includeHarnessIdentity`, `includeRuntimeContext`, `personaPrefix`, `personaSuffix`, and `toolOrder`. A `complete: true` section becomes the exact complete prompt after assembly (more than one effective complete section fails assembly), while assembled context/tools/variables remain separate inputs; an empty rendered prompt causes the loop to clear all effective system nodes. `toolOrder` shape errors fail at load, but an unknown tool name fails at the first assembly."
+      ],
+      "actors": [
+        "Package author",
+        "Config schema author",
+        "Deployment operator",
+        "Settings UI author"
+      ],
+      "steps": [
+        "Define the schema before documenting it.",
+        "Document required versus optional and the exact default.",
+        "State validation timing and the failure code or message.",
+        "Regenerate the configuration catalog and link it from the README.",
+        "Test one invalid value per validation boundary."
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": "Per-package schema validation runs at plugin construction or at the documented assembly/execution boundary; the generated catalog check keeps docs and schema aligned.",
+        "trust": "Schema validation is authoritative for shape and ranges; semantic serviceability checks (for example credential resolution or catalog model errors) may occur per request.",
+        "failure": "Load or assembly throws with the field and reason; the deployment must fix the value. A route that is configured-but-unserviceable may remain editable with a diagnostic.",
+        "exceptions": "Some fields intentionally accept omission to mean 'ambient provider discovery' or 'feature disabled'; this must be documented as the default."
+      },
+      "applicability": "Any package with a Config object, YAML row configuration, or user-facing settings form.",
+      "relationships": [
+        "package-contracts-6.settings-persistence-and-precedence",
+        "package-contracts-6.credential-and-secret-boundary",
+        "package-contracts-6.generated-artifact-and-evidence-verification"
+      ],
+      "migration": {
+        "strategy": "Generate the catalog from the schema and make the README link it. Add validation-boundary tests before adding fields.",
+        "implementation": "A schema-to-catalog generator plus a CI diff check; per-package tests for load-time and assembly-time failures.",
+        "requiredSupport": "A configuration schema library and a generator that can render defaults and JSDoc."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.configuration-surface-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Every documented field appears in the generated catalog with the same default.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A negative or fractional spill budget fails plugin load.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "An invalid timeout or a non-integer retry count is rejected at construction.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An unknown model route with no api/baseURL/models is refused where the profile is written.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Correct the field, reload the plugin, and confirm the catalog and effective value agree.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The README table can drift from the schema if the catalog check is not wired into CI.",
+        "Validation timing is package-specific; a value accepted at load can still fail at first call.",
+        "Some defaults depend on the deployment (OS temp directory, route catalog) and are described rather than fixed."
+      ]
+    },
+    {
+      "id": "package-contracts-6.settings-persistence-and-precedence",
+      "title": "Settings persistence, precedence, reset, and legacy import",
+      "sources": [
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset-registry/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/web-app/presets/standard.patch.yml",
+          "start": 1,
+          "end": 3,
+          "kind": "config"
+        }
+      ],
+      "problem": "Multiple configuration writers (profile patches, home patches, command-line overlays, forms, device-local storage) can silently overwrite each other or lose values across releases.",
+      "triggers": [
+        "Editing live plugin configuration through a form",
+        "Shipping a new configuration layer or migrating an old settings file",
+        "Changing a preference schema or storage location"
+      ],
+      "obligations": [
+        "Forms expose only volatile fields from active, uniquely addressed profile entries; ordinary configuration stays in Cordis configuration files.",
+        "A form write persists through the active profile's Cordis patch and is refused if a home patch or command-line overlay would override it.",
+        "Reset restores the value beneath the profile override, including schema defaults; it cannot delete a value supplied by a lower layer.",
+        "Legacy settings are imported once after the Loader settles: the file is renamed before the first write, each section maps to a specific entry id, and a rejected section stays only in the renamed file.",
+        "A user override replaces the complete child list; it does not merge future builtin changes automatically.",
+        "Saved user overrides survive plugin unload while the command bindings themselves disappear with the owning plugin.",
+        "Preference stores declare their schema version and migrate on the next successful write; unreadable or future-version data is never replaced by reset.",
+        "内置 preset row（如 `preset-standard`）提供 `config.plugins` 默认；Web 编辑器保存的编辑按 plugin id 覆盖该 row 的对应插件，未编辑的 id 保留内置默认；row 级 patch replace 与 plugin 级用户覆盖是两层不同粒度。"
+      ],
+      "actors": [
+        "Settings service owner",
+        "Plugin author",
+        "User",
+        "Migration author"
+      ],
+      "steps": [
+        "Declare config as volatile only when the live form is the intended editor.",
+        "Check precedence before writing; refuse writes that an overlay would shadow.",
+        "Implement reset as restoring the inherited layer, not deleting keys blindly.",
+        "Import legacy files behind an idempotent rename and log rejected sections.",
+        "Bump the preference schema version only when the next write can safely migrate."
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": "The settings service validates against the full plugin Config, rejects stale revisions, and compares the active override layers before persisting; import runs once after Loader settlement.",
+        "trust": "The active profile patch is the persistence authority; business plugins read their Config references directly, not the form projection.",
+        "failure": "A stale write is refused; an unreadable preference document disables edits until repaired; a rejected legacy section remains in the renamed file for manual handling.",
+        "exceptions": "Device-local stores (browser origin storage, Electron userData) are separate from Harness home and are not migrated by the settings service."
+      },
+      "applicability": "Deployments with layered configuration and a live settings UI. Command-line-only deployments can skip the form but still need precedence rules.",
+      "relationships": [
+        "package-contracts-6.configuration-surface-contract",
+        "package-contracts-6.credential-and-secret-boundary",
+        "package-contracts-6.compatibility-and-version-migration"
+      ],
+      "migration": {
+        "strategy": "Keep one persistence owner per layer, add an explicit precedence table, and migrate legacy files once with a rename-before-write protocol.",
+        "implementation": "Settings service with revisioned descriptors plus a legacy importer; tests for overlay refusal, reset, and idempotent import.",
+        "requiredSupport": "A config editor that can write the active profile patch and a home-path resolver."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.settings-persistence-and-precedence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A form edit writes the profile patch and survives restart.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A legacy settings.yaml is imported once and renamed to settings.yaml.imported.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A form write shadowed by a home patch or CLI overlay is refused.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A stale revision edit is rejected instead of overwriting a newer value.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Remove the overriding layer or reset the field, then retry the edit.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Nested Includes own separate configurations and are not editable through the active profile form.",
+        "Cross-tab or cross-process writes can still be last-writer-wins at the storage layer.",
+        "A user override replacing a list does not receive later builtin additions.",
+        "本读取只证明注释声明的覆盖顺序；实际 profile composer 的合并实现未在本范围验证。"
+      ]
+    },
+    {
+      "id": "package-contracts-6.credential-and-secret-boundary",
+      "title": "Credential references, secret redaction, and repository-external secret files",
+      "sources": [
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 1,
+          "end": 273,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/web/web-fetch-http/README.md",
+          "start": 1,
+          "end": 145,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 38,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 95,
+          "end": 95,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Secrets committed to configuration, echoed in logs, or resolved from ambient environment without an explicit reference leak across deployments and into support artifacts.",
+      "triggers": [
+        "Adding a provider, backend, or publishing target that authenticates",
+        "Building a settings form that displays configuration",
+        "Recording errors or audit events around an authenticated operation"
+      ],
+      "obligations": [
+        "Configuration carries a reference (for example apiKeyEnv) or a store record id, never a plaintext secret.",
+        "Credential references resolve per request through the credential seam; a reference that resolves to nothing fails loudly with a stable missing-credential code.",
+        "Secret-role values are redacted from values, inherited values, profile overrides, and schema defaults; clients receive presence markers only.",
+        "Publishing credentials live outside Git in filesystem-permission-protected files; the CI uploader accepts permanent COS credentials, not STS session credentials.",
+        "Missing CI configuration stops publication; there is no personal-token fallback.",
+        "Anonymous fetch sends no credentials; SSH uses a deployment-owned alias and verifies artifact digests.",
+        "Error messages and audit records exclude credential values, authorization headers, and raw SDK errors.",
+        "Stored login records are addressable only by a lowercase-hyphenated provider id; a hand-declared route outside that grammar cannot be signed into because the record write fails `LlmError('UNSTORABLE_PROVIDER_ID')`, and such routes authenticate through `apiKeyEnv` or ambient provider settings. Omitting `apiKeyEnv` leaves a route configured-but-keyless, deferring to native ambient discovery for catalog routes."
+      ],
+      "actors": [
+        "Deployment operator",
+        "Plugin author",
+        "Settings UI author",
+        "Release engineer"
+      ],
+      "steps": [
+        "Add the credential to the credential store or the deployment's external file.",
+        "Reference it by name in configuration.",
+        "Resolve it at the operation boundary and fail with the documented code if absent.",
+        "Redact it from any form or log projection.",
+        "Verify the negative case (missing reference) without printing the secret."
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": "The credential seam resolves references; the settings form projection strips secret roles; the uploader validates configuration and skips credentials in child environments; audit records omit secrets.",
+        "trust": "A reference is only as trustworthy as the deployment's credential store. A provider that reads its own files may bypass the seam, and the README says so.",
+        "failure": "A missing or unusable reference fails the request (MISSING_CREDENTIAL/INVALID_CREDENTIAL) rather than falling back to an ambient secret.",
+        "exceptions": "Provider-native ambient discovery is allowed when a route names no credential; the README documents that this may read provider files outside the seam."
+      },
+      "applicability": "Every deployment that authenticates to a provider, remote host, object store, or update channel.",
+      "relationships": [
+        "package-contracts-6.configuration-surface-contract",
+        "package-contracts-6.outbound-data-disclosure",
+        "package-contracts-6.human-approval-and-evidence-limits"
+      ],
+      "migration": {
+        "strategy": "Replace plaintext configuration values with references, back them with a credential store, and add negative tests for absent references.",
+        "implementation": "Credential seam plus a settings projection that redacts secret roles; CI configuration files kept outside the repository.",
+        "requiredSupport": "A credential store, per-request resolver, and log/audit redaction."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.credential-and-secret-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A provider route with apiKeyEnv resolves the key per request and never writes it to config.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "The settings form shows a presence marker for a secret field and no value.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A route whose apiKeyEnv resolves to nothing fails with MISSING_CREDENTIAL.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Publication without the required credential file stops instead of falling back to a personal token.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Add the external credential file or store record, retry, and confirm no secret appears in the log.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Provider-native discovery can read credential files the seam does not mediate.",
+        "A sign-in lives only in the process that started it; a reload abandons the pending authorization.",
+        "Headers supplied as plain strings can carry a credential the redactor never sees; the documented rule is to use a reference."
+      ]
+    },
+    {
+      "id": "package-contracts-6.optional-bundle-lifecycle",
+      "title": "Optional and experimental bundles: off by default, enable/disable, caches, and model effects",
+      "sources": [
+        {
+          "path": "packages/experimental/ralph-bundle/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/session-titles-bundle/README.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/voice-input-bundle/README.md",
+          "start": 1,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-worktree/README.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/client-ui-cot-translation/README.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/README.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/session-titles-bundle/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/session-titles-bundle/README.md",
+          "start": 30,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/session-titles-bundle/README.md",
+          "start": 66,
+          "end": 66,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Experimental capability shipped in a profile can become active without an explicit user decision, can mutate tools or prompts at runtime, and can leave artifacts behind after being disabled.",
+      "triggers": [
+        "Adding an experimental or optional bundle",
+        "Enabling or disabling a bundle from the Plugins UI",
+        "Overriding a bundle's rows from a later profile layer"
+      ],
+      "obligations": [
+        "Optional and experimental bundles are installed but disabled in shipped profiles; the README names the default state.",
+        "Enabling is an explicit user action in Plugins; the bundle patch inserts its rows, and disabling removes the profile layer.",
+        "A later profile patch may override or disable a bundle by row id, but an override alone does not select the bundle.",
+        "Disabling removes tools/UI contributions; existing checkouts and branches remain (tool-worktree), and some bundles install native runtime even while disabled (voice-input).",
+        "Toggling a bundle that changes the tool list or prompt invalidates the cached request prefix once; the README states that effect.",
+        "A bundle that adds no model tool says so, and a bundle that adds one states its schema cost and completion behavior.",
+        "Enabling or disabling changes the running Host tool list, so every Agent sees the change on its next request in every preset, including minimal.",
+        "A bundle that replaces the title provider states the switch scope and failure retention: session-titles replaces the first-prompt title provider for existing and new Sessions, preserves user-pinned titles, keeps the previous title on failure, includes the current generated title in its 4096-byte title-input budget, and rejects oversized input instead of truncating conversation history."
+      ],
+      "actors": [
+        "Bundle author",
+        "User enabling the feature",
+        "Profile composer"
+      ],
+      "steps": [
+        "Write cordis.patch.yml rows that are inert until selected.",
+        "Document the exact default (on/off) and the enable/disable path.",
+        "State what deletion removes and what persists.",
+        "State the model-visible delta and cache effect.",
+        "Verify that disable leaves the base composition valid."
+      ],
+      "enforcement": {
+        "mode": "config",
+        "implementation": "Profile patch selection: shipped profiles omit the bundle row; enabling adds the layer and disabling removes it. Profile composer owns patch ordering and errors.",
+        "trust": "A user or profile editor controls selection; a later patch can still override rows, and the README states that this does not count as selection.",
+        "failure": "Removing a row unregisters its tools/UI; a component that fails to deactivate is a composition error rather than a partial enable.",
+        "exceptions": "Features enabled by the base bundle (for example automatic compaction) are documented as default-on rather than optional."
+      },
+      "applicability": "Any feature whose default activation would change model input, spend external resources, download assets, or modify the workspace.",
+      "relationships": [
+        "package-contracts-6.model-experience-disclosure",
+        "package-contracts-6.registration-lifetime-and-scope",
+        "package-contracts-6.durability-and-restart-semantics"
+      ],
+      "migration": {
+        "strategy": "Keep the capability implementation in a normal package and put only composition rows in the bundle. Add the bundle disabled by default and document the switch.",
+        "implementation": "cordis.patch.yml plus a plugin-manager entry; tests that enable, disable, and re-enable without duplicating registrations.",
+        "requiredSupport": "A profile composer that can insert/remove layers and report errors; a plugin inventory projection."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.optional-bundle-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A fresh profile has the bundle row absent and the tool/UI absent.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Enabling the bundle registers its tool once; disabling removes it without deleting existing checkouts or branches.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A profile override of a bundle row that does not select the bundle leaves the feature off.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A second provider registered by enabling the bundle fails the duplicate-service check.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Disable the bundle, confirm the tool/UI disappears on the next request, then remove residual assets separately if required.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Disabling cannot undo durable effects such as generated titles or created worktrees.",
+        "Some bundles install native dependencies even while disabled; the disk/download cost remains.",
+        "Browser-half packages can suspend waiting for a page even when the profile is otherwise headless."
+      ]
+    },
+    {
+      "id": "package-contracts-6.model-facing-tool-result-contract",
+      "title": "Model-facing tool results: bounded output, stable codes, caller-derived authority, no hidden cursors",
+      "sources": [
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-session-query/README.md",
+          "start": 1,
+          "end": 186,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill-policy/README.md",
+          "start": 1,
+          "end": 166,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/README.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workflow/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/tool-worktree/README.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 78,
+          "end": 82,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Tool output that is unbounded, ambiguous, or grants authority based on model-supplied identifiers can exhaust context, hide failures, or let a model read another workspace's data.",
+      "triggers": [
+        "Adding or changing a model-facing tool",
+        "A tool returns large output, paginated results, or cross-session data",
+        "A tool result is rendered by a generic spill or presentation layer"
+      ],
+      "obligations": [
+        "Results are bounded through documented caps, paging footers, or the shared spill policy; custom compositions without that policy can receive complete inline payloads (session query states this).",
+        "Failures use stable machine-routable codes plus a recovery instruction; callers must not parse prose.",
+        "Search/query results are cursor-free: no provider cursor, offset, page size, or model-controlled limit reaches the model; a capped result asks the model to narrow the query.",
+        "Authority is derived from the caller (Agent/Session identity), never from a model-supplied id; cross-session access requires exact workspace equality and unauthorized boundaries carry no hidden ids.",
+        "Successful results use the documented envelope; read results use line-numbered content with an exact footer; write/edit return a compact confirmation while arguments retain the full text.",
+        "A generic spill policy owns truncation/recovery; an individual tool must not invent a second truncation format.",
+        "Tool names and field names stay compatible with the existing schema vocabulary (snake_case, canonical names); renaming a tool changes its category and must be documented.",
+        "Filesystem mutations are gated by an observation policy rather than tool-local state: writing/editing an unread target fails `FS_NOT_OBSERVED`, a changed file fails `FS_STALE_VERSION` with a re-read instruction, successful reads emit `fs/observed`, and observation listeners must be synchronous side-effect-only recorders (a later mutation rechecks under the target lock)."
+      ],
+      "actors": [
+        "Tool author",
+        "Spill/presentation owner",
+        "Security reviewer"
+      ],
+      "steps": [
+        "Define the result envelope and error codes before the executor.",
+        "Resolve the caller identity and workspace from execution context, not arguments.",
+        "Bound output and add the exact continuation/recovery text.",
+        "Route oversized output through the shared spill policy.",
+        "Test the unauthorized case and the at-cap case."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Executors enforce caps and authorization in trusted code; the shared spill policy replaces oversized accepted content after tool post-execute; stable error constructors normalize messages.",
+        "trust": "The tool boundary is trusted only for the caller identity the host supplies. A local argument-validation error keeps its own message; trusted service failures are sanitized.",
+        "failure": "A denied or invalid call returns an error result the model can read; an oversized result is spilled or capped rather than sent whole; a missing capability refuses execution.",
+        "exceptions": "A custom composition without the spill policy accepts complete payloads inline; the package README states that consequence."
+      },
+      "applicability": "All model-facing tools, especially those returning files, search results, session history, or command output.",
+      "relationships": [
+        "package-contracts-6.model-experience-disclosure",
+        "package-contracts-6.outbound-data-disclosure",
+        "package-contracts-6.fail-closed-enforcement"
+      ],
+      "migration": {
+        "strategy": "Introduce a shared result envelope, stable error codes, and one spill policy; migrate tools one at a time and keep old tool names working until callers update.",
+        "implementation": "Tool executor helpers for caps/envelopes plus a post-execute retention policy; authorization helpers that read execution context.",
+        "requiredSupport": "A tool registry with execution context, a token meter, and a spill store."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.model-facing-tool-result-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A read over the cap returns the exact footer and the next offset.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A session query for another workspace returns SESSION_QUERY_TOOL_UNAUTHORIZED without leaking ids.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A model-supplied limit or cursor is rejected as an unknown argument.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A write without a prior read returns FS_NOT_OBSERVED with the read-then-retry instruction.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Read the file, retry the write, and confirm the stale-version path returns FS_STALE_VERSION with re-read guidance.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Caps are estimates for token cost; provider-reported usage remains authoritative.",
+        "Spill notices are a text convention and cannot prove the policy saved the result.",
+        "A same-process tool can still return data the model should not see if the host supplies the wrong caller identity."
+      ]
+    },
+    {
+      "id": "package-contracts-6.fail-closed-enforcement",
+      "title": "Fail-closed enforcement: no silent downgrade to unconfined or unverified operation",
+      "sources": [
+        {
+          "path": "packages/shell/bash-sandbox/README.md",
+          "start": 1,
+          "end": 183,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-sandbox/README.md",
+          "start": 1,
+          "end": 135,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/web/web-fetch-http/README.md",
+          "start": 1,
+          "end": 145,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill-local/README.md",
+          "start": 1,
+          "end": 141,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/gateway/README.md",
+          "start": 33,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/gateway/README.md",
+          "start": 43,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/gateway/README.md",
+          "start": 47,
+          "end": 49,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "When an enforcement component is missing or fails, the convenient behavior is to continue without it. That silently converts a confined operation into an unconfined one or a verified artifact into an unverified one.",
+      "triggers": [
+        "A confined mode is requested but no runner can enforce it",
+        "An installed helper, digest, protocol, or platform does not match",
+        "A security-relevant path is symlinked, writable by others, or outside the allowed root",
+        "Required publishing or tagging configuration is absent"
+      ],
+      "obligations": [
+        "A confined mode with no usable runner rejects with a stable unavailable code (SANDBOX_UNAVAILABLE); unconfined passthrough never happens for a confined policy.",
+        "A runner failure outranks a denial and is reported as a sandbox problem, not a command failure.",
+        "Digest, protocol-version, runtime-kind, and platform/architecture mismatches are rejected before readiness, not repaired by fallback.",
+        "A hostname answer set containing any non-public address is rejected in full; the connection is pinned to the validated set; cross-origin redirects fail.",
+        "Spill writes use exclusive create with owner-only permissions and refuse symlinks or pre-existing targets.",
+        "Missing publication configuration, debugging artifacts, or required signatures stop the operation; there is no personal-token fallback.",
+        "A denial is a structured result (FS_SANDBOX_DENIED or sandbox denial marker), not stderr inference where the fence owns the decision.",
+        "Every Gateway invocation and stream names an explicit Peer; a disposed Peer fails with `gateway/peer-disposed` before the payload is read. For a non-owner principal, resources are resolved from type-validated arguments and `ctx.remoteAccess.decide({principal, action, resources, args})` runs after input validation but before lookup, Context resolution, or Session activation; a denial throws `remote-access/denied` and an invalid resource is refused with `resource-invalid` without asking. Owner calls bypass the decision. `$events` and `$events/result` require `peer.interactions === 'answer'`; buffered uplink above `streamInboxBytes` fails the stream with `gateway/uplink-overflow` without closing the socket."
+      ],
+      "actors": [
+        "Sandbox/executor author",
+        "Deployment operator",
+        "Release engineer"
+      ],
+      "steps": [
+        "Identify every path where the enforcement component can be absent.",
+        "Return a stable unavailable/denied code instead of running the operation.",
+        "Preserve enough evidence to distinguish runner failure from operation failure.",
+        "Add a test that removes the runner and asserts the rejection.",
+        "Document the one approved recovery path (fix the runner or explicitly choose an unconfined executor)."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Bash executor checks ctx.sandbox.confine() and rejects SANDBOX_UNAVAILABLE; fs fence re-canonicalizes and returns FS_SANDBOX_DENIED; SSH validates digests/protocol; web fetch rejects non-public answers; publish workflows fail when configuration or evidence is missing.",
+        "trust": "These are trusted-code checks, not kernel boundaries. They prevent accidental downgrade, not a hostile process with equivalent privileges.",
+        "failure": "The operation fails closed with a code and, where applicable, a runner-failure fact or audit stage; the caller may retry only after fixing the environment.",
+        "exceptions": "danger-full-access explicitly bypasses the sandbox and is stamped as unconfined; that is a chosen mode, not a silent fallback."
+      },
+      "applicability": "Security-relevant executors, remote transports, publishers, and any component whose absence changes the guarantee.",
+      "relationships": [
+        "package-contracts-6.trust-boundary-and-residual-risk",
+        "package-contracts-6.capability-seam-one-provider",
+        "package-contracts-6.human-approval-and-evidence-limits"
+      ],
+      "migration": {
+        "strategy": "Enumerate enforcement points, define unavailable codes, and make absence a hard error. Add negative tests before enabling the feature by default.",
+        "implementation": "Error types per component plus tests that remove the runner/digest/config and assert rejection.",
+        "requiredSupport": "A composition that can omit the provider in tests and a stable error taxonomy."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.fail-closed-enforcement",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A confined bash call runs with the selected mode and reports enforcement facts.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A public web fetch resolves, pins, and returns a capped body.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Removing the sandbox runner makes the same bash call fail SANDBOX_UNAVAILABLE.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A helper digest mismatch prevents SSH readiness.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Restore the runner or helper, re-run the operation, and verify the mode/enforcement facts before relying on the result.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Fail-closed cannot detect a compromised runner that reports success.",
+        "Denials inferred from stderr in bash can misclassify application errors or miss a denial outside the retained tail.",
+        "Publication approval gates the workflow, not arbitrary code under the same machine account."
+      ]
+    },
+    {
+      "id": "package-contracts-6.trust-boundary-and-residual-risk",
+      "title": "Trust-boundary declaration and residual risk",
+      "sources": [
+        {
+          "path": "packages/shell/bash-sandbox/README.md",
+          "start": 1,
+          "end": 183,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-sandbox/README.md",
+          "start": 1,
+          "end": 135,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-browser/README.md",
+          "start": 1,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/scope/README.md",
+          "start": 1,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/agent-instructions/README.md",
+          "start": 225,
+          "end": 225,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess/README.md",
+          "start": 80,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subprocess/subprocess/README.md",
+          "start": 84,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 61,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/sdk-app/README.md",
+          "start": 26,
+          "end": 26,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A component named 'sandbox', 'scope', or 'approval' invites consumers to treat it as a security boundary. When it is a policy fence, a cooperative primitive, or an approval gate over one workflow, over-trusting it defeats the actual protection.",
+      "triggers": [
+        "A package uses the words sandbox, isolation, scope, trust, or approval",
+        "A deployment composes a security-sensitive capability",
+        "Reviewing a security claim in a package README"
+      ],
+      "obligations": [
+        "State what the boundary does NOT protect: fs-sandbox is a policy fence over a model-controlled path, not a kernel boundary; the residual resolve-to-syscall TOCTOU is narrowed but accepted.",
+        "The dynamic Cordis vm isolates globals but is not a security boundary; its services reach the live runtime, so treat a dynamic package like bash access.",
+        "Scoped registration routes trusted same-process plugins and is not a sandbox or authority boundary: state isolation applies only to scope-aware APIs and events, an arbitrary Cordis service remains context-global when called through a scoped context, one context carries one nearest scope key, and handing out `Scope.ctx` hands out the minting plugin's injected services.",
+        "Iframe sandboxing trades compatibility for isolation; escaped popups retain an opener, cross-origin pages can still navigate at the top level after the sandbox is disabled, and private-network filtering is not a firewall.",
+        "SSH digest verification detects an unexpected installed artifact but does not make writable deployment files safe to execute; TLS stream keys do not protect against remote process-memory inspection, and no reconnect or replay is supplied.",
+        "An approval environment gates the workflow, not arbitrary code running under the same machine account; account isolation and source-branch restrictions are separate work.",
+        "Subagent requests/results are borrowed trusted same-process values; serialization and hostile-input validation belong at process and wire boundaries.",
+        "Instruction candidates whose final path component is a symlink are resolved across the trust boundary: a cloned repository can surface off-tree content as lower-authority workspace guidance (never overriding system, developer, or direct user instructions), so loading an untrusted repository requires a filesystem policy gate or OS sandbox around `ctx.fs`.",
+        "Child processes receive a scrubbed environment: credential-shaped names and ambient `DSH_*` facts are removed before the caller explicit `env` merges, an explicit `undefined` tombstone removes an ordinary entry, and `argv` is never shell-interpreted; transports that own their spawn import `scrubbedParentEnv` so environment policy remains single-sourced.",
+        "An SDK stdio profile keeps stdout protocol-only (newline-delimited JSON-RPC); arbitrary inserted user plugins cannot be constrained by the shipped bundle, a custom profile must retain the `dsh-sdk-jsonrpc-server` row, and disabling HMR means configuration changes require a restart."
+      ],
+      "actors": [
+        "Package author",
+        "Security reviewer",
+        "Deployment operator"
+      ],
+      "steps": [
+        "Write the threat model in one paragraph: what is untrusted, what is trusted, what is out of scope.",
+        "Name the residual risk and why it is accepted.",
+        "Name the component that owns kernel-grade or cross-process isolation instead.",
+        "Prevent stronger claims in the README and in UI copy."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Human security review and documentation review; no runtime check proves a threat model.",
+        "trust": "The declaration is only as good as the reviewer. Tests demonstrate specific behaviors, not the absence of all escapes.",
+        "failure": "An overstated guarantee leads to unsafe composition; the mitigation is correction and, where possible, a compensating control at a higher layer.",
+        "exceptions": "A deployment may add a stronger boundary (OS sandbox, separate account, network policy) outside the package; the README should point to where that belongs."
+      },
+      "applicability": "Any component whose name or API implies confinement, isolation, authorization, or approval.",
+      "relationships": [
+        "package-contracts-6.fail-closed-enforcement",
+        "package-contracts-6.limitations-and-deferred-work",
+        "package-contracts-6.human-approval-and-evidence-limits"
+      ],
+      "migration": {
+        "strategy": "Add a mandatory threat-model/non-guarantee paragraph to security-adjacent READMEs and review UI copy for stronger language.",
+        "implementation": "A README checklist question: 'What does this not protect against, and who owns that protection?'",
+        "requiredSupport": "A security review process and a place to record accepted residual risk."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.trust-boundary-and-residual-risk",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "fs-sandbox documentation states policy-fence status and the accepted TOCTOU residual risk.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "The Cordis runner documentation states the vm is not a security boundary and compares the package to bash access.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A README claiming kernel-grade isolation for the fs fence is rejected.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An approval claim that covers arbitrary account code is rejected unless account isolation exists.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Correct the claim, add the residual-risk paragraph, and link the component that owns the stronger boundary.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Threat models age; a later change can invalidate the stated assumptions.",
+        "Review cannot prove the absence of an escape; adversarial testing and external audit remain necessary for high-assurance use."
+      ]
+    },
+    {
+      "id": "package-contracts-6.registration-lifetime-and-scope",
+      "title": "Registration lifetime, scope isolation, and atomic contributions",
+      "sources": [
+        {
+          "path": "packages/core/scope/README.md",
+          "start": 1,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/registry/README.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/lsp/README.md",
+          "start": 1,
+          "end": 139,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/core/system-prompt/README.md",
+          "start": 1,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/directory-picker/README.md",
+          "start": 1,
+          "end": 111,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-turn-outline/README.md",
+          "start": 1,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset-registry/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 53,
+          "end": 57,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 30,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Registrations that outlive their owner leak across agents and reloads; registrations that commit partially leave a registry in a state no one can reason about; scope filters that do not match ownership let a contribution be visible in one scope and torn down by another.",
+      "triggers": [
+        "Registering a tool, prompt section, command, extension, provider, projection, or module",
+        "Unloading or replacing a plugin",
+        "Creating per-agent or per-group registries"
+      ],
+      "obligations": [
+        "Registration runs through a scoped context or a Cordis effect; the disposer withdraws exactly that contribution.",
+        "A contribution is atomic: validate package-face identity, schemas, and invocation descriptors before committing; duplicates reject the whole batch before any state changes.",
+        "A registration made through a scoped context is both scope-visible and scope-lifetime; do not make something visible in one scope but owned by another.",
+        "Child scopes inherit ancestor contributions with nearest definition precedence; ancestor listeners may observe descendants, never the reverse; disposing a scope removes everything it owns.",
+        "Registrations that are effects disappear when the mounting fiber unloads; an absent registry makes the unit inert rather than partially registered.",
+        "Merge-extensible vocabulary (capability kinds, resource kinds, activity kinds) is declaration-merged by the owner; existing entries keep registration order.",
+        "A registry change is published to subscribers; a throwing listener is logged and does not stop later listeners.",
+        "Subagent delegation capacity is a tree-wide pool: `maxActiveSubagents` defaults to 8, the root parent consumes no slot, creation/cold resume reserves before yielding, waiting/pending-inbox/stopping activations stay counted, admission never queues, lowering the limit refuses new admissions without evicting residents, and slots are process-local. At capacity, creation rejects `ACTIVATION_LIMIT_REACHED` (browser prompts get `subagent/delivery-unavailable`).",
+        "Command registration rejects duplicate ids and overlapping default key combinations across the supported device profiles; fixed read-only sequences participate in conflict checks, cannot be assigned to editable commands, and remain visible-but-non-executable when a saved binding collides with a mounted fixed action."
+      ],
+      "actors": [
+        "Plugin author",
+        "Registry owner",
+        "Composition author"
+      ],
+      "steps": [
+        "Mint or receive the scope that matches the intended lifetime.",
+        "Validate the complete contribution before writing any state.",
+        "Register through one effect and keep the returned disposer.",
+        "For scoped data, file by scopeOf() and dispatch through scopeTarget(); do not rely on a scoped context alone.",
+        "Test unload and duplicate cases."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Cordis effect ownership and scoped stores; typert's atomic register with duplicate rejection; LSP effect-scoped provider routes; client entry ownership and stale-factory discard.",
+        "trust": "The registry trusts same-process callers to use the API; it prevents lifecycle leaks and accidental duplicates, not malicious mutation.",
+        "failure": "A duplicate rejects before commit; a disposed scope removes its registrations; a late or stale module download cannot mount after its desired entry changed.",
+        "exceptions": "Some saved user data (keybinding overrides, preset selections) intentionally outlives the contributing plugin; the README states that."
+      },
+      "applicability": "Any registry, extension point, event surface, or scoped service in a plugin architecture.",
+      "relationships": [
+        "package-contracts-6.capability-seam-one-provider",
+        "package-contracts-6.durability-and-restart-semantics",
+        "package-contracts-6.readme-contract-and-group-map"
+      ],
+      "migration": {
+        "strategy": "Move registration into effects, add a scope primitive for per-agent isolation, and make registration validation atomic.",
+        "implementation": "A scope store with createScope/scopeTarget/ScopedLayers plus registry-level duplicate checks and disposer tests.",
+        "requiredSupport": "A plugin container with effect ownership and a way to mint scoped contexts."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.registration-lifetime-and-scope",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Unloading a plugin removes its tool and prompt registration; re-loading registers one instance.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A tool registered through agent.ctx is visible only to that agent.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Registering a duplicate typert contribution rejects the whole batch and leaves the registry unchanged.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A second LSP provider for the same extension fails before publishing a route.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Remove the duplicate or dispose the previous scope, then re-register and verify the registry change event.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Only scope-aware APIs isolate state; an arbitrary service called through a scoped context remains context-global.",
+        "A context carries one nearest scope key; multi-membership policy sets are unsupported.",
+        "Service reachability comes from the scope minter and cannot be narrowed later by the holder."
+      ]
+    },
+    {
+      "id": "package-contracts-6.durability-and-restart-semantics",
+      "title": "Durability and restart semantics: durable, process-local, and interrupted states",
+      "sources": [
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry/README.md",
+          "start": 1,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-turn-outline/README.md",
+          "start": 1,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/subagent/subagent/README.md",
+          "start": 1,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/spill/spill-local/README.md",
+          "start": 1,
+          "end": 141,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-turn-outline/README.md",
+          "start": 47,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-turn-outline/README.md",
+          "start": 112,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 103,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 168,
+          "end": 168,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Consumers assume state survives a restart when it is process-local, or assume a restart is clean when a write was interrupted. Both errors produce lost work, duplicate side effects, or broken indexes.",
+      "triggers": [
+        "Storing state that consumers expect to read after restart",
+        "Writing multiple records that must agree",
+        "Resuming a session, child agent, or restored cache",
+        "Publishing a multi-object operation"
+      ],
+      "obligations": [
+        "Each package declares its state class: durable domain records, persisted caches, process-local registries, or in-memory projections.",
+        "Restored rows are schema-validated; a corrupt row is discarded rather than seeding a broken fold.",
+        "Multi-write mutations use an explicit pending marker so startup completes or rolls back exactly the interrupted operation.",
+        "A cold resume states its prerequisites (persistence, session query, preset definition) and rejects with a stable code when they are missing.",
+        "Process-local definitions disappear on restart; historical logs retain arguments and receipts but do not restore the registry.",
+        "A client applies only the Host release it booted from; another release's modules stay outside the queue until the Host returns.",
+        "Telemetry/audit cursors mean handed-off, not delivered; a missing terminal result means interruption, not success.",
+        "One-shot cleanup runs at activation and does not sweep again until restart; the README states that retention is not continuous.",
+        "A projection unit is a pure fold over committed session events; its wire value is whole-value (the complete array, strictly increasing by turn) so consumers replace and never merge, and a draft-only change must not advance the public value. Restored cached rows are schema-validated, including ordering, and corrupt rows are discarded instead of feeding a broken fold.",
+        "Archive admission is a capability seam: `workspace/session-activity` asks composed providers what still runs and `WorkspaceActiveSessionError` refuses a non-empty answer; `stopActivity: true` persists the archive before dispatching the parallel stop so the durable set blocks wakeups, and provider stop errors are logged while the archive survives. Removing a project never deletes its folder, files, or session histories."
+      ],
+      "actors": [
+        "Package author",
+        "Storage owner",
+        "Operator"
+      ],
+      "steps": [
+        "Classify the state and write the classification down.",
+        "Persist a mutation marker before the records can diverge.",
+        "Validate on restore and define the discard behavior.",
+        "Document the resume prerequisites and the failure code.",
+        "Test crash points: before marker, after first write, after commit, during cleanup."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Workspace pendingMutation and startup validation; turn-outline persisted schema validation; subagent cold-resume checks; client release equality gate; publish audit records and lock directories.",
+        "trust": "Durability is bounded by the storage backend and the process's ability to finish the recovery path; a crash between external side effects may still need manual reconciliation.",
+        "failure": "Corrupt state is discarded or fails loud as corruption; a missing terminal record is treated as interruption; an unrecoverable lock requires verifying no writer before manual removal.",
+        "exceptions": "A failed local agent without a committed turn/end settles as error; a later committed turn ending supplies the recovered outcome."
+      },
+      "applicability": "Packages with persistent stores, session-derived projections, resumable agents, publish/upload pipelines, and caches.",
+      "relationships": [
+        "package-contracts-6.registration-lifetime-and-scope",
+        "package-contracts-6.generated-artifact-and-evidence-verification",
+        "package-contracts-6.limitations-and-deferred-work"
+      ],
+      "migration": {
+        "strategy": "Write an explicit state-class table per package, add a mutation marker for multi-write operations, and validate on every restore.",
+        "implementation": "Domain store with marker + startup recovery; schema-validated cache restore; resume tests with a missing prerequisite.",
+        "requiredSupport": "A durable storage backend, a schema validator, and a test harness that can simulate interruption."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.durability-and-restart-semantics",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A workspace create/delete interrupted between writes is completed or rolled back on next startup.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A persisted turn-outline row with a non-increasing turn is discarded on restore.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Cold-resuming a child without persistence rejects with the documented continuation code.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A client receiving a graph from another Host release applies nothing and publishes a releaseChange event.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Remove the stale lock only after proving no writer, restore the failed operation from its audit record, and verify the terminal result exists.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "A durable store does not make external side effects transactional.",
+        "Crash-loss windows remain in best-effort queues and one-shot cleanup.",
+        "Cross-process access to one persistence store is out of scope for several packages."
+      ]
+    },
+    {
+      "id": "package-contracts-6.generated-artifact-and-evidence-verification",
+      "title": "Generated artifacts, drift gates, and retained verification evidence",
+      "sources": [
+        {
+          "path": "packages/client/ui-sidebar-documentpreview/tests/fuzz/README.md",
+          "start": 1,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-pi-ai/README.md",
+          "start": 1,
+          "end": 273,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/README.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "native/system/packages/entry/README.md",
+          "start": 1,
+          "end": 15,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Generated metadata, patches, and long-running diagnostics go stale silently. A green build or a cached install can then hide a generator mismatch, an unapplied patch, or a regression corpus that no longer represents the input space.",
+      "triggers": [
+        "Changing a dependency that a generator reads",
+        "Changing a generator, patch, or generated file",
+        "Running (or deciding not to run) a diagnostic campaign",
+        "Publishing built artifacts"
+      ],
+      "obligations": [
+        "Generated files carry an owner and a regeneration command; they are never edited by hand.",
+        "A verify command recomputes the expected artifact from the installed dependency and current generator; a pre-commit check compares the staged generated file and CI verifies against the lockfile.",
+        "A dependency or generator change is staged together with the regenerated file; generation errors block the commit.",
+        "Patches to published packages are maintained with the package manager's patch workflow, exclude generated launchers, and are validated in a fresh extraction before relying on cached tests.",
+        "Long-running fuzz/diagnostic campaigns are explicit, not part of the default suite; failures are retained and exit nonzero; reports include input hash, whether it opened, and worktree status.",
+        "Baseline comparisons state their limits (current dependency versions, current helpers, no shipped browser profile) instead of claiming a full historical reproduction.",
+        "Retained fixtures are committed for unit/browser tests so those tests do not require the generator's runtime."
+      ],
+      "actors": [
+        "Package author",
+        "CI maintainer",
+        "Release engineer"
+      ],
+      "steps": [
+        "Generate; review the diff; stage the generated file with the input change.",
+        "Run the verify/check command locally and in CI.",
+        "For patches, re-extract the dependency and verify patch application.",
+        "For diagnostics, keep corpus and reports, and state what the run does not prove.",
+        "Record the exact command, seed, versions, and result status."
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": "Pre-commit gen-provider-data --check --cached, CI verify-provider-data, generated diff review, fuzz runner exit status, publish hash/signature verification.",
+        "trust": "The generated artifact is authoritative only for the installed dependency and generator version; floating dependency drift can invalidate it until regeneration.",
+        "failure": "A stale generated file fails the check; a failed patch application fails the build/test; a fuzz defect exits nonzero even when the value difference is 'known'.",
+        "exceptions": "Unrequested prior-generation source maps may read the current map file; accepted damaged ZIP inputs are informational and need separate inspection."
+      },
+      "applicability": "Any repository with code generation, patched dependencies, binary fixtures, or long-running diagnostic campaigns.",
+      "relationships": [
+        "package-contracts-6.configuration-surface-contract",
+        "package-contracts-6.durability-and-restart-semantics",
+        "package-contracts-6.packaging-payload-and-supply-chain"
+      ],
+      "migration": {
+        "strategy": "Add a generator owner marker and a verify command; wire the check into pre-commit and CI; move exploratory campaigns out of the default suite and commit representative fixtures.",
+        "implementation": "Generator script with --check mode, a pre-commit hook over relevant inputs, CI step, and a fixtures directory.",
+        "requiredSupport": "Deterministic generation, a lockfile, and a runner that records inputs and exit status."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.generated-artifact-and-evidence-verification",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Updating the provider dependency and regenerating leaves the verify command green with the staged generated file.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A fuzz campaign with a known defect exits nonzero and retains the report.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Staging a hand-edited generated file fails the pre-commit check.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A patch that includes generated launchers is rejected in review.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Rerun the documented generation commands, stage both input and output, and retry the commit.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "A generation probe covers installed resolvers, not all value-dependent branches.",
+        "Metadata-only revisions cannot distinguish content changes invisible in mtime/ctime/size.",
+        "A passing check proves agreement with the current generator, not semantic correctness of the generated content."
+      ]
+    },
+    {
+      "id": "package-contracts-6.compatibility-and-version-migration",
+      "title": "Version compatibility, legacy inputs, and explicit migration",
+      "sources": [
+        {
+          "path": "packages/client/shortcuts/README.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/settings/settings/README.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset-registry/README.md",
+          "start": 1,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/gateway/README.md",
+          "start": 1,
+          "end": 108,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-chat/src/client/conversation-nodes/README.md",
+          "start": 1,
+          "end": 331,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/workspace/workspace/README.md",
+          "start": 1,
+          "end": 187,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A format or preference change can break old deployments, silently rewrite user data, or leave two protocol peers unable to detect that they disagree.",
+      "triggers": [
+        "Changing a persisted format, preference schema, wire protocol, or tool schema",
+        "Renaming or retiring a configuration field",
+        "Connecting components built at different versions"
+      ],
+      "obligations": [
+        "Legacy values are accepted and mapped at read time without rewriting the source (for example normal/expanded map to detailed; version 1 keybindings are read without rewrite).",
+        "A preference store declares its schema version and migrates on the next successful write; unreadable or future-version data is never replaced by reset.",
+        "A retired configuration field is declared as not read and not rewritten instead of being silently honored.",
+        "Wire peers reject mismatched protocol versions, runtime kinds, or digests before readiness.",
+        "Client module graphs carry a release identity (version plus commit); a page applies only its boot release and reports a release change.",
+        "Persisted records carry a version; old read shapes remain readable, and schema validation rejects unknown/corrupt shapes explicitly.",
+        "Renaming a tool or field is a compatibility change: snake_case and canonical names are preserved where external callers depend on them, and a rename changes presentation categories."
+      ],
+      "actors": [
+        "Package author",
+        "Migration author",
+        "Operator upgrading a deployment"
+      ],
+      "steps": [
+        "Write the old and new shapes and the read-time mapping.",
+        "Version the persisted record or protocol.",
+        "Keep old readers working until the migration is complete; do not silently rewrite.",
+        "Add a negative test for a version mismatch.",
+        "Document the upgrade path and what cannot be migrated."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Versioned schemas and protocol checks; legacy mapping in the reader; release equality gate; digest and kind checks at connection time.",
+        "trust": "Compatibility is best effort where an old artifact is genuinely unavailable; the README states which old records are accepted.",
+        "failure": "A mismatched protocol fails loudly; a corrupt row is discarded; an unreadable preference document disables edits rather than being overwritten.",
+        "exceptions": "Historical logs may be readable without being restorable (for example dynamic definitions); the README distinguishes the two."
+      },
+      "applicability": "Any package with persisted state, a wire protocol, external tool schemas, or user preferences.",
+      "relationships": [
+        "package-contracts-6.settings-persistence-and-precedence",
+        "package-contracts-6.durability-and-restart-semantics",
+        "package-contracts-6.generated-artifact-and-evidence-verification"
+      ],
+      "migration": {
+        "strategy": "Version every persisted shape and wire message; add read-time legacy mapping; keep one write version at a time and test both sides of the boundary.",
+        "implementation": "Schema version fields plus migration-on-write; protocol version checks; compatibility tests with old fixtures.",
+        "requiredSupport": "Old fixtures, a version field, and a documented upgrade command."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.compatibility-and-version-migration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A version 1 keybinding file is read without rewrite and saved as version 2 on the next edit.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Legacy normal/expanded values display as detailed without rewriting the saved value.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A client with a mismatched release does not apply the other Host's graph.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An SSH helper with a mismatched protocol version or digest is refused before readiness.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Reconnect with matching versions, or run the documented migration, then verify the new value is readable.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Some historical artifacts are readable but not restorable.",
+        "A migration that requires an unavailable old definition is rejected rather than falling back.",
+        "Compatibility shims can accumulate; the README should name when they can be removed."
+      ]
+    },
+    {
+      "id": "package-contracts-6.outbound-data-disclosure",
+      "title": "Outbound data disclosure: telemetry, external services, and what never reaches the model",
+      "sources": [
+        {
+          "path": "packages/session/session-telemetry/README.md",
+          "start": 1,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/feedback/README.md",
+          "start": 1,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/client-ui-cot-translation/README.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar-browser/README.md",
+          "start": 1,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/web/web-fetch-http/README.md",
+          "start": 1,
+          "end": 145,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ssh/ssh/README.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Session text, reasoning, file contents, and command output can leave the process through telemetry, translation, browsing, or fetch without a deployment realizing which copy is exported and whether it was redacted.",
+      "triggers": [
+        "Mounting a telemetry backend",
+        "Sending reasoning or conversation text to an external service",
+        "Opening untrusted web content in an embedded browser",
+        "Fetching a public URL"
+      ],
+      "obligations": [
+        "State what leaves the process and to whom; a no-op or absent backend must not be described as delivery.",
+        "The canonical session log is never rewritten by redaction; redaction applies only to the outbound copy.",
+        "Every outbound record passes the redaction waterfall; with no rules mounted, records leave exactly as captured, and a throwing listener withholds that record fail-closed.",
+        "The backend discloses its sharing mode (full, feedback-only, disabled); this is a mode declaration, not a per-session receipt.",
+        "Delivery is best-effort: the cursor means handed-off, not delivered, and queued records may be lost on crash.",
+        "Feedback is a signal about output, never input to the model; per-message ratings survive restart but never enter model history or telemetry.",
+        "External reasoning translation discloses that displayed reasoning may contain private code or conversation details; requests never fall back to another provider.",
+        "Anonymous fetch sends no credentials; SSH aliases, authentication, and stream capabilities are private deployment details."
+      ],
+      "actors": [
+        "Deployment operator",
+        "Backend author",
+        "Privacy reviewer"
+      ],
+      "steps": [
+        "Enumerate every outbound channel and its payload.",
+        "Mount redaction rules for each shared-collector deployment.",
+        "Verify the fail-closed behavior with a throwing listener.",
+        "Verify that the canonical log and model history are unchanged.",
+        "Document the loss window and deduplication key."
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": "Telemetry redaction waterfall and outbound-copy isolation; feedback storage separate from model history; browser protocol policy; anonymous fetch transport; credential/SSH private fields.",
+        "trust": "Redaction is only as good as the mounted rules; the package ships none. The backend SDK owns batching, retry, and loss.",
+        "failure": "A throwing redaction listener withholds that record; an unavailable external service fails the translation without fallback; a non-public fetch target is rejected.",
+        "exceptions": "A deployment that exports to a trusted collector may intentionally mount no rules; the README states that records then leave unchanged."
+      },
+      "applicability": "Deployments that export telemetry, call external services with user content, embed web pages, or fetch URLs.",
+      "relationships": [
+        "package-contracts-6.credential-and-secret-boundary",
+        "package-contracts-6.model-facing-tool-result-contract",
+        "package-contracts-6.trust-boundary-and-residual-risk"
+      ],
+      "migration": {
+        "strategy": "Inventory outbound channels, default to no export, and require explicit redaction rules before sending to a shared collector.",
+        "implementation": "One coordinator with a redaction waterfall and an outbound copy; per-channel documentation and tests.",
+        "requiredSupport": "A backend contract with emit/flush/shutdown, a redaction hook, and a deduplication key."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.outbound-data-disclosure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A mounted telemetry backend receives records in order and the canonical session log is unchanged.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A translation request discloses the external service and keeps the original reasoning in the session.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A throwing redaction listener withholds that record instead of exporting it unredacted.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A fetch to a non-public address is rejected before response bytes are accepted.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Fix the redaction listener or remove it deliberately, then replay the unhanded records from the cursor.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "No built-in redaction rules; exported data is as clean as the deployment's rules.",
+        "Best-effort delivery can lose queued records on crash.",
+        "On-demand redaction uses the policy mounted at capture time, not the policy at event time."
+      ]
+    },
+    {
+      "id": "package-contracts-6.human-approval-and-evidence-limits",
+      "title": "Human approval gates and the limits of local evidence",
+      "sources": [
+        {
+          "path": "apps/desktop/publishing/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/publishing/ci/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-host-runner/README.md",
+          "start": 1,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/bash-sandbox/README.md",
+          "start": 1,
+          "end": 183,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/tool-fs/README.md",
+          "start": 1,
+          "end": 266,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/fs/fs-sandbox/README.md",
+          "start": 1,
+          "end": 135,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Irreversible or privileged operations (publication, permission escalation, loading dynamic code into the live runtime) can be triggered by automation or by a model. Without an explicit human gate and an honest statement of what local checks prove, the operation looks approved when it is only technically possible.",
+      "triggers": [
+        "Publishing or promoting an artifact to production",
+        "Escalating a sandbox mode",
+        "Loading a dynamic package with a browser half",
+        "Running a model-requested operation that needs wider permissions"
+      ],
+      "obligations": [
+        "Publication requires explicit operator authorization and GitHub Environment approval; test and production are separate environments with their own reviewers.",
+        "Only production creates the release tag; the App token is short-lived, and missing configuration stops publication with no personal-token fallback.",
+        "A debugging/unsigned package cannot publish; eligibility requires a new signed/notarized package, not a retry.",
+        "A denied sandbox operation may be retried once at the narrowest wider mode only after the approval prompt is accepted; nothing executes before approval.",
+        "A browser-half dynamic package waits for a page verdict; the run suspends until approved or cancelled, and there is no timeout.",
+        "State what local evidence does not prove: local fixtures do not establish COS/CDN/admin permissions; a successful run does not mean the UI rendered; approval gates the workflow, not arbitrary code under the same account.",
+        "Retain the approval summary, operation identity, events, and terminal result; a missing result means interruption, not success."
+      ],
+      "actors": [
+        "Operator",
+        "Reviewer/approver",
+        "Release engineer",
+        "Model requesting escalation"
+      ],
+      "steps": [
+        "Prepare the operation and its evidence.",
+        "Request approval with the exact version, channel, target, and hashes.",
+        "Execute only after approval; record the identity and outcome.",
+        "On failure, recover the exact prepared attempt or start a new authorized operation; do not rebuild merely to retry an upload.",
+        "State the evidence limits in the completion report."
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": "GitHub Environment required reviewers and allowed deployment branch; publisher rechecks signatures/hashes and refuses missing configuration; tool layer drives sandbox escalation; cordis runner suspends on a page verdict.",
+        "trust": "Approval is a human gate over a specific workflow. It does not isolate the machine account, and it does not prove external permissions.",
+        "failure": "A missing approval/configuration stops the operation; a rejected escalation leaves the original denial; a suspended run waits until cancelled.",
+        "exceptions": "Test environments may allow self-approval; developers still cannot skip a signed/notarized requirement for publishable artifacts."
+      },
+      "applicability": "Irreversible writes, production publication, privilege escalation, and dynamic code loading.",
+      "relationships": [
+        "package-contracts-6.fail-closed-enforcement",
+        "package-contracts-6.generated-artifact-and-evidence-verification",
+        "package-contracts-6.credential-and-secret-boundary"
+      ],
+      "migration": {
+        "strategy": "Put irreversible operations behind an explicit approval environment and record the exact artifact identity; keep a preview/dry-run path.",
+        "implementation": "CI environments with required reviewers; a publish plan with hashes and signatures; an audit record with before/after state.",
+        "requiredSupport": "A CI provider with environment approvals, an artifact identity store, and a signed/notarized build pipeline."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.human-approval-and-evidence-limits",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A production publish waits for the desktop-production environment approval and records the prepared identity.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A denied bash command offers exactly one wider-mode retry after user approval.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Publishing an unsigned or unnotarized package is rejected before upload.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Loading a browser-half dynamic package without a connected page leaves the run suspended, not silently succeeded.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Rebuild and sign a new package or restore the exact approved artifact, obtain a new approval, and verify the terminal audit result.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Approval reviewers may not understand the artifact; the gate does not replace technical verification.",
+        "A suspended run has no timeout and can block unattended automation.",
+        "Local checks cannot prove remote permissions or CDN behavior."
+      ]
+    },
+    {
+      "id": "package-contracts-6.packaging-payload-and-supply-chain",
+      "title": "Packaging payloads and supply-chain identity",
+      "sources": [
+        {
+          "path": "python/sdk-runtime/README.md",
+          "start": 1,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/README.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "native/system/packages/entry/README.md",
+          "start": 1,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/modules/README.md",
+          "start": 1,
+          "end": 150,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A packaged runtime can accidentally include development artifacts, download at import time, or publish a payload for the wrong platform, producing a wheel/artifact that installs but cannot run or that silently mutates the environment.",
+      "triggers": [
+        "Building a platform wheel, native addon package, or prebuilt runtime",
+        "Adding an optional download or payload directory",
+        "Publishing a client bundle"
+      ],
+      "obligations": [
+        "Published targets are explicit; the wheel tag and payload must match exactly, and unsupported targets are not published.",
+        "The package publishes wheels only and installs a command plus module; importing modules, starting profiles, or processing files never downloads resources.",
+        "Downloads are explicit API calls that verify archive hashes and package identities, preserve executable permissions, and publish completed directories atomically; failed downloads can be retried.",
+        "Resource identity includes the release's locked inputs; cache layout is documented, and unused versions require manual removal.",
+        "A dev-only carrier (for example runtime/node) is never selected automatically and is excluded from wheels and sdists.",
+        "Native platform packages carry binaries, use compatible dependency ranges, and reject missing/unloadable bindings without installation-time compilation; C sources ship for auditability.",
+        "A workspace-dependency payload has a validated manifest (platform/arch must match the process), a stable layout, and either in-place use or a copied installation; invalid payloads fail the first tool call.",
+        "Client bundles are built before launch; a missing bundle fails activation with one build instruction and the package/path list."
+      ],
+      "actors": [
+        "Release engineer",
+        "Package author",
+        "Deployment operator"
+      ],
+      "steps": [
+        "Declare the published target matrix and the payload manifest.",
+        "Verify the tag/arch against the payload at build time.",
+        "Make downloads explicit and hash-verified; keep import paths download-free.",
+        "Exclude development carriers and source trees from the published artifact.",
+        "Test installation in a clean environment outside the checkout."
+      ],
+      "enforcement": {
+        "mode": "implementation",
+        "implementation": "Platform package metadata and wheel tags; payload manifest validation; download hash/identity verification; atomic cache publication; build guards excluding dev carriers.",
+        "trust": "The artifact is trusted only for the platform and locked inputs it declares; a floating dependency or hand-built payload is outside the guarantee.",
+        "failure": "A tag/payload mismatch, missing executable, or wrong platform rejects with a build/install instruction; a bad download fails and can be retried.",
+        "exceptions": "Unused workspace patches are permitted for packages outside the runtime closure during production deployment; repository installation still rejects unused patches."
+      },
+      "applicability": "Repositories that publish platform wheels, native addons, bundled runtimes, or prebuilt client assets.",
+      "relationships": [
+        "package-contracts-6.generated-artifact-and-evidence-verification",
+        "package-contracts-6.durability-and-restart-semantics",
+        "package-contracts-6.credential-and-secret-boundary"
+      ],
+      "migration": {
+        "strategy": "Split build-time and download-time resources, declare the target matrix, and add a clean-environment install smoke.",
+        "implementation": "Manifest-driven packaging with hash verification and atomic cache; CI matrix per target; installed-wheel smoke outside the checkout.",
+        "requiredSupport": "A release pipeline with per-target runners, a lockfile for payload inputs, and a cache directory policy."
+      },
+      "reference": "references/package-contracts-6.md#package-contracts-6.packaging-payload-and-supply-chain",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A wheel installs the command and module, and importing the module performs no download.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An external payload with the matching platform/arch manifest is used in place and returns the expected paths.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A wheel tag that does not match the payload is rejected at build/install.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A payload whose platform/arch differs from the running process is rejected at the first tool call.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Download the matching target explicitly, verify hashes, and re-run the installed smoke.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Hash verification does not make writable deployment files safe to execute.",
+        "Unused cached versions require manual removal.",
+        "A provider added by a newer consumer installation can lack generated metadata until regeneration."
+      ]
+    }
+  ]
+}

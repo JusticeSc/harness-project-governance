@@ -1,0 +1,2031 @@
+{
+  "domain": "decisions",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "sourceRepository": "deepseek-harness",
+  "mechanisms": [
+    {
+      "id": "decisions-note-necessity",
+      "title": "Agent Note 必要性准入：什么值得记、什么豁免、什么必须更新既有 owner",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 44,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 5,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 155,
+          "end": 155,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 24,
+          "end": 25,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "决策理据散落在 PR 评论、聊天和已合并提交中时不可检索；但要求每个改动都写决策记录，会把活跃决策集淹没在机械变更里，读者无法判断哪条仍是权威。",
+      "triggers": [
+        "PR 引入或改变一个有长期价值的决策",
+        "作者考虑新增一篇 Agent Note",
+        "同一决策似乎已有记录，但不确定该更新还是新建"
+      ],
+      "obligations": [
+        "只有代码、测试与现有文档无法解释的持久决策理据才新增或更新 Agent Note，且必须在同一 PR 内完成",
+        "选中已拥有该决策的 Note 并更新它即满足义务；不得为同一决策制造重复篇",
+        "实质未来工作从 proposed/ 开始；已经做出的决策从 implemented/ 开始",
+        "机械或局部编辑（含本地 UI 呈现与交互变化）豁免，但实现规模小不能豁免局部 bug 修复、性能变化、新能力或实质行为决策",
+        "不得把一篇 Note 编辑成另一个决策；反悔必须新建 Note 并交叉链接，除非旧篇之后按合并规则整体并入",
+        "更新 implemented Note 以追踪既有决策的新落点是义务，不是禁止项"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "Agent Note 目录所有者"
+      ],
+      "steps": [
+        "确认代码、测试和现有文档都不能解释该决策的 why",
+        "搜索活跃树中是否已有 Note 拥有同一决策或机制",
+        "按决策状态选择 proposed/ 或 implemented/，再选 class",
+        "有 owner 则更新该篇；无 owner 才新建，且同 PR 完成",
+        "若属机械/局部改动，在 PR 描述中说明豁免依据",
+        "逐项检查是否不小心改写了决策本身"
+      ],
+      "enforcement": {
+        "mode": "instruction + review",
+        "implementation": "契约文字位于 .agents/notes/README.md § When to write one；根 AGENTS.md 以一行常驻命令链接该节；不存在“是否值得写”的自动化判定。",
+        "trust": "作者与评审者的语义判断。",
+        "failure": "漏写使理据只存在于 PR 评论；重复篇制造两个 owner；把旧篇改成相反结论会伪造历史。",
+        "exceptions": [
+          "机械或局部编辑豁免，包括本地 UI 呈现与交互变化",
+          "实现很小不构成豁免理由：局部 bug 修复、性能变化、新能力、实质行为决策仍需要记录",
+          "更新既有 Note 的现状事实属于维护义务，不受“不得把 Note 编辑成另一决策”限制"
+        ]
+      },
+      "applicability": "任何使用文件型决策记录的仓库。若项目没有独立决策记录载体，先决定是否引入；引入后必须同时定义豁免边界，否则要么记录泛滥，要么关键理据继续散落。",
+      "relationships": [
+        "decisions-lifecycle-classification",
+        "decisions-note-format",
+        "decisions-supersession-audit",
+        "decisions-implemented-maintenance",
+        "decisions-consolidation"
+      ],
+      "migration": {
+        "strategy": "先写清准入表（必须写/不写/必须更新 owner），再建立目录与格式；不要先建目录后补规则。",
+        "implementation": "把四类判断写进决策记录契约：持久理据、未来工作、已做决策、机械豁免；在 PR 模板加一行确认；在子树 AGENTS.md 里要求新 Note 触发取代审计。",
+        "requiredSupport": [
+          "单页决策记录契约",
+          "可搜索的决策目录",
+          "PR 模板中的确认项",
+          "评审清单中的必要性判断"
+        ]
+      },
+      "reference": "references/decisions.md#note-necessity",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "对每个新增 Note 的 PR，能在同 diff 中找到代码/行为变更与 Note 变更",
+          "能指出该 Note 的 owner 是新建还是既有篇，且不存在同主题第二篇"
+        ],
+        "rejection": [
+          "构造一个只有机械改动的 PR，若它强制新增 Note，则准入过严",
+          "构造一个重复 owner 的语料，若分类/评审没有暴露重复关系，则准入未被执行"
+        ],
+        "recovery": [
+          "重复篇：合并独有内容到现行 owner，按合并规则删除旧篇并修链接",
+          "被改写为相反决策的旧篇：恢复事实性更新，另建新 Note 并交叉链接"
+        ],
+        "evidence": "源仓无专用脚本；只能由评审记录与 PR diff 证明。作者阶段未运行任何源仓命令。"
+      },
+      "limitations": [
+        "自动门禁只能证明“存在且格式正确”，不能证明该改动真的需要 Note，也不能证明理据真实。",
+        "“代码、测试与现有文档无法解释”是语义判断，没有可执行判据。",
+        "源仓的豁免文字依赖维护者共识；采用项目若没有评审纪律，豁免会被滥用。"
+      ]
+    },
+    {
+      "id": "decisions-lifecycle-classification",
+      "title": "路径编码的生命周期与闭集分类",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 7,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/agent-note-tree.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-classification.ts",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-classification.ts",
+          "start": 13,
+          "end": 18,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "只靠标签或集中索引无法阻止 Note 被放进错误状态或类别；索引文件还会让无关变更争用同一文件，并且会与路径元数据形成第二真相。",
+      "triggers": [
+        "新建或移动 Agent Note",
+        "新增一个决策类别",
+        "重构决策目录或迁移旧 RFC/ADR 路径"
+      ],
+      "obligations": [
+        "路径必须是 {lifecycle}/{class}/yyyy-mm-dd-topic-title.md",
+        "日期是主题首次提出的日期（按 git 历史），不是归档或接受日期",
+        "生命周期闭集为 proposed、implemented、rejected；class 闭集为 feature、bug-fix、simplification、architecture、process、testing",
+        "新增 class 必须同时扩展代码中的 AGENT_NOTE_CLASSES 与 README 分类节；门禁拒绝任何未列目录",
+        "活跃树根不得有 INDEX.md；浏览目录或搜索仓库即工作清单",
+        "旧路径 docs/rfc/ 与 docs/rfcs/ 不得重新出现",
+        "Note 间交叉引用使用相对 Markdown 链接，不用裸散文或编号"
+      ],
+      "actors": [
+        "作者",
+        "分类门禁",
+        "维护者（新增 class）"
+      ],
+      "steps": [
+        "按三条生命周期定义选择目录：实现前/部分实现=proposed，已发布=implemented，已否决=rejected",
+        "按判别式选 class：architecture 是发布源码的结构与运行时词汇；process 是围绕代码的工具/政策/工作流；refactor 故意缺席，由 simplification 的“可观察行为是否改变”覆盖",
+        "文件名写首次提出日期与主题短名",
+        "确认活跃树根没有 INDEX.md，且没有未知生命周期目录",
+        "运行 pnpm run verify-agent-note-classification",
+        "若新增 class，先改 AGENT_NOTE_CLASSES 再改 README，然后重跑门禁"
+      ],
+      "enforcement": {
+        "mode": "gate (classification) + instruction",
+        "implementation": "scripts/agent-note-tree.ts 提供共享遍历器：闭集校验、深度校验、文件名正则、INDEX 禁止、根级 allowlist、.zh.md 跳过；verify-agent-note-classification.ts 追加旧路径检查并汇总错误。",
+        "trust": "路径是状态的唯一编码；闭集常量与 README 必须同步。",
+        "failure": "未知生命周期目录会让其中 Note 对遍历不可见；未知 class 或坏文件名逐文件报错；根级 INDEX 直接失败。",
+        "exceptions": [
+          "生命周期根下允许 AGENTS.md 与 CLAUDE.md",
+          "foo.zh.md 不参与本门禁，由双语配对门禁负责其结构一致性",
+          "archived/ 不在活跃遍历内，由归档校验器单独校验"
+        ]
+      },
+      "applicability": "任何用目录表达状态的决策库。class 数量应按项目实际决策面裁剪；不要照搬六类，也不要把 class 当作标签系统。",
+      "relationships": [
+        "decisions-note-necessity",
+        "decisions-note-format",
+        "decisions-archive-triplet",
+        "documentation-i18n-pair-gate",
+        "documentation-gate-composition"
+      ],
+      "migration": {
+        "strategy": "先定义闭集与判别式，再实现遍历器；新增 class 走“代码常量+契约文档”双改。",
+        "implementation": "设置决策根目录与活跃生命周期；实现一个纯遍历模块返回 notes 与 errors；单独脚本负责分类校验；把 INDEX 禁止和旧路径禁止写成显式错误。",
+        "requiredSupport": [
+          "决策根目录",
+          "生命周期/类别常量",
+          "遍历器测试",
+          "迁移前的旧路径清单"
+        ]
+      },
+      "reference": "references/decisions.md#lifecycle-classification",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "verify-agent-note-classification 输出 “N Agent Note(s) checked, structure consistent.” 并退出 0",
+          "所有文件深度为 3，class 在闭集内，文件名匹配日期前缀"
+        ],
+        "rejection": [
+          "在活跃根放 INDEX.md 必须失败",
+          "新增未登记目录（无论生命周期还是 class）必须失败",
+          "创建 docs/rfc 或 docs/rfcs 目录必须失败"
+        ],
+        "recovery": [
+          "按错误信息改路径或补常量与 README；未知生命周期目录改名后重跑"
+        ],
+        "evidence": "源码阅读；作者阶段未执行 pnpm run verify-agent-note-classification。"
+      },
+      "limitations": [
+        "门禁只证明路径合法，不证明 class 选得对；architecture/process 的边界仍需评审。",
+        "遍历器先放行生命周期根下的 AGENTS.md/CLAUDE.md，再跳过 .zh.md；放在生命周期根下的杂项 .zh.md 会被静默跳过。",
+        "INDEX.md 只检查决策根一层；深层无日期文件会被文件名规则拒绝，但不会得到“禁止索引”的专门诊断。",
+        "门禁不校验日期是否等于首次提出日期，也不校验日期是否合法日历日期。",
+        "该门禁的规则内联在脚本里且没有独立 spec；负向行为由源码阅读确认，不是执行证据。"
+      ]
+    },
+    {
+      "id": "decisions-note-format",
+      "title": "Agent Note 文件格式门禁：header、状态语法、生命周期骨架、alternatives 与退役标记",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 54,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-agent-note-format.ts",
+          "start": 1,
+          "end": 94,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/agent-note-tree.ts",
+          "start": 41,
+          "end": 82,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        }
+      ],
+      "problem": "路径已经编码生命周期，但正文仍会混入 ADR 模板、提案时态章节、重复状态行与旧债务标记；读者无法从文件本身判断它处于哪一阶段，代理也会复制邻篇的错误结构。",
+      "triggers": [
+        "新增或编辑任何活跃 Agent Note",
+        "把旧格式语料迁移到统一格式",
+        "评审检查 Note 结构"
+      ],
+      "obligations": [
+        "第 1 行匹配 ^# Agent Note: \\S，第 2 行空，第 3 行为状态行，第 4 行空",
+        "状态语法与目录严格一致：proposed 恰为 Status: proposed；implemented 恰为 Status: implemented；rejected 为 Status: rejected — <一句话原因>",
+        "状态行不带日期与括号；全文只允许第 3 行这一处 Status:（围栏外）",
+        "正文第一个 H2 必须是 ## Problem",
+        "proposed 必备 ## Proposal、## Acceptance criteria、## Risks；implemented 必备 ## Decision、## Consequences；rejected 必备 ## Proposal",
+        "implemented 中禁止出现 ## Proposal、## Plan、## Migration plan、## Acceptance criteria（大小写不敏感）",
+        "每篇必须有 ## Alternatives considered，或在限定日期前使用精确 grandfather 注释；两者互斥",
+        "grandfather 注释仅对日期早于 2026-07-05 的 Note 有效",
+        "退役债务标记 XXX: legacy ADR/RFC body format 与 XXX: legacy ADR/Agent Note body format 在正文出现即失败",
+        "代码围栏内的格式 token 不算文档结构"
+      ],
+      "actors": [
+        "作者",
+        "格式门禁",
+        "评审者"
+      ],
+      "steps": [
+        "写 header 三行与第 4 行空行",
+        "按生命周期写 ## Problem 与必备章节；implemented 用现在时描述已发布现实",
+        "为每个真实替代方案写一段加粗领起，或有争议者写 ### Why not <X>?",
+        "若为 2026-07-05 前的历史 Note 且替代方案不可复原，放精确 grandfather 注释并删除 ## Alternatives considered",
+        "检查围栏外没有重复 Status: 与退役标记",
+        "运行 pnpm run verify-agent-note-format"
+      ],
+      "enforcement": {
+        "mode": "gate (format) + instruction",
+        "implementation": "verify-agent-note-format.ts 遍历活跃树，逐文件检查 header、状态正则、唯一状态行、H2 顺序与必备/禁用集合、alternatives 与 grandfather 互斥及日期、退役标记；围栏行先剔除。",
+        "trust": "格式契约在 README；门禁是唯一执行点；归档保留封印时的格式，不受本门禁约束。",
+        "failure": "逐文件输出 format: <rel> — <message>，退出 1；缺节、错状态、重复状态行、提案标题、缺 alternatives、非法 grandfather 都会失败。",
+        "exceptions": [
+          "归档 Note 保留封印时格式加 Archived 行，不做格式重写",
+          ".zh.md 被跳过，由配对门禁检查结构；机器 token # Agent Note: 与 Status: 保持英文原样",
+          "日期早于 2026-07-05 的 Note 可用精确 grandfather 注释替代 alternatives 节"
+        ]
+      },
+      "applicability": "所有需要人/代理快速判定决策阶段的项目。采用项目必须重设 grandfather 日期与状态语法；若不使用双语，删除 .zh.md 例外。",
+      "relationships": [
+        "decisions-lifecycle-classification",
+        "decisions-lifecycle-transitions",
+        "documentation-slop-checklist",
+        "documentation-i18n-pair-gate",
+        "decisions-frozen-archive-trust"
+      ],
+      "migration": {
+        "strategy": "先写格式契约，再实现门禁；历史语料在一个变更内规范化，避免双格式长期共存。",
+        "implementation": "定义 header、状态枚举、每生命周期必备/禁用 H2、alternatives 规则；实现围栏感知的检查器；为旧语料设定唯一 grandfather 注释与截止日期；在文档聚合中标记为 quick。",
+        "requiredSupport": [
+          "格式契约文档",
+          "围栏感知的解析器",
+          "旧语料迁移清单",
+          "负向夹具（重复状态、缺节、禁用标题）"
+        ]
+      },
+      "reference": "references/decisions.md#note-format",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "verify-agent-note-format 输出 “N Agent Note(s) checked, all conform ...” 并退出 0",
+          "每个生命周期目录的 Note 都具备对应骨架与 alternatives"
+        ],
+        "rejection": [
+          "把 implemented Note 的 ## Decision 改成 ## Proposal 必须失败",
+          "重复一行 Status: 必须失败",
+          "日期 >= 2026-07-05 却使用 grandfather 注释必须失败",
+          "恢复退役债务标记必须失败"
+        ],
+        "recovery": [
+          "按 format: <rel> — <message> 修改；缺节补节，提案标题折叠进 Decision/Consequences/现在时 Testing"
+        ],
+        "evidence": "源码阅读；作者阶段未执行 pnpm run verify-agent-note-format。"
+      },
+      "limitations": [
+        "门禁只验证形状，不验证替代方案是否真实、后果是否诚实、Problem 是否写得清楚。",
+        "状态行唯一性检查只针对围栏外文本；围栏内的 Status: 被允许。",
+        "H2 检查只看行首 '## '，不解析 setext 标题、HTML 标题或四级以上结构。",
+        "日期比较是字符串比较；非法日历日期不会被格式门禁拒绝。",
+        "双格式容忍被明确拒绝，但源仓没有记录迁移期长度或回滚策略。",
+        "该门禁的规则内联在脚本里且没有独立 spec；负向行为由源码阅读确认，不是执行证据。"
+      ]
+    },
+    {
+      "id": "decisions-lifecycle-transitions",
+      "title": "proposed→implemented→rejected 的移动与正文重写",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 11,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 119,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 5,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-agent-note-format.ts",
+          "start": 21,
+          "end": 36,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "从 proposed 移到 implemented 时最常见的违约，是只改文件夹和状态行，正文仍是未来时计划与验收清单；门禁若不交叉校验目录与骨架，就会放行一篇“已实现”的提案。",
+      "triggers": [
+        "提案被接受并发布",
+        "提案被否决",
+        "决策范围缩减，部分实现"
+      ],
+      "obligations": [
+        "移动生命周期必须同时更新 Status: 行并重新满足目标目录骨架，否则门禁失败",
+        "proposed→implemented：## Proposal 改写为现在时 ## Decision；## Acceptance criteria 与 ## Risks 折叠进 ## Consequences，或改成现在时 ## Testing/## Verification",
+        "proposed→rejected：只在 Status: 行加一句话原因并冻结文件",
+        "状态行必须与所在目录一致；不得在 implemented 中保留提案时态标题",
+        "若决策本身改变，不得靠移动+改写掩盖，必须新建 Note（见取代审计）"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "格式与分类门禁"
+      ],
+      "steps": [
+        "确认仍是同一个决策，只是状态变化",
+        "移动文件到目标生命周期目录",
+        "更新状态行为目标语法",
+        "按目标骨架重写正文：已发布事实、后果、当前由什么验证",
+        "运行分类与格式门禁",
+        "在 PR 中说明正文改写对应哪些已发布行为"
+      ],
+      "enforcement": {
+        "mode": "gate (status grammar + required/banned headings) + review",
+        "implementation": "STATUS 正则按目录匹配；REQUIRED 按生命周期要求 H2；BANNED_IMPLEMENTED 拒绝提案时态标题。",
+        "trust": "目录即状态，状态行必须自描述且一致。",
+        "failure": "只移文件不改状态：状态语法失败；只改状态不重写：缺 ## Decision/## Consequences 或含禁用标题失败。",
+        "exceptions": [
+          "rejected 保留提案时正文（含 ## Acceptance criteria 或 ## Plan），只要求 header、## Problem、## Proposal 与 alternatives",
+          "源仓没有 archived→implemented 的恢复程序；归档是终态"
+        ]
+      },
+      "applicability": "使用多阶段决策目录的项目。采用项目可简化状态集，但必须保持“目录、状态行、正文骨架”三者一致。",
+      "relationships": [
+        "decisions-note-format",
+        "decisions-supersession-audit",
+        "decisions-consolidation",
+        "decisions-archive-triplet"
+      ],
+      "migration": {
+        "strategy": "把移动定义为一个原子变更：路径、状态行、正文重写、门禁四件事同 diff。",
+        "implementation": "为每条允许的转换写检查清单；在格式门禁中按目录选择状态正则与必备/禁用 H2；为转换添加负向夹具。",
+        "requiredSupport": [
+          "生命周期契约",
+          "状态正则表",
+          "每阶段 H2 集合",
+          "转换负向测试"
+        ]
+      },
+      "reference": "references/decisions.md#lifecycle-transitions",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "移动后的文件通过分类门禁（目录合法）与格式门禁（状态与骨架匹配）",
+          "implemented 正文不含 Proposal/Plan/Migration plan/Acceptance criteria 标题"
+        ],
+        "rejection": [
+          "保持 ## Proposal 的文件放进 implemented 必须失败",
+          "Status: proposed 的文件放进 implemented 目录必须失败"
+        ],
+        "recovery": [
+          "按门禁报错重写正文或改回原目录；不得用 grandfather 注释绕过生命周期骨架"
+        ],
+        "evidence": "源码阅读；作者阶段未执行门禁。"
+      },
+      "limitations": [
+        "没有 archived→proposed/implemented 的恢复路径，也没有撤销归档的门禁流程。",
+        "dsh-archive-agent-notes 的 description 提到 restoring，但正文只定义归档/删除判决；恢复语义未在源仓落地。",
+        "门禁不检查重写后的内容是否真的描述已发布现实，只检查标题形状。"
+      ]
+    },
+    {
+      "id": "decisions-supersession-audit",
+      "title": "每篇新 Note 触发的取代审计与全文交叉链接",
+      "sources": [
+        {
+          "path": ".agents/notes/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 8,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 48,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md",
+          "start": 23,
+          "end": 25,
+          "kind": "history"
+        }
+      ],
+      "problem": "新决策落地后，旧 Note 仍以“现行权威”姿态留在活跃树，读者会同时找到互相矛盾的多个真相；把清理推迟到季度审计，债务会复利。",
+      "triggers": [
+        "创建任何新 Agent Note",
+        "决策反转或机制被替换",
+        "评审发现两篇 Note 覆盖同一主题"
+      ],
+      "obligations": [
+        "每篇新 Agent Note 必须触发一次范围内审计：搜索覆盖同一决策、机制或被否决替代方案的活跃 Note",
+        "对每个候选判定 full supersession、partial supersession 或 none，并记录依据",
+        "full 且为 implemented 三件套：在同一 PR 内归档",
+        "partial：两篇都保持活跃并交叉链接，更新所有仍现行的事实",
+        "已无价值的 proposal：按 rejected 生命周期拒绝并给诚实原因，不得归档",
+        "交叉引用使用相对 Markdown 链接，禁止裸散文或编号",
+        "审计不是配额任务：范围内每篇都要看，相似组可归并原则，边界案例要记录"
+      ],
+      "actors": [
+        "新 Note 作者",
+        "dsh-archive-agent-notes 技能",
+        "评审者"
+      ],
+      "steps": [
+        "用决策主题、机制名与被否替代方案作为检索词，搜索活跃生命周期树",
+        "打开每个候选，判断是整篇被取代、部分事实仍现行，还是无关",
+        "full：判定旧篇是否满足删除条件；否则按归档三件套同 PR 归档",
+        "partial：在两篇中互相加相对链接，并更新仍现行的事实",
+        "proposal 已无价值：移动为 rejected，状态行写一句话原因",
+        "在 PR 报告列出每个候选的判定与去向"
+      ],
+      "enforcement": {
+        "mode": "instruction + skill procedure + review",
+        "implementation": "notes/AGENTS.md 把审计设为每篇新 Note 的强制步骤；dsh-archive-agent-notes 给出分类判决；没有自动检查“是否审计过”。",
+        "trust": "写入时审计而非事后清理；作者自证与评审抽查。",
+        "failure": "漏审会产生两个 owner；把 partial 误判为 full 会丢失仍现行的事实；把 proposal 归档会冻结一份从未实现的提案。",
+        "exceptions": [
+          "机械/局部改动通常不产生新 Note，因而不触发审计；但若改变既有 Note 的事实，仍要更新该篇",
+          "相似的多篇旧 Note 可按同一原则归并判决，但仍需逐篇查看"
+        ]
+      },
+      "applicability": "任何会持续积累决策记录的仓库。项目小时可先人工执行；项目大时必须给检索路径与报告模板，否则审计不可复核。",
+      "relationships": [
+        "decisions-note-necessity",
+        "decisions-delete-keep-archive",
+        "decisions-archive-triplet",
+        "decisions-consolidation",
+        "agent-workflows-agent-note-archive"
+      ],
+      "migration": {
+        "strategy": "先建立“新 Note → 检索 → 判定 → 同 PR 处置”的流程，再逐步清理存量。",
+        "implementation": "在子树 AGENTS.md 写审计义务；在 PR 模板加“被检旧 Note 与判定”栏；给 full/partial/none 三个判定词固定含义；把归档命令写成步骤。",
+        "requiredSupport": [
+          "可搜索的活跃决策树",
+          "判定词表",
+          "PR 报告栏",
+          "归档流程"
+        ]
+      },
+      "reference": "references/decisions.md#supersession-audit",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "每个新增 Note 的 PR 报告列出被检旧 Note 与 full/partial/none 判定",
+          "full 的 implemented 旧篇在同一 PR 中出现在 archived/ 且封印通过"
+        ],
+        "rejection": [
+          "构造一个 full supersession 却未归档旧篇的 PR，评审应拒绝",
+          "构造一个 partial 却被删除的语料，链接与事实审计应暴露缺失"
+        ],
+        "recovery": [
+          "漏审：合并前补审；已合并则在下次触碰该主题时补齐并交叉链接",
+          "误归档：源仓无解封程序，需维护者显式决策，不能自行编辑归档"
+        ],
+        "evidence": "源仓无自动覆盖审计工具；只有技能文字与评审记录。作者阶段未运行任何命令。"
+      },
+      "limitations": [
+        "“搜索完整”无法机械证明；审计质量完全依赖作者与评审。",
+        "没有工具统计“哪些旧 Note 从未被审计”，也没有覆盖率指标。",
+        "阈值（full vs partial）是语义判断，源仓不提供形式化判据。"
+      ]
+    },
+    {
+      "id": "decisions-implemented-maintenance",
+      "title": "implemented Note 的现状维护与决策边界",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 13,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 48,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 55,
+          "end": 55,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "已发布 Note 会随代码漂移；两种错误都常见：任其腐烂，或把 Note 当成变更日志不断追加历史，最终读者无法判断哪段是当前事实。",
+      "triggers": [
+        "代码移动文件、重命名包、改变 key/默认值/机制",
+        "发现 Note 与已发布现实不符",
+        "PR 实现了某个 proposed Note"
+      ],
+      "obligations": [
+        "在同一变更内保持路径、符号、默认值与机制为当前值",
+        "原地重写陈旧事实，不追加变更历史",
+        "决策或其理据被反转时不得改写旧 Note；必须新建 Note 并交叉链接",
+        "Note 不再可能指导未来工作但仍有历史价值时，归档完整三件套而不是继续维护",
+        "完全被取代的旧 Note 只能经受控合并删除",
+        "实现 proposed Note 的 PR 必须在同一 diff 中移动并改写为现在时已发布状态"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "Note 所有者"
+      ],
+      "steps": [
+        "在改动代码的同一 diff 中定位拥有该决策的 Note",
+        "更新路径、名称、默认值与机制描述",
+        "判断是否改变决策：只改事实则原地重写；改变决策则新建 Note 并交叉链接",
+        "若 Note 已低未来指导价值，转入归档流程",
+        "评审时核对每个路径/机制是否能在当前代码找到"
+      ],
+      "enforcement": {
+        "mode": "instruction + review checklist",
+        "implementation": "implemented/AGENTS.md 定义维护义务；格式门禁要求 ## Decision/## Consequences 且禁止提案时态标题；dsh-code-review 的 “Implemented Agent Notes match shipped reality” 项要求同一 diff 移动并改写。",
+        "trust": "当前代码是事实源；Note 是决策与理据，不是变更日志。",
+        "failure": "漂移的路径/默认值会误导读者；追加历史会制造编年史；把决策改写进旧篇会伪造理据。",
+        "exceptions": [
+          "归档 Note 不维护、不更新事实、不修链接；当前事实写进活跃文档或新 Note",
+          "局部机械更新不改变决策，只需保持事实准确"
+        ]
+      },
+      "applicability": "所有把 implemented 决策记录保持为现行文档的项目。若不设归档层，删除或合并策略必须另外定义。",
+      "relationships": [
+        "decisions-lifecycle-transitions",
+        "decisions-supersession-audit",
+        "decisions-consolidation",
+        "decisions-archive-triplet",
+        "collaboration-code-review-procedure"
+      ],
+      "migration": {
+        "strategy": "把“改代码的同 diff 改 Note 事实”写进评审清单，再决定低价值记录的归档/删除路径。",
+        "implementation": "在 implemented 目录指令中写三条：保持当前、原地重写、决策反转需新 Note；在 code review 清单加一项“Note 与已发布现实一致”。",
+        "requiredSupport": [
+          "当前代码作为事实源",
+          "评审清单",
+          "归档/合并流程"
+        ]
+      },
+      "reference": "references/decisions.md#implemented-maintenance",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "Note 提到的每个路径、默认值、机制都能在当前代码定位",
+          "Note 中没有“后来改成…”式的变更历史段落"
+        ],
+        "rejection": [
+          "把决策反转写进旧 Note 而非新建，评审应拒绝",
+          "实现 proposed Note 却不移动/改写，评审应拒绝"
+        ],
+        "recovery": [
+          "发现漂移：同 PR 修正；若旧篇已归档，写当前文档或新 Note，绝不改归档"
+        ],
+        "evidence": "源仓无自动事实比对；只有评审清单。作者阶段未运行任何命令。"
+      },
+      "limitations": [
+        "格式门禁不比对 Note 与代码事实，漂移只能靠评审发现。",
+        "没有工具标记“哪些 Note 长期未更新”，因此腐烂不会被自动暴露。",
+        "“不再可能指导未来工作”是语义判断。"
+      ]
+    },
+    {
+      "id": "decisions-delete-keep-archive",
+      "title": "删除、保留与归档的语义判决（拒绝字数/年龄/配额）",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 36,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 18,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 31,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 68,
+          "end": 68,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "活跃决策集会无限膨胀；按字数、年龄或配额清理会删掉仍能防止重蹈覆辙的理据，也会把有历史价值的记录当作噪声。",
+      "triggers": [
+        "新 Note 触发取代审计",
+        "计划清理活跃决策语料",
+        "评审质疑某篇 Note 是否还应保持活跃"
+      ],
+      "obligations": [
+        "语义逐篇判断；词数与年龄只作发现线索，绝不作归档判据",
+        "implemented 删除条件：只描述小型 UI 调整或纯机械改动；连同英文、中文、sidecar 三件套一起删，并修复或移除入站链接",
+        "implemented 归档条件：决策已完整发布、理据不太可能指导未来工作，但仍有历史决策价值",
+        "implemented 保留条件：替代方案、所有权边界、负向保证、持久/线格式语义、安全规则或重新引入条件仍有用",
+        "proposed 永不归档；不再值得推进就拒绝",
+        "rejected 仅在失败的提案仍是诱人且有意义的错误、且 Note 解释为何失败时保留；否则删除三件套",
+        "小型实现不构成删除理由",
+        "不给配额；检查范围内每篇并记录边界案例"
+      ],
+      "actors": [
+        "执行代理",
+        "评审者",
+        "记录所有者"
+      ],
+      "steps": [
+        "读取范围内每篇 Note 全文",
+        "用当前代码、配置、包文档、生成目录与较新 Note 判断其事实是否仍现行",
+        "按生命周期套用判决：implemented 三选一，proposed 拒绝或保留，rejected 保留或删除",
+        "对删除项删三件套并修入站链接",
+        "对归档项走归档三件套流程",
+        "报告保留/删除/归档数量与每个边界案例的词数和选择"
+      ],
+      "enforcement": {
+        "mode": "skill procedure + review",
+        "implementation": "dsh-archive-agent-notes 给出判决标准与报告格式；没有自动分类器；归档后的封印由校验器执行。",
+        "trust": "执行者的语义判断；代码与现行文档是事实源。",
+        "failure": "误删丢失理据；误归档冻结低价值记录并增加维护成本；用字数配额会系统性删除短而关键的规则。",
+        "exceptions": [
+          "校准示例只设定尺度，不是配额；采用项目必须按领域重标定",
+          "rejected 的保留判据是“仍能阻止重提”，不是“曾经被认真考虑”"
+        ]
+      },
+      "applicability": "有活跃决策语料且需要控制规模的项目。若语料很小，可只保留“删除/保留”两态，但不要引入配额。",
+      "relationships": [
+        "decisions-supersession-audit",
+        "decisions-consolidation",
+        "decisions-archive-triplet",
+        "rationale.archive-retention-and-freeze"
+      ],
+      "migration": {
+        "strategy": "先写判决标准与报告格式，再做一次全量分类；归档机制可后置。",
+        "implementation": "把 implemented 三态、proposed/rejected 规则写成清单；准备当前代码/文档作为事实源；规定边界案例必须报告词数与理由；禁止以字数或年龄作为判据。",
+        "requiredSupport": [
+          "语义判决标准",
+          "当前事实源访问",
+          "报告模板",
+          "归档/删除流程"
+        ]
+      },
+      "reference": "references/decisions.md#delete-keep-archive",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "每篇被检查 Note 有明确去向并在报告中有依据",
+          "删除项的三件套与入站链接都已处理"
+        ],
+        "rejection": [
+          "仅因字数少就删除一篇承载负向保证的 Note，评审应拒绝",
+          "把仍有用的 rejected 提案删除导致同类错误重提，审计应暴露"
+        ],
+        "recovery": [
+          "误删：从版本控制恢复三件套并修链接，重新评审",
+          "误归档：源仓无解封程序，需维护者决策"
+        ],
+        "evidence": "源仓无自动判决工具；只有技能文字与报告。作者阶段未运行任何命令。"
+      },
+      "limitations": [
+        "判决正确性无法自动验证；技能只提供语义标准。",
+        "校准示例绑定源仓具体 Note 与字数，迁移时不可照抄。",
+        "没有工具统计语料规模变化或删除覆盖率。"
+      ]
+    },
+    {
+      "id": "decisions-consolidation",
+      "title": "完全取代后的合并删除与 feature 移除前提",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 48,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 11,
+          "end": 13,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "两篇 Note 讲同一决策时，简单删旧篇会丢失独有理据；把旧文改写成相反结论则会制造历史伪造；partial supersession 被误当 full 会删掉仍现行的事实。",
+      "triggers": [
+        "一篇 implemented Note 被完全取代",
+        "feature 增加篇在后续移除变更中需要并入"
+      ],
+      "obligations": [
+        "只有 full supersession 可以合并；partial 必须两篇都保留并交叉链接",
+        "合并前 owner 必须保留旧篇每一条独有理据、替代方案、后果、必需验证与具名覆盖缺口",
+        "修复每一条入站链接，并在同一变更内删除中文对照与一致性记录",
+        "不得把旧文件改写成它的反面，也不得让 git 历史成为理据的唯一副本",
+        "feature 篇并入移除篇必须同时满足：功能已不在生产代码、配置、schema、持久/线格式、迁移与兼容行为；无当前文档称其可用；无测试把它当受支持行为",
+        "移除 owner 还要保留最初动机、为何不再支持、完整移除之外的替代方案、放弃的能力、重新引入条件、完整缺席的验证",
+        "只验证被删行为的过时清单与测试不算当前验证证据；移除一种 transport/default/实现/呈现，或仍有持久数据与兼容处理，属 partial"
+      ],
+      "actors": [
+        "旧 Note 所有者",
+        "合并执行者",
+        "评审者"
+      ],
+      "steps": [
+        "确认是 full supersession，而不是部分事实仍现行",
+        "把旧篇独有内容逐条并入当前 owner",
+        "修复所有入站链接",
+        "删除旧篇英文、中文与 sidecar",
+        "删除后运行链接与格式门禁",
+        "若为 feature 移除合并，逐项验证功能缺席条件并保留重新引入条件"
+      ],
+      "enforcement": {
+        "mode": "instruction + review",
+        "implementation": "README § When to write one 定义保留义务与两条合并规则；没有自动检查“独有内容是否全部转移”。",
+        "trust": "owner 对理据完整性负责；git 只是备份，不是理据的唯一副本。",
+        "failure": "丢失独有理据会让未来重提无法被阻止；伪造成相反结论会破坏历史可信度；把 partial 当 full 会删掉仍现行的事实。",
+        "exceptions": [
+          "删除旧篇是活跃语料唯一允许“丢失文件”的路径，但必须满足全部保留义务",
+          "移除理由与验证缺席的测试可以保留，不算过时实现清单"
+        ]
+      },
+      "applicability": "有重复 owner 或 feature 被移除的项目。若项目没有稳定 owner 概念，必须先指定合并责任人。",
+      "relationships": [
+        "decisions-supersession-audit",
+        "decisions-implemented-maintenance",
+        "decisions-delete-keep-archive",
+        "rationale.alternatives-and-rejected-knowledge"
+      ],
+      "migration": {
+        "strategy": "先定义 full/partial 判据与保留清单，再允许删除；删除必须由一个 owner 执行。",
+        "implementation": "写合并检查清单：独有理据、替代方案、后果、验证、覆盖缺口、入站链接、三件套删除；为 feature 移除增加六项缺席验证。",
+        "requiredSupport": [
+          "full/partial 判据",
+          "保留清单",
+          "链接检查",
+          "版本控制作为备份"
+        ]
+      },
+      "reference": "references/decisions.md#consolidation",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "旧篇及其 zh/sidecar 消失，owner 包含全部独有内容",
+          "所有入站链接指向新 owner 或归档"
+        ],
+        "rejection": [
+          "partial supersession 仍删除旧篇，评审应拒绝",
+          "feature 仍存在于配置/schema/测试却合并进移除篇，评审应拒绝"
+        ],
+        "recovery": [
+          "发现遗漏：停止删除，恢复旧篇并补全 owner 后再删",
+          "链接未修复：链接门禁红，按报错修"
+        ],
+        "evidence": "源仓无自动合并完整性检查；只有文字义务与评审。作者阶段未运行任何命令。"
+      },
+      "limitations": [
+        "没有工具比对“旧篇独有句子是否都出现在 owner 中”。",
+        "feature 缺席条件需要跨代码、配置、schema、格式、迁移、兼容与测试人工核对。",
+        "“仍可能指导未来工作”是语义判断，与删除/归档判决共享同一不确定性。"
+      ]
+    },
+    {
+      "id": "decisions-archive-triplet",
+      "title": "归档三件套搬移：唯一允许的正文变更与执行顺序",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 40,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 54,
+          "end": 62,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 5,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/archived-agent-notes.ts",
+          "start": 118,
+          "end": 183,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "归档若允许顺手修链接、改事实、重排版，就会把历史快照变成不可信的混合体；若不规定操作顺序，作者会在写入封印前就把内容改坏。",
+      "triggers": [
+        "判决为归档的完整 implemented 三件套"
+      ],
+      "obligations": [
+        "移动完整的 foo.md、foo.zh.md、foo.i18n.yaml 三件套到 archived/<kind>/",
+        "归档路径不含 implemented 段；只有 implemented 可以进入归档",
+        "不做正文编辑；仅在两个语言文件的 Status: implemented 下一行插入同一日期的 Archived: YYYY-MM-DD",
+        "重录 sidecar 的两个元数据编辑后哈希；不翻译、不重排版、不更新事实、不修内部链接",
+        "保留现有标题标点、空行布局与语言切换措辞",
+        "修复或重定向/删除活跃散文中的入站链接；绝不检查或修复归档出站链接",
+        "先运行 verify-archived-agent-notes --write，再运行普通校验"
+      ],
+      "actors": [
+        "归档执行者",
+        "评审者",
+        "归档校验器"
+      ],
+      "steps": [
+        "确认该篇满足归档而非删除条件",
+        "git mv 三件套从 implemented/<kind>/ 到 archived/<kind>/",
+        "在两个语言文件的状态行下插入同一 Archived 日期",
+        "用配对工具重录 sidecar 哈希",
+        "搜索活跃散文的入站链接并处置",
+        "运行 pnpm run verify-archived-agent-notes --write",
+        "运行 pnpm run verify-archived-agent-notes"
+      ],
+      "enforcement": {
+        "mode": "gate (metadata, triplet completeness, seal) + skill procedure",
+        "implementation": "归档校验器验证三件套、Status/Archived、sidecar blob 哈希与 manifest；--write 追加封印。",
+        "trust": "封印后内容不可变；搬移阶段只允许两类元数据变更。",
+        "failure": "缺件、错误状态、非法日期、两侧日期不同、sidecar 哈希不匹配、未封印都会失败。",
+        "exceptions": [
+          "精确登记的旧→新哈希转换（源仓为一次 Figma 链接移除登记三条）",
+          "历史标题不要求是 # Agent Note:，语言切换措辞按原样保留"
+        ]
+      },
+      "applicability": "使用双语三件套的项目。单语项目可退化为“单文件 + 内容哈希清单 + Archived 行”，但必须保留“不得顺手修改正文”的边界。",
+      "relationships": [
+        "decisions-delete-keep-archive",
+        "decisions-frozen-archive-trust",
+        "documentation-i18n-pair-contract",
+        "documentation-i18n-consistency-record"
+      ],
+      "migration": {
+        "strategy": "先实现校验器与封印，再允许第一次归档；操作顺序固定为“搬移→插行→重录 sidecar→修入站链接→写封印→普通校验”。",
+        "implementation": "建立 archived/<kind>/ 目录、AGENTS.md、manifest.json；实现三件套正则、Status/Archived 校验、sidecar blob 哈希与 append-only manifest；提供 --write 与只读两种模式。",
+        "requiredSupport": [
+          "归档目录与 AGENTS.md",
+          "闭合 manifest",
+          "可信基线 ref",
+          "配对重录工具",
+          "入站链接清单"
+        ]
+      },
+      "reference": "references/decisions.md#archive-triplet",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "普通校验输出 N frozen artifact(s) checked across 6 kind(s).",
+          "manifest 恰好新增 3 个路径，既有条目哈希不变",
+          "git diff 显示旧路径删除、新路径新增、两行 Archived: 与 sidecar 重录"
+        ],
+        "rejection": [
+          "删除 sidecar 或 zh 侧必须报 incomplete archived triplet",
+          "改动已封印正文后重跑必须报 sealed content hash changed",
+          "归档日期早于文件名日期或两侧不同必须失败"
+        ],
+        "recovery": [
+          "内容被改：还原为封印内容，不要更新哈希",
+          "忘记 --write：补跑追加模式；随后必须再跑普通模式",
+          "三件套不全：补齐或整体撤回"
+        ],
+        "evidence": "源码阅读与 scripts/archived-agent-notes.spec.ts 的负向夹具；作者阶段未执行校验器。"
+      },
+      "limitations": [
+        "源校验器首次封印不比对搬移前内容；目标已有可信基线原文/三元组搬移补强，见 decisions-frozen-archive-trust.targetImplementation；独立/平台证据仍缺。",
+        "归档不要求正文骨架，历史格式被保留；因此归档不能作为格式范本。",
+        "归档 sidecar 是旧式两行 blob 记录，不能由现行按标题分节的配对门禁重录；只能由归档校验器接受。",
+        "校验器不验证 Archived 日期等于真实归档时间，只验证合法且不早于文件名日期。"
+      ]
+    },
+    {
+      "id": "decisions-frozen-archive-trust",
+      "title": "冻结归档的信任模型：闭合目录、三件套、元数据、sidecar 与 append-only 封印",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-archived-agent-notes.ts",
+          "start": 1,
+          "end": 115,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/archived-agent-notes.ts",
+          "start": 1,
+          "end": 204,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/archived-agent-notes.spec.ts",
+          "start": 25,
+          "end": 153,
+          "kind": "test"
+        },
+        {
+          "path": ".rgignore",
+          "start": 1,
+          "end": 2,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 104,
+          "end": 107,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 146,
+          "end": 186,
+          "kind": "config"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 13,
+          "end": 15,
+          "kind": "config"
+        }
+      ],
+      "problem": "“别改归档”如果只是口头约定，任何一次善意修链接都会悄悄改写历史；但把归档做成不可读的死文件又会妨碍有意检索。信任必须可机械验证，同时明确它不能证明什么。",
+      "triggers": [
+        "任何 archived/ 目录变更",
+        "审计归档完整性",
+        "CI 静态车道与本地暂存 hook",
+        "诊断封印失败"
+      ],
+      "obligations": [
+        "归档根只允许 AGENTS.md 与 manifest.json 两个普通文件；只允许普通文件与 class 目录；class 必须属于闭集且六类目录全部存在",
+        "类目录内只允许普通文件，路径必须匹配 {kind}/yyyy-mm-dd-topic.{md,zh.md,i18n.yaml}",
+        "两个语言文件都要求恰为 Status: implemented，下一行是合法且不早于文件名日期的 Archived: YYYY-MM-DD，且两侧日期相同",
+        "sidecar 必须恰好两个条目，分别等于两份语言文件的 git blob SHA-1",
+        "manifest 闭合 schema：只有 version 与 files，version 为 1，哈希为 sha256:<64 hex>；渲染按路径排序、2 空格缩进、末尾换行",
+        "基线 ref 必须是 commit；ref 上无 manifest 视为空基线；既有每条封印路径必须存在且哈希不变",
+        "非 --write 模式拒绝未封印的新 artifact；--write 只追加且先验证既有封印",
+        "归档不得编辑、翻译、重排版、修复、删除或移动；不作为当前行为权威",
+        "文档门禁跳过归档源（含出站链接），活跃散文可有意链接进归档",
+        "根 .rgignore 排除归档，历史查询需显式命名目录"
+      ],
+      "actors": [
+        "归档校验器",
+        "维护者（例外登记）",
+        "CI（可信基线）",
+        "评审者"
+      ],
+      "steps": [
+        "CI 注入可信 base ref；本地写入默认 HEAD",
+        "普通模式读取当前 manifest 并解析 schema",
+        "读取基线 manifest；逐条比对封印路径存在且哈希不变",
+        "遍历归档目录：校验根文件、class 闭集、类目录内容、三件套与元数据、sidecar blob 哈希",
+        "计算当前 artifact 集合并与 manifest 比较：缺失、变更、未封印分别报错",
+        "仅在 --write 且无错误时写回确定性 manifest"
+      ],
+      "enforcement": {
+        "mode": "gate (frozen archive verifier, write mode and read-only mode)",
+        "implementation": "verify-archived-agent-notes.ts 负责目录、基线、追加与退出码；archived-agent-notes.ts 负责纯函数：manifest 解析/渲染、artifact 校验、append-only 扩展、精确例外。",
+        "trust": "内容封条 + 可信基线 + append-only manifest；PR 作者不得控制基线。",
+        "failure": "任意正文改动、缺件、未知 kind、错误根文件、非法元数据、sidecar 不符、未封印、基线不可读都会失败。",
+        "exceptions": [
+          "精确登记的 path+before+after seal 转换（源仓三条 Figma 例外），反向与其他路径被拒",
+          "历史标题格式与语言切换措辞被保留，不要求 # Agent Note: 前缀",
+          "归档正文骨架不校验"
+        ]
+      },
+      "applicability": "需要保留历史决策快照、同时避免其污染当前检索的项目。若项目没有版本控制或可信 CI 基线，封印只能提供本地自洽，不能证明历史未变。",
+      "relationships": [
+        "decisions-archive-triplet",
+        "decisions-delete-keep-archive",
+        "automation-gate-aggregate-registry",
+        "documentation-agent-note-archive",
+        "rationale.archive-retention-and-freeze"
+      ],
+      "migration": {
+        "strategy": "先实现只读校验与闭合目录，再引入 manifest；基线必须由 CI 注入，最后才允许归档写入。",
+        "implementation": "建立 archived/AGENTS.md、manifest.json 与六类目录；实现 manifest schema、sidecar blob 校验、append-only 扩展与精确例外表；在 PR 与 master 车道注入不同基线；在 lefthook 仅在归档文件暂存时运行。",
+        "requiredSupport": [
+          "归档目录与 AGENTS.md",
+          "闭合 manifest",
+          "可信 base ref",
+          "确定性 JSON 渲染",
+          "精确例外表",
+          "全历史 checkout 或 base SHA"
+        ]
+      },
+      "reference": "references/decisions.md#frozen-trust",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "普通模式输出 N frozen artifact(s) checked across 6 kind(s).",
+          "manifest 条目数等于现有归档文件数，且排序稳定",
+          "精确例外正向转换通过，反向转换失败"
+        ],
+        "rejection": [
+          "更改任意已封印字节必须失败",
+          "删除 manifest 条目或替换为另一路径的新哈希必须失败",
+          "在归档根放额外文件、未知 kind 目录或嵌套目录必须失败",
+          "sidecar 缺一条、多一条或哈希不符必须失败"
+        ],
+        "recovery": [
+          "内容被改：还原，而不是更新封印",
+          "基线不可读：取全历史或使用 PR base SHA，不要跳过门禁",
+          "新增归档但未封印：补跑 --write 后再跑普通模式"
+        ],
+        "evidence": "源码阅读与 archived-agent-notes.spec.ts 的正负夹具；作者阶段未执行校验器。"
+      },
+      "limitations": [
+        "源校验器首次封印接受任意内容，未比对搬移前后正文；下列targetImplementation记录目标补强，不改写源已有能力。",
+        "--write 本地基线默认 HEAD；若已被提交，只做自洽检查，不能证明历史未变。",
+        "Archived 日期不等于真实归档时间，只要求合法且不早于文件名日期。",
+        "精确例外硬编码在代码中，新增需要改代码与评审，不是配置项。",
+        "归档校验不要求 H1 为 # Agent Note:，也不检查正文骨架。",
+        "归档 sidecar 是旧式两行 blob 记录，与活跃语料的按标题分节记录格式不同；不能用现行配对门禁重录。",
+        "仓库内没有分支保护/ruleset，无法证明校验器是 required check。"
+      ],
+      "targetImplementation": {
+        "kind": "source-duty-target-extension-local-observed-not-independent-closure",
+        "executor": "tools/agent-notes/verify-archived-agent-notes.mjs",
+        "builder": "research/build-agent-note-runtime.mjs",
+        "behavior": "首次封印按可信基线Git blob证明完整implemented三元组已搬移；两语言只许插入Archived行，侧车重新校验。可信对象格式从已有ls-tree的40/64位完整ID推导，无额外对象格式探测；旧式侧车仍为SHA-1。可信基线中的既有未封印历史每个artifact都须存在且原字节相同，整组三元组遗漏拒绝；当前伪造空manifest或新seal不跳过库存/原文比对。",
+        "evidence": ["verification/evidence/raw/p1-first-seal-regressions.json", "verification/evidence/raw/p1-first-seal-installed.json", "verification/evidence/raw/p1-resumed-first-seal-installed.json", "verification/evidence/raw/p1-first-seal-sha256-before.json", "verification/evidence/raw/p1-first-seal-sha256-after.json", "verification/evidence/raw/p1-first-seal-sha256-installed.json", "_working/audit/p1-first-seal-sha256-independent-recheck.json", "verification/evidence/raw/p1-first-seal-git-capability-before.json", "verification/evidence/raw/p1-first-seal-git-capability-after.json", "verification/evidence/raw/p1-first-seal-git-capability-installed.json", "_working/audit/p1-first-seal-git-capability-independent-recheck.json", "verification/evidence/raw/p1-historical-bootstrap-before.json", "verification/evidence/raw/p1-historical-bootstrap-after.json", "verification/evidence/raw/p1-historical-bootstrap-installed.json"],
+        "limits": "修复前SHA-1/SHA-256历史整组遗漏均被真实CLI误接受；修复后12项回归通过，包含伪造空当前清单仍拒绝、拒绝不写与原字节恢复。新离线npm包的默认安装路径下，两格式消费者各完成30条实际命令，包含3次遗漏拒绝及恢复；仅证明当前归档模块，不冒充完整C3或独立闭合。旧10项/各23命令仍是历史版本事实。真实Git为2.48.1.windows.1，不代表旧Git矩阵/最低版本认证。required CI、平台阻断及CRLF兼容未证明；基线建立前已丢失的历史不可由该基线重建。CI必须提供受信变更前基线，不能用已包含恶意变更的HEAD当历史证明。"
+      }
+    },
+    {
+      "id": "decisions-postmortem-admission",
+      "title": "Postmortem 准入、执行摘要、章节骨架与护栏链接",
+      "sources": [
+        {
+          "path": "docs/postmortem/README.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0002-js-expression-disabled-filesystem-tools.md",
+          "start": 1,
+          "end": 47,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0003-web-agent-gui-feedback-loop.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md",
+          "start": 1,
+          "end": 55,
+          "kind": "history"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 26,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "test"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 28,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/translation-pairing.ts",
+          "start": 161,
+          "end": 168,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/translation-pairing.manifest.json",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        }
+      ],
+      "problem": "每个 bug 都写复盘会稀释信号；只写“修了什么”又无法防止同类问题再次穿过安全网。事故叙事还容易与设计决策混为一谈，导致读者把一次故障当成长期设计理由。",
+      "triggers": [
+        "bug 到达真实用户、已合并 PR 或发布",
+        "失败原因具有系统性（测试/工具/约定缺口）",
+        "诊断耗时且可再次发生"
+      ],
+      "obligations": [
+        "三条件同时成立才写：机制 subtle、原因 systemic、重新发现 costly",
+        "开头必须有 ## Executive summary：坏了什么、根因、为何逃逸、持久教训，三十秒可读",
+        "正文包含 Summary、Timeline、Root cause、Guardrails added、Lessons；示例另有 Impact",
+        "链接它促成的护栏（测试、AGENTS.md 规则、ADR 等）",
+        "在 postmortem README 的编号索引表加一行",
+        "维护完整中英/侧车三元组与语言切换；postmortem属于docs/**配对范围，完整性、结构与记录新鲜度必须通过通用配对门禁，译文含义另行评审",
+        "护栏必须能因报告的机制失败，而不是超时或替代服务的自证"
+      ],
+      "actors": [
+        "事故处理者",
+        "评审者",
+        "护栏所有者"
+      ],
+      "steps": [
+        "确认三条件，而不是每个 bug 都写",
+        "先写执行摘要，再写详细时间线与根因",
+        "追到机制层：为什么测试/工具/约定没拦住",
+        "为每个护栏落地测试或规则，并写清它如何失败",
+        "更新编号索引表",
+        "写中文对照与侧车，在实际文档语料配置中纳入postmortem目录并执行配对门禁",
+        "评审检查根因深度、译文含义与护栏可失败性"
+      ],
+      "enforcement": {
+        "mode": "instruction + review + index + automatic bilingual pairing",
+        "implementation": "准入、执行摘要、章节、索引与护栏链接由README与评审承担；没有postmortem专用摘要/索引校验器。但docs/**通用配对范围覆盖postmortem，未在manifest排除，完整三元组、结构和记录新鲜度由verify-translation-pairing自动验证。",
+        "trust": "索引、准入、摘要及译文含义靠评审；通用配对门禁承担结构/完整性/记录约束；护栏有效性靠实际测试或规则本身。",
+        "failure": "缺译文/侧车、结构不符或记录漂移由配对门禁非零拒绝；摘要、根因、索引与护栏质量仍由评审拒绝，不能用门禁绿替代语义判断。",
+        "exceptions": [
+          "不是每个 bug 都写：subtle + systemic + costly to rediscover 三条件同时成立",
+          "设计理据与未发生的假设不进 postmortem（属 Agent Note）",
+          "单篇状态行（如 Status: resolved）在示例中出现，但 README 未强制"
+        ]
+      },
+      "applicability": "适用于满足subtle/systemic/costly准入条件的真实故障；未触发时保留规则与再激活条件。源仓没有以项目小为理由免除执行摘要或后续详细故障记录的例外。",
+      "relationships": [
+        "decisions-durable-rule-admission",
+        "testing-tiered-evidence-selection",
+        "engineering-performance-evidence",
+        "documentation-tier-placement",
+        "documentation-i18n-pair-contract"
+      ],
+      "migration": {
+        "strategy": "先定义三条件与执行摘要，再建立编号索引与双语；最后要求每个护栏落成测试或规则。",
+        "implementation": "建立docs/postmortem/README.md与编号文件，保留准入、摘要、章节、索引和护栏规则；实际双语语料必须纳入同一配对门禁，不得改为仅人工确认。确无双语触发面时须记录具体事实与再激活条件，不能仅以项目小或没有专用脚本豁免。",
+        "requiredSupport": [
+          "事故目录与索引",
+          "执行摘要模板",
+          "护栏链接约定",
+          "适用双语语料的完整三元组、实际配对门禁与语义评审"
+        ]
+      },
+      "reference": "references/decisions.md#postmortem-admission",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "每篇 postmortem 有执行摘要、时间线、根因、护栏与教训",
+          "索引表包含该编号，双语文件与语言切换行齐全",
+          "每个护栏能指出具体落点：配置校验器、夹具拒绝规则、原生边界用例或装配快照"
+        ],
+        "rejection": [
+          "构造一个只有修了什么的复盘，评审应拒绝",
+          "构造一个只有超时断言、无法因目标机制失败的护栏，评审应拒绝",
+          "构造一个把快照刷新当作正确性证明的护栏，评审应拒绝（0002 的教训）",
+          "在已激活双语postmortem语料中删除译文/侧车或使结构与记录失配，实际配对门禁必须非零拒绝"
+        ],
+        "recovery": [
+          "根因不深：补到测试/工具/约定缺口",
+          "护栏不可失败：改成针对机制的负向测试，或把规则接入门禁",
+          "归因只靠单一前缀：改成退出码+逐行签名+精确排除的合取（0004）",
+          "配对被拒：恢复完整且语义对应的三元组、按真实内容重录并重新通过门禁，不取消该目录的适用范围"
+        ],
+        "evidence": "四篇 postmortem 正文与 README 阅读；doc-standard.spec.ts 与 scripts 目录负向检索确认无专用校验器；作者阶段未执行任何命令。"
+      },
+      "limitations": [
+        "没有postmortem专用索引/摘要/章节检查；这些由评审承担。双语配对已有通用自动门禁，不能由缺少专用脚本推断不存在；目标postmortem入口的正常/拒绝/恢复和独立效果证明仍未提供。",
+        "护栏是否真的会因目标机制失败，只能由测试证据证明，postmortem 文本本身不构成证明。",
+        "状态行语义未规范化，检索工具不能据此判断事故是否仍未解决。",
+        "站外投影不存在，postmortem 对采用方用户不可见，迁移时需自行决定发布面。",
+        "0002/0004 的护栏引用具体包与快照路径，采用项目必须重写为本地等价物，不能照抄。"
+      ],
+      "guardrailLayers": [
+        {
+          "layer": "静态配置校验",
+          "example": "verify-cordis-config 拒绝 Loader entry metadata 中的表达式节点（0002）"
+        },
+        {
+          "layer": "快照/夹具拒绝结构化错误",
+          "example": "dsh-session-snapshot 拒绝 UNKNOWN_TOOL 结果（0002）"
+        },
+        {
+          "layer": "原生边界回归",
+          "example": "partial-landlock.spec.ts 覆盖信息行、致命证据与前后台分类（0004）"
+        },
+        {
+          "layer": "装配后产品路径",
+          "example": "snapshots/session/partial-landlock-child-failure 独立 pin 住存活 bash 路径（0004）"
+        },
+        {
+          "layer": "指令与文档",
+          "example": "AGENTS.md 与 Cordis primer 写明 !!js 仅在 plugin config 下有效（0002）"
+        }
+      ]
+    },
+    {
+      "id": "decisions-durable-rule-admission",
+      "title": "持久规则准入：一事实一归宿、分层放置、机械门禁偏好与负对照",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 36,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 49,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/README.md",
+          "start": 5,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 115,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 40,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 54,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 181,
+          "end": 181,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 175,
+          "end": 175,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 353,
+          "end": 358,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.spec.ts",
+          "start": 428,
+          "end": 437,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-cordis-config.spec.ts",
+          "start": 19,
+          "end": 48,
+          "kind": "test"
+        }
+      ],
+      "problem": "一条规则可能被写进根指令、子树指令、文档、Note、防守模式或 skill；写错层会导致上下文膨胀、重复与漂移。规则若不接门禁，只能靠记忆执行；若不可检查却伪装成门禁，会制造虚假保证。",
+      "triggers": [
+        "新增或修改常驻规则",
+        "根指令文件超预算",
+        "同一规则在多处出现",
+        "决定把约定升级成自动检查"
+      ],
+      "obligations": [
+        "每条事实只有一个归宿层，其他位置只链接",
+        "常驻指令保持 1-3 行并链接权威主页",
+        "证据必须可复算：前后测量或门禁检查，不能靠手工同步",
+        "新增或修改的验收规则必须有故意无效用例，并通过真实 runner 失败",
+        "每条可机械检查的不变量接入实际执行的顶层检查；变更的每个验收路径用无效用例证明拒绝；例外窄且有理由，不以全局禁用替代",
+        "门禁归属由测试锁定，而不是口头约定",
+        "修改扫描或政策实现时，需领域所有者确认且理由记录在变更上",
+        "预算超限按迁移→压缩→提额处理，上限是护栏不是削减目标"
+      ],
+      "actors": [
+        "规则作者",
+        "子树所有者",
+        "评审者",
+        "门禁所有者"
+      ],
+      "steps": [
+        "在层级表中找到该事实的职责层",
+        "若已在别处，保留一个 home，其余改链接",
+        "根规则保持 1-3 行并链接理据/主页",
+        "能机械校验的不变量接到实际执行的顶层检查，再通过它运行正常/无效用例；不能机械校验的语义判断写清评审条件与边界，不用人工评审代替已有自动效果",
+        "为新增/变更的验收规则补负对照：故意无效用例必须通过真实 runner 失败",
+        "用测试锁住门禁归属（例如快速聚合等于带 quick 标记的叶子；依赖扫描在声明的每个聚合里都存在）",
+        "涉及扫描或政策实现时，取得领域所有者确认并把理由记录在该变更上",
+        "运行预算门禁；超限按迁移→压缩→提额顺序处理",
+        "评审确认没有重复规则、没有全局禁用、没有伪门禁"
+      ],
+      "enforcement": {
+        "mode": "instruction + budget gate + review",
+        "implementation": "AGENTS.md:175 明确要求可机械检查的不变量接入实际执行的顶层检查、每条变更验收路径有无效用例、例外窄且有理由；docs/AGENTS.md 定义分层与预算；defensive-patterns/README.md 要求证据可复算；package-surface.md 指定扫描/政策所有者与具名例外；testing/code-review 定义真实 runner 负对照。各检查按自己的聚合/hook/CI 执行，这不是要求所有规则进入同一个聚合，也不证明所有规则已被实现或被必需CI执行。",
+        "trust": "层级归属与规则质量由评审判断；预算与门禁可机械验证。",
+        "failure": "重复规则会漂移；根文件膨胀会挤占上下文；不可检查的规则会退化为口号；伪门禁会制造虚假保证。",
+        "exceptions": [
+          "历史叙事允许留在 postmortem/Note/commit/PR",
+          "生成内容的英文侧可省略语言切换以保持字节一致（见 documentation 域）",
+          "无预算层级由评审治理",
+          "具体门禁的例外必须窄而具名：如依赖扫描/政策的修改需要领域所有者确认并在变更上记录理由"
+        ]
+      },
+      "applicability": "所有使用文件型代理指令的仓库。预算阈值、层级名称与文档目录必须按项目重设；不要照搬 2080/1430 等数字。",
+      "relationships": [
+        "decisions-note-necessity",
+        "decisions-postmortem-admission",
+        "engineering-instruction-tiers",
+        "documentation-prose-budgets",
+        "documentation-tier-placement",
+        "testing-tiered-evidence-selection",
+        "automation-gate-aggregate-registry",
+        "supply-chain-dependency-faces"
+      ],
+      "migration": {
+        "strategy": "先确认规则归属与可机械校验性；为每条适用不变量选择实际执行的顶层入口和正常/拒绝/恢复场景，保留各自拓扑，不假设存在一个包办所有规则的聚合",
+        "implementation": [
+          "列出载体（根/子树/文档/Note/postmortem/defensive/skill）与职责",
+          "把常驻命令压到 1-3 行并链接权威主页",
+          "用 manifest 设上限并让脚本可执行",
+          "为每条可机械校验的规则指定实际会跑的检查，并加通过真实 runner 的负对照",
+          "为不可机械校验的规则写评审判断条件",
+          "为扫描/政策类实现指定领域所有者为例外批准人",
+          "用 code review 清单检查重复与伪门禁"
+        ],
+        "requiredSupport": [
+          "层级表",
+          "预算 manifest 与门禁",
+          "评审清单",
+          "负向夹具",
+          "真实的检查执行路径（hook 或 CI，按项目拓扑自行选择）"
+        ]
+      },
+      "reference": "references/decisions.md#durable-rule-admission",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "预算门禁能报出每个超限文件的字数与上限，并以非零退出",
+          "依赖扫描在清单/版本违规时失败，页面能指出入口命令、门禁名与政策文件",
+          "新增验收规则的负对照在真实 runner 下确实变红"
+        ],
+        "rejection": [
+          "可机械校验的不变量只留散文，或执行入口不调用对应检查，必须作为未落实的源义务拒绝，不能因没有单一聚合改称建议",
+          "把故意无效用例绕过真实 runner（直接调用私有函数或改 mock），若仍被视为负对照，则证据不成立"
+        ],
+        "recovery": [
+          "预算红：迁移→压缩→提额并说明",
+          "可机械校验的规则补入实际执行入口并重跑正常/无效路径；只有不可机械校验的语义判断采用评审程序；扫描/政策变更补领域所有者确认记录"
+        ],
+        "evidence": "源文件阅读（AGENTS.md:175 完整长行、defensive-patterns README15、package-surface115-123、testing40、code-review54、verify-doc-budgets）；作者阶段未执行门禁，P1 纠正的是源义务身份，不是目标效果证明。"
+      },
+      "limitations": [
+        "“可机械检查”是设计判断，不是自动发现；没有工具能证明一条规则已被正确接入。",
+        "防守模式没有独立执行门禁，靠 code review 读取与人工判断。",
+        "AGENTS.md:175 有通用的实际顶层检查与窄例外义务；它不要求所有不变量进入同一个聚合，也没有自动发现所有不变量的执行器。目标每项实际接线/拒绝/恢复证据仍需分别证明。",
+        "领域所有者确认是流程约束，仓库内没有文件能证明它发生过。"
+      ]
+    },
+    {
+      "id": "decisions-gate-wiring",
+      "title": "决策门禁的聚合、hook 与可信 CI 基线",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 122,
+          "end": 130,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 198,
+          "end": 198,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 805,
+          "end": 882,
+          "kind": "implementation"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 1,
+          "end": 49,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 104,
+          "end": 107,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 140,
+          "end": 190,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 35,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 64,
+          "end": 68,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "有了脚本但不在任何路径执行，等于没有治理；把所有门禁塞进 pre-commit 会拖慢本地提交；归档封印若拿不到可信基线，只是在本地自洽。",
+      "triggers": [
+        "新增或修改决策门禁",
+        "文档/Note 变更",
+        "归档变更",
+        "准备推送或合并"
+      ],
+      "obligations": [
+        "每个门禁有独立 package 脚本入口",
+        "doc-sync 聚合文档门禁；Agent Note 三类门禁与 pairing/md-links/md-wrap 标记 quick，供 test:docs 的 doc-quick 使用",
+        "本地 hook 只在暂存归档文件时运行归档校验器；暂存 sidecar 时运行 pairing 但排除归档目录",
+        "PR 静态车道注入可信基线 DSH_ARCHIVE_BASE_REF=github.event.pull_request.base.sha",
+        "master 串行车道注入 github.event.before，并强制 fetch-depth: 0",
+        "文档/Note 变更至少运行 doc-sync；归档变更另需聚焦测试、普通校验器、doc-sync、lint、git diff --check",
+        "报告只写实际运行的命令与输出"
+      ],
+      "actors": [
+        "门禁维护者",
+        "CI 所有者",
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "在 package.json 暴露独立脚本",
+        "把门禁加入 doc-sync 叶子列表并标记 quick（如适用）",
+        "在 lefthook 用 glob/exclude 只跑暂存相关的快速检查",
+        "在 PR 车道注入 base SHA 并运行静态聚合",
+        "在 master 车道使用 event.before 与全历史 checkout",
+        "作者按表面选择证据并在 PR 记录真实输出",
+        "评审核对证据与 diff 面匹配"
+      ],
+      "enforcement": {
+        "mode": "gate aggregation + hooks + CI",
+        "implementation": "package.json 脚本；run-gates.ts 的 docSyncLeafGates/docQuickLeafGates；lefthook 条件 job；CI 环境变量与 checkout 深度。",
+        "trust": "CI 基线由平台事件提供，PR 作者不可控；本地 hook 是快速检查，CI 是权威。",
+        "failure": "未接入聚合：门禁不执行；浅克隆：归档基线不可读；只跑定向检查：PR 级语料检查缺失。",
+        "exceptions": [
+          "git diff --cached --check 只查暂存内容",
+          "check:windows-wine 只在诊断已知 Windows 失败时运行，CI 拥有该信号",
+          "pre-commit 可被 --no-verify 绕过，CI 才是最终执行点"
+        ]
+      },
+      "applicability": "任何有 CI 与本地 hook 的项目。采用项目必须替换脚本名、聚合器、环境变量与车道名；没有 CI 时必须另找可信基线，否则封印只具本地意义。",
+      "relationships": [
+        "decisions-note-format",
+        "decisions-frozen-archive-trust",
+        "automation-gate-aggregate-registry",
+        "automation-gate-dependency-graph",
+        "automation-gate-result-reporting",
+        "testing-pre-push-evidence-selection",
+        "agent-workflows-pre-push-evidence"
+      ],
+      "migration": {
+        "strategy": "先接入独立脚本与聚合，再加本地 hook，最后接 CI 与可信基线。",
+        "implementation": "映射源门禁到目标脚本；建立 quick/full 两级聚合；hook 用 glob 条件；CI 注入变更前提交；为归档校验保证全历史或 base SHA；在 PR 模板要求证据块。",
+        "requiredSupport": [
+          "脚本入口",
+          "聚合器",
+          "hook 框架",
+          "CI 基线注入",
+          "证据模板"
+        ]
+      },
+      "reference": "references/decisions.md#gate-wiring",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "doc-sync 列表中包含分类、格式、归档、pairing、链接、wrap 六个叶子",
+          "test:docs 运行 doc-quick 子集且不包含 doc-typecheck",
+          "PR 车道的 DSH_ARCHIVE_BASE_REF 是 pull_request.base.sha",
+          "master 车道 fetch-depth: 0 且基线是 github.event.before"
+        ],
+        "rejection": [
+          "改归档内容后本地暂存，lefthook 应调用归档校验器",
+          "仅暂存 sidecar 时 pairing 不应扫描归档目录",
+          "浅克隆下归档基线不可读必须显式失败，而不是静默通过"
+        ],
+        "recovery": [
+          "基线不可读：取全历史或改 base SHA",
+          "本地绿 CI 红：检查是否只跑了定向/暂存模式，PR 级需要语料级运行"
+        ],
+        "evidence": "源码阅读；作者阶段未运行任何门禁或 CI。"
+      },
+      "limitations": [
+        "仓库内没有分支保护/ruleset 配置，无法证明这些 check 是 required。",
+        "本地 hook 可被绕过；CI 配置本身若被 PR 修改，也存在信任边界问题（见 automation 域）。",
+        "doc-quick 只覆盖标记 quick 的叶子；非 quick 门禁只在 doc-sync/CI 运行。",
+        "源仓 CI 车道与作业名强绑定自托管环境，迁移不能照抄。"
+      ]
+    },
+    {
+      "id": "decisions-reference-integrity",
+      "title": "交叉引用、链接门禁与归档可见性",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-md-links.ts",
+          "start": 14,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/translation-pairing.ts",
+          "start": 128,
+          "end": 168,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/doc-typecheck.ts",
+          "start": 205,
+          "end": 212,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 75,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": ".rgignore",
+          "start": 1,
+          "end": 2,
+          "kind": "config"
+        }
+      ],
+      "problem": "决策记录靠交叉链接生存；裸编号、绝对路径、失效锚点会让审计不可机械执行；归档搬移又会大规模改变链接目标。",
+      "triggers": [
+        "Note 间引用",
+        "归档搬移",
+        "文档链接变更",
+        "历史引用"
+      ],
+      "obligations": [
+        "Note 间使用相对 Markdown 链接，不用裸散文或编号",
+        "链接门禁扫描 README、活跃 Note、docs、包 Markdown、根 AGENTS.md 与 skills；归档被排除为源，但指向归档的链接仍被检查",
+        "配对与文档类型检查跳过归档源；归档有专用封印校验器",
+        "归档搬移后修复或删除入站链接；不改归档出站链接",
+        "当前文件用相对链接；历史引用用 tag 或 PR 编号；仓库引用校验拒绝真实 commit 标识符",
+        "归档默认从 ripgrep 搜索中排除；历史查询显式命名目录"
+      ],
+      "actors": [
+        "作者",
+        "链接门禁",
+        "评审者"
+      ],
+      "steps": [
+        "写相对链接并验证目标与锚点",
+        "归档搬移后全仓搜索入站链接",
+        "只改活跃散文中的链接，不改归档内部",
+        "运行 verify-md-links 与配对/文档检查",
+        "历史引用改用 tag 或 PR 编号",
+        "需要历史检索时显式搜索 archived/ 目录"
+      ],
+      "enforcement": {
+        "mode": "gate (markdown links) + scope exclusions",
+        "implementation": "verify-md-links 用 uniqueRepoFiles 与 isArchivedAgentNotePath 排除归档源；translation-pairing 与 doc-typecheck 同样排除归档；.rgignore 排除归档搜索。",
+        "trust": "归档内容不可改，因此其出站链接允许腐烂；当前链接必须可解析。",
+        "failure": "断链或坏锚点使链接门禁失败；归档搬移后未修入站链接会红。",
+        "exceptions": [
+          "活跃散文可有意链接进归档，作为历史引用",
+          "归档出站链接不检查、不修复"
+        ]
+      },
+      "applicability": "所有使用 Markdown 交叉引用的项目。若没有链接门禁，至少规定相对链接与搬移后的入站链接清单。",
+      "relationships": [
+        "decisions-archive-triplet",
+        "decisions-frozen-archive-trust",
+        "documentation-markdown-links",
+        "documentation-i18n-pair-gate",
+        "documentation-repository-reference-policy"
+      ],
+      "migration": {
+        "strategy": "先启用相对链接与链接门禁，再引入归档排除；搬移流程必须包含入站链接清单。",
+        "implementation": "实现链接扫描器；把归档路径排除为源但保留为目标；在配对与类型检查中排除归档；在归档步骤中要求全仓检索入站链接；用标签/PR 号记录历史引用。",
+        "requiredSupport": [
+          "链接门禁",
+          "归档路径判定函数",
+          "入站链接清单",
+          "历史引用约定"
+        ]
+      },
+      "reference": "references/decisions.md#references",
+      "verification": {
+        "status": "unexecuted (author phase; integration runs repository checks)",
+        "positive": [
+          "verify-md-links 对全仓 Markdown 通过",
+          "归档路径不出现在链接源集合中，但指向归档的链接仍被解析",
+          "搬移后的入站链接均指向新路径或当前权威"
+        ],
+        "rejection": [
+          "删除被活跃散文引用的归档路径而不修链接，链接门禁应失败",
+          "在归档内放入断链，链接门禁不应因此失败（冻结的代价）"
+        ],
+        "recovery": [
+          "断链：修目标或锚点，不删检查",
+          "归档搬移漏修链接：按报错逐条重定向或删除"
+        ],
+        "evidence": "源码阅读；作者阶段未运行链接门禁。"
+      },
+      "limitations": [
+        "链接门禁只证明目标与锚点存在，不证明语义指向正确。",
+        "归档出站链接故意不检查，因此归档内部可能积累断链。",
+        "默认搜索排除归档意味着普通检索不会发现历史事实，需显式路径。",
+        "仓库引用校验的规则细节在其他域，本域只引用入口。"
+      ]
+    }
+  ],
+  "crossDomain": [
+    {
+      "domain": "rationale",
+      "reason": "统一格式与冻结归档的理据、替代方案与后果，以及 1267 篇 Note 正文的分区语义审计由 rationale 域承载；本域只引用其结论与操作约束。",
+      "mechanismIds": [
+        "rationale.non-trivial-note-policy",
+        "rationale.archive-retention-and-freeze",
+        "rationale.alternatives-and-rejected-knowledge",
+        "rationale.postmortem-root-cause",
+        "rationale.verification-epistemics"
+      ],
+      "peerCoverage": {
+        "path": "research/rationale-coverage.json",
+        "inspectedPath": ".agents/notes/README.md",
+        "ranges": [
+          "1-125"
+        ],
+        "observedMechanismIds": [
+          "rationale.decision-record-content",
+          "rationale.alternatives-and-rejected-knowledge",
+          "rationale.non-trivial-note-policy",
+          "rationale.format-classification-and-index",
+          "rationale.archive-retention-and-freeze",
+          "rationale.authority-and-history-routing"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-note-necessity",
+        "decisions-delete-keep-archive",
+        "decisions-archive-triplet",
+        "decisions-frozen-archive-trust"
+      ],
+      "noteCorpus": {
+        "partitionManifest": "research/note-partitions.json",
+        "englishNotes": 1267,
+        "partitions": 15,
+        "owner": "rationale"
+      },
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "documentation",
+      "reason": "双语三件套、语言切换、配对门禁、文档分层与预算归 documentation；本域保留归档 sidecar 与现行配对记录格式不同的接口事实。",
+      "mechanismIds": [
+        "documentation-i18n-pair-contract",
+        "documentation-i18n-consistency-record",
+        "documentation-i18n-pair-gate",
+        "documentation-tier-placement",
+        "documentation-prose-budgets",
+        "documentation-markdown-links",
+        "documentation-agent-note-format-gates",
+        "documentation-agent-note-archive"
+      ],
+      "peerCoverage": {
+        "path": "research/documentation-coverage.json",
+        "inspectedPath": ".agents/notes/README.md",
+        "ranges": [
+          "1-125"
+        ],
+        "observedMechanismIds": [
+          "documentation-agent-note-lifecycle",
+          "documentation-agent-note-format-gates",
+          "documentation-agent-note-archive"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-note-format",
+        "decisions-archive-triplet",
+        "decisions-reference-integrity",
+        "decisions-durable-rule-admission"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "automation-ci",
+      "reason": "doc-sync/doc-quick 聚合、lefthook 条件、CI 基线注入、required check 与分支保护归 automation；本域只声明证据入口。",
+      "mechanismIds": [
+        "automation-gate-aggregate-registry",
+        "automation-gate-dependency-graph",
+        "automation-gate-result-reporting",
+        "automation-pr-job-inventory",
+        "automation-lefthook-hook-matrix"
+      ],
+      "peerCoverage": {
+        "path": "research/automation-coverage.json",
+        "inspectedPath": "scripts/run-gates.ts",
+        "ranges": [
+          "1-563",
+          "559-903",
+          "903-1253",
+          "1250-1697"
+        ],
+        "observedMechanismIds": [
+          "automation-gate-aggregate-registry",
+          "automation-gate-dependency-graph",
+          "automation-gate-scheduler",
+          "automation-gate-env-budget",
+          "automation-gate-failfast-cancel",
+          "automation-gate-result-reporting"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-gate-wiring",
+        "decisions-frozen-archive-trust"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "testing",
+      "reason": "守卫测试必须能因目标回归失败、负对照、聚焦证据选择与推送前证据面匹配归 testing；本域只引用其规则。",
+      "mechanismIds": [
+        "testing-tiered-evidence-selection",
+        "testing-pre-push-evidence-selection"
+      ],
+      "peerCoverage": {
+        "path": "research/testing-coverage.json",
+        "inspectedPath": "docs/testing.md",
+        "ranges": [
+          "1-55"
+        ],
+        "observedMechanismIds": [
+          "testing-tiered-evidence-selection",
+          "testing-execution-topology",
+          "testing-resource-isolation",
+          "testing-world-verification",
+          "testing-pre-push-evidence-selection",
+          "testing-ci-orchestration-and-trust"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-durable-rule-admission",
+        "decisions-gate-wiring",
+        "decisions-postmortem-admission"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "agent-workflows",
+      "reason": "常驻指令分层、skill 元数据与代理如何加载规则归 agent-workflows；本域只声明持久规则放哪一层。",
+      "mechanismIds": [
+        "agent-workflows-instruction-tiers",
+        "agent-workflows-agent-note-lifecycle",
+        "agent-workflows-agent-note-archive",
+        "agent-workflows-pre-push-evidence"
+      ],
+      "peerCoverage": {
+        "path": "research/agent-workflows-coverage.json",
+        "inspectedPath": ".agents/notes/README.md",
+        "ranges": [
+          "1-125"
+        ],
+        "observedMechanismIds": [
+          "agent-workflows-agent-note-lifecycle",
+          "agent-workflows-agent-note-archive"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-durable-rule-admission",
+        "decisions-gate-wiring"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "engineering",
+      "reason": "防守模式的具体技术规则（生命周期、所有权、性能证据等）归 engineering；本域只保留规则准入与门禁偏好。",
+      "mechanismIds": [
+        "engineering-instruction-tiers",
+        "engineering-performance-evidence",
+        "engineering-jsdoc-prose",
+        "engineering-check-selection"
+      ],
+      "peerCoverage": {
+        "path": "research/engineering-coverage.json",
+        "inspectedPath": "docs/defensive-patterns/general.md",
+        "ranges": [
+          {
+            "start": 1,
+            "end": 222
+          }
+        ],
+        "observedMechanismIds": [
+          "engineering-explicit-state-contracts",
+          "engineering-ownership-teardown",
+          "engineering-error-handling",
+          "engineering-performance-evidence",
+          "engineering-migration-behavior",
+          "engineering-untrusted-subprocess",
+          "engineering-architecture-extension-map"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-durable-rule-admission",
+        "decisions-postmortem-admission"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "collaboration",
+      "reason": "评审职责、PR 模板与证据块、设计讨论而非自动否决归 collaboration。",
+      "mechanismIds": [
+        "collaboration-code-review-procedure",
+        "collaboration-issue-pr-templates",
+        "collaboration-pre-push-evidence",
+        "collaboration-review-event-handoff",
+        "collaboration-approval-status-contract"
+      ],
+      "peerCoverage": {
+        "path": "research/collaboration-coverage.json",
+        "inspectedPath": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+        "ranges": [
+          "1-137"
+        ],
+        "observedMechanismIds": [
+          "collaboration-pre-push-evidence",
+          "collaboration-change-scope-report",
+          "collaboration-stack-review-propagation"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-gate-wiring",
+        "decisions-implemented-maintenance",
+        "decisions-supersession-audit"
+      ],
+      "status": "peer-coverage-verified"
+    },
+    {
+      "domain": "supply-chain",
+      "reason": "依赖面、workspace 协议、可选依赖与依赖目录归 supply-chain；本域只把 verify-package-dependencies 作为“机械强制 + 领域所有者确认例外”的例证。",
+      "mechanismIds": [
+        "supply-chain-dependency-faces",
+        "supply-chain-workspace-protocol",
+        "supply-chain-optional-deps",
+        "supply-chain-dependency-catalog"
+      ],
+      "peerCoverage": {
+        "path": "research/supply-chain-coverage.json",
+        "inspectedPath": "scripts/verify-package-dependencies.ts",
+        "ranges": [
+          "1-58",
+          "59-592",
+          "596-700",
+          "704-823",
+          "824-923",
+          "924-1038"
+        ],
+        "observedMechanismIds": [
+          "supply-chain-dependency-faces",
+          "supply-chain-workspace-protocol"
+        ]
+      },
+      "ourMechanisms": [
+        "decisions-durable-rule-admission"
+      ],
+      "status": "peer-coverage-verified"
+    }
+  ]
+}

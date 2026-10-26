@@ -1,0 +1,4068 @@
+{
+  "domain": "agent-workflows",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "agent-workflows-instruction-tiers",
+      "title": "指令层级、常驻命令与预算（根/子树 AGENTS.md 分层）",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 1,
+          "end": 185,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 1,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 9,
+          "kind": "config"
+        },
+        {
+          "path": "packages/context/agent-instructions/README.md",
+          "start": 34,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "snapshots/session/agent-instructions/session.v2.jsonl",
+          "start": 8,
+          "end": 8,
+          "kind": "test"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/digest.ts",
+          "start": 1,
+          "end": 17,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 1,
+          "end": 149,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 181,
+          "end": 419,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 420,
+          "end": 430,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 431,
+          "end": 602,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/bundle/web-app/presets/standard.patch.yml",
+          "start": 15,
+          "end": 18,
+          "kind": "config"
+        }
+      ],
+      "problem": "工作流规则散落在根文件、子树文件、文档与技能中时，代理会在错误层级写入规则，或把情境化流程塞进每次会话的上下文，导致上下文膨胀、规则冲突和不可检索。",
+      "triggers": [
+        "初始化或重构代理指令体系",
+        "新增子树需要局部规则",
+        "根指令文件超预算或规则重复",
+        "判断某条规则应放在根/子树/技能/文档/Agent Note"
+      ],
+      "obligations": [
+        "根 AGENTS.md 只放每次会话都需要的常驻命令，每条一到三行并链接权威主页",
+        "子树 AGENTS.md 只放该子树特有命令，不重复根规则",
+        "技能层只放可复用工作流与专项决策标准，不承载产品/运行时契约",
+        "更具体指令优先于更宽泛指令，但不得覆盖 system/developer/直接用户指令",
+        "常驻文档受词数预算约束；超限先迁移、再压缩、最后才提额并说明理由",
+        "预算值以 manifest 为准，不在散文里复制第二份数字",
+        "根 AGENTS.md:175 要求可机械检查的不变量有实际顶层执行入口、每条变更验收路径有无效拒绝证明、例外窄且有理由；完整程序由 decisions-durable-rule-admission 承载，不以单一聚合是否存在决定义务身份",
+        "去重身份必须区分两份摘要：instructionContentSha1 对精确 UTF-8 内容取 SHA-1，trimmedInstructionDigest 先 trim 再取 SHA-1；只有后者用于重复抑制，被保留候选仍按原始字节渲染，不得把 trim 后文本当作正文。",
+        "重复抑制按候选组（instructionCandidateGroup + scopeForDisplayPath 计算）进行，不是全局去重：harness home 与 agents home 的两个 user-global 根合为一个组，不同组即使内容完全相同也必须各自渲染；同组保留发现顺序最早的候选。",
+        "发现顺序固定为：先 user-global 根（harness home 再 agents home 的固定 USER_GLOBAL_FILE），再项目根到 cwd 的祖先链（由宽到具体），每层先 instructionFileCandidates 再 localInstructionFileCandidates；绝对路径重复时保留首次出现。",
+        "每个候选的 stat 必须是三态：只有 present 参与读取；确认缺失（ENOENT/ENOTDIR 或 provider 的 FS_NOT_FOUND）和 provider 暂时不可用都跳过该候选本身；project-root 标记探测遇到 provider 异常必须向上抛出，不得等同于“没有标记”而回退 cwd。",
+        "单文件源上限 maxSourceBytes 是拒绝而非截断：元数据已超限直接跳过；流式累计字节超限返回 undefined；读取期间文件消失或不可读也只跳过该文件，其余独立候选继续加载。",
+        "maxBytes 或 maxSourceBytes 必须为正有限数，否则整次加载返回 undefined；当去重后为空时，只有 replacePreviousBaseline === true 才渲染显式空替换集，否则返回 undefined 以保留旧基线。",
+        "加载结果必须同时保留 observed（读取成功、去重前）、deduped（同组内容重复）与 included（去重且经渲染预算保留）三组，使调用方能够判断被抑制的重复候选在保留者消失或变化后是否重新可见。",
+        "标准 preset 为 agent-instructions 显式配置 `maxBytes: 65536`；这是运行时指令载荷上限，不是 docs 预算 manifest 的数字。"
+      ],
+      "actors": [
+        "仓库维护者",
+        "子树所有者",
+        "执行代理",
+        "评审者"
+      ],
+      "steps": [
+        "确定项目根标记与指令文件候选（源为 .git；AGENTS.md/CLAUDE.md；AGENTS.local.md/CLAUDE.local.md）",
+        "建立根文件：只写常驻命令，每条链接一个权威主页",
+        "为每个需要局部规则的子树创建 AGENTS.md，删除与根重复的内容",
+        "为技能/文档/决策记录划定边界：产品契约去 docs，理据去 Agent Notes，流程去 skills",
+        "设置预算 manifest 并接入 verify-doc-budgets",
+        "用加载快照验证：渲染一次、顺序由宽到具体、内容去重",
+        "按 user-global→项目根→cwd 顺序收集候选并做绝对路径去重；不要先按预算裁剪再读取。",
+        "逐文件执行 maxSourceBytes 拒绝读取，再按候选组做 trim 摘要去重，最后交给渲染预算；记录 observed/deduped/included 三组。",
+        "空结果时按 replacePreviousBaseline 决定显式空替换或保留旧基线，不要把“无文件”与“明确清空”混为一谈。"
+      ],
+      "enforcement": {
+        "mode": "instruction + gate",
+        "implementation": [
+          "verify-doc-budgets + scripts/doc-budgets.manifest.json；运行时 agent-instructions 加载器按目录链渲染并对相同内容去重",
+          "`digest.ts:12-16,24-26` 提供精确与 trim 后 SHA-1；`files.ts:323-376` 的 `discoverInstructionFiles` 实现 user-global→祖先链顺序与路径去重；`files.ts:387-428` 的 `readBounded` 执行单文件 maxSourceBytes 的拒绝而非截断；`files.ts:430-454` 的 `dedupInstructionFilesByCandidateGroup` 在读取后按候选组用 trim 摘要去重；`files.ts:469-524` 的 `loadBaselineInstructionSet` 组合 observed/deduped/included 并在空集时依 replacePreviousBaseline 决定显式清空或保留旧基线。"
+        ],
+        "trust": [
+          "预算与加载顺序可机械验证；层级归属与规则质量只能评审",
+          "顺序、去重组、三态、拒绝而非截断以及显式空替换可由源码与 fixture 断言；预算数字仍是配置，不证明目标仓库取值合理，也不证明规则应放在哪一层。"
+        ],
+        "failure": [
+          "超预算门禁失败；层级错放不会被自动发现，但会造成上下文膨胀或规则冲突",
+          "超过源上限或读取失败的候选被静默跳过（不出现在 included/rendered）；候选级 provider 异常可能表现为缺文件而不是错误；只有 project-root 标记探测异常会让整次加载抛出。"
+        ],
+        "exceptions": [
+          "vendor/ 仅按 prose/leakage 专项技能排除审查与编辑，不能豁免全仓治理；AGENTS.md:185 明确要求固定上游、同步、重施或退役已记录补丁并执行 test/build",
+          ".agents/notes/archived/ 冻结不编辑"
+        ]
+      },
+      "applicability": "所有使用文件型代理指令（AGENTS.md/CLAUDE.md 或等价物）的仓库。预算阈值必须按目标仓库重设。",
+      "relationships": [
+        "agent-workflows-symlink-indirection",
+        "agent-workflows-skill-catalog",
+        "agent-workflows-documentation-entry"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留分层与优先级语义；把文件名、项目根标记、预算数字参数化；预算段建议从 manifest 生成以避免散文漂移",
+        "requiredSupport": [
+          "文件型指令加载器（或人工加载约定）",
+          "词数预算检查",
+          "至少一个加载快照或手动验证"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-01",
+      "verification": {
+        "positive": [
+          {
+            "check": "新会话加载根+子树指令，模型能看到更具体规则，且同内容只渲染一次",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "必须断言渲染文本与三组列表，不能只比对文件是否存在。",
+            "scenario": "同一候选组内两份仅周边空白不同、内容相同的文件，只渲染发现顺序最早者；user-global 组与 project 组的相同内容则分别渲染；observed 含全部读取成功项，deduped 只含后者。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "文件元数据或流式累计超过 maxSourceBytes 时该文件不被渲染且不截断，其他候选正常；maxBytes<=0 或非有限数时整次加载返回 undefined。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "project-root 标记命中 cwd 之上第一个包含标记的目录；没有标记时回退 cwd；祖先链渲染顺序由宽到具体。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除根文件后常驻命令消失；或把局部规则写进根导致预算失败",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "project-root 标记探测的 provider 异常必须使加载抛出；把它当作“无标记、回退 cwd”是失败。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "同组重复候选被渲染两次，或不同组的相同内容被错误合并成一次，都是失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复正确层级并重跑加载快照与预算检查",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "删除同组保留者后重新加载，先前被抑制的重复候选变为可见并只渲染一次。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "replacePreviousBaseline=true 时文件全部消失应产生显式空替换集；false/缺省时应返回 undefined 而不是清空旧基线。"
+          }
+        ]
+      },
+      "limitations": "源仓库没有根文件完整性的机械检查；只有预算和链接。docs/AGENTS.md:59 的写作目标与 manifest 的硬上限是不同概念：architecture 2400/2410、testing 1300/1350 的差异本身不证明漂移；examples/AGENTS.md 的310词目标由评审而非预算脚本治理，不应静默升级为自动上限。`files.ts:393-395` 仍留有 TODO(total-instruction-read-bound)：没有跨整批基线的聚合源预算，只有单文件 cap；渲染预算在全部文件读取后才应用，因此多个大文件可以先被完整读取。去重只按 trim 后内容，不规范化换行或 Unicode。\n本读取只证明 preset 配置值；loader 在超限时的截断或报错行为未由该范围证明，65536 也不是所有部署的通用常量。",
+      "origin": "source",
+      "sourceBacked": true,
+      "exceptions": [
+        "provider 暂时不可用的候选只跳过自身；但 project-root 标记探测失败是 discovery 级错误，会使本次加载抛出。",
+        "被抑制的重复候选不是永久淘汰：注释明确要求它们仍可被探测，因为删除或修改同组保留者会让重复项重新可见。",
+        "去空白摘要会折叠仅周边空白不同的符号链接或字节副本，但正文存在其他差异时仍是不同候选。"
+      ]
+    },
+    {
+      "id": "agent-workflows-symlink-indirection",
+      "title": "指令与技能入口的符号链接间接层",
+      "sources": [
+        {
+          "path": "CLAUDE.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "packages/CLAUDE.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "vendor/CLAUDE.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/implemented/CLAUDE.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".claude/skills",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/agent-experience/SKILL.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "snapshots/session/agent-instructions/workspace/AGENTS.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "snapshots/session/agent-instructions/workspace/nested/AGENTS.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 179,
+          "end": 182,
+          "kind": "instruction"
+        },
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 9,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 46,
+          "end": 66,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/agent-experience/SKILL.md",
+          "start": 1,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 156,
+          "end": 158,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 173,
+          "end": 178,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/digest.ts",
+          "start": 20,
+          "end": 24,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/agent-instructions/README.md",
+          "start": 1,
+          "end": 236,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 804,
+          "end": 819,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 859,
+          "end": 861,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 906,
+          "end": 919,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/README.md",
+          "start": 1,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 422,
+          "end": 459,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 819,
+          "end": 835,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts",
+          "start": 129,
+          "end": 165,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts",
+          "start": 214,
+          "end": 236,
+          "kind": "test"
+        },
+        {
+          "path": "docs/config-catalog.md",
+          "start": 3110,
+          "end": 3114,
+          "kind": "config"
+        },
+        {
+          "path": "packages/context/agent-instructions/src/files.ts",
+          "start": 550,
+          "end": 586,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 619,
+          "end": 634,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 636,
+          "end": 662,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 853,
+          "end": 868,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 906,
+          "end": 922,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "多个代理产品要求不同文件名（AGENTS.md、CLAUDE.md、.claude/skills），直接复制会产生多份内容并漂移；删除真实文件后某些入口会静默失效。",
+      "triggers": [
+        "让同一规则同时服务多个代理产品",
+        "新增/移动子树指令文件",
+        "技能目录需要被另一产品发现",
+        "在 Windows 或无符号链接环境检出"
+      ],
+      "obligations": [
+        "编辑真实文件而不是链接副本",
+        "链接目标必须是仓库内相对路径，且该目标受版本控制",
+        "删除/移动真实文件时同步所有指向它的链接",
+        "不要跟随指向 vendor/ 的链接去编辑",
+        "归档/发布前验证链接仍是链接（mode 120000）",
+        "在没有符号链接的平台上提供等价的生成副本或校验",
+        "最终组件符号链接：非递归 scope 探测必须先 resolve()（跟随最终链接）再 stat；stat 目标不是常规文件（缺失，或链接到目录）视为确认缺失，只有 provider 异常才是 unavailable。",
+        "原生技能读取必须 realpath() 后读取解析目标，并把解析后的常规文件路径作为候选 path 发布；resourceBase 仍指向逻辑技能目录（可以仍是链接路径），二者不得混同。",
+        "根目录链接与 watchFollowSymlinks=false：watcher 必须用 lstat 判断根是否为链接，若为链接则锚定 resolve(root) 以保留链接路径，而不是 canonicalize；followSymlinks=true 时才 canonicalize，并在 chokidar 层跟随子链接。",
+        "目录项链接在发现期由 stat 跟随分类；断链、权限失败或指向特殊文件的链接必须 warn 后跳过，不得成为候选。",
+        "链接目标缺失只能折叠“最终路径不存在”（ENOENT/ENOTDIR 或 FS_NOT_FOUND）；后端或权限异常不得被当作链接失效吞掉。"
+      ],
+      "actors": [
+        "仓库基础设施维护者",
+        "子树所有者",
+        "发布/打包维护者"
+      ],
+      "steps": [
+        "列出所有需要暴露同一内容的入口",
+        "为每个入口创建指向真实文件的相对符号链接",
+        "用 git ls-tree 确认 mode 为 120000",
+        "在加载器层确认相同内容去重（源加载器按去空白内容去重）",
+        "在 Windows/打包路径上验证实际读到的内容"
+      ],
+      "enforcement": {
+        "mode": "config + review",
+        "implementation": [
+          "Git mode 120000；agent-instructions 用 stat/fs.resolve 跟随最终组件链接并读取目标，按去空白后内容去重；skill-filesystem 用 realpath+readFile 读取链接目标，parseSkillFile 要求 YAML frontmatter；watchFollowSymlinks 默认 true；快照语料门禁解析声明的链接目标",
+          "`files.ts:550-586` 的 `probeScopeInstruction` 先 `resolve()` 再 `stat` 并区分 absent/unavailable；`index.ts:636-662` 的 `resolveRootWatchMode` 用 `lstat` + `followSymlinks` 决定保留链接根还是 `canonicalizeWatchPath`，并在缺失时向上找祖先模式；`index.ts:853-868` 的原生读取 `realpath()` 后读目标并发布解析路径；`index.ts:906-922` 的 `nodeEntryKind` 对目录项链接 `stat` 跟随并对断链 warn 跳过。"
+        ],
+        "trust": [
+          "Git 模式可机械检查；agent-instructions 与 skill-filesystem 的跟随行为有实现与测试；跨平台物化没有门禁。物化后加载器不会识别“这是链接”，只会把路径文本当普通指令读入；技能 provider 则因缺 frontmatter 跳过",
+          "跟随/保留规则与错误分类可由源码断言；没有执行跨平台链接物化检查，因此不等于 Windows core.symlinks=false 已处理。"
+        ],
+        "failure": [
+          "链接被物化后 CLAUDE.md 内容为目标路径文本，指令加载器会把它当普通指令加载（模型看到路径而不是规则）；agent-experience/SKILL.md 缺 frontmatter 被技能 provider 跳过；.claude/skills 不再是目录。Claude Code 的发现行为不在本仓库，未验证",
+          "断链或特殊文件链接只产生 warn 并从目录消失；目标目录链接按非文件处理为缺失；权限/后端异常会中止该技能读取并使发现不完整。"
+        ],
+        "exceptions": [
+          "vendor/CLAUDE.md 仅作入口，不用来编辑 vendor 内容",
+          "快照 fixture 的别名链接仅用于复用同一 canonical 指令",
+          "POSIX 上链接由加载器/provider 跟随；Windows core.symlinks=false 需要修复检出或生成副本"
+        ]
+      },
+      "applicability": "支持 POSIX 符号链接的仓库；Windows 需额外方案（core.symlinks=true、检出后修复脚本、或生成副本+一致性检查）。",
+      "relationships": [
+        "agent-workflows-instruction-tiers",
+        "agent-workflows-skill-catalog",
+        "agent-workflows-translation"
+      ],
+      "migration": {
+        "strategy": "retain-effect-with-platform-fallback",
+        "implementation": "保留真实文件+链接；新增一个链接模式检查；Windows 用生成副本并在 CI 校验字节一致",
+        "requiredSupport": [
+          "git 符号链接支持或生成脚本",
+          "跨平台加载验证",
+          "发布前链接模式检查"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-02",
+      "verification": {
+        "positive": [
+          {
+            "check": "git ls-tree 显示 120000；POSIX 上两个产品入口读到同一内容；加载器只渲染一次；skill provider 能列出 agent-experience",
+            "evidence": "planned",
+            "note": "同时检查加载器实际渲染文本与技能目录，不只看文件存在。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "指向常规文件的技能链接被发现；原生读取发布 realpath 解析后的常规文件路径，而 resourceBase 仍为原链接目录；指令 scope 探测跟随最终组件链接。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "watchFollowSymlinks=false 时根链接保留为链接锚点；true 时根被 canonicalize，子链接由 chokidar 跟随。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "core.symlinks=false 的检出上 CLAUDE.md 被当作普通指令加载，内容只是目标路径文本；agent-experience 不在技能目录；.claude/skills 不是目录",
+            "evidence": "planned",
+            "note": "加载器不会报“链接损坏”，因此必须断言实际内容。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "断链、链接到目录的 SKILL.md 候选、链接到特殊文件必须不成为技能候选，且只记 warn。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "把 provider 的后端/权限异常当作链接不存在，或把链接目录误报为可用技能，都是失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复检出（core.symlinks=true 或重新检出）或切换到生成副本，再重跑内容一致性检查与技能目录检查",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "修复链接目标后重新探测，技能重新出现且 path 为解析后常规文件路径。"
+          }
+        ]
+      },
+      "limitations": "源仓库没有跨平台符号链接检查，也没有文档化的 Windows 处置；物化后的加载器/技能 provider 行为有实现依据，修复方案属迁移设计；Claude Code 的发现行为不在本仓库，未验证。；`resolveRootWatchMode` 只在 followSymlinks=false 且根自身是链接时保留链接路径；更深层链接的 watch 行为依赖 chokidar，本次未执行平台测试。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-skill-catalog",
+      "title": "19 条仓库技能入口与支撑文件清单",
+      "sources": [
+        {
+          "path": ".agents/skills/.gitignore",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/agent-experience/SKILL.md",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/cordis-styling-nitpicking/SKILL.md",
+          "start": 1,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 1,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 1,
+          "end": 131,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-client-ui-ux/SKILL.md",
+          "start": 1,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 1,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 1,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/review.md",
+          "start": 1,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/style.md",
+          "start": 1,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/website-sync.md",
+          "start": 1,
+          "end": 95,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/package-bundle.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/package-group.md",
+          "start": 1,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/package-library.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/package-reference.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-change.md",
+          "start": 1,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-format.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-release.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-error-handling/SKILL.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 1,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-official-plugin-artwork/SKILL.md",
+          "start": 1,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+          "start": 1,
+          "end": 81,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-prose-standard/references/examples.md",
+          "start": 1,
+          "end": 169,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-responsive-ui/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-speed-up-perf/SKILL.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/SKILL.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/references/examples.md",
+          "start": 1,
+          "end": 275,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md",
+          "start": 1,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/SKILL.md",
+          "start": 1,
+          "end": 172,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/scripts/encode_gif.py",
+          "start": 1,
+          "end": 337,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/scripts/test_encode_gif.py",
+          "start": 1,
+          "end": 103,
+          "kind": "test"
+        },
+        {
+          "path": "docs/subsystems/skills.md",
+          "start": 64,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/README.md",
+          "start": 1,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 804,
+          "end": 819,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 906,
+          "end": 919,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 34,
+          "end": 68,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 87,
+          "end": 286,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 287,
+          "end": 630,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 646,
+          "end": 803,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 820,
+          "end": 848,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 862,
+          "end": 905,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 920,
+          "end": 1006,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 184,
+          "end": 421,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 465,
+          "end": 818,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 849,
+          "end": 922,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts",
+          "start": 1,
+          "end": 124,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts",
+          "start": 166,
+          "end": 213,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts",
+          "start": 237,
+          "end": 489,
+          "kind": "test"
+        }
+      ],
+      "problem": "仓库技能没有集中索引时，代理不知道存在哪些工作流、何时触发、需要哪些支撑文件，容易重复实现或漏读关键 reference。",
+      "triggers": [
+        "新代理进入仓库",
+        "新增/重命名/删除技能",
+        "判断某任务应由哪个技能处理",
+        "审计技能覆盖与引用完整性"
+      ],
+      "obligations": [
+        "每个技能目录包含 SKILL.md；名称为 kebab-case",
+        "description 必须说明何时使用与覆盖范围，因为模型目录只渲染 name 与 description",
+        "支撑 references/templates/scripts 放在技能目录内，由 SKILL.md 一跳链接",
+        "不复制产品/运行时契约；链接 docs 或源码",
+        "技能之间可以互相引用，但必须用所有权声明切分，不能整段复制",
+        "删除/重命名技能时修复所有入链",
+        "发现 rank 固定：project-dsh 100、project-agents 200、custom 300、user-dsh 400、user-agents 500，最后是 bundled（导入的 BUNDLED_SKILL_RANK）；同名技能由最小 rank 胜出。project 根只在提供 cwd 且 includeDefaultRoots 时扫描，custom 根始终扫描，user 根只在 includeDefaultRoots 时扫描。",
+        "includeDefaultRoots=false 的 isolated provider 只能看到显式 customSkillDirs 或显式 bundledSkillDir；DSH_BUNDLED_SKILL_DIR 属于默认根，不得被 isolated provider 重新认领。",
+        "user-dsh 根必须跳过直接子项 `.system`；project、custom、agents 与 bundled 根不应用该过滤。",
+        "每个根只扫描直接子项（depth 1，按名称 localeCompare 排序）：目录候选要求 `<dir>/SKILL.md`，扁平候选要求 `<name>.md`；`.txt`、没有 SKILL.md 的目录、非文件条目都跳过，不做递归发现。",
+        "frontmatter 必须从首行精确 `---` 开始、以独立 `---` 行结束（容忍 CRLF；YAML 块内的 `----` 不是分隔符），且解析为非 null、非数组对象；否则 warn 后跳过该技能，不得影响同目录兄弟。",
+        "name 与 description 必须是非空字符串，name 必须满足 isSkillName；whenToUse 只在非空字符串时保留；metadata 只在非数组对象时保留；正文 trim 后作为 content。",
+        "provider 读取必须区分三种结果：确认缺失或非文件（ENOENT/ENOTDIR/FS_NOT_FOUND/FS_NOT_DIRECTORY、stat undefined）表示技能消失；其他 resolve/stat/read 异常表示发现不完整且不得缓存空目录；FS_NOT_TEXT 记 warn 并只跳过该文件。provider 列目录同理：缺失错误按空根处理，其他错误必须让发现不完整。",
+        "存在 ctx.fs 时，非 trustedHost 根的 listDir 与技能读取都经 provider（resolve/stat/readText）；原生分支才用 readdir/realpath/readFile。bundled 根是 trustedHost：即使存在 ctx.fs，也必须走原生 readdir/realpath/readFile，避免宿主文件服务隐藏或转换随包资源。",
+        "技能 provider 的项目根发现与指令加载器不同：只从 cwd 向上找 `.git`，没有标记时以 cwd 为根；ctx.fs 存在时 resolve 抛错或 stat 瞬态失败都把该层当作非标记继续向上，原生分支用 access 判定。",
+        "fs/observed 失效只接受 actor.name 为 edit 或 write，且 observeHostMutation 只接受根级 `*.md`（1 段）或二层 `<skill>/SKILL.md`（2 段）；根自身（0 段）、三层以上路径与被过滤的 `.system` 都不得触发失效。",
+        "watcher 事件相关性按根内相对段数判定：0 段只接受 addDir/unlinkDir；1 段接受目录事件或 `.md`；2 段只接受 `<skill>/SKILL.md` 且排除 addDir/unlinkDir；不相关事件不得触发失效。",
+        "watcher 失效必须用微任务合并：同一轮多个事件只调用一次 invalidate；dispose 后的迟到事件必须被 closing 守卫吞掉。",
+        "watch 失败不得阻断目录：watcher startup 失败返回 `{candidates, complete:false}`；运行期 error 或根 unlinkDir 记 warn、标记 unhealthy、排程 rewatch；根不存在时改为 watchFile 轮询最近存在祖先的下一段，根重建后自动恢复。",
+        "watcher 项目数受 watchMaxProjects 限制，按插入顺序淘汰最旧项目并释放其 root 所有权；淘汰触发一次 invalidate，下次 lookup 重新观察并加载期间变化。",
+        "watchStabilityThresholdMs、watchPollIntervalMs、watchMaxProjects 必须是正整数（>=1），默认 200/100/128；即使 watch=false 也在插件加载时校验。",
+        "dispose 必须幂等、先 abort 生命周期再等待 opening 并关闭全部 watcher；close 失败只记 warn；关闭前要重新挂 error 监听以包含 Windows 关闭后迟到 EPERM stat 错误，避免 uncaught。"
+      ],
+      "actors": [
+        "技能所有者",
+        "仓库维护者",
+        "执行代理"
+      ],
+      "steps": [
+        "枚举 .agents/skills 下全部目录与支撑文件（源为 19 个技能、39 个受控文件）",
+        "为每个技能写 name/description/触发边界",
+        "把细节下沉到一跳 reference 或模板",
+        "建立技能间引用图并检查循环是否有所有权切分",
+        "把技能根接入目标产品的发现机制（源 rank 200）",
+        "加元数据/文档标准/预算检查",
+        "按 cwd 与 includeDefaultRoots 构造有序根；同名只保留最小 rank，并只在 user-dsh 跳过 .system。",
+        "每个根只列直接子项，按目录 SKILL.md 或扁平 .md 建候选，逐项解析 frontmatter 与调用策略；非法项 warn 跳过，兄弟继续。",
+        "读取走 ctx.fs（bundled 除外），把确认缺失与瞬态失败分开；瞬态失败标记 complete:false 且不缓存。",
+        "观察 fs/observed 与 watcher 事件，只按潜在技能路径形状合并失效；watch 错误进入 unhealthy/rewatch，项目数按 LRU 上限淘汰。"
+      ],
+      "enforcement": {
+        "mode": "instruction + scripts",
+        "implementation": [
+          "技能发现（skill-filesystem，project-agents rank 200）；verify-skill-invocation-metadata；doc-standard.spec.ts 的 kind↔template 检查；verify-doc-budgets",
+          "`index.ts:34-42` 定义 rank 常量；`index.ts:149-286` 的 `list`/`get`/`roots` 实现根顺序、bundled env 语义与 trustedHost；`index.ts:287-630` 的 `SkillWatchManager` 实现 owner/LRU、root/ancestor watch、微任务失效、错误 rewatch、close 容错与 dispose；`index.ts:646-803` 定义事件白名单、潜在路径过滤与一级发现；`index.ts:820-1006` 实现 frontmatter/README 校验、原生 realpath 读取与 .git 项目根。测试面见 `skill-filesystem.spec.ts:184-421,465-818,849-922` 与 `skill-filesystem-watcher.spec.ts:1-124,166-213,237-489`。"
+        ],
+        "trust": [
+          "目录/元数据/模板映射可机械检查；技能内容与触发质量靠评审",
+          "根顺序、过滤、frontmatter 语法、瞬态/缺失区分与 watcher 失效形状有源码与测试断言；watcher 实际事件时序依赖 chokidar/平台且本次未执行，不能据此声称实时刷新已在目标环境工作。"
+        ],
+        "failure": [
+          "非法名称或缺失/损坏 frontmatter 的条目会被 provider 记录警告后跳过，模型目录看不到该技能（没有逐技能诊断）；缺失 SKILL.md 的目录不会成为候选；模型可能选错技能或读不到支撑文件；模板缺失会让文档标准测试失败",
+          "非法技能只记日志并消失；瞬态读取使整个 catalog incomplete 且不缓存空目录；watcher 启动失败只降低 complete，不阻断 list；LRU 淘汰后的变化在下一次 lookup 才可见。"
+        ],
+        "exceptions": [
+          "agent-experience/SKILL.md 是符号链接，内容属于运行时 preset；Windows core.symlinks=false 时物化为路径文本，provider 因缺 frontmatter 跳过",
+          "本地 provider 也接受扁平 <name>.md，但不支持递归发现"
+        ]
+      },
+      "applicability": "所有使用目录式技能包的代理产品。技能数量与内容按目标仓库裁剪；不得少于覆盖其真实工作流所需。",
+      "relationships": [
+        "agent-workflows-skill-invocation-policy",
+        "agent-workflows-instruction-tiers",
+        "agent-workflows-documentation-entry",
+        "agent-workflows-code-review"
+      ],
+      "migration": {
+        "strategy": "retain-and-trim",
+        "implementation": "完整迁移 19 条入口或按目标仓库映射；保留 description 触发句、一跳引用、支撑文件布局；不把源仓库专用路径写成硬依赖",
+        "requiredSupport": [
+          "技能发现机制",
+          "frontmatter 解析",
+          "引用/链接检查",
+          "技能元数据门禁"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-03",
+      "verification": {
+        "positive": [
+          {
+            "check": "从模型目录仅凭 name/description 能选中正确技能；技能引用的支撑文件都存在",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "五类根同时存在同名技能时，project-dsh 胜出；user-dsh 的 .system 不可见；isolated provider（includeDefaultRoots=false）看不到 env bundled 根，只看显式 custom。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "目录 SKILL.md 与扁平 .md 都被发现；无 SKILL.md 目录、.txt、非法 name、缺失 description、无/未闭合 frontmatter、非对象 YAML 被跳过而合法兄弟仍在；CRLF 与 YAML 块内 `----` 不破坏解析。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "transient listDir 失败时 snapshot 为 complete:false 且不缓存；清除故障后重新列出原技能；确认缺失的读取则移除该技能但 complete:true。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "watcher startup 连续失败时 list 仍返回 candidates + complete:false；恢复后可重新观察；增/改/删/根重建最终反映到目录；LRU 淘汰项目在下次 lookup 重新加载。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除一个 reference 或模板后，相关技能仍在但执行会缺步骤；doc-standard 的 kind↔template 检查失败；SKILL.md frontmatter 非法/缺失时 provider 跳过，模型目录看不到该技能",
+            "evidence": "planned",
+            "note": "跳过通常只有日志警告，模型目录没有逐技能诊断。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "fs/observed 的根自身、三层路径、.system 路径或 read actor 不得触发失效；只有 edit/write 且路径形状匹配才触发。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "watchMaxProjects=0、watchPollIntervalMs=1.5、watchStabilityThresholdMs=0 必须在插件加载时失败。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "断链、链接到特殊文件、目录项 named SKILL.md 但实际是目录等不可读候选不得进入目录。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复支撑文件；重命名时修复入链并重跑检查",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "删除根目录后目录变为空且 complete:true；重新创建后经 ancestor watchFile 探测恢复新技能。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "重复 dispose 与 dispose 后迟到观察不抛错、不失效；list 仍可返回磁盘上的候选。"
+          }
+        ]
+      },
+      "limitations": "源仓库没有技能内容正确性检查；doc-standard.spec.ts 只覆盖有限属性（kind 映射、无原型期语言）。provider 会 warn 后跳过非法/缺失 frontmatter 的条目，模型目录没有逐技能诊断；agent-experience 在 Windows core.symlinks=false 物化后会被跳过。技能总数为 19，支撑文件 20 个加 2 个脚本；Windows 上可发现数可能少 1。；watcher 是尽力而为：startup/运行期失败只产生 incomplete/warn 并排程重试，没有持久健康状态；无递归发现、无逐技能诊断（仅日志）；非原生特殊文件被跳过；BUNDLED_SKILL_RANK 的数值来自 @deepseek-ai/dsh-skill 常量而非本文件；本次未执行任何测试，watcher 时序与平台差异仍是已知缺口。",
+      "entryPaths": [
+        ".agents/skills/agent-experience",
+        ".agents/skills/cordis-styling-nitpicking",
+        ".agents/skills/dsh-archive-agent-notes",
+        ".agents/skills/dsh-ci-test-reliability",
+        ".agents/skills/dsh-client-ui-ux",
+        ".agents/skills/dsh-code-review",
+        ".agents/skills/dsh-create-upgrade-guide",
+        ".agents/skills/dsh-doc",
+        ".agents/skills/dsh-error-handling",
+        ".agents/skills/dsh-find-simplifications",
+        ".agents/skills/dsh-merging-stacked-prs",
+        ".agents/skills/dsh-official-plugin-artwork",
+        ".agents/skills/dsh-pre-push-checks",
+        ".agents/skills/dsh-prose-standard",
+        ".agents/skills/dsh-responsive-ui",
+        ".agents/skills/dsh-speed-up-perf",
+        ".agents/skills/dsh-translate-docs",
+        ".agents/skills/dsh-trim-cot-leakage",
+        ".agents/skills/record-browser-gif"
+      ],
+      "supportingFiles": [
+        ".agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md",
+        ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+        ".agents/skills/dsh-doc/references/review.md",
+        ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+        ".agents/skills/dsh-doc/references/style.md",
+        ".agents/skills/dsh-doc/references/website-sync.md",
+        ".agents/skills/dsh-doc/templates/package-bundle.md",
+        ".agents/skills/dsh-doc/templates/package-group.md",
+        ".agents/skills/dsh-doc/templates/package-library.md",
+        ".agents/skills/dsh-doc/templates/package-reference.md",
+        ".agents/skills/dsh-doc/templates/persistence-change.md",
+        ".agents/skills/dsh-doc/templates/persistence-format.md",
+        ".agents/skills/dsh-doc/templates/persistence-release.md",
+        ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+        ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+        ".agents/skills/dsh-prose-standard/references/examples.md",
+        ".agents/skills/dsh-trim-cot-leakage/references/examples.md",
+        ".agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md",
+        ".agents/skills/record-browser-gif/scripts/encode_gif.py",
+        ".agents/skills/record-browser-gif/scripts/test_encode_gif.py"
+      ],
+      "entryCount": 19,
+      "supportingFileCount": 20,
+      "trackedFileCount": 39,
+      "origin": "source",
+      "sourceBacked": true,
+      "exceptions": [
+        "非目录 custom 根在 readdir 时按缺失处理为空根；watcher 打开失败只标记 incomplete，不清空目录。",
+        "dispose 后的迟到 fs/observed、watcher error 与 ready 回调必须被包含，不得再 invalidate 或抛出。",
+        "watchFollowSymlinks=false 只保留链接根的 watch 锚点（见 symlink 机制），不表示技能链接不被发现。"
+      ]
+    },
+    {
+      "id": "agent-workflows-skill-invocation-policy",
+      "title": "跨产品技能调用策略一致性（manual-only 双向对齐）",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+          "start": 1,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/skills.md",
+          "start": 119,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 1007,
+          "end": 1016,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 1025,
+          "end": 1026,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-skill-invocation-metadata.ts",
+          "start": 1,
+          "end": 122,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-skill-invocation-metadata.spec.ts",
+          "start": 1,
+          "end": 53,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/skills/.gitignore",
+          "start": 1,
+          "end": 1,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 851,
+          "end": 858,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 804,
+          "end": 848,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/src/index.ts",
+          "start": 1019,
+          "end": 1044,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts",
+          "start": 314,
+          "end": 378,
+          "kind": "test"
+        }
+      ],
+      "problem": "同一技能在 Claude Code 与 Codex 中可能被不同策略暴露：一侧允许模型隐式调用，另一侧仅允许用户调用，造成不可预测的行为差异；原始 `disable-model-invocation: true` 且 `user-invocable: false` 的 manual-only 技能会失去用户入口。注意：原始两个键都写 `false` 不是这个组合，而是 `{modelInvocable:true,userInvocable:false}`（model-only）；运行时支持 `{false,false}` trusted-only，但本仓库带 `agents/openai.yaml` 的门禁会拒绝 manual-only + 用户入口关闭。",
+      "triggers": [
+        "新增技能",
+        "修改 disable-model-invocation 或 user-invocable",
+        "生成 Codex agents/openai.yaml",
+        "技能只应由用户显式调用"
+      ],
+      "obligations": [
+        "disable-model-invocation 与 user-invocable 若存在必须是布尔",
+        "Codex 的 policy.allow_implicit_invocation 若存在必须是布尔",
+        "必须区分原始键与归一化字段：disable-model-invocation 缺省/false 不禁用模型，user-invocable 缺省/true 不禁用用户；缺省时归一化 modelInvocable/userInvocable 均为 true",
+        "trusted-only 是归一化 {modelInvocable:false,userInvocable:false}，对应原始 disable-model-invocation:true + user-invocable:false；不要用原始两个 false 表示它",
+        "在存在 agents/openai.yaml 的技能目录中，Claude manual-only === Codex manual-only，双向一致",
+        "在存在 agents/openai.yaml 的技能目录中，manual-only 技能必须仍 user-invocable",
+        "SKILL.md 必须有闭合 YAML frontmatter",
+        "agents/openai.yaml 必须是 YAML 对象",
+        "旧键 disableModelInvocation、modelInvocable、userInvocable 不是弃用别名：出现即让该技能解析失败并告警，错误必须点名规范键（disable-model-invocation 或 user-invocable）以便修复。",
+        "规范布尔字段只接受 boolean、数字或字符串的 1/0，以及大小写不敏感的 true/false、yes/no、on/off；其他值（如 maybe、null、数组）抛 `must be a boolean`，整个技能被跳过，不得静默回退默认值。",
+        "调用策略解析错误只淘汰该技能；同目录合法兄弟技能必须继续被发现（列表结果保留 good-skill）。"
+      ],
+      "actors": [
+        "技能所有者",
+        "仓库维护者"
+      ],
+      "steps": [
+        "确定技能是否允许模型隐式调用、是否允许用户调用",
+        "在 SKILL.md 写原始键 disable-model-invocation/user-invocable",
+        "按 parseInvocationPolicy 语义计算归一化 {modelInvocable,userInvocable}，确认它是对应组合而不是名字相近的组合",
+        "在 agents/openai.yaml 写等价 policy",
+        "运行 verify-skill-invocation-metadata",
+        "确认 manual-only 技能仍能由用户入口触发；若目标需要 trusted-only，单独决定是否豁免该门禁"
+      ],
+      "enforcement": {
+        "mode": "gate-script",
+        "implementation": [
+          "scripts/verify-skill-invocation-metadata.ts 读取原始键并比较 Claude manual-only（disable-model-invocation === true）与 Codex manual-only（allow_implicit_invocation === false）；运行时归一化在 packages/skill/skill-filesystem/src/index.ts:1007-1016",
+          "`index.ts:1019-1024` 的 `rejectLegacyInvocationKey` 对旧键抛错并给出规范键；`index.ts:1025-1044` 的 `frontmatterBoolean` 接受 boolean、1/0 与 true/false/yes/no/on/off 字符串并对其余值抛 TypeError；`index.ts:804-848` 的 `parseSkillFile` 捕获该错误后 warn 并返回 undefined，从而只跳过当前技能。测试见 `skill-filesystem.spec.ts:314-378`。"
+        ],
+        "trust": [
+          "两侧布尔映射可机械验证；只遍历存在 agents/openai.yaml 的目录，而该文件被 gitignore，因此干净检出报告 0 对并通过。运行时支持四种归一化组合；门禁额外禁止 manual-only 且 user-invocable=false，二者不可混同",
+          "接受集合、拒绝错误与兄弟隔离由源码与测试覆盖；不证明任何下游产品会正确解释归一化结果。"
+        ],
+        "failure": [
+          "任一方向不一致或类型错误时退出 1；manual-only 且 user-invocable=false 也失败",
+          "非法/旧键技能从目录消失且只在日志中出现原因；模型目录没有逐技能诊断，用户可能只看到技能缺失。"
+        ],
+        "exceptions": [
+          "没有 Codex 元数据的产品可省略该侧，但必须记录未覆盖",
+          "agents/openai.yaml 不入库",
+          "运行时 trusted-only（{false,false}）是合法组合，但本仓库跨产品门禁不允许 manual-only + 用户入口关闭"
+        ]
+      },
+      "applicability": "同时服务多个代理产品且各产品有独立调用策略开关的仓库。",
+      "relationships": [
+        "agent-workflows-skill-catalog",
+        "agent-workflows-translation"
+      ],
+      "migration": {
+        "strategy": "retain-and-map",
+        "implementation": "保留双向一致性检查；把两个产品的布尔映射参数化；在目标仓库中若只有单一产品，删除映射但保留 manual-only 必须 user-invocable 的规则。不要把原始两个 false 当作 trusted-only；如果目标确实需要 trusted-only，必须单独决定是否豁免 manual-only 门禁，并在策略文档中写明。",
+        "requiredSupport": [
+          "frontmatter 解析",
+          "各产品策略文件",
+          "门禁脚本接入 CI",
+          "原始键到归一化字段的映射测试"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-04",
+      "verification": {
+        "positive": [
+          {
+            "check": "缺省（无字段）归一化为 {true,true}；原始 disable-model-invocation:false + user-invocable:false 归一化为 {true,false}（model-only），不是 trusted-only；原始 disable-model-invocation:true + user-invocable:false 归一化为 {false,false}，且带 agents/openai.yaml 时被门禁拒绝；原始 disable-model-invocation:true + user-invocable:true 归一化为 {false,true}（user-only）并通过",
+            "evidence": "planned",
+            "note": "检查必须绑定原始键与归一化后的实际值，不能只读字段名。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "7 种 truthy 拼写（true/TRUE/\"true\"/yes/ON/1/\"1\"）都归一化为 disable-model-invocation=true；7 种 falsy 拼写都归一化为 user-invocable=false。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "旧键或非法值技能不出现，但同目录 good-skill 仍出现。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "单侧 manual-only，或原始 disable-model-invocation:true + user-invocable:false（manual-only 且用户入口关闭）时门禁失败",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "disableModelInvocation、modelInvocable、userInvocable、`disable-model-invocation: maybe`、`user-invocable: null` 必须使该技能被跳过而不是按默认值接受。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修正另一侧策略后重跑；不要删除检查",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "把旧键改成规范键或修正布尔值后重新发现，技能恢复而无需删除其他技能。"
+          }
+        ]
+      },
+      "limitations": "干净检出通过不等于策略齐全；门禁只覆盖存在 agents/openai.yaml 的技能，测试只覆盖布尔映射与 manual-only/user-invocable 规则，不覆盖产品实际行为，也不证明运行时 trusted-only 在目标产品中可用。；本补充只覆盖 provider 的 frontmatter 解析；错误文本只进日志，模型目录不展示拒绝原因。",
+      "origin": "source",
+      "sourceBacked": true,
+      "exceptions": [
+        "运行时的归一化组合（包括 trusted-only `{modelInvocable:false,userInvocable:false}`）仍是合法数据；本仓跨产品门禁额外禁止 manual-only 且 user-invocable=false，两者不可混同。"
+      ]
+    },
+    {
+      "id": "agent-workflows-onboarding",
+      "title": "入门、贡献边界与首次安装完成信号",
+      "sources": [
+        {
+          "path": "Makefile",
+          "start": 1,
+          "end": 35,
+          "kind": "config"
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "start": 1,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 9,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 133,
+          "end": 162,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 196,
+          "end": 205,
+          "kind": "instruction"
+        },
+        {
+          "path": "README.md",
+          "start": 11,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "README.md",
+          "start": 17,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "README.md",
+          "start": 49,
+          "end": 56,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "没有清晰的贡献边界和唯一安装完成信号时，新贡献者会提交不被接受的 PR、在错误工具链上工作，或把“测试通过”误当“安装完成”。",
+      "triggers": [
+        "新贡献者加入",
+        "开源仓库决定是否接受外部 PR",
+        "工具链/Node/pnpm 版本变化",
+        "hook 安装方式变化"
+      ],
+      "obligations": [
+        "明确说明是否接受外部 PR；若不接受，给出替代参与渠道",
+        "列出工具链版本与必需开关（Node、pnpm、Git、type stripping）",
+        "首次安装步骤必须包含依赖与 hook 安装",
+        "定义一个唯一、可执行的完成信号",
+        "说明 Windows/WSL 的环境隔离与性能注意事项",
+        "说明 hook 的窄范围，避免贡献者误以为 hook 跑全量检查"
+      ],
+      "actors": [
+        "仓库维护者",
+        "新贡献者"
+      ],
+      "steps": [
+        "写贡献边界与替代渠道",
+        "写前置条件与版本",
+        "写首次安装命令（含 hook 安装）",
+        "定义完成信号（源为 pnpm run typecheck 成功）",
+        "写环境隔离与测试适用范围",
+        "写 hook 实际做什么、不做什么"
+      ],
+      "enforcement": {
+        "mode": "instruction + hooks",
+        "implementation": "docs/development.md 的安装教程；lefthook pre-commit/pre-push；install-lefthook.mjs",
+        "trust": "安装步骤可执行；完成信号可验证；hook 行为由配置固定",
+        "failure": "hook 缺失导致本地检查跳过；完成信号未定义导致“看起来能跑”被误报为完成",
+        "exceptions": [
+          "hook 不跑测试/快照/文档/构建/hygiene；CI owns 穷尽覆盖",
+          "check:all 是可选综合门禁，不是 agent 指令"
+        ]
+      },
+      "applicability": "所有有外部贡献者或多环境开发的仓库。",
+      "relationships": [
+        "agent-workflows-instruction-tiers",
+        "agent-workflows-pre-push-evidence"
+      ],
+      "migration": {
+        "strategy": "retain-and-localize",
+        "implementation": "保留“唯一完成信号 + 前置版本 + hook 安装”结构；把命令与版本替换为目标仓库事实；若接受外部 PR，改写贡献边界",
+        "requiredSupport": [
+          "可执行的安装步骤",
+          "hook 安装脚本",
+          "一个快速完成信号"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-05",
+      "verification": {
+        "positive": [
+          {
+            "check": "从零按文档安装后 pnpm run typecheck 成功；hook 已安装",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "缺少 type stripping 或 pnpm 版本不符时安装失败并给出可诊断错误",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按诊断修复工具链；hook 缺失时手动运行 install-lefthook.mjs",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "源完成信号只覆盖类型检查，不覆盖产品可运行；迁移应补最小运行 smoke（迁移设计）。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-task-intake",
+      "title": "任务 intake：显式范围、变更范围工具与沙箱提权边界",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+          "start": 14,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 8,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/SKILL.md",
+          "start": 18,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 10,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 8,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/change-scope.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 109,
+          "end": 112,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "代理容易在没有显式范围时推断全仓、把调查当实施授权、或在沙箱失败时用提权绕过真实失败。",
+      "triggers": [
+        "开始一个无明确边界的任务",
+        "评审或推送前需要确定 diff 范围",
+        "命令因沙箱失败",
+        "调查类请求可能被误当实施"
+      ],
+      "obligations": [
+        "缺少显式 scope 时报告所需输入并停止，不推断全仓",
+        "区分调查与实施授权",
+        "使用 change-scope 并验证 base/head；工具从不猜测 base",
+        "合并 base 后重跑范围报告并重评受影响行为",
+        "只有凭据/网络/IPC/watch/嵌套沙箱被拦截时才用最窄主机提权，且必须有沙箱证据",
+        "绝不用提权绕过测试失败或产品沙箱"
+      ],
+      "actors": [
+        "执行代理",
+        "评审者"
+      ],
+      "steps": [
+        "确认用户范围与成功标准",
+        "验证 live base/head",
+        "运行 change-scope 并读 committed/staged/unstaged/untracked",
+        "按路径选上下文与证据",
+        "遇到沙箱失败时先证明是沙箱拦截，再最小提权重试"
+      ],
+      "enforcement": {
+        "mode": "instruction + tool",
+        "implementation": "scripts/change-scope.ts 的版本化 JSON 报告；AGENTS.md 的沙箱规则",
+        "trust": "范围报告可机械生成；沙箱失败归因需证据；调查/实施边界靠评审",
+        "failure": "错误 base 会产生错误范围；无证据提权会掩盖真实失败",
+        "exceptions": [
+          "纯调查任务可只读",
+          "用户显式要求全量时可扩大范围"
+        ]
+      },
+      "applicability": "所有多文件代理任务；尤其需要评审与推送的仓库。",
+      "relationships": [
+        "agent-workflows-code-review",
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-simplification"
+      ],
+      "migration": {
+        "strategy": "retain-and-port",
+        "implementation": "迁移 change-scope 等价物或用 git merge-base + diff 的组合；保留“显式 scope”与“沙箱证据”规则",
+        "requiredSupport": [
+          "git",
+          "可解析的 base/head",
+          "一个范围报告命令"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-06",
+      "verification": {
+        "positive": [
+          {
+            "check": "报告路径与用户范围一致；base/head SHA 可解析",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "错误 base 或未验证 ref 时报告不应被当作证据",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新验证 ref 并重跑",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "change-scope 只列路径，不做语义判断；脏层需要人工解释。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-code-review",
+      "title": "PR 评审：来源、阻断项、人工检查与发现报告",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 1,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/README.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 1,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/pull_request_template.md",
+          "start": 1,
+          "end": 21,
+          "kind": "config"
+        }
+      ],
+      "problem": "评审若凭记忆或风格偏好，会漏掉生命周期、错误处理、接口契约、真实入口与证据缺口；清单式评审又会淹没实质阻断。",
+      "triggers": [
+        "评审 deepseek-harness PR",
+        "评审一个触及 Cordis/客户端/文档/测试的变更",
+        "收到评审意见需要回应"
+      ],
+      "obligations": [
+        "验证并抓取 live base 与精确 head；retarget/merge 后重建",
+        "先运行 change-scope 再读 diff",
+        "先读要求再判断 diff；按路径打开权威页面",
+        "六条阻断项：散文语义评审、文档与代码同 diff、核心类型文档、Cordis 所有权、证据存在、locale-owned 文案",
+        "人工检查覆盖意图/错误/生命周期/能力契合/范围/配置/模型视角/强制执行/借用状态/边界/真实入口/测试强度/可靠性/负向控制/Agent Note 一致性/转录/双语",
+        "报告缺陷、位置、影响、证据；阻断与建议分开；已由绿色门禁执行的问题省略",
+        "收到评审逐条核实，基于技术理由修复或反驳"
+      ],
+      "actors": [
+        "评审者",
+        "作者",
+        "设计/产品评审者（UI）"
+      ],
+      "steps": [
+        "验证 base/head",
+        "运行 change-scope",
+        "读 AGENTS/defensive-patterns/docs/testing 与相关技能",
+        "逐条过阻断项",
+        "按 artifact 过人工检查",
+        "写发现并分阻断/建议",
+        "作者修复或反驳；重跑证据"
+      ],
+      "enforcement": {
+        "mode": "review + gates",
+        "implementation": "dsh-code-review 技能；PR 模板的 Motivation/Changes/Testing/Proof；CI 门禁；防御模式页面",
+        "trust": "门禁可证明机械属性；语义评审不可自动证明；评审技能自称指导而非完整清单",
+        "failure": "漏掉阻断项会让缺陷进入主线；把清单当门禁会制造形式化评审",
+        "exceptions": [
+          "与 Agent Note 不一致是设计讨论，不是自动否决",
+          "纯样式变更可缩短人工检查，但不能跳过散文与范围"
+        ]
+      },
+      "applicability": "所有有 PR 流程与代码评审的仓库。阻断项需按目标仓库的实际风险重排。",
+      "relationships": [
+        "agent-workflows-task-intake",
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-stack-review-propagation",
+        "agent-workflows-ui-review",
+        "agent-workflows-test-and-error-review",
+        "agent-workflows-review-approval-gate"
+      ],
+      "migration": {
+        "strategy": "retain-and-reweight",
+        "implementation": "保留“先验证 ref→change-scope→读来源→阻断项→人工检查→分开报告”的骨架；把六条阻断项映射到目标仓库的真实门禁与风险",
+        "requiredSupport": [
+          "change-scope 等价物",
+          "defensive-patterns 或等价规则集",
+          "PR 模板",
+          "CI 门禁"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-07",
+      "verification": {
+        "positive": [
+          {
+            "check": "真实 PR 产出至少一个可复现阻断项或明确无阻断；base/head 被记录",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "未验证 ref 或凭记忆判断规则时，评审不应被接受",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新验证 ref，打开 owning 页面后重评",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "技能是指导，不是完整清单；不能替代编译器、测试或 CI。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-pre-push-evidence",
+      "title": "推送前最小充分证据选择与推送验证",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 122,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 133,
+          "end": 162,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/change-scope.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "代理容易反射性跑全量，或只跑一个无关测试就声称通过；分不清“测试选择”与“覆盖范围”，也容易在推送前重复已通过的检查。",
+      "triggers": [
+        "推送、强推、标记 ready、声称检查通过之前",
+        "gh stack sync 之后",
+        "选择覆盖率证据",
+        "CI 失败诊断后重推"
+      ],
+      "obligations": [
+        "推送前运行一次相关本地证据；CI 拥有穷尽覆盖与平台矩阵",
+        "每个行为变更需要能对其回归失败的最窄测试或专用检查",
+        "按变更面选择证据（包/文档/可见输出/expected-output 放置/profile 放置/构建产物/provider）",
+        "聚焦覆盖率时同时指定 owning tests 与 --coverage.include；不得用 --passWithNoTests 或降低阈值掩盖",
+        "Vitest 过滤直接跟在脚本名后，不插入独立 --",
+        "失败时停止修复或说明阻塞；不要推上去赌 CI",
+        "推送后验证远端 SHA 等于本地 HEAD；再看 CI",
+        "total_count: 0 且无 checks 时先读 mergeability，冲突是唯一修复"
+      ],
+      "actors": [
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "change-scope 确认范围",
+        "按面选择最小证据",
+        "运行一次并记录命令/结果",
+        "提交并检查 pre-commit fixer 改动",
+        "推送（必要时 lease）",
+        "验证远端 SHA",
+        "gh pr checks；报告 pending/failing"
+      ],
+      "enforcement": {
+        "mode": "instruction + hooks + CI",
+        "implementation": "lefthook pre-commit/pre-push（窄）；CI 穷尽矩阵；change-scope",
+        "trust": "hook 只跑 lint/空白/vendor/增量 typecheck；CI 才是穷尽证据；本地选择靠判断",
+        "failure": "选错证据会漏回归；重复全量会浪费；把 pending 报成 passing 是虚假声明",
+        "exceptions": [
+          "用户显式要求全量、诊断 CI 失败、或变更跨切面到没有更窄集合可信时跑完整本地近似",
+          "gh stack sync 允许先发布后验证"
+        ]
+      },
+      "applicability": "所有有推送与 CI 的仓库。证据命令需按目标仓库替换。",
+      "relationships": [
+        "agent-workflows-task-intake",
+        "agent-workflows-code-review",
+        "agent-workflows-history-rewrite",
+        "agent-workflows-test-and-error-review",
+        "agent-workflows-provider-evidence"
+      ],
+      "migration": {
+        "strategy": "retain-selection-logic",
+        "implementation": "保留“按面选最小证据 + 跑一次 + 推送后验证 + 失败不赌 CI”的决策树；把命令映射到目标仓库；不要迁移源仓库已删除的 check:pre-push 聚合",
+        "requiredSupport": [
+          "测试运行器",
+          "覆盖率配置",
+          "CI 状态查询",
+          "范围报告"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-08",
+      "verification": {
+        "positive": [
+          {
+            "check": "所选最小证据能覆盖变更面并通过；远端 SHA 匹配；CI 状态被如实报告",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用 --passWithNoTests 或缩窄覆盖掩盖未覆盖文件时应被评审拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 owning tests 或恢复覆盖范围后重跑",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "本地通过不证明 CI runner 稳定；CI 通过不证明语义正确。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-history-rewrite",
+      "title": "历史改写保护与 gh stack sync 后验证",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 80,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 161,
+          "end": 162,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 7,
+          "end": 26,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "强制推送可能覆盖并发前进的远端，或让写前证据（commit OID、inline anchor、approval）失效；gh stack sync 无法在重写与发布之间插入验证。",
+      "triggers": [
+        "rebase 后推送",
+        "gh stack push/sync",
+        "评审后重写分支",
+        "并发远端更新"
+      ],
+      "obligations": [
+        "重写推送必须 lease 保护（--force-with-lease=<branch>:<observed-oid>）",
+        "原始 --force 永不允许",
+        "并发前进时中止推送，不覆盖",
+        "重写后重取 heads 并重审 threads/approvals/mergeability/checks",
+        "gh stack sync 前要求干净 worktree、记录官方栈顺序与精确 heads",
+        "sync 后逐层验证；全部通过前不合并、不声称 ready"
+      ],
+      "actors": [
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "抓取远端并记录精确 OID",
+        "重写本地历史",
+        "用 lease 推送",
+        "重取 heads",
+        "重审评审状态与 checks",
+        "gh stack sync 后逐层跑证据"
+      ],
+      "enforcement": {
+        "mode": "instruction + git semantics",
+        "implementation": "Git --force-with-lease；gh stack 的 lease 保护；评审流程",
+        "trust": "lease 由 Git 强制；gh stack sync 的“先发布”顺序无法在本地拦截，只能靠事后验证",
+        "failure": "原始 --force 会覆盖并发更新；sync 后不验证会把未验证层当 ready",
+        "exceptions": [
+          "gh stack sync 是唯一允许先发布后验证的顺序例外"
+        ]
+      },
+      "applicability": "所有允许 rebase 的 PR 流程；不适用禁止历史重写的仓库。",
+      "relationships": [
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-stack-landing",
+        "agent-workflows-stack-review-propagation"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "保留 lease 与 post-sync 验证；若目标平台无等价 lease，禁用强推而不是降级为 --force",
+        "requiredSupport": [
+          "支持 lease 的 Git/托管平台",
+          "能查询 heads 与 checks"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-09",
+      "verification": {
+        "positive": [
+          {
+            "check": "lease 推送成功；post-sync 每层证据通过；heads 被记录",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "并发前进时推送中止；原始 --force 被评审拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新抓取 heads 并重评，不覆盖",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "托管平台的栈/queue 状态可能异步；命令成功不等于分层落地完成。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-stack-review-propagation",
+      "title": "PR 栈的评审修复放置与向上传播",
+      "sources": [
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+          "start": 6,
+          "end": 8,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "跨 PR 的评审评论若在下游修复，起源 PR 会继续发布未修复代码，且评审者看不到修复；并行修复共享检出会互相污染。",
+      "triggers": [
+        "评审评论跨多个依赖 PR",
+        "修复需要传播到子分支",
+        "子代理报告“已修复”"
+      ],
+      "obligations": [
+        "每个 PR 分支一个 worktree",
+        "GitHub stack 对象是权威（PullRequest.stack / stackEntry.position）",
+        "修复落在引入问题的 PR，再向上传播",
+        "每个评审修复保持独立提交；只 amend 未推送未评审工作",
+        "merge-forward 或 rebase 二选一，重写必须 lease 保护",
+        "委派修复 trust-but-verify：自己在真实树重跑；回归 guard 要证明在未修复代码上失败",
+        "在 review thread 回复，说明修复与当前 head",
+        "重写后重审 threads/approvals/mergeability/checks"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "子代理（被委派修复）"
+      ],
+      "steps": [
+        "triage 每条评论并对照代码验证",
+        "映射到起源 PR",
+        "在该 PR 修复并验证",
+        "按顺序传播到每个子层",
+        "在 thread 回复",
+        "重写后重审状态"
+      ],
+      "enforcement": {
+        "mode": "instruction + platform state",
+        "implementation": "GitHub stack 对象；每个 PR worktree；评审流程",
+        "trust": "平台对象可查询；修复放置与传播靠流程；子代理报告不可信",
+        "failure": "下游修复会漏掉起源 PR；共享检出会污染并行修复；重写后旧 anchor 失效",
+        "exceptions": [
+          "已评审修复不 amend 出历史；只 amend 未推送未评审工作"
+        ]
+      },
+      "applicability": "使用依赖 PR 栈的仓库。",
+      "relationships": [
+        "agent-workflows-stack-landing",
+        "agent-workflows-code-review",
+        "agent-workflows-history-rewrite",
+        "agent-workflows-handoff"
+      ],
+      "migration": {
+        "strategy": "retain-if-platform-supports-stacks",
+        "implementation": "保留修复放置与传播规则；若目标平台无原生栈，记录“不适用”，不要用分支链模拟官方栈",
+        "requiredSupport": [
+          "依赖 PR 流程",
+          "能查询 stack 成员",
+          "每 PR 独立 worktree"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-10",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个修复在起源 PR；子层 diff 只含自身变更；重写后状态被重审",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在下游修复或 amend 已评审修复时应被评审拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "回到起源 PR 修复并重新传播",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "依赖托管平台的 stack 对象；跨 fork 或不支持原生栈时不可用。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-stack-landing",
+      "title": "通过 GitHub 原生栈落地依赖 PR",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-merging-stacked-prs/SKILL.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 161,
+          "end": 162,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 27,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "用 gh pr merge + gh pr edit 逐个合并与重定向复制栈语义，会绕过平台对顺序、CI、retarget、merge state 的统一管理。",
+      "triggers": [
+        "落地 A←B←C 依赖链",
+        "合并 base 为另一开放 PR 的 PR",
+        "请求提到 stacked PRs / PR stack / dependent PRs"
+      ],
+      "obligations": [
+        "gh stack --version 可用；否则硬停",
+        "所有 head 分支同仓库；跨 fork 硬停",
+        "干净专用 worktree；抓取实时元数据与精确 heads",
+        "GraphQL 查 PullRequest.stack 与 stackEntry.position；分页 entries",
+        "作者相同才自动 link；作者不同先询问",
+        "不自动解散/重排/重建已有栈",
+        "只在需要时刷新；sync/rebase 后逐层验证",
+        "预检每个 PR open/非 draft/顺序/评审/检查",
+        "通过 gh stack merge；不传 --delete-branch；不退回 gh pr merge",
+        "等每个选中 PR MERGED；验证剩余栈；最后才删分支且依赖数为 0"
+      ],
+      "actors": [
+        "落地作者",
+        "评审者"
+      ],
+      "steps": [
+        "检查 gh stack 与同仓库",
+        "查实时 PR 元数据与 heads",
+        "查官方 stack 并建立 bottom-to-top 顺序",
+        "必要时 link（同作者自动，混合作者询问）",
+        "按需刷新并验证",
+        "预检合并范围",
+        "gh stack merge（整栈或边界 PR）",
+        "等待 MERGED 并验证剩余栈",
+        "最后删分支"
+      ],
+      "enforcement": {
+        "mode": "instruction + platform API",
+        "implementation": "gh stack 扩展 + GitHub 原生 stack 对象 + merge queue",
+        "trust": "平台对象与合并结果可查询；本地无法完全模拟；扩展缺失/跨 fork 只能硬停",
+        "failure": "退回逐 PR merge 会绕过栈规则；未等 MERGED 就删分支会破坏入链",
+        "exceptions": [
+          "部分落地需显式边界 PR",
+          "merge queue 可能分成多个组落地"
+        ]
+      },
+      "applicability": "使用 GitHub 原生 stacks 的同仓库依赖链。GHES、跨 fork、无扩展时仅保留“硬停”知识。",
+      "relationships": [
+        "agent-workflows-stack-review-propagation",
+        "agent-workflows-history-rewrite",
+        "agent-workflows-review-approval-gate"
+      ],
+      "migration": {
+        "strategy": "retain-or-record-inapplicable",
+        "implementation": "目标平台支持原生栈则迁移完整流程；不支持则保留为知识并记录“不适用”，禁止手工模拟",
+        "requiredSupport": [
+          "gh CLI + stack 扩展",
+          "GitHub 原生 stacks",
+          "GraphQL 访问",
+          "同仓库分支"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-10",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个选中 PR state=MERGED；剩余上层仍是期望官方栈；依赖数为 0 后才删分支",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "跨 fork、无 gh stack、混合作者未询问、或未 MERGED 就删分支时流程应停止",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "满足前置后重试；失败层按 merge-forward 或 rebase 修复",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "依赖 GitHub 平台能力；源仓库没有降级路径。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-agent-note-lifecycle",
+      "title": "Agent Note 生命周期、格式与 supersession 检查",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 7,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/agent-note-tree.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-format.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-classification.ts",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "决策理据若只存在于 PR 讨论或聊天，会在交接后丢失；若允许随意改写，历史决策会被反转而不留痕；若每件事都写 note，活跃语料会膨胀。",
+      "triggers": [
+        "做出持久设计决策",
+        "提出实质未来工作",
+        "实现一个 proposed note",
+        "新增 note 需要查重",
+        "note 需要移动生命周期"
+      ],
+      "obligations": [
+        "路径编码 lifecycle/class/date-topic；class 为闭集，新增需更新规范集",
+        "同一 PR 内写/更新 note，仅限代码/测试/文档无法解释的持久理据",
+        "每个新 note 触发作用域 supersession 检查，同 PR 归档符合条件的三件套",
+        "Status 与生命周期目录一致；格式由 verify-agent-note-format 门禁",
+        "proposed/implemented/rejected 各有固定骨架；implemented 禁止 Proposal/Plan/Migration plan/Acceptance criteria",
+        "Alternatives considered 强制",
+        "生命周期移动要更新 Status 并重新满足目标骨架",
+        "更新已有 owner 而不是创建重复 note；不得把 note 编辑成不同决策"
+      ],
+      "actors": [
+        "决策提出者",
+        "归档者",
+        "评审者"
+      ],
+      "steps": [
+        "判断是否满足创建标准",
+        "搜索同类活跃 note 并分类取代关系",
+        "选择 lifecycle/class 与日期",
+        "按骨架写 Problem 与 lifecycle 专属节",
+        "写 Alternatives considered",
+        "同 PR 更新/归档相关 note 并修入链",
+        "跑 format/classification verifier"
+      ],
+      "enforcement": {
+        "mode": "gate-script + review",
+        "implementation": "verify-agent-note-format、verify-agent-note-classification、agent-note-tree 闭集；每一个新 note 的 supersession 检查靠流程",
+        "trust": "格式/类/路径可机械检查；是否值得保留/取代靠人判断",
+        "failure": "缺骨架或 Status 不匹配时门禁失败；未查重会产生重复/矛盾记录；改写决策会丢失理据",
+        "exceptions": [
+          "机械/局部编辑（含局部 UI）豁免",
+          "pre-format 旧 note 可用 alternatives-not-recorded 注释",
+          "已完全合并的旧 note 可按合并规则删除"
+        ]
+      },
+      "applicability": "所有需要持久决策记录的仓库；class 集合可按目标仓库调整，但必须仍是闭集。",
+      "relationships": [
+        "agent-workflows-agent-note-archive",
+        "agent-workflows-handoff",
+        "agent-workflows-simplification"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留路径编码、Status、骨架、Alternatives 强制与 supersession 检查；class 集与 verifier 按目标仓库实现",
+        "requiredSupport": [
+          "Markdown 解析器",
+          "路径/类/格式 verifier",
+          "三件套约定（若启用双语）"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-11",
+      "verification": {
+        "positive": [
+          {
+            "check": "note 通过 format/classification；Status 与目录一致；Alternatives 存在",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "Status 与目录不匹配、implemented 出现 Proposal、或缺 Alternatives 时门禁失败",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按目标骨架修正；不要用删除替代结构修复",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "语义分类无法自动化；“是否值得写/保留”靠人判断。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-agent-note-archive",
+      "title": "冻结归档：三件套移动、元数据、append-only seal",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 1,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 36,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-archived-agent-notes.ts",
+          "start": 1,
+          "end": 115,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/archived-agent-notes.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/archived-agent-notes.spec.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "test"
+        }
+      ],
+      "problem": "归档若允许继续编辑，历史记录会被“现代化”并失去证据价值；若直接删除，又失去仍可能指导未来的理据。",
+      "triggers": [
+        "implemented note 不再指导未来但仍有历史价值",
+        "审计活跃 note 语料",
+        "归档 note 入链损坏",
+        "verifier 报告 seal 不匹配"
+      ],
+      "obligations": [
+        "只移动完整 foo.md/foo.zh.md/foo.i18n.yaml 三件套",
+        "不改正文；只在两个语言文件 Status 下插入同一 Archived 日期",
+        "机械重录 sidecar；不翻译/重排/更新事实/修 note 内链接",
+        "修复或删除活跃散文中指向它的入链；不验证归档 note 出链",
+        "verify-archived-agent-notes --write 只追加新三件套哈希；先证明现有 seal 仍匹配",
+        "封印后永不编辑/移动/翻译/重排/删除",
+        "归档根只允许 AGENTS.md 与 manifest.json；kind 目录必须在闭集"
+      ],
+      "actors": [
+        "归档者",
+        "评审者",
+        "独立验证者"
+      ],
+      "steps": [
+        "判断是否满足归档而非删除",
+        "移动三件套",
+        "插入 Archived 日期",
+        "重录 sidecar",
+        "修复入链",
+        "运行 --write 追加 seal",
+        "运行普通 verifier"
+      ],
+      "enforcement": {
+        "mode": "gate-script",
+        "implementation": "scripts/verify-archived-agent-notes.ts + archived-agent-notes.ts 的 append-only manifest 与精确例外",
+        "trust": "seal、三件套完整性、根文件白名单、类闭集可机械验证；归档语义靠人判断",
+        "failure": "修改已封印 note 或漏三件套会失败；stale sidecar 会失败；Figma 例外只允许三个精确 old-to-new",
+        "exceptions": [
+          "Figma 链接移除的三个精确 seal 例外",
+          "归档 note 出链故意不检查"
+        ]
+      },
+      "applicability": "使用三件套（英/中/sidecar）或等价完整记录集的仓库；单语仓库可退化为单文件+manifest，但必须保留 append-only seal 语义。",
+      "relationships": [
+        "agent-workflows-agent-note-lifecycle",
+        "agent-workflows-handoff"
+      ],
+      "migration": {
+        "strategy": "retain-seal",
+        "implementation": "保留 append-only seal 与三件套完整性；若无双语，manifest 记录单文件哈希；保留“封印后不可变”规则",
+        "requiredSupport": [
+          "哈希 manifest",
+          "路径/类校验",
+          "append-only 写入模式"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-11",
+      "verification": {
+        "positive": [
+          {
+            "check": "归档三件套完整、日期一致、sidecar 与 seal 匹配；普通 verifier 通过",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "修改已封印 note、漏一个语言文件、或未知 kind 目录时失败",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "还原被改内容；若确需更正，开新 note 而不是改 seal",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "归档出链故意不验证；Figma 例外是硬编码，迁移时不应复制。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-handoff",
+      "title": "交接：维护者转移、委派核验、scratch 与 Dev Note",
+      "sources": [
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 54,
+          "end": 64,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 15,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 33,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 55,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 75,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+          "start": 44,
+          "end": 62,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "人员/会话交接时，隐含设置、临时状态和“已修复”的口头报告会丢失或失真；scratch 与 Dev Note 若没有生命周期，会变成第二个待办队列。",
+      "triggers": [
+        "维护者角色转移",
+        "把任务交给另一个代理/会话",
+        "接收子代理的完成报告",
+        "创建 scratch 或 Dev Note"
+      ],
+      "obligations": [
+        "维护者交接要开取代当前 note 的后续 Agent Note，记录机制在仓库内还是新操作者私有设置；不静默转移工具",
+        "委派修复 trust-but-verify：自己在真实树重跑；回归 guard 证明在未修复代码上失败",
+        "e2e 断言重跑命令或外部重读，不信代理自报",
+        "scratch 页写明 owner、创建日期、过期、晋升目标",
+        "Dev Note 显式非权威；关闭工作时晋升耐久结论、移理据到 Agent Note、事件时间线到 postmortem、删除已解决闲聊",
+        "空 Dev Note 写 None."
+      ],
+      "actors": [
+        "交接双方",
+        "子代理",
+        "评审者"
+      ],
+      "steps": [
+        "判断是否需要文档化交接",
+        "写后继 Agent Note 或 scratch 状态",
+        "记录 owner/日期/过期/晋升目标",
+        "接收方在真实树核验，而不是只读报告",
+        "关闭时晋升/归档/删除"
+      ],
+      "enforcement": {
+        "mode": "instruction + review",
+        "implementation": "Agent Note 规则；scratch 约定；Dev Note 规范；e2e 世界验证策略",
+        "trust": "文档存在性可检查；交接完整性与报告真实性靠评审与重跑",
+        "failure": "未文档化交接会丢失私有设置；信自报会把未修复当已修复；scratch 无过期会腐烂",
+        "exceptions": [
+          "机械/局部工作不需要交接文档；空 Dev Note 写 None."
+        ]
+      },
+      "applicability": "所有多人/多会话/多代理协作的仓库。",
+      "relationships": [
+        "agent-workflows-agent-note-lifecycle",
+        "agent-workflows-stack-review-propagation",
+        "agent-workflows-continuation-extension"
+      ],
+      "migration": {
+        "strategy": "retain-and-add-continuity",
+        "implementation": "保留 Agent Note/scratch/Dev Note 交接；若用户要求跨会话继续，另加状态文件（见 continuation-extension），不要冒充源机制",
+        "requiredSupport": [
+          "Agent Note 或等价决策记录",
+          "scratch 目录约定",
+          "可重跑的门禁"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-11",
+      "verification": {
+        "positive": [
+          {
+            "check": "接收方按交接记录能独立执行下一命令；真实树核验通过",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只读子代理报告就声称完成时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "在真实树重跑；修正交接记录",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "源仓库没有通用连续会话协议；交接质量无法自动验证。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-continuation-extension",
+      "title": "用户要求的连续会话状态文件（非源义务）",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 55,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 54,
+          "end": 64,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "用户要求“刷新会话后继续”时，源仓库没有通用协议；只有 Agent Notes、Dev Note、scratch 与 git 历史。直接把聊天摘要当状态会遗漏分支、命令与阻塞。",
+      "triggers": [
+        "用户显式要求跨会话继续",
+        "任务被暂停/交接到新会话",
+        "上下文压缩前需要保存进度"
+      ],
+      "obligations": [
+        "明确标注这是迁移设计，不是源仓库已验证的机制",
+        "状态文件写 owner、目标、当前分支/commit、已完成、未完成、阻塞、下一命令、证据路径、过期/复核日期",
+        "只在暂停/交接/压缩前写，不是每步都写",
+        "新会话先读状态文件与 owning Agent Note，再读代码",
+        "状态与仓库不一致时以仓库状态为准并更新状态文件"
+      ],
+      "actors": [
+        "任务所有者",
+        "接续代理"
+      ],
+      "steps": [
+        "创建受版本控制的状态文件",
+        "写字段并链接证据",
+        "交接时更新",
+        "新会话读取并核对 git/文件状态",
+        "关闭时归档或删除"
+      ],
+      "enforcement": {
+        "mode": "none (design)",
+        "implementation": "无源实现；建议 docs/scratch 或 .agents/handoff",
+        "trust": "没有自动保证；正确性靠核对",
+        "failure": "状态文件腐烂会误导接续代理；必须与仓库状态对账",
+        "exceptions": [
+          "短任务不需要",
+          "纯调查任务可用只读摘要"
+        ]
+      },
+      "applicability": "仅当用户明确要求连续会话或交接时启用。不得声称源仓库已提供该能力。",
+      "relationships": [
+        "agent-workflows-handoff",
+        "agent-workflows-agent-note-lifecycle"
+      ],
+      "migration": {
+        "strategy": "new-capability",
+        "implementation": "新增状态文件模板与读取约定；在文档中标注 Non-source / migration design",
+        "requiredSupport": [
+          "受版本控制的 scratch/handoff 目录",
+          "git 状态查询",
+          "任务关闭时的清理约定"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-11",
+      "verification": {
+        "positive": [
+          {
+            "check": "新会话按状态文件的下一命令可独立执行并复现当前状态",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "状态与 git/文件不一致时仍继续，应判定为失败",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "以仓库状态修正状态文件后重试",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "完全是迁移设计；无源证据，不得标为已验证。",
+      "origin": "user-required migration extension",
+      "sourceBacked": false
+    },
+    {
+      "id": "agent-workflows-ui-review",
+      "title": "客户端 UI/UX 与响应式评审",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-client-ui-ux/SKILL.md",
+          "start": 1,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-responsive-ui/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/README.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "lint/typecheck/i18n 门禁无法判断反馈面选择、复用、遮罩安全、平台窗口适配、加载态与响应式取舍；这些判断错误会造成用户可见的布局破坏或不可用交互。",
+      "triggers": [
+        "新增/修改产品用户可见 GUI 行为",
+        "评审 UI PR",
+        "设计响应式布局/截断/纯图标控件",
+        "处理 macOS/Windows 窗口 chrome"
+      ],
+      "obligations": [
+        "使用现有 token（颜色/圆角/间距）；每个颜色在明暗主题可读",
+        "新增特性 CSS 字重 ≤500（markdown 排版 token 例外）",
+        "先扩展现有组件/容器/交互；图标来自现有库；新字形需设计批准",
+        "右侧栏内容注册现有 sidebar slot",
+        "瞬时结果用应用级 Toast 且宿主比报告面长寿；失败保持数据可见；就地 notice 只用于面绑定状态",
+        "错误文案平实、短；中文 ≤2 句省略句号；不挤动布局",
+        "加载态：列表 skeleton，其余居中 spinner；每页一种处理",
+        "遮罩三验：可关闭、适配视口、不被裁剪",
+        "macOS clearance 用 scoped [data-platform=darwin] override，不改全局变量",
+        "390px 最小视口；先调空间/换行，再截断/纯图标；主操作不省略",
+        "hover 只用 @media (hover: hover)；移动 tooltip 按信息类型区分；不自动升键盘",
+        "大幅 UI 变更或明显可感知变更需设计/产品评审"
+      ],
+      "actors": [
+        "UI 实现者",
+        "设计/产品评审者",
+        "评审者"
+      ],
+      "steps": [
+        "读架构与组件规则",
+        "搜现有 token 与最近兄弟页",
+        "选择反馈面",
+        "实现并检查遮罩三验",
+        "390px 与明暗主题验证",
+        "设计评审",
+        "GUI PR 录 GIF"
+      ],
+      "enforcement": {
+        "mode": "instruction + review + i18n gate",
+        "implementation": "verify-client-ui-i18n；packages/client/AGENTS.md；docs/web-styling.md；人工/截图/GIF 评审",
+        "trust": "文案 locale 可机械检查；视觉/交互/响应式靠评审与真实页面",
+        "failure": "硬编码文案被门禁拒绝；遮罩/裁剪/主题不可读只能评审发现；设计批准缺失会阻塞",
+        "exceptions": [
+          "markdown 排版 token 的字重例外",
+          "390px 以下可放宽",
+          "原生 picker 测试可省略 overlay"
+        ]
+      },
+      "applicability": "有 Web/桌面客户端的仓库；token 与组件名需按目标产品替换。",
+      "relationships": [
+        "agent-workflows-artwork",
+        "agent-workflows-browser-evidence",
+        "agent-workflows-code-review",
+        "agent-workflows-translation"
+      ],
+      "migration": {
+        "strategy": "retain-judgment-rules",
+        "implementation": "保留反馈面/复用/遮罩/平台/响应式判断；把 token 名、clearance 变量、组件目录替换为目标产品事实",
+        "requiredSupport": [
+          "可运行客户端",
+          "明暗主题",
+          "390px 视口",
+          "截图/GIF 能力",
+          "设计评审角色"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-12",
+      "verification": {
+        "positive": [
+          {
+            "check": "明暗主题可读；390px 无重叠/裁剪/横滚；遮罩三验通过；错误/加载态符合面选择",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "全局改 --dsh-frame-top-clearance、硬编码文案、或 hover 只在移动端残留时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 scoped 页面覆盖；把文案移入 typed dictionary；用 @media (hover: hover)",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "判断规则无法自动证明；视觉质量需人/截图验证。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-artwork",
+      "title": "官方插件图标与特性预览美术工作流",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-official-plugin-artwork/SKILL.md",
+          "start": 1,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 1,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-meta.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-official-bundle-catalog.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-official-bundle-catalog.ts",
+          "start": 41,
+          "end": 127,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "插件图标若各自发明风格、错误透明、把页面 tile 烤进 SVG、或用字体渲染字标，会与现有官方图标不一致，且在实际尺寸/主题下不可读。",
+      "triggers": [
+        "新增官方/官方 experimental 插件图标",
+        "新增可选特性预览",
+        "评审 PluginArtwork 变更",
+        "修改 package icon 元数据"
+      ],
+      "obligations": [
+        "先检查真实特性、输出、owning manifest；复用设计者资源；不改品牌/产品名/无关图标",
+        "36×36 viewBox；18–22 units 起点；不把页面 tile 烤进 SVG",
+        "与相邻图标平衡饱和度/亮度；避免 glow/投影/高光/emoji；用语义主题 token",
+        "字标导出为 path；按可见墨迹对齐；实际尺寸可读",
+        "空区真正透明（mask/cutout），不用白/深色圆盘",
+        "包图片经 <img>：自包含 SVG，局部唯一 ID，无 script/外链/字体/foreignObject",
+        "新字形落地前取得设计者批准",
+        "预览遵循 adding-a-plugin-preview 的可选性/尺寸/语言/资源上限",
+        "官方 on-demand catalog 名单必须非空且无重复，默认取安装侧的 ON_DEMAND_BUNDLES。生成器扫描 `packages/*/*/package.json`、`apps/*/package.json`、`vendor/*/package.json`；重名 workspace 包直接失败。",
+        "每个 catalog 成员必须是 `packages/` 下、以 `@deepseek-ai/dsh-` 命名、非 private 且声明 `dsh.bundle.patch` 的公开 bundle 包；并且不得是 DSH 安装依赖闭包的一部分（从 `@deepseek-ai/dsh` 递归 dependencies/optionalDependencies/peerDependencies，命中即失败）。",
+        "元数据只从包资源读取，不 import 或激活 provider：`locale/{en,zh}.json` 的 meta.title/description 必须非空；插件 meta 必须有 icon，且 title/description 的 en/zh 文本都非空；meta.error 直接失败。",
+        "生成文件 `packages/boot/app-boot/src/official-bundles.generated.ts` 是确定性的 source-plane 产物：header 写明生成命令与 do not edit；localized 对象按语言键排序，字符串经 TypeScript printer 单引号转义。",
+        "同步逻辑只容忍 ENOENT，其他读取错误抛出；内容相同不写；`--check` 发现 stale 时抛错并提示 `pnpm gen-official-bundle-catalog`，否则写文件。",
+        "该门禁只证明 catalog 元数据与结构，不证明视觉美术、provider 运行行为或真实安装；美术评审与真实页面验证仍必须执行。"
+      ],
+      "actors": [
+        "美术实现者",
+        "设计者",
+        "评审者"
+      ],
+      "steps": [
+        "读预览指南（若适用）",
+        "检查特性与参考",
+        "绘制/细化",
+        "导出到 manifest icon 路径",
+        "跑 verify-package-meta / constraints / verify-official-bundle-catalog",
+        "真实页面明暗主题验证",
+        "设计批准",
+        "GUI PR 录 GIF"
+      ],
+      "enforcement": {
+        "mode": "instruction + scripts + review",
+        "implementation": [
+          "verify-package-meta（含 SVG 检查）、constraints、verify-official-bundle-catalog、gen-official-bundle-catalog；设计批准",
+          "generateOfficialBundleCatalog 做名单、DSH 安装闭包、包形态与 en/zh 元数据/icon 校验；renderOfficialBundleCatalog 生成确定性 TS；syncOfficialBundleCatalog 提供 --check freshness 和 ENOENT-only 容错。"
+        ],
+        "trust": "元数据/结构可机械检查；视觉质量与品牌一致性靠设计与真实页面",
+        "failure": [
+          "SVG 含脚本/外链会被 <img> 拒绝；目录陈旧被门禁拒绝；未批准字形不应落地",
+          "空/重复名单、依赖闭包命中、非 public/非 bundle/非 packages 成员、缺 icon 或 en/zh 标题/描述、meta.error、stale 生成文件都会失败。"
+        ],
+        "exceptions": [
+          "预览允许内嵌栅格（文档化例外）；图标不得",
+          "工具栏/动作图标不属于本技能",
+          "ENOENT（尚未生成）被视为可写状态；其他读取错误不吞掉。"
+        ]
+      },
+      "applicability": "有官方插件图标/预览的仓库。尺寸、目录、门禁命令需按目标产品替换。",
+      "relationships": [
+        "agent-workflows-ui-review",
+        "agent-workflows-browser-evidence"
+      ],
+      "migration": {
+        "strategy": "retain-rules-and-adapt-assets",
+        "implementation": "保留几何/透明/字标/导出/批准规则；把 36×36、icon 路径、三个门禁替换为目标产品事实",
+        "requiredSupport": [
+          "SVG 校验",
+          "包元数据门禁",
+          "真实页面预览",
+          "设计批准角色"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-13",
+      "verification": {
+        "positive": [
+          {
+            "check": "三个门禁通过；实际尺寸与两主题可读；透明正确；设计批准存在",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "白/深色圆盘伪造透明、把 tile 烤进 SVG、或未批准新字形时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 mask/cutout；重画几何；取得批准后重跑",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "结构检查不替代视觉评审；设计批准无法自动化。；合法结构不等于图标视觉合格；locale 字典与插件 meta 两处都校验文本，但语义质量靠评审。；不 import provider，因此不证明运行时可用或安装成功；未执行生成器或 --check。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-browser-evidence",
+      "title": "浏览器演示 GIF：录制、编码、验证与发布",
+      "sources": [
+        {
+          "path": ".agents/skills/record-browser-gif/SKILL.md",
+          "start": 1,
+          "end": 172,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/scripts/encode_gif.py",
+          "start": 1,
+          "end": 337,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/skills/record-browser-gif/scripts/test_encode_gif.py",
+          "start": 1,
+          "end": 103,
+          "kind": "test"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 121,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/web/tests/pin-browse-picker.overlay.yml",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        },
+        {
+          "path": "apps/web/tests/README.md",
+          "start": 1,
+          "end": 39,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "GUI 变更若没有真实运行的演示证据，评审只能靠描述；用 fixture/mock/拼接帧伪造演示会误导评审；把二进制提交进代码分支会永久膨胀历史。",
+      "triggers": [
+        "PR 改变产品用户可见 GUI 行为",
+        "被要求录制/生成浏览器演示 GIF",
+        "需要发布 GIF 到 PR"
+      ],
+      "obligations": [
+        "每个 GUI PR 必须包含用本技能录制的 GIF，并在 body 嵌入",
+        "用该 PR 分支树、真实 key、真实模型轮次；不用 fixture/mock/合成事件/测试 hook（除非用户明确要求）",
+        "录制与发布分离；录制不改远端；发布不碰 PR 分支",
+        "每个 PR 干净 worktree、记录 commit、构建该树、隔离 DSH_HOME/workspace/session/browser",
+        "一个 storyboard 一次运行；失败帧丢弃重跑；不拼接",
+        "显式匹配 viewport 与 recordVideo.size；context.close 后再 saveAs/编码",
+        "3–6 个有意义状态；等语义 locator；固定等待只作阅读停留",
+        "编码需要 python3/ffmpeg/ffprobe；披露 trim/speed；编码器默认 5 MiB 上限",
+        "视觉读编码后的 GIF；确认无敏感内容；产物只落 ignored 路径",
+        "attach 前重读 live head；attach 后重读 head 与 body；验证 200/image/gif",
+        "assets 分支仅回退；只追加，不删除/不 force-push"
+      ],
+      "actors": [
+        "GIF 录制者",
+        "评审者",
+        "发布者"
+      ],
+      "steps": [
+        "确认 PR 树与 commit",
+        "构建并起隔离服务器",
+        "录制 3–6 状态",
+        "编码并读 summary",
+        "视觉验证 GIF",
+        "（仅任务要求）attach 或 assets 发布",
+        "核对 live head 与 body"
+      ],
+      "enforcement": {
+        "mode": "instruction + encoder + platform limits",
+        "implementation": "encode_gif.py 的区间/帧数/尺寸/字节检查；gh --attach 限制；assets 分支校验；SKILL 的 PR 证据规则",
+        "trust": "编码器与平台限制可机械验证；真实性（真实树/真实模型）靠记录与评审；编码器媒体测试不在 CI",
+        "failure": "拼接/fixture/mock 会制造虚假证据；head 移动会让 GIF 归因错误；超 10MB attach 失败",
+        "exceptions": [
+          "用户明确要求 fixture 录制",
+          "浏览器控制不可用时用 Playwright 回退并披露",
+          "原生 picker 行为测试可省略 overlay",
+          "assets 分支仅在 attach 不适用时"
+        ]
+      },
+      "applicability": "有浏览器 GUI 与 PR 证据要求的仓库。媒体工具、尺寸、上限需按目标平台替换。若目标确实没有浏览器界面或 PR 证据要求，必须给出证据并记录该义务为何不适用；缺少 ffmpeg/浏览器工具只标未执行，不得用截图冒充 GIF。",
+      "relationships": [
+        "agent-workflows-ui-review",
+        "agent-workflows-artwork",
+        "agent-workflows-pre-push-evidence"
+      ],
+      "migration": {
+        "strategy": "retain-pipeline",
+        "implementation": "保留“真实树录制→隔离→编码→视觉验证→分离发布”管线；替换构建/启动命令、overlay、附件上限",
+        "requiredSupport": [
+          "浏览器控制或 Playwright",
+          "ffmpeg/ffprobe/python3",
+          "gh 或等价附件上传",
+          "gitignored 工作目录"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-14",
+      "verification": {
+        "positive": [
+          {
+            "check": "编码 summary 与视觉检查通过；GIF 旁写明 commit/源/凭据/模型轮次；body 引用可渲染；live head 未移动",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "拼接不同运行、用 fixture 冒充真实模型、或把 GIF 提交进 PR 分支时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "全新 roots 重录；改用 attach/assets 分支；head 移动时重录",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "编码器测试需要本地 ffmpeg/ffprobe 且不在仓库 CI 运行；GIF 真实性最终靠人核对。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-translation",
+      "title": "双语文档：常规单遍与扩展用户调用",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 7,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/translation-pairing.manifest.json",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/gen-translation-brief.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "整篇重译一个增量会丢掉已评审措辞；把扩展翻译工作流自动用于日常文档会浪费上下文；不重录 sidecar 会让 pair 状态失真。",
+      "triggers": [
+        "新增/更新双语 pair",
+        "删除/重命名双语文档",
+        "用户显式调用 dsh-translate-docs",
+        "pairing 门禁报告 missing/out-of-sync"
+      ],
+      "obligations": [
+        "常规工作由工作代理单遍更新 counterpart，不调用技能/不生成 briefing/不委派",
+        "扩展技能只在用户显式按名调用时运行（disable-model-invocation: true, user-invocable: true）",
+        "Update 用 briefing 驱动的最小编辑；不整篇重译",
+        "New pair 用整篇路径；删除/重命名同时处理 counterpart 与 .i18n.yaml",
+        "术语表翻译前加载；未列术语需可引用先例或保留英文并标待定",
+        "代码块两侧字节一致；链接按 locale 规则",
+        "每次编辑后 verify-translation-pairing --write <pair>；批量必须显式 --all",
+        "归档 Agent Notes 不翻译"
+      ],
+      "actors": [
+        "工作代理（常规）",
+        "用户指定的译者/子代理（整篇）",
+        "评审者"
+      ],
+      "steps": [
+        "先区分常规 one-shot/one-pass 更新与用户明确点名的扩展工作流；不因普通文档任务自动加载扩展技能",
+        "常规路径在同一 pass 做最小 counterpart 更新，确认语义后 scoped 重录和检查，不自动生成 briefing 或委派",
+        "仅显式调用扩展工作流时判断 update/new/delete；已有 pair 走 briefing，新增 pair 走整篇，删除/改名同步三文件",
+        "扩展 update 的机械 fence diff 才用 --apply，散文才按该路径委派；不为最小更新整篇重译",
+        "任一路径均保留最小变化、逐句验证、术语与字节相同的代码块；确认后 scoped --write 再 scoped 检查",
+        "按需 --list 找工作；全域 doc-sync 在 PR 级一次运行，不在每个翻译子任务重复"
+      ],
+      "enforcement": {
+        "mode": "instruction + gate-script + runtime policy",
+        "implementation": "disable-model-invocation/user-invocable；verify-translation-pairing；gen-translation-brief；manifest 排除",
+        "trust": "pairing 可机械检查结构、逐节 hash 与指定链接语义；它不检查通用物理行数相等，也不证明语义忠实、术语质量或散文逐行对应；这些写作义务仍须评审",
+        "failure": "结构不一致或 sidecar 陈旧时门禁失败；整篇重译会让评审失效；未列术语可能漂移",
+        "exceptions": [
+          "generated 英文源无切换器；translation-prompt 不配对；archived notes 不翻译；manifest 记录真实排除"
+        ]
+      },
+      "applicability": "目标项目实际启用双语文档契约时适用；事实确认的单语项目可以不激活配对流程，但须保留知识、判据与引入第二语言/配对契约时的重新激活条件。缺少目录、工具或译者不构成不适用；prose 命题规则仍适用。",
+      "relationships": [
+        "agent-workflows-skill-invocation-policy",
+        "agent-workflows-documentation-entry",
+        "agent-workflows-code-review"
+      ],
+      "migration": {
+        "strategy": "retain-two-path",
+        "implementation": "保留常规单遍与扩展用户调用的分工及其调用策略；以实际双语契约判断激活，记录事实支持的不激活与重新触发条件，不删机制知识；把术语表与 pairing 工具适配为目标资产，缺实现则保持缺口",
+        "requiredSupport": [
+          "双语契约/术语表",
+          "pairing 工具",
+          "sidecar 或等价记录",
+          "用户调用策略"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-15",
+      "verification": {
+        "positive": [
+          {
+            "check": "pair 结构、逐节 hash 与链接通过 scoped verify-translation-pairing；另行评审物理行对齐、术语、意义及顺序",
+            "evidence": "planned",
+            "note": "源写作规则与自动保证分开验证；本地3行/6行 pair 通过的边界观察不构成逐行对应、术语或语义质量证明。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "整篇重译一个增量、或未重录 sidecar 时应被评审/门禁拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改为最小更新并重录；结构失败先修结构",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "绿色 hash 不证明翻译质量；术语判断仍需评审。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-provider-evidence",
+      "title": "Provider 面向的真实 API 证据与适配器协议",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-an-llm-adapter.md",
+          "start": 1,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 27,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 102,
+          "end": 117,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 10,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 145,
+          "end": 149,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "无 key 测试只证明管线；mock 会掩盖真实 provider 的协议、取消、流式与错误差异；把 provider 瞬态失败与产品缺陷混为一谈会掩盖回归。",
+      "triggers": [
+        "新增/修改 LLM adapter 或 provider 路由",
+        "变更真实模型可见行为",
+        "诊断 provider e2e 失败",
+        "评估是否删除 provider/适配器"
+      ],
+      "obligations": [
+        "with-key 运行才证明对真实模型工作；覆盖写文件、多轮、工具、流中取消",
+        "无 key 时 self-skip，但 self-skip 不是成本信号",
+        "真实 provider e2e 走 test:e2e 层级；每个 suite 无 key 自跳过",
+        "adapter：usage 先于 finish；finish 后不发；arguments 是原始 JSON 字符串；index 按首见顺序；错误只有 throw 或 finish error/aborted 两条路径；尊重 signal；不支持选项抛 UNSUPPORTED_OPTION；replayState 只在同一 adapter 实例拥有两侧时传递",
+        "模型元数据用 provider-neutral resolveModel；effort 是 adapter 映射的有序不透明 id",
+        "绝不打印 secret",
+        "瞬态外部 provider 测试可在外部边界重试；不得扩散到内部断言",
+        "不要删除两个 LLM adapter 或 persistence seam，除非用户明确覆盖"
+      ],
+      "actors": [
+        "provider/adapter 作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "确定有/无 key",
+        "跑对应 e2e smoke",
+        "验证外部世界而非自报",
+        "分类失败（产品 vs provider 瞬态）",
+        "记录 key 可用性与未验证项"
+      ],
+      "enforcement": {
+        "mode": "instruction + test lane + CI",
+        "implementation": "test:e2e 层级；pi-ai provider metadata hook；docs/testing.md with-key policy；协议义务在 adapter 测试",
+        "trust": "e2e 可执行；无 key 时自跳过会隐藏未验证；协议义务需专门测试",
+        "failure": "mock 通过但真实 provider 失败；无 key 却声称通过；把瞬态当产品缺陷或反之",
+        "exceptions": [
+          "无密钥 CI 自跳过；文档化瞬态外部 provider 的重试"
+        ]
+      },
+      "applicability": "接入外部模型/provider 的仓库。协议义务与 key 名称按目标 provider 替换。若目标确实没有外部 provider/adapter，必须给出证据并记录该义务为何不适用；缺少 key 只标未验证，缺少 adapter 保留协议义务并在引入时执行。",
+      "relationships": [
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-test-and-error-review",
+        "agent-workflows-simplification"
+      ],
+      "migration": {
+        "strategy": "retain-evidence-and-protocol",
+        "implementation": "保留 with-key 证据与 adapter 协议义务；若目标确实没有外部 provider/adapter，必须给出证据并记录该义务为何不适用。缺少 key 只标“未验证”；缺少 adapter 保留协议义务并在引入时执行。不能因工具缺失丢弃证据或宣告不适用。",
+        "requiredSupport": [
+          "真实 key 或明确无 key 声明",
+          "e2e 测试入口",
+          "adapter 协议测试",
+          "secret 处理"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-16",
+      "verification": {
+        "positive": [
+          {
+            "check": "with-key smoke 发生真实模型轮次；外部状态被断言；失败分类正确",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "无 key 却声称通过、或打印 secret 时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 key 后重跑，或明确标未验证",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "源仓库的 with-key 证据在外部环境生成，迁移后不可复用；必须重跑。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-performance",
+      "title": "性能：测量卡、合成基准、回归证明与行为保持",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-speed-up-perf/SKILL.md",
+          "start": 1,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/README.md",
+          "start": 7,
+          "end": 25,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "“让它更快”若没有用户路径测量，会优化错误热点、用不真实负载制造假胜利，或用放宽预算/挑幸运运行隐藏回归。",
+      "triggers": [
+        "调查/优化性能",
+        "设计基准或 CI 性能门禁",
+        "剖析长 Session/Web 响应",
+        "把性能 PR 证据变成修复"
+      ],
+      "obligations": [
+        "先约定用户可见端点、负载范围、资源约束、可接受小差异、停止规则",
+        "后端与浏览器端到端测量分开；测本地开销时排除模型/网络延迟并声明",
+        "检查精确当前 base，不只看运行中 checkout",
+        "先考察用户路径再排序候选；独立成本驱动因素要变化",
+        "用固定 reviewed 常量合成输入；不复制用户 prompt/输出/路径/身份/凭据",
+        "实现前写测量卡（操作/负载/入口/时钟/内存/裁决/行为）",
+        "测量构建后 JS；CPU worker 在 plain Node；浏览器用构建后资源 + 支持 profile",
+        "冷/进程内存用 fresh children + 私有 mkdtemp；warm 显式保留缓存",
+        "报告所有样本与决定结果的聚合；预算是源码常量，不可环境覆盖",
+        "先证明回归再改；一次一个因果因素；要求负向控制",
+        "保持行为与资源所有权；性能证据不替代功能证据",
+        "记录耐久理据/替代/校准/排除/风险到 Agent Note"
+      ],
+      "actors": [
+        "性能作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "定范围与停止规则",
+        "检查 base",
+        "排候选",
+        "写测量卡",
+        "建真实基准",
+        "证明回归",
+        "单因素改",
+        "端到端复测",
+        "行为证据 + 负向控制",
+        "报告"
+      ],
+      "enforcement": {
+        "mode": "instruction + bench lane + review",
+        "implementation": "benchmarks/AGENTS.md；test:bench；recordTimings/recordPeakMemory；CI benchmark job；人工评审",
+        "trust": "基准可执行；预算常量可检查；用户路径代表性与浏览器校准靠评审",
+        "failure": "不真实负载/放宽预算/挑幸运运行会制造假胜利；无界保留会掩盖内存回归",
+        "exceptions": [
+          "手工浏览器诊断无阈值；必跑浏览器预算需显式 lane 决策",
+          "用户显式要求全量排练"
+        ]
+      },
+      "applicability": "有性能敏感用户路径的仓库。基准目录、报告工具、预算值需按目标仓库替换。",
+      "relationships": [
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-test-and-error-review",
+        "agent-workflows-simplification"
+      ],
+      "migration": {
+        "strategy": "retain-method",
+        "implementation": "保留测量卡/真实负载/回归证明/负向控制/行为保持；把 bench 目录与报告工具替换为目标仓库实现",
+        "requiredSupport": [
+          "可复现负载生成",
+          "基准运行器",
+          "CI benchmark lane",
+          "内存/时间测量"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-17",
+      "verification": {
+        "positive": [
+          {
+            "check": "前后绝对值与比率、端点与内存语义、行为证据、负向控制、精确检查、排除项齐全",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "放宽预算、挑幸运运行、或端到端收益消失仍合并时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复预算并重测；记录被拒假设",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "本地时序不证明 CI runner 稳定；浏览器预算需要实际 runner 校准。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-simplification",
+      "title": "有证据的简化：可达性、受保护设计与净减少",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 1,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 196,
+          "end": 205,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        }
+      ],
+      "problem": "简化容易变成按未用符号删除：误删公共扩展点、把复杂度搬到 glue、或删掉仍承载 durable/wire/生命周期义务的机制。",
+      "triggers": [
+        "寻找有证据的简化",
+        "写/合并简化提案",
+        "评估其他分支的简化",
+        "删除 dead/duplicated/speculative 行为"
+      ],
+      "obligations": [
+        "先读架构/防御模式/测试策略/相关 Agent Notes；归档 note 不作当前权威且不修其出链",
+        "两个 LLM adapter 与 JSONL persistence provider 是受保护设计，除非用户明确覆盖",
+        "广泛请求按独立域分给子代理；每个代理有界域 + 消费者证据 + 被拒替代",
+        "候选必须有完整效果路径分析（producer/consumer/observable result）",
+        "区分不可达删除、有损失收窄、受保护义务",
+        "拒绝：破坏保留义务、只搬移复杂度、无有意义减少",
+        "替换基础设施要证明净减少；演练协议截断/取消/边界/时钟/打包/source-vs-built",
+        "提案用 Problem/Proposal/Alternatives/Acceptance/Risks；已实现用 implemented 格式",
+        "每个新 note 做 supersession 检查；更新现有 owner 不重复创建"
+      ],
+      "actors": [
+        "简化作者",
+        "子代理",
+        "评审者",
+        "用户（授权）"
+      ],
+      "steps": [
+        "读约束与保护设计",
+        "分域",
+        "搜索候选并证明可达性",
+        "分类（删除/收窄/受保护）",
+        "记录 owner/路径/损失/保留理由",
+        "写提案或 TODO",
+        "验证并报告"
+      ],
+      "enforcement": {
+        "mode": "instruction + review",
+        "implementation": "README/架构/防御模式/测试策略；Agent Note 规则；依赖策略；历史模式校准",
+        "trust": "可达性可搜索但不能证明语义；受保护设计与净减少靠评审",
+        "failure": "零调用点误删公共扩展点；把复杂度搬到 glue；删 durable 事实",
+        "exceptions": [
+          "小改进用 TODO/FIXME/XXX 而不是设计记录",
+          "调查不等于实施授权"
+        ]
+      },
+      "applicability": "所有维护中的代码库；受保护设计清单按目标仓库调整。",
+      "relationships": [
+        "agent-workflows-agent-note-lifecycle",
+        "agent-workflows-agent-note-archive",
+        "agent-workflows-provider-evidence",
+        "agent-workflows-code-review"
+      ],
+      "migration": {
+        "strategy": "retain-method",
+        "implementation": "保留可达性证明/受保护设计/净减少/提案骨架；把历史模式替换为目标仓库案例或删除",
+        "requiredSupport": [
+          "全仓搜索",
+          "架构与防御模式文档",
+          "Agent Note 流程",
+          "依赖策略"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-18",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个候选有 owner/producer-consumer 路径/消失项/保留理由；提案骨架完整",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "零固定调用者即删除公共扩展点、或只搬移复杂度时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复并重新按历史模式校准；补消费者证据",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "历史模式是校准不是当前删除清单；静态未用检查无法覆盖动态加载/generated/编译面。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-documentation-entry",
+      "title": "文档工作流入口：dsh-doc、prose、CoT 的分工与编排",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 1,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+          "start": 1,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/review.md",
+          "start": 1,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/style.md",
+          "start": 1,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/website-sync.md",
+          "start": 1,
+          "end": 95,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+          "start": 1,
+          "end": 81,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-prose-standard/references/examples.md",
+          "start": 1,
+          "end": 169,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/SKILL.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/references/examples.md",
+          "start": 1,
+          "end": 275,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md",
+          "start": 1,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 1,
+          "end": 77,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档工作同时涉及结构、放置、双语、预算、站点投影、散文覆盖与推理轨迹清理；一个技能包办会变成巨型清单，拆错又会重复或漏项。",
+      "triggers": [
+        "新建/重构/评审/审计/迁移文档",
+        "写/修/trim 散文",
+        "清理推理轨迹泄漏",
+        "发布/移动站点页面"
+      ],
+      "obligations": [
+        "dsh-doc 拥有放置/结构/kind/双语/站点/预算；prose-standard 拥有命题与覆盖；trim-cot 拥有泄漏分类",
+        "dsh-doc 工作流：读层级→分类→放置→元数据→写作→双语→验证",
+        "操作声明必须实际运行；不能复现就删除",
+        "kind 必须映射到唯一模板；新增 kind 需独立模板+位置+检查",
+        "Summary 说 subject 能做什么；开发者节解释概念不枚举 API；Dev Note 唯一 slop zone",
+        "prose-standard 必须有显式 scope；缺失停止；始终排除 vendor 与 archived，mode 只控制提问，不改变写入授权",
+        "删词前枚举命题；保留 actor/condition/modality/negative guarantee/ownership/failure/consequence",
+        "术语 contract/boundary/shape/surface/seam/gate/vocabulary 是逐处核对而非禁词表；优先精确对象，准确命名技术义务或字面边界时保留",
+        "只有至少两种完整命题都成立但原则取舍不同才是 borderline；automatic 对已授权明确改写直接执行、真边界只报告不提问；interactive 仅在用户明确要求时启用",
+        "interactive 将同类段落按原则分组，给两三种可行版本、推荐及事实/结构差异，不列劣质陪衬；遵循用户指定渠道，PR行内校准把临时推荐放在对应diff行并附替代；用户决定后把原则/版本归入目标自己的样例并检查范围内同类段落",
+        "trim-cot 一条测试：HEAD 读者能否解析每个引用并验证每个声明",
+        "trim-cot owner-first 修复；删前查 overcorrection traps"
+      ],
+      "actors": [
+        "文档作者",
+        "散文作者",
+        "评审者"
+      ],
+      "steps": [
+        "判断属于结构/散文/泄漏哪一层",
+        "读对应权威文档与 owner",
+        "按该层工作流执行",
+        "先改 owner 再重生成 derivative",
+        "跑该层门禁（test:docs/doc-sync/verify-type-equiv/verify-translation-pairing）"
+      ],
+      "enforcement": {
+        "mode": "instruction + gate-script + review",
+        "implementation": "test:docs、doc-sync、verify-doc-budgets、verify-md-wrap、verify-md-links、verify-type-equiv、verify-translation-pairing、verify-doc-site-fragments；散文/泄漏判断靠评审",
+        "trust": "结构/预算/链接/类型粘贴/站点可机械检查；语义正确性、覆盖、编辑质量靠评审",
+        "failure": "结构门禁可被绕过但内容错误；把技能当完整清单会漏语义；只删不重述会丢事实",
+        "exceptions": [
+          "tiny/generated/parser-owned 格式可省 Summary/ToC",
+          "vendor 与 archived 排除",
+          "归档出链不修"
+        ]
+      },
+      "applicability": "所有有文档体系的仓库；kind 集、模板、站点投影需按目标仓库替换。",
+      "relationships": [
+        "agent-workflows-instruction-tiers",
+        "agent-workflows-translation",
+        "agent-workflows-code-review",
+        "agent-workflows-upgrade-guide"
+      ],
+      "migration": {
+        "strategy": "retain-split",
+        "implementation": "保留三层分工；把 kind/模板/站点 manifest 适配为目标仓库实际实现。只有以项目事实确认双语义务不适用时才不激活 pairing，记录判据和重新激活条件并保留机制知识；缺少工具不构成不适用。",
+        "requiredSupport": [
+          "Markdown 解析/链接检查",
+          "文档门禁",
+          "模板",
+          "（可选）站点投影"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-19",
+      "verification": {
+        "positive": [
+          {
+            "check": "文档结构/预算/链接/类型粘贴/站点投影门禁通过；操作声明可复现；散文无未解析引用",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只删不重述导致事实丢失、或把技能当完整清单时评审应拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复被删事实；按命题规则重述；修 owner 后重生成",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "绿色门禁不证明内容正确；技能内容正确性无自动检查。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-test-and-error-review",
+      "title": "CI 测试可靠性、错误处理与 Cordis 生命周期（跨域入口）",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 1,
+          "end": 131,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-error-handling/SKILL.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/cordis-styling-nitpicking/SKILL.md",
+          "start": 1,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试在并发/共享主机/时钟/全局状态/子进程/异步 teardown 下会不确定；错误处理若只 catch 不建立状态保证会掩盖未知结果；Cordis 单例/未反转副作用/清理依赖会制造生命周期竞态。",
+      "triggers": [
+        "新增/修改高风险测试或 fixture",
+        "调查 flaky CI",
+        "评审测试隔离",
+        "设计/评审失败与恢复",
+        "评审 Cordis 插件生命周期"
+      ],
+      "obligations": [
+        "建模执行拓扑：同文件/不同 worker/同 job 独立 gate/共享主机 job 都可能重叠",
+        "资源原子分配（listen(0)、mkdtemp、唯一 namespace、独占创建）",
+        "进程全局状态捕获原值、精确恢复、立即注册、最小 try/finally、afterEach 兜底",
+        "尊重平台语义（NTFS tick、环境变量大小写、异步句柄、无 POSIX 权限/信号）",
+        "超时预算对 lane 负责；hook 预算随 test 预算",
+        "按状态同步，不用固定 sleep；竞态用 barrier",
+        "dispose 到静默：停止新工作、detach、恢复 hook、await 完成",
+        "拒绝 flake-masking：无状态加超时、重试、全串行、吞错、弱化断言、normalize、sleep",
+        "错误：类型化失败、稳定 discriminant、owner、containment、状态保证、可见报告",
+        "Cordis 三条 P0：单例、未反转副作用、清理依赖先于消费者完成"
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "插件作者"
+      ],
+      "steps": [
+        "识别资源与拓扑",
+        "原子分配并注册清理",
+        "按状态同步",
+        "prove intended regression / negative control",
+        "错误路径定义 owner 与状态保证",
+        "Cordis 审计从入口追所有权与 disposal"
+      ],
+      "enforcement": {
+        "mode": "instruction + review + tests",
+        "implementation": "docs/testing.md 层级；dsh-ci-test-reliability；dsh-error-handling；cordis-styling-nitpicking；packages/AGENTS.md 的 disposal 测试要求",
+        "trust": "测试可运行；隔离/所有权/错误语义靠评审与负向控制；模式搜索不能宣称穷尽",
+        "failure": "sleep/重试/串行会掩盖竞态；catch-and-continue 会掩盖未知状态；未反转副作用会在 HMR/disposal 泄漏",
+        "exceptions": [
+          "文档化瞬态外部 provider 测试可重试，例外留在外部边界",
+          "不可变常量/纯冻结表/无状态函数不适用单例规则",
+          "可选通知可提前停止"
+        ]
+      },
+      "applicability": "所有有 CI 测试与插件生命周期的仓库。",
+      "relationships": [
+        "agent-workflows-pre-push-evidence",
+        "agent-workflows-code-review",
+        "agent-workflows-provider-evidence"
+      ],
+      "migration": {
+        "strategy": "retain-rules",
+        "implementation": "保留隔离/分配/同步/teardown/错误所有权/三条 P0；把测试层级与插件模型替换为目标仓库事实",
+        "requiredSupport": [
+          "测试运行器",
+          "并发/资源模型",
+          "插件生命周期模型",
+          "负向控制"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-20",
+      "verification": {
+        "positive": [
+          {
+            "check": "高风险测试在并发下稳定；错误路径有 owner 与状态保证；Cordis 三条 P0 有实证结论",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用 sleep/重试/串行/弱断言掩盖竞态时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按 owner 修复并加负向控制/并发证据",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "模式搜索不能宣称穷尽安全；三条 P0 是聚焦审计，不是完整生命周期证明。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-upgrade-guide",
+      "title": "外部可感知破坏的升级指南",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "implementation"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 5,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 37,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "破坏外部可感知面却不写迁移说明，会让升级者在 release 后才发现命令行、配置、持久数据或 SDK 变化；推迟到发版准备会丢失变更时的上下文。",
+      "triggers": [
+        "变更破坏 CLI/profile/cordis.yml/settings/持久用户数据/SDK/wire/发布包入口",
+        "改动未发布指南已覆盖的面",
+        "release 版本 bump"
+      ],
+      "obligations": [
+        "在引入破坏的同一变更中写，立即写，不推迟到 release",
+        "只写仓库外用户升级后可观察的破坏",
+        "位置 docs/upgrade-guide/v<version>/<item>/guide.md",
+        "每个 item 目录恰好 guide.md/guide.zh.md/guide.i18n.yaml",
+        "frontmatter 恰好 kind: upgrade-guide 与一句 description",
+        "一个 # 标题，然后 ## Change/## Migration（中文 ## 变更/## 迁移）按序",
+        "英文 ≤500 词（含 frontmatter）",
+        "Change 写旧/新行为与受影响者；Migration 列有序步骤并说明如何确认",
+        "版本 bump 后旧目录冻结；不写跨 release 指南"
+      ],
+      "actors": [
+        "引入破坏的作者",
+        "评审者",
+        "发布维护者"
+      ],
+      "steps": [
+        "识别外部可感知破坏",
+        "确定当前根 package.json version 与 item 名",
+        "写 guide.md 的 Change/Migration",
+        "写中文 counterpart",
+        "重录 pair",
+        "跑 verify-upgrade-guides / verify-translation-pairing / verify-md-links"
+      ],
+      "enforcement": {
+        "mode": "gate-script + review",
+        "implementation": "scripts/verify-upgrade-guides.ts；verify-translation-pairing；verify-md-links",
+        "trust": "路径/文件名/frontmatter/节序/词数可机械检查；迁移步骤有效性靠评审",
+        "failure": "位置错误、节序错误、超词、缺中文/配对记录时门禁失败",
+        "exceptions": [
+          "pre-stable 内部 API 且消费者同变更更新不需要指南",
+          "Session 格式变更仍遵循类型确认"
+        ]
+      },
+      "applicability": "有外部发布与升级语义的仓库。版本目录、词数上限按目标仓库调整。若目标确实没有外部可感知面，必须给出证据并记录该义务为何不适用；缺少发布工具不能作为不适用理由。",
+      "relationships": [
+        "agent-workflows-documentation-entry",
+        "agent-workflows-translation",
+        "agent-workflows-code-review"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "保留位置/三件套/节序/词数/冻结规则；把版本来源与门禁替换为目标仓库实现",
+        "requiredSupport": [
+          "版本来源（package.json）",
+          "Markdown 解析",
+          "pairing",
+          "链接检查"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-21",
+      "verification": {
+        "positive": [
+          {
+            "check": "三件套齐全、节序正确、≤500 词、链接可解析、pairing 通过",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "推迟到 release 才写、位置错误、或超词不迁移内容时门禁/评审拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把额外文本外移到 Agent Note/脚本；补写并重跑",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "门禁只查格式与词数，不查迁移步骤是否真的有效。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-skill-maintenance",
+      "title": "技能的人类周期维护与候选 promotion",
+      "sources": [
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 1,
+          "end": 64,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md",
+          "start": 1,
+          "end": 85,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 1,
+          "end": 61,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "评审技能若靠一次性大审计更新，会落后于真实评审实践；若自动把 adapter 输出直接提交，会把单次事件外推成永久规则，并造成清单膨胀。",
+      "triggers": [
+        "周期性更新 dsh-code-review",
+        "发现评审实践与技能不一致",
+        "维护者交接",
+        "adapter 故障或无候选"
+      ],
+      "obligations": [
+        "单指定操作者用私有周期工具；产物在操作者机器，维护 worktree 每次恢复干净",
+        "窗口内合并 PR 要 merge commit 可从 origin/master 到达；不可达或超 250 commit 记录并跳过",
+        "收集带 commit anchor 的 pre-merge 人类反馈；不获取 conversation comments；排除 target-branch-only",
+        "两个独立 adapter 分类；主 adapter 起草；双方审同一 diff；阻断循环到双方批准；跑 doc-sync/lint",
+        "操作者按自身价值读 diff；抽查至少一个候选的评论支持与 PR 采纳",
+        "Discard / Batch / Promote；Promote 从干净 master、验证 source blob、技能漂移则停",
+        "不逐字提交 adapter 输出",
+        "无候选是正确；adapter 故障 fail loud，不折叠成 no candidate",
+        "交接开取代 note 的后续 Agent Note"
+      ],
+      "actors": [
+        "指定操作者",
+        "评审 adapter",
+        "维护者"
+      ],
+      "steps": [
+        "周期采集反馈",
+        "adapter 分类与起草",
+        "双 adapter 审 diff",
+        "跑门禁",
+        "操作者读 diff/抽查",
+        "Discard/Batch/Promote",
+        "开 draft PR 并人工合并"
+      ],
+      "enforcement": {
+        "mode": "human-process + private tooling",
+        "implementation": "仓库外私有工具；cookbook 描述保证；draft PR 由人评审",
+        "trust": "cookbook 只描述保证不描述实现；仓库无法独立验证周期运行；promotion helper 防技能漂移",
+        "failure": "逐字提交 adapter 输出会膨胀/外推；静默转移工具会丢失私有设置；故障折叠成无候选会掩盖中断",
+        "exceptions": [
+          "无候选不通知；两天重叠窗口覆盖漏掉的日更；更长间隔手动 DSH_CODE_REVIEW_SINCE"
+        ]
+      },
+      "applicability": "有专门评审技能且愿意承担单操作者维护成本的仓库。无此条件时用人工周期评审并标注不等价。",
+      "relationships": [
+        "agent-workflows-code-review",
+        "agent-workflows-handoff",
+        "agent-workflows-agent-note-lifecycle"
+      ],
+      "migration": {
+        "strategy": "retain-knowledge-or-replace-with-manual",
+        "implementation": "保留“从真实反馈更新 + 人类最终判断 + 防漂移 + fail loud”；没有私有工具时用人工月度评审替代并明确标注不等价",
+        "requiredSupport": [
+          "真实评审反馈来源",
+          "候选 diff 审阅流程",
+          "promotion/合并权限",
+          "故障可见性"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-22",
+      "verification": {
+        "positive": [
+          {
+            "check": "候选经人类按价值审阅后 promote；draft PR body 含 source feedback/landed range/run/checks",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "逐字提交 adapter 输出、或技能漂移仍覆盖时应被拒绝",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "人工编辑后重新开 PR；技能漂移时重跑分析",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "机制在仓库外；仓库无法独立验证周期更新真的发生。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "agent-workflows-review-approval-gate",
+      "title": "评审批准门：加权批准、委托与只读安全（跨域）",
+      "sources": [
+        {
+          "path": ".github/review-ownership/README.md",
+          "start": 1,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/review-ownership/approval-policy.json",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/weighted-approval.yml",
+          "start": 1,
+          "end": 66,
+          "kind": "config"
+        }
+      ],
+      "problem": "仅按“有一个 approval”合并会让低权重/无写权限/作者自审通过；委托点若不守恒可被转发；状态发布若执行 PR 代码会引入供应链风险。",
+      "triggers": [
+        "配置分支保护",
+        "评审者委托评审点",
+        "评估 PR 是否满足批准阈值",
+        "修改批准政策"
+      ],
+      "obligations": [
+        "分支规则只要求以 GitHub Actions 为预期来源的 commit status",
+        "政策账号 2 点，其他写权限评审者 1 点；作者自审与无写权限不计",
+        "作者信用 min(100, mergedPRCount)×11/1000；不能单独满足 2 点",
+        "1 分批准按生产代码行所有权加权 min(2, 1+4×owned/total)；0/12.5/25% → 1/1.5/2；阈值 2 不四舍五入",
+        "/delegate 必须是整条评论；双方有写/管理权限且非作者；后续任何评审自动收回；delegate 只能转自己点；作者信用不可转",
+        "status job 所有 action 钉 SHA；只 checkout 默认分支；不执行 PR 代码；不用仓库 secret",
+        "政策变更只在合并进默认分支后生效"
+      ],
+      "actors": [
+        "仓库管理员",
+        "评审者",
+        "PR 作者",
+        "workflow"
+      ],
+      "steps": [
+        "配置 policy 与分支规则",
+        "评审者批准或委托",
+        "publisher 计算分数并发布 status",
+        "分支规则读取 status",
+        "政策变更走默认分支合并"
+      ],
+      "enforcement": {
+        "mode": "CI status + policy files",
+        "implementation": "weighted-approval workflow + approval-policy.json + check-approval.mjs + 分支规则",
+        "trust": "分数与 status 可审计；委托守恒与权限可测试；具体 workflow 实现属于 automation 域",
+        "failure": "仅 context 的规则可能接受同名状态；执行 PR 代码会泄漏 token；委托转发会破坏守恒",
+        "exceptions": [
+          "draft/阻塞评审/足够评审点跳过历史查询",
+          "新行不进分母；空分母无加成"
+        ]
+      },
+      "applicability": "使用 GitHub 分支保护与加权批准的仓库。该机制本体属 automation/CI 域；本域只保留评审/handoff 语义与跨域边界。缺少平台加权批准时记录“未迁移”，不得用人工评审冒充自动保证。",
+      "relationships": [
+        "agent-workflows-code-review",
+        "agent-workflows-stack-landing"
+      ],
+      "migration": {
+        "strategy": "cross-domain-retain-reference",
+        "implementation": "加权审批的可执行接入已提供在 Skill 内 tools/github-approval/，按 references/github-approval.md 安装真实生产目录并部署受信发布及平台保护。目标没有等价远端门禁时仍记录“批准门未迁移”，不得用人工评审或安装成功冒充自动保证。",
+        "requiredSupport": [
+          "分支保护/必需状态",
+          "可信计算作业",
+          "权限模型",
+          "委托命令解析"
+        ]
+      },
+      "reference": "references/agent-workflows.md#aw-23",
+      "verification": {
+        "positive": [
+          {
+            "check": "低于 2 点时 status 为 pending；达到 2 点且无 blocker 时为 success；委托后分数守恒",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "作者自审、无写权限评审、或仅 context 的分支规则不应通过",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修正权限/政策后重新评估；政策变更合并到默认分支后生效",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "机制本体跨域；源仓库的账号/权重是项目特定配置，迁移时必须重设。",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

@@ -1,0 +1,2457 @@
+{
+  "domain": "packaged-skill-contracts",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "packaged-skill-contracts.render-budget",
+      "title": "Skill 渲染体与工具结果修剪阈值",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 20,
+          "end": 26,
+          "kind": "test"
+        },
+        {
+          "path": "packages/bundle/web-app/presets/standard.patch.yml",
+          "start": 77,
+          "end": 83,
+          "kind": "config"
+        },
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 71,
+          "end": 90,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/acl-skill.spec.ts",
+          "start": 36,
+          "end": 43,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/skill-office.spec.ts",
+          "start": 20,
+          "end": 37,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/README.md",
+          "start": 48,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 170,
+          "end": 203,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "`skill` 工具把整份 SKILL.md 正文渲染成一次工具结果；标准 preset 的 tool-result-pruner 只对超过阈值的工具结果做裁尾，因此过大的技能正文会在模型看到之前被截断，指令完整性无法保证。",
+      "triggers": [
+        "新增或修改任何随产品发布的 SKILL.md",
+        "新增整文件 references/*.md",
+        "给技能追加示例、模板清单或排障说明",
+        "评审看到正文接近阈值"
+      ],
+      "obligations": [
+        "创作者技能渲染后的 `<skill_content>` 全文（含包装与资源提示）必须严格低于 8192 个 Unicode 码点（code point），不是 UTF-16 长度、不是字节数。",
+        "`references/` 下的整文件引用按 read 工具的 `行号: 文本` 形式计算长度，也必须低于 8192 码点；测试用 `codePointLength(numbered)` 检查。",
+        "Windows ACL 诊断技能正文额外要求 `.length` 低于 7000 个 UTF-16 代码单元，为工具包装和阈值留余量。",
+        "Office 路由技能使用更紧的渐进预算：token 估算 = ceil(length/4)；router description ≤ 50、正文 ≤ 200；docx/pptx/xlsx 正文的新 token 数 ≤ floor(上一版 token 数 × 0.65)，测试基线分别为 1688/1879/2330。",
+        "超预算时优先删减重复的背景、把细节移到按需读取的 references、把可复制内容移到 templates；不得靠缩短包装或省略资源提示规避。",
+        "修改后必须重新测量，而不是目测“差不多”。"
+      ],
+      "actors": [
+        "owner: 技能所有者（creator skill maintainer）",
+        "contributors: 技能作者; Office 能力维护者",
+        "reviewers: 代码评审者; 预设/Skill 评审者",
+        "automation: Vitest：agent-preset 的 shipped creator skills 规格、ACL 技能规格、Office 技能规格；本域未执行这些测试。"
+      ],
+      "steps": [
+        "用真实 provider 路径读出 SKILL.md 去掉 frontmatter 后的正文（frontmatter 不计入渲染体）。",
+        "按 `renderSkillContent` 的完整输出估算：`<skill_content>`、`<skill_resources>`、资源提示、`<skill_instructions>` 与正文。",
+        "对每个 references 文件按 read 工具的行号前缀形式测量。",
+        "超过 8192（或 ACL 7000 / Office 预算）时，把长表格、模板与排障细节迁到按需读取文件，正文只保留触发、顺序和完成标准。",
+        "重新运行对应技能规格，记录实际码点数/token 估计值。"
+      ],
+      "enforcement": {
+        "mode": "automated-test",
+        "implementation": "`packages/preset/agent-preset/tests/skills.spec.ts:20-26 与 packages/preset/agent-preset/tests/skills.spec.ts:71-90` 定义 `PRUNER_THRESHOLD_CHARS = 8192` 并用 `codePointLength(renderSkillContent(...))` 断言；`packages/sandbox/sandbox-windows-acl/tests/acl-skill.spec.ts:36-43` 断言 ACL 正文 `< 7_000`；`packages/skill/skill-office/tests/skill-office.spec.ts:20-37` 断言 Office token 预算。标准 preset 的实际阈值由 `packages/bundle/web-app/presets/standard.patch.yml:77-83` 的 `thresholdChars: 8192` 提供。",
+        "trust": "测试在源码树中直接读取真实技能文件与真实渲染函数；但测试通过只证明测试覆盖的路径，不证明任意打包产物或运行时 pruner 配置一致。",
+        "failure": "断言失败即阻止合并；若只在发布产物中替换文件，测试不会发现。",
+        "exceptions": "规则只约束随产品发布的创作者技能；测试夹具中的 SKILL.md 不受此预算约束（`packages/experimental/webworker-runtime/tests/fixtures/vfs-example/workspace/.agents/skills/preview-tour/SKILL.md` 仅 8 行）。"
+      },
+      "applicability": [
+        "when: 维护任何会被注册为 skill 的 Markdown 正文，尤其是随包发布的 creator/Office/诊断技能。",
+        "preconditions: 能确定该技能由哪个 provider 注册以及是否会经过 skill 工具渲染; 能拿到标准 preset 的实际 pruner 阈值（默认 8192）",
+        "inapplicable: 纯仓库内开发者说明（`.agents/skills/**` 中不随产品发布的治理技能）若从不经过该 pruner，预算不构成硬约束；但仍受清晰度与渐进加载原则约束。"
+      ],
+      "relationships": [
+        "related: packaged-skill-contracts.referenced-resource-integrity; packaged-skill-contracts.office-router-progressive",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把 8192 码点当作“模型一定能看到完整正文”的硬上限，先测量再写；超限即拆分，不做例外。",
+        "implementation": "在目标仓库建立 `renderSkillContent` 等价的渲染函数与 `codePointLength` 测量脚本；CI 中对每个 SKILL.md（去 frontmatter）与每个 references 文件（行号前缀）执行阈值断言；Office 类技能另建 token 预算表。",
+        "requiredSupport": [
+          "与产品一致的 skill 渲染包装（含资源提示）",
+          "按码点计数的长度函数",
+          "遍历技能目录与 references 的测试",
+          "Office 技能的上一版 token 基线"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.render-budget",
+      "verification": {
+        "positive": [
+          {
+            "check": "对当前 4 个 agent-preset 技能运行渲染预算测试，所有 `codePointLength(renderSkillContent(...)) < 8192` 且所有被反引号引用的 references/templates 路径存在。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "对 ACL 技能运行 `acl-skill.spec.ts`，正文长度断言 `< 7_000` 通过。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "运行 Office 技能规格，router description ≤50 token、正文 ≤200 token，docx/pptx/xlsx 正文 ≤ 上一版 65%。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把一段 9000 码点的正文放进某 creator SKILL.md，渲染预算测试必须以 `codePointLength` 失败并指出技能名。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 references 文件扩到 8192 码点以上（按行号前缀计），整文件引用预算测试必须失败。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "让 Office router 描述超过 50 token 或正文超过 200 token，Office 规格必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "超限后把细节迁到 references、把可复制内容迁到 templates，正文只保留索引与完成标准；重新运行测试并在交付说明中记录新的码点数。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "只读取了测试与配置，未运行测试；本域不声称任何门禁已通过。",
+        "8192 是标准 preset 的 pruner 阈值；其他 preset 或部署可能配置不同，必须按实际配置复核。",
+        "Office 的 token 数是 `length/4` 的估算，不是真实分词器计数。",
+        "ACL 的 7000 个 UTF-16 代码单元断言是保守余量，未证明与 8192 码点在所有 Unicode 输入上等价。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.referenced-resource-integrity",
+      "title": "被引用资源的存在性、可发现性与打包完整性",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 71,
+          "end": 81,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 105,
+          "end": 134,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/SKILL.md",
+          "start": 36,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/host-plugin.md",
+          "start": 20,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/src/index.ts",
+          "start": 69,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/src/acl-skill.ts",
+          "start": 44,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-docx/SKILL.md",
+          "start": 8,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/README.zh.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "SKILL.md 正文只携带路由与步骤，真正的模板、参考文档、脚本与图标在旁路文件里。引用路径写错、文件没被 `files`/`exports` 打包、或运行时资源目录在 ASAR/SEA 中不可读，都会让技能在模型面前“看起来完整”但实际不可执行。",
+      "triggers": [
+        "在 SKILL.md 中新增 `references/...` 或 `templates/...` 引用",
+        "新增模板 package.json、locale、icon 或客户端文件",
+        "把技能从源码树搬到打包应用（Desktop/SEA）",
+        "provider 以目录作为 resourceBase 注册技能"
+      ],
+      "obligations": [
+        "正文中以反引号写出的每个 `references/<file>` 或 `templates/<file>` 路径必须在技能目录下真实存在；测试用 `statSync` 逐个断言。",
+        "模板的每个非通配 export、每个 locale 文件与 bundle patch 都必须在技能正文的 Read next 表中被点名（测试断言正文包含 `templates/<name>/<file>`），否则模型无从发现。",
+        "模板的 `files` 必须覆盖即将发布的资源：patch、locale、icon 与全部运行时文件；通配符必须能匹配实际文件路径。发布包还应核对真实 tarball 文件清单。",
+        "`exports` 必须暴露 `./locale/*.json` 与 `./icon`（子路径插件用 `./<subpath>/locale/*.json` 与 `./<subpath>/icon`）；图标必须是 SVG/PNG/JPEG/WebP 且 ≤256 KiB、留在包内、绝对路径/URL/逃逸符号链接被拒绝。",
+        "`meta.title` 与 `meta.description` 必须非空；缺字段回退到 package.json 的 name/description，畸变元数据产生诊断但保留有效文本。",
+        "provider 注册技能时必须提供可解析的 `resourceBase`：Office 用绝对目录并统一分隔符；ACL 技能把 SKILL.md 与 .ps1 复制到自有的临时目录（`flag: 'wx', mode: 0o600`），因为技能资源目录会在卸载时删除。",
+        "技能正文必须声明运行时目录与技能目录是只读共享资源，工作脚本与中间产物只能落在任务工作区。",
+        "技能资源与执行工具必须位于同一主机；跨主机拆分资源与 Node/CLI 会使操作技能无法工作。"
+      ],
+      "actors": [
+        "owner: 技能所有者",
+        "contributors: 模板作者; 打包/发布维护者",
+        "reviewers: 评审者; 发布核对者",
+        "automation: shipped creator skills 规格做存在性与打包形态断言；模板元数据门禁（package-meta）另行验证资源可读；本域未运行。"
+      ],
+      "steps": [
+        "列出正文中所有反引号资源引用与 Read next 表行。",
+        "逐个在技能根目录下解析相对路径，确认是普通文件。",
+        "对每个模板检查 package.json 的 `exports`、`files`、`dsh.bundle.patch` 与 locale/icon。",
+        "检查 provider 的 resourceBase 与运行时资源复制策略（ASAR/SEA 只读、临时目录生命周期）。",
+        "在安装后的形态再核对一次实际文件清单与渲染出的图标，而不是只看源码树。"
+      ],
+      "enforcement": {
+        "mode": "automated-test-plus-review",
+        "implementation": "`skills.spec.ts:71-81` 用正则提取正文中的资源路径并 `statSync`；`skills.spec.ts:105-134` 断言 export、locale 非空、正文点名与 `files` glob 匹配；`skill-office/src/index.ts:69-95` 在注册时构造绝对 resourceBase；`acl-skill.ts:44-63` 复制到临时目录。",
+        "trust": "测试覆盖源码树中的创作者技能与模板；发布 tarball、ASAR 解包和安装后图标渲染不在测试内，需要人工/发布门禁核对。",
+        "failure": "缺文件或未打包会使引用不可读；测试在源码阶段失败，但打包后缺失只会在运行时暴露。",
+        "exceptions": "可丢弃的测试夹具或显式要求无元数据的包可省略展示资源，但必须在交付说明中逐项解释；Host-only/configuration-only bundle 仍有可见 inventory 条目，不是例外。"
+      },
+      "applicability": [
+        "when: 任何带旁路资源的技能或模板 bundle 的新增、搬迁、打包。",
+        "preconditions: 技能根目录可枚举; 打包 manifest 与发布流程可检查",
+        "inapplicable: 纯内联、没有任何 references/templates 的最小技能不触发资源存在性检查，但仍需经过渲染预算。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.render-budget",
+        "related: packaged-skill-contracts.template-parse-and-copy; packaged-skill-contracts.single-source-distribution",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把“正文可发现 + 文件存在 + manifest 打包”作为三个独立断言，分别验证；不要用一个宽松的目录存在检查替代。",
+        "implementation": "在目标仓库增加技能资源检查器：解析正文反引号路径、枚举模板 exports/files、校验 locale 与 icon 约束；provider 注册时强制 resourceBase；对 ASAR/SEA 部署改用 Host 只读复制或临时目录。",
+        "requiredSupport": [
+          "技能目录布局约定",
+          "打包 manifest 规范",
+          "安装后资源核对步骤",
+          "临时资源目录的清理生命周期"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.referenced-resource-integrity",
+      "verification": {
+        "positive": [
+          {
+            "check": "对 cordis-plugin-development 的正文运行资源检查，所有 references/templates 引用存在，两个模板的 export/files/locale 均被正文点名。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "以目录 resourceBase 加载 Office 与 ACL 技能，加载后能读到 SKILL.md 与脚本，卸载后临时资源目录消失。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除正文引用的 `templates/mcp/icon.svg`，资源测试必须因 statSync 失败而拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "从模板 package.json 的 `files` 中移除 `locale/*.json`，打包完整性断言必须失败。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 icon 指到包外绝对路径或包外符号链接，元数据读取必须拒绝并给出诊断。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补回缺失文件、在 Read next 表补一行、修正 files/exports；重新运行资源测试并在打包产物上复读文件清单。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未检查真实 npm tarball 或 Desktop ASAR 中的资源；测试只覆盖源码树。",
+        "`verify-package-meta` 的实际实现未阅读，图标/元数据细节以 host-plugin.md 的说明为准。",
+        "图标大小与格式限制来自指令文本，未在测试中看到对应断言。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.template-parse-and-copy",
+      "title": "模板可解析、可复制、不得原地执行",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 92,
+          "end": 103,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/SKILL.md",
+          "start": 36,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration/package.json",
+          "start": 1,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration/cordis.patch.yml",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration/client.js",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/templates/mcp/cordis.patch.yml",
+          "start": 1,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/templates/mcp/package.json",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/host-plugin.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "技能模板是会被模型复制进工作区再安装的“活代码”。若 manifest、Loader patch 或 JavaScript 有语法错误，失败会发生在安装/激活阶段；若直接在 ASAR 内的技能目录执行安装，文件系统只读且不可被 shell 打开，错误更难诊断。",
+      "triggers": [
+        "新增或修改技能 templates/ 下的文件",
+        "修改模板 package.json 的 dsh.client 或 dsh.bundle.patch",
+        "模型按技能指令复制模板创建插件",
+        "模板安装失败或 Loader 报 YAML/JS 错误"
+      ],
+      "obligations": [
+        "每个模板目录必须有 `package.json`，其 `dsh.bundle.patch` 指向的 YAML 必须能被 Loader 的 `entryListSchema` 解析为数组。",
+        "模板中所有 `.js` 文件必须通过 `node --check`（语法检查）；不得依赖安装后再发现语法错误。",
+        "模板 `package.json` 必须是合法 JSON，且 `exports`、`files`、`dsh.client`、`dsh.bundle.patch` 字段与真实文件一致。",
+        "先把模板文件读取并复制到工作区的一个目录，再在工作区里修改、安装；绝不在技能目录内安装或语法检查模板。",
+        "Desktop 中技能目录位于 `app.asar` 内，只有 Host 进程自己的文件读取能打开；shell、glob/search（原生 ripgrep）、node、pnpm 都会失败，必须用文件读取/写入工具。",
+        "模板文本与图标必须改写为请求的实际能力，不得留下与交付插件无关的模板文案。"
+      ],
+      "actors": [
+        "owner: 模板维护者",
+        "contributors: 技能作者; 插件开发者（模型或人）",
+        "reviewers: 评审者",
+        "automation: `skills.spec.ts:92-103` 解析每个模板的 JSON/YAML 并对 JS 执行 `node --check`；未覆盖安装阶段。"
+      ],
+      "steps": [
+        "选择与请求匹配的模板目录（decoration 或 mcp）。",
+        "用文件读取工具读取模板全部文件，用文件写入工具复制到工作区新目录。",
+        "修改 package.json 名称、patch 行 id/name、locale 文案、icon 与运行时文件。",
+        "用 `node --check` 校验每个 JS，用 YAML 解析校验 patch，用 JSON 解析校验 manifest。",
+        "通过 `plugin_manager` `install_bundle` 安装工作区目录，读取 `application`/`warnings` 判断是否生效。"
+      ],
+      "enforcement": {
+        "mode": "automated-test-plus-instruction",
+        "implementation": "测试端：`skills.spec.ts:92-103` 对 `templates/*/package.json` 做 `JSON.parse`，对 patch 用 `entryListSchema` 解析，对每个 `.js` 执行 `process.execPath --check`。指令端：`cordis-plugin-development/SKILL.md:36-50` 要求复制到工作区并禁止原地安装/检查。",
+        "trust": "解析测试保证模板源文件本身合法；模型是否正确复制、修改后是否仍合法，只能靠安装结果与评审。",
+        "failure": "模板源文件语法错误会被测试拒绝；模型改写后的错误在安装/激活时失败，需要按 application/warnings 诊断。",
+        "exceptions": "无。模板可以按请求增删字段，但 parse 与复制后安装的要求不变。"
+      },
+      "applicability": [
+        "when: 任何包含可复制模板的技能，尤其是插件/预设/MCP 创建流程。",
+        "preconditions: 模板目录有 manifest 与 patch; 运行环境有 Node（用于语法检查）",
+        "inapplicable: 只读参考文档类技能没有模板，不触发；但若它指示用户复制示例代码，仍应把示例放在工作区而非原地修改。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.referenced-resource-integrity",
+        "related: packaged-skill-contracts.no-shell-file-routing; packaged-skill-contracts.plugin-creator-procedure",
+        "crossDomain: automation"
+      ],
+      "migration": {
+        "strategy": "把模板当作产品代码：源码阶段做 parse 测试，使用阶段先复制再改，安装阶段只信 application/warnings。",
+        "implementation": "为目标仓库的技能模板增加 JSON/YAML/JS 解析测试；在技能正文写明 app.asar 限制与复制步骤；提供 `plugin_manager install_bundle` 或等价安装入口，禁止手写 profile。",
+        "requiredSupport": [
+          "Loader entry-list schema",
+          "Node 语法检查",
+          "工作区复制目录约定",
+          "安装入口与结果字段"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.template-parse-and-copy",
+      "verification": {
+        "positive": [
+          {
+            "check": "对 decoration 与 mcp 两个模板运行 parse 测试，manifest 合法、patch 解析为数组、client.js/index.js 通过 `node --check`。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 decoration 模板复制到工作区、改 locale/icon 后通过 install_bundle 安装，`application: applied` 且 Client slot 可见。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在模板 client.js 中写入语法错误，`node --check` 必须非零退出并阻止测试通过。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 patch 改成非数组 YAML，entryListSchema 解析必须抛错。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "尝试在 app.asar 内的技能目录直接运行安装或 `node`，必须失败并提示复制到工作区。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "语法/解析失败时修复模板源文件并重新复制；模型改写导致的失败则回到工作区副本修正，不修改技能目录。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "`node --check` 只检查语法，不检查模块解析、React 运行时或 Loader 激活语义。",
+        "未在 Desktop/ASAR 环境实测；ASAR 行为来自技能正文陈述。",
+        "未运行测试。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.no-shell-file-routing",
+      "title": "禁止用 shell 读取技能文件，也禁止封杀源码阅读",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 136,
+          "end": 145,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/SKILL.md",
+          "start": 36,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/editing-cordis-compositions/SKILL.md",
+          "start": 10,
+          "end": 14,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "技能目录在 Desktop 中位于 `app.asar`，只有 Host 进程自身的文件读取能打开。如果技能正文指导模型用 `cat`/`cp`/`ls`、ripgrep、node 或 pnpm 访问它，命令会失败，模型可能误判为技能缺失或环境损坏。另一类错误是正文禁止读取 DSH 包源码，切断了排障所需的知识来源。",
+      "triggers": [
+        "编写或修改技能正文中的文件访问指令",
+        "技能需要读取 references、templates 或脚本",
+        "运行环境是 Desktop/打包应用",
+        "正文出现“不要读源码”类措辞"
+      ],
+      "obligations": [
+        "技能正文不得出现 `` `cat ` ``、`` `cp ` ``、`` `ls ` `` 这类 shell 文件路由写法；测试用正则 `/`(cat|cp|ls) /` 拒绝。",
+        "正文必须明确：在包括源码 checkout 在内的所有部署中，用文件读取工具读技能文件、用文件写入工具把副本写入工作区，并用读回验证副本。",
+        "正文必须说明 Desktop 的 `app.asar` 中 shell（`ls`、`cat`、`cp`、`cmp`）、glob/search（原生 ripgrep）、`node`、`pnpm` 都会失败。",
+        "不得写“do not read DSH sources / package sources”之类禁令；测试用 `/do not read (DSH |package |DSH package )?sources/i` 拒绝。",
+        "需要执行模板或脚本时，先复制到工作区，再在工作区执行；技能目录只读。",
+        "已知技能的 base directory 由 `skill` 工具结果给出；正文应说“不要枚举该目录”，用 Read next 表按需读取。"
+      ],
+      "actors": [
+        "owner: 技能作者",
+        "contributors: 评审者",
+        "reviewers: 代码评审者; 技能评审者",
+        "automation: `skills.spec.ts:136-145` 遍历所有技能 Markdown 并做正则拒绝；测试是启发式，不是完整路径分析。"
+      ],
+      "steps": [
+        "搜索技能 Markdown 中的 `cat `/`cp `/`ls ` 反引号命令与“不要读源码”措辞。",
+        "把文件访问改成显式的“file-read tool / file-write tool”步骤。",
+        "在资源读取段落写明 app.asar 限制与复制到工作区的顺序。",
+        "若技能确实需要 shell 执行 CLI，区分“读技能文件”和“执行任务命令”，后者可以保留。"
+      ],
+      "enforcement": {
+        "mode": "automated-test-plus-instruction",
+        "implementation": "`skills.spec.ts:136-145` 对 `skills/<name>/**/*.md` 执行两条正则断言；`cordis-plugin-development/SKILL.md:38-46` 与 `editing-cordis-compositions/SKILL.md:10-14` 给出正确做法。",
+        "trust": "正则只覆盖三种小写命令与一种英文禁令，无法发现 `Get-Content`、`type`、`tar`、`rg` 或改写后的禁令；不能把通过测试当作完整保证。",
+        "failure": "命中正则即测试失败；未命中的错误写法在 ASAR 环境中表现为工具失败或模型误判。",
+        "exceptions": "技能可以指导用 shell 执行 LibreOffice Kit CLI、`node --check` 等任务命令；限制针对“读取技能自身文件”的路径。"
+      },
+      "applicability": [
+        "when: 任何会被打包进应用或需要读取自身资源的技能。",
+        "preconditions: 存在文件读取工具与文件写入工具; 知道部署是否在 ASAR/SEA 中",
+        "inapplicable: 纯仓库内、永不打包的技能可以放宽 shell 限制，但仍不应封杀源码阅读；复用该规则可避免迁移时回归。"
+      ],
+      "relationships": [
+        "related: packaged-skill-contracts.referenced-resource-integrity; packaged-skill-contracts.template-parse-and-copy"
+      ],
+      "migration": {
+        "strategy": "把“读取技能资源”和“执行任务命令”分开写；前者只走文件工具，后者才允许 shell。",
+        "implementation": "在技能模板中固定资源读取段落；在 CI 中加入同样的正则启发式，并人工评审 PowerShell/ripgrep 等未覆盖写法；Desktop 打包测试中实际调用一次文件读取。",
+        "requiredSupport": [
+          "文件读取/写入工具",
+          "ASAR 部署说明",
+          "技能 Markdown 扫描测试"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.no-shell-file-routing",
+      "verification": {
+        "positive": [
+          {
+            "check": "扫描 cordis-plugin-development 与 editing-cordis-compositions 的全部 Markdown，无 `cat|cp|ls` 反引号命令、无“不要读源码”禁令。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在技能正文加入一行 `` `cat SKILL.md` ``，`skills.spec.ts` 的正则必须失败并指出文件。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "加入 “do not read package sources”，源码读取禁令断言必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把命令改成“用 file-read tool 读取资源，用 file-write tool 复制到工作区”，重新扫描并在 ASAR 环境验证一次读取。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "正则只覆盖 `cat`、`cp`、`ls` 三个小写命令；`Get-Content`、`type`、`rg`、`tar` 等未覆盖。",
+        "英文禁令正则只覆盖特定措辞，无法识别语义等价表述。",
+        "未在 Desktop 环境实测 app.asar 行为。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.office-router-progressive",
+      "title": "Office 路由技能与渐进加载预算",
+      "sources": [
+        {
+          "path": "packages/skill/skill-office/assets/office/SKILL.md",
+          "start": 1,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/skill-office.spec.ts",
+          "start": 20,
+          "end": 37,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/progressive-loading.spec.ts",
+          "start": 78,
+          "end": 114,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-docx/SKILL.md",
+          "start": 34,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-xlsx/SKILL.md",
+          "start": 44,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-pptx/SKILL.md",
+          "start": 58,
+          "end": 64,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-recalculate/SKILL.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-export-pdf/SKILL.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Office 能力如果塞进一个巨大技能，模型会在无关任务上加载渲染、PDF、重算等全部指令，浪费上下文并互相干扰；如果拆成互不关联的小技能，模型又不知道先选哪个。需要“薄路由 + 独立操作技能”的渐进加载结构。",
+      "triggers": [
+        "用户要求创建/编辑/检查/转换 Office 文档",
+        "用户任务涉及图片、视觉检查或版式",
+        "需要刷新公式缓存或导出 PDF",
+        "新增 Office 能力或调整技能拆分"
+      ],
+      "obligations": [
+        "`office` 是路由技能：正文只说明先用 `skill` 工具加载对应格式技能，并给出 docx/pptx/xlsx/render/recalculate/export-pdf 的分派；不复制各格式的具体库用法。",
+        "独立操作技能（office-render、office-recalculate、office-export-pdf）只需被直接加载，不要求先加载 router；显式调用作者技能时也不应自动带出 router。",
+        "路由技能预算：description ≤ 50 token，正文 ≤ 200 token（length/4 向上取整）。",
+        "docx/pptx/xlsx 正文预算：≤ 上一版 token 数的 65%；不得包含 `read_image|transparent|DPI`、`dsoffice`；必须包含 `office-render` 作为视觉升级出口。",
+        "新文件、内容编辑、公式和附带的基础格式（如加粗表头、数字格式）默认不触发渲染；只有用户要求图片/视觉检查，或任务主要目标就是外观时才加载 `office-render`。",
+        "用户明确要求跳过渲染时必须遵守；不得“为了稳妥”重复加载已经加载过的技能。",
+        "技能正文应把“加载哪个技能”写成完成条件，而不是让模型猜测。"
+      ],
+      "actors": [
+        "owner: Office 技能维护者",
+        "contributors: 各格式作者; 评审者",
+        "reviewers: 评审者",
+        "automation: `skill-office.spec.ts` 检查目录、预算与正文排除词；`progressive-loading.spec.ts` 用 mock LLM 检查真实请求内容、resume/fork 与显式调用路径。"
+      ],
+      "steps": [
+        "判断任务属于创建/编辑/检查/转换中的哪一类。",
+        "按 router 分派：格式技能负责内容，render 负责视觉，recalculate 负责公式缓存，export-pdf 负责 PDF。",
+        "只加载当前需要的技能；独立操作技能直接加载。",
+        "在格式技能完成内容与结构检查后，按外观触发条件决定是否升级到 render。",
+        "不要重复加载 router 或已加载的技能。"
+      ],
+      "enforcement": {
+        "mode": "automated-test",
+        "implementation": "`skill-office.spec.ts:20-37` 断言 router 与 authoring 的 token 预算、排除词与 office-render 出口；`progressive-loading.spec.ts:78-114` 断言 router→authoring 的请求顺序、resume/fork 保留、独立操作直接加载、显式作者技能不带 router。",
+        "trust": "测试直接检查发给模型的请求 JSON，能发现“技能正文被错误拼接”的问题；但不证明模型在真实对话中总会按 router 选择。",
+        "failure": "预算或内容断言失败即拒绝；请求中出现不该出现的正文片段会失败。",
+        "exceptions": "用户显式要求跳过渲染时，render 的视觉检查义务不适用。"
+      },
+      "applicability": [
+        "when: 任何多格式文档能力或需要按任务选择子流程的技能族。",
+        "preconditions: 存在按名字加载技能的 `skill` 工具; 有可测量的 token/字符预算; 能断言模型请求内容",
+        "inapplicable: 单一能力、没有子流程的技能不需要 router；但“按需加载细节”的原则仍适用。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.render-budget",
+        "related: packaged-skill-contracts.office-authoring-delivery; packaged-skill-contracts.office-render-escalation; packaged-skill-contracts.invocation-policy"
+      ],
+      "migration": {
+        "strategy": "先写薄 router，再为每个操作写独立技能；用真实请求测试验证“加载了什么、没加载什么”。",
+        "implementation": "把 Office 家族拆成 router + 6 个操作技能；为 router 与 authoring 设 token 预算；用 mock LLM 捕获请求并断言正文出现/不出现；在 resume/fork 后重复断言。",
+        "requiredSupport": [
+          "技能注册表与按名加载",
+          "token/字符估算函数",
+          "mock LLM 请求捕获",
+          "视觉升级触发条件清单"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.office-router-progressive",
+      "verification": {
+        "positive": [
+          {
+            "check": "加载 `office` 后再加载 `office-docx`，第二个请求包含 python-docx 而不包含 dsoffice；resume 与 fork 后仍包含这些指令。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "直接加载 `office-render`/`office-recalculate`/`office-export-pdf`，请求包含 libreofficeKit 且不包含 router 或 Word 正文。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "用户输入 `/office-xlsx ...`，请求直接包含 Excel 正文且不含 router。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 python-docx 用法复制进 office router，router 正文预算与“不含 authoring 正文”断言必须失败。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "让某个操作技能正文包含 `dsoffice`，Office 规格必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把细节移回对应格式技能，router 只保留分派；重新运行请求内容断言。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "token 预算是 `length/4` 估算；不同分词器可能得出不同结果。",
+        "未运行测试；未验证真实模型是否按 router 描述选择技能。",
+        "progressive-loading 测试依赖 mock adapter，不能代表真实用户对话的全部路径。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.office-authoring-delivery",
+      "title": "Office 内容创作、校验与交付纪律",
+      "sources": [
+        {
+          "path": "packages/skill/skill-office/assets/office-docx/SKILL.md",
+          "start": 6,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-xlsx/SKILL.md",
+          "start": 6,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-pptx/SKILL.md",
+          "start": 6,
+          "end": 64,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-recalculate/SKILL.md",
+          "start": 14,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-export-pdf/SKILL.md",
+          "start": 14,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office/references/sidecar.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "直接操作 OOXML 而不熟悉库的语义，很容易破坏 run 级格式、丢失公式/图表/宏，或把 DataFrame 当成工作簿覆盖原文件。交付前若不重新打开验证，模型会把“写文件成功”误报为“文档正确”。",
+      "triggers": [
+        "创建、读取或编辑 docx/xlsx/pptx",
+        "需要保留既有格式、公式、图表或宏",
+        "准备交付最终文件"
+      ],
+      "obligations": [
+        "默认使用 `load_workspace_dependencies` 返回的 Python 可执行文件与其捆绑库（python-docx/openpyxl/pandas/python-pptx）；不要安装包或寻找系统 Python。用户或 AGENTS.md 明确要求其他环境时从其要求。",
+        "脚本、中间文件与最终文档都放在任务工作区；运行时与技能目录是只读共享资源。",
+        "Python 脚本按任务命名（如 `edit_docx.py`），避免 `inspect.py`、`docx.py`、`zipfile.py` 等遮蔽导入库的模块名。",
+        "默认保存为新文件，除非用户明确要求原地编辑；重新打开保存后的文件，验证请求内容、相关格式与必须保留的未改动内容。",
+        "DOCX：按文本或位置定位目标，只检查其 runs 与格式；不要用段落 `.text` 赋值破坏 run 格式；不要伪造修订/批注。直接写 package parts 时创建新 ZIP，每个未改成员只复制一次，避免重名损坏包。",
+        "XLSX：公式必须用 `data_only=False` 加载以保留；写入公式不会计算；`data_only=True` 只返回可能缺失/过期的缓存；需要刷新时加载 office-recalculate，不得用常量替换请求的公式。",
+        "XLSX：DataFrame 不是工作簿；不要用 DataFrame 覆盖既有文件。不要仅靠改扩展名把 `.xls`/`.xlsb`/加密/宏文件变成 `.xlsx`。",
+        "PPTX：只改请求的内容，保留混合文本格式；重建幻灯片可能丢失动画/SmartArt；图表内嵌工作簿属于交付物，必须包含预期数据。",
+        "交付时调用 `present`，以 `files` 数组中的 `path` 指向实际最终文件；不交付中间脚本/报告，除非用户要求。`present` 不可用时使用会话支持的文件交付方式。"
+      ],
+      "actors": [
+        "owner: Office 技能维护者",
+        "contributors: 模型/执行者",
+        "reviewers: 请求发起者（验收）",
+        "automation: 没有对文档语义的自动门禁；`docx-validation.e2e.ts`、`xlsx-validation.e2e.ts` 等端到端用例未在本域阅读。"
+      ],
+      "steps": [
+        "确认用户/AGENTS.md 是否指定环境或库；否则获取 `load_workspace_dependencies` 的 Python 路径。",
+        "读取文档中与请求相关的结构，避免整包重建。",
+        "在副本上做最小修改，保存新文件。",
+        "重新打开并核对内容、类型、公式、样式与未改动内容。",
+        "仅在触发条件满足时调用 render/recalculate/export-pdf。",
+        "用 `present` 交付实际文件并报告已完成的检查范围。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "六个 Office 技能正文规定库选择、工作区边界、保存/重开、公式语义与 `present` 交付；没有单一自动检查器验证文档语义。",
+        "trust": "执行者按指令自检；测试只验证技能正文存在与加载路径，不验证生成文档的正确性（本域未读 e2e 验证器）。",
+        "failure": "跳过重开验证会把格式丢失/公式未计算误报为成功；评审应要求提供重开检查结果与工作区路径。",
+        "exceptions": "用户明确要求原地编辑时可覆盖默认新文件；显式指定其他库时可偏离默认库。"
+      },
+      "applicability": [
+        "when: 任何 Office 文件的内容创作或修改。",
+        "preconditions: 有可用的 Python 运行时与捆绑库（或用户指定环境）; 有任务工作区可写",
+        "inapplicable: 纯视觉检查任务只需 office-render；纯 PDF 导出只需 office-export-pdf。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.office-router-progressive",
+        "related: packaged-skill-contracts.office-render-escalation; packaged-skill-contracts.office-sidecar-consent"
+      ],
+      "migration": {
+        "strategy": "把“库选择、最小修改、新文件、重开验证、present 交付”写成固定步骤；公式与格式保留规则按格式分别列出。",
+        "implementation": "在目标技能中提供 `load_workspace_dependencies` 等价入口；固定工作区与只读资源边界；为每种格式写最小代码示例与失败处理；要求交付前重开验证。",
+        "requiredSupport": [
+          "捆绑 Python 依赖或等价环境",
+          "任务工作区",
+          "present/文件交付能力",
+          "公式计算引擎（可选）"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.office-authoring-delivery",
+      "verification": {
+        "positive": [
+          {
+            "check": "创建新 docx 后保存、重开并核对标题/段落；用 `present` 指向最终文件。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "修改既有 xlsx 时用 `data_only=False` 保留公式，重开后确认公式仍在且未改动区域一致。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "编辑 pptx 标题后重开确认其他幻灯片与图表仍在，图表内嵌工作簿数据正确。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用 DataFrame 覆盖既有工作簿导致图表/公式丢失，重开验证必须失败并被拒绝交付。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把公式替换为常量以“让结果看起来正确”，违反公式保留义务，必须拒绝。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "从原始文件重新加载，按最小修改在新副本上重做；重开验证通过后再交付，并报告未覆盖的格式风险。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "本域只读技能正文，未运行 docx/xlsx/pptx 端到端验证器。",
+        "`load_workspace_dependencies` 的实现与默认库版本未阅读。",
+        "渲染/公式引擎的实际兼容性由 LibreOffice Kit 决定，技能正文只给出边界说明。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.office-render-escalation",
+      "title": "视觉升级、空白预览止损与单句状态",
+      "sources": [
+        {
+          "path": "packages/skill/skill-office/assets/office-render/SKILL.md",
+          "start": 1,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-xlsx/SKILL.md",
+          "start": 46,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-docx/SKILL.md",
+          "start": 36,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-pptx/SKILL.md",
+          "start": 60,
+          "end": 62,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/progressive-loading.spec.ts",
+          "start": 92,
+          "end": 99,
+          "kind": "test"
+        }
+      ],
+      "problem": "视觉检查既可能不足（外观改动没看图就交付），也可能失控（空白预览后反复换范围/DPI/格式，或改环境找浏览器）。需要明确的升级触发条件和一次性止损规则，以及诚实的完成状态措辞。",
+      "triggers": [
+        "用户要求图片或视觉检查",
+        "任务主要目标是布局、间距、颜色、对齐、字号",
+        "渲染返回空白/透明图像",
+        "当前模型不接受图片输入"
+      ],
+      "obligations": [
+        "出现外观类目标时必须加载 `office-render` 并检查变更页，即使没有单独的“视觉检查”请求；用户明确跳过时例外。",
+        "新文件、内容编辑、公式与附带基础格式（加粗表头、数字格式）不因这些原因触发渲染。",
+        "只做检查的预览必须创建私有、唯一命名的临时父目录，并把尚不存在的子路径作为 `--output-dir`；POSIX 用 `mktemp -d`，PowerShell 用 `.dsh-office-` + GUID；检查完只删除该父目录，绝不用固定目录名或删除工作区。 预览报告用文本；回复不得链接或嵌入已删除的预览图。",
+        "证据不足时不能只凭命令成功或图片读取成功宣称可用；必须检查裁剪、对齐、标题、表格宽度、对比度、图表标签与数字格式。",
+        "有内容的文档若渲染出全透明或均匀空白图像，判定为渲染器失败；检查一次即可，不得重读同一图像。空白结果后立即停止该任务的视觉检查：不得再次渲染/读取，不得换范围、页、sheet、DPI、输出格式、诊断导出或打印设置，也不得改环境修复。",
+        "若内容与结构检查通过，交付说明只加恰好一句视觉状态：英文 “Content and structure checks passed; visual inspection was not completed.” 或中文 “内容与结构检查通过；视觉检查未完成。” 不添加渲染/预览 bullet、不解释停止原因、不描述像素。",
+        "不得声称“所有检查都通过”或“视觉已验证”；内容/结构失败应单独报告。"
+      ],
+      "actors": [
+        "owner: Office render 技能维护者",
+        "contributors: 模型/执行者",
+        "reviewers: 请求发起者",
+        "automation: `progressive-loading.spec.ts:92-99` 只断言 authoring 技能请求中不出现 render 专用文本；空白止损行为没有自动测试，靠指令执行。"
+      ],
+      "steps": [
+        "判断是否存在外观类目标或用户明确的视觉请求。",
+        "确认当前模型接受图片；否则完成内容/结构检查并报告视觉不可用。",
+        "保存最终文件后，用绝对 node/cli 路径调用 render，批量请求页面/幻灯片，工作表用精确 sheet + range。",
+        "读取 JSON manifest 与图片，做具体视觉项检查。",
+        "遇到空白结果：检查一次，停止，保留源文件和已请求输出，写单句视觉状态。",
+        "按需交付文件，不交付检查用预览图或报告。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-selective-test",
+        "implementation": "`office-render/SKILL.md:1-31` 定义触发、目录、空白止损与措辞；`office-xlsx/SKILL.md:46-50`、`office-docx/SKILL.md:36-38`、`office-pptx/SKILL.md:60-62` 各自定义升级出口；`progressive-loading.spec.ts:92-99` 防止 render 文本泄漏进无关操作技能。",
+        "trust": "主要靠执行者遵守；测试只能证明技能加载边界，不能证明空白止损或视觉判断被执行。",
+        "failure": "跳过视觉检查会漏掉版式缺陷；空白后重试会浪费上下文并可能改坏环境；错误措辞会虚假宣称已验证。",
+        "exceptions": "用户明确跳过渲染；请求仅是导出图片时仍可交付图片，但不得声称完成了布局检查。"
+      },
+      "applicability": [
+        "when: Office 外观相关修改、图片导出或视觉检查请求。",
+        "preconditions: 有 LibreOffice Kit sidecar 与绝对 node/cli 路径; 当前模型可读图片（检查用）; 任务工作区可写",
+        "inapplicable: 纯数据/公式修改且无外观目标时不触发；纯 PDF 导出不需要 render。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.office-router-progressive; packaged-skill-contracts.office-authoring-delivery",
+        "related: packaged-skill-contracts.office-sidecar-consent"
+      ],
+      "migration": {
+        "strategy": "用“触发条件表 + 空白止损硬规则 + 单句状态模板”把视觉检查变成可验收的有限步骤。",
+        "implementation": "把外观触发条件写进每个 authoring 技能；为 render 技能固定临时目录命名、manifest 读取、空白判定与停止规则；在交付模板中只允许一句视觉状态。",
+        "requiredSupport": [
+          "LibreOffice Kit CLI",
+          "图片读取工具",
+          "临时目录清理",
+          "统一状态措辞"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.office-render-escalation",
+      "verification": {
+        "positive": [
+          {
+            "check": "修改 Excel 单元格填充色后加载 office-render，渲染精确 sheet/range，检查颜色与对齐后交付。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "渲染出均匀空白图像后只检查一次即停止，最终消息包含且仅包含规定的一句视觉状态。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "空白预览后继续换 DPI/范围重试，或声称视觉已验证，必须被评审拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "外观改动未加载 office-render 就交付，必须被评审拒绝。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "停止视觉检查后保留源文件与已请求输出，改为报告内容/结构检查结果与视觉未完成；必要时由用户决定后续。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "空白判定与单句措辞没有自动测试。",
+        "未运行渲染或图片检查；未验证 LibreOffice 与实际 Office 的差异。",
+        "当前模型图像能力需要运行时探测，技能正文只给条件分支。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.office-sidecar-consent",
+      "title": "Office sidecar 缺失时的用户同意与安装边界",
+      "sources": [
+        {
+          "path": "packages/skill/skill-office/assets/office/references/sidecar.md",
+          "start": 1,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-render/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-export-pdf/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill-office/assets/office-recalculate/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Office 转换/渲染/重算依赖 LibreOffice Kit sidecar。直接下载、安装或改用系统 soffice/npx 会绕过用户授权，污染环境，或在受限会话中制造新的失败。",
+      "triggers": [
+        "Office 操作需要 render/recalculate/export-pdf 但 sidecar 缺失",
+        "`dsoffice` 不在 PATH",
+        "sidecar 安装失败或平台不匹配"
+      ],
+      "obligations": [
+        "先检查现有 LibreOffice Kit 安装是否能服务任务；PATH 上没有 `dsoffice` 不等于 sidecar 缺失。",
+        "若确实缺失且用户未授权，必须用可用的提问工具询问是否下载 Office 转换引擎；工具不可用时在对话中询问。等待明确同意后才下载/安装。",
+        "用户拒绝时，继续不需要引擎的工作，并报告不可用的操作。",
+        "同意后安装 `@deepseek-ai/libreoffice-kit` 与匹配的 engine 包，engine 版本取主包 optional dependencies 声明的版本。",
+        "在任务本地 tools 目录用可用的 npm/pnpm 安装，带 `--ignore-scripts`；把包管理器 cache/store 也放在该可写任务目录（npm 用 `--cache <task-tools-directory>/.npm-cache`）。",
+        "按运行 CLI 的 Node 进程的平台/架构选择 engine：Windows x64、Windows ARM64、macOS arm64、macOS x64；无匹配原生包（含 Linux）用 wasm。优先原生，WASM 需其包支持当前平台；安装前检查平台限制。",
+        "复用 `load_workspace_dependencies` 提供的 Node/pnpm，或用户配置的版本。下载 sidecar 的许可不包含安装 Python/Node/包管理器；缺这些前置时解释所需内容。",
+        "按路径运行新安装的 `dsoffice` 或 `lib/cli.js`，不要假设 PATH 已更新；继续前检查 `dsoffice capabilities`。",
+        "不得调用系统 soffice、使用 npx、安装替代渲染器，或用构建替代管线绕过已安装 sidecar 的失败。"
+      ],
+      "actors": [
+        "owner: Office 技能维护者",
+        "contributors: 执行者; 用户（授权）",
+        "reviewers: 用户",
+        "automation: 无自动门禁；用户同意是人工/工具确认。"
+      ],
+      "steps": [
+        "探测现有 sidecar 能力。",
+        "缺失时提问并获得明确同意。",
+        "确定 Node 进程平台/架构与对应 engine 包。",
+        "在任务本地目录安装并缓存，使用 `--ignore-scripts`。",
+        "按绝对路径运行并检查 capabilities。",
+        "失败时报告限制，不切换到系统 soffice/npx。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-user-approval",
+        "implementation": "`office/references/sidecar.md:1-17` 规定同意、平台选择、安装目录与失败边界；三个操作技能在开头引用该文件并禁止系统 soffice/npx。",
+        "trust": "依赖执行者遵守与用户确认；没有自动化验证安装来源或权限边界。",
+        "failure": "未经同意下载会侵犯用户授权；PATH 假设会导致命令找不到；平台错配会安装失败。",
+        "exceptions": "已有可用的 LibreOffice Kit 安装时无需下载；用户拒绝时只执行不依赖引擎的工作。"
+      },
+      "applicability": [
+        "when: Office 渲染、重算或 PDF 导出需要 sidecar 而当前环境缺失。",
+        "preconditions: 能确认现有安装状态; 能向用户提问; 有任务本地可写目录",
+        "inapplicable: 仅做 docx/xlsx/pptx 内容编辑且不需要渲染/重算/导出时不触发。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.office-render-escalation",
+        "related: packaged-skill-contracts.office-authoring-delivery"
+      ],
+      "migration": {
+        "strategy": "把 sidecar 安装写成“探测→询问→本地安装→能力检查”的显式流程，绝不默认下载或替换渲染器。",
+        "implementation": "在目标技能中维护平台→engine 包映射；提供任务本地 tools 目录与缓存参数；把用户同意作为前置；失败时保留源文件并报告限制。",
+        "requiredSupport": [
+          "用户提问工具",
+          "npm/pnpm 与 Node",
+          "平台检测",
+          "任务本地可写目录"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.office-sidecar-consent",
+      "verification": {
+        "positive": [
+          {
+            "check": "sidecar 缺失时先询问用户；同意后在任务本地安装匹配 engine，`dsoffice capabilities` 成功后再执行操作。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "用户拒绝下载时继续完成内容编辑，并报告渲染/导出不可用。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "未经同意自动下载 sidecar，必须被评审拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "有 sidecar 却调用系统 soffice 或用 npx 绕过失败，必须被评审拒绝。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "安装失败或平台不匹配时保留源文件，清理任务本地失败产物，报告所需平台/前置，不切换到系统渲染器。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未实际安装或运行 sidecar；版本、平台映射与 WASM 支持来自指令文本。",
+        "用户同意流程依赖具体会话工具，未在本域验证。",
+        "没有自动检查 sidecar 来源或 `--ignore-scripts` 是否真的传入。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.invalid-asset-rejection",
+      "title": "无效技能资产在注册前拒绝",
+      "sources": [
+        {
+          "path": "packages/skill/skill-office/src/index.ts",
+          "start": 37,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-office/src/index.ts",
+          "start": 69,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/skill-office.spec.ts",
+          "start": 150,
+          "end": 186,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/skill-office.spec.ts",
+          "start": 39,
+          "end": 62,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/tests/skill-office.spec.ts",
+          "start": 121,
+          "end": 143,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/src/acl-skill.ts",
+          "start": 26,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/acl-skill.spec.ts",
+          "start": 1,
+          "end": 69,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/skill-composition.spec.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "test"
+        }
+      ],
+      "problem": "打包资产的缺失或 frontmatter 畸变如果被静默接受，会注册一个没有描述或没有正文的技能，模型无法正确路由；更糟的是部分注册后留下半套候选，导致目录与文件不一致。",
+      "triggers": [
+        "新增/移动技能资产目录",
+        "修改 SKILL.md frontmatter",
+        "配置 assetRoot 或打包应用的外部资源目录",
+        "技能卸载/重新加载"
+      ],
+      "obligations": [
+        "assetRoot 必须是绝对目录；相对路径在注册前直接抛错（`assetRoot must be an absolute directory`）。",
+        "每个技能目录必须有 SKILL.md；缺失时注册前抛错并包含路径。",
+        "SKILL.md 必须以 YAML frontmatter 开头，且 frontmatter 必须被解析为对象；缺失/未闭合/非对象都拒绝。",
+        "`description` 必须是非空字符串；空、null、标量、数字等一律拒绝（`has no description`）。",
+        "frontmatter 解析必须支持引号、折叠块与 CRLF；正文中类似元数据的行不得被误当 frontmatter。",
+        "注册是原子的：任一资产无效时不得留下部分候选；测试在失败后断言 `ctx.skills.list()` 为空。",
+        "provider 卸载必须移除候选与自有资源副本；ACL 技能把资源复制到临时目录并在 dispose 时删除，重新挂载时重新注册。",
+        "操作技能（render/recalculate/export-pdf）的 node/cli 路径在加载时校验：必须是绝对路径且是文件；SEA/Electron 未提供 standalone Node 时拒绝；`cli: false` 明确禁用并在正文说明。",
+        "不得为了“先能加载”而接受无效资产或提供空描述回退。"
+      ],
+      "actors": [
+        "owner: 技能 provider 维护者",
+        "contributors: 资产作者",
+        "reviewers: 评审者",
+        "automation: `skill-office.spec.ts` 与 `acl-skill.spec.ts` 在注册/加载时断言抛错与空目录；`skill-composition.spec.ts` 断言真实 Loader 组合下的挂载/卸载。"
+      ],
+      "steps": [
+        "在注册前读取每个 SKILL.md 并解析 frontmatter。",
+        "校验绝对 assetRoot、文件存在、frontmatter 对象与非空 description。",
+        "构造候选时统一 resourceBase 分隔符；任何失败在注册前抛出。",
+        "验证失败后注册表为空；卸载后候选与临时资源消失。",
+        "对操作技能额外校验 node/cli 绝对路径与文件类型，并区分 disabled 与配置错误。"
+      ],
+      "enforcement": {
+        "mode": "automated-test",
+        "implementation": "`packages/skill/skill-office/src/index.ts:37-45 与 packages/skill/skill-office/src/index.ts:69-95` 的 `parseSkill` 与 `apply` 做前置校验；`packages/skill/skill-office/tests/skill-office.spec.ts:150-186` 覆盖相对 assetRoot、缺 SKILL.md、缺 frontmatter、六种无效 description；`packages/sandbox/sandbox-windows-acl/tests/acl-skill.spec.ts:56-69` 覆盖提取资源中的无效 SKILL.md；`skill-composition.spec.ts` 覆盖真实组合的卸载。",
+        "trust": "测试直接调用真实 provider 与 Loader 组合，能证明这些失败路径被拒绝；但不覆盖所有 YAML 边缘语法或所有打包形态。",
+        "failure": "无效资产会导致注册抛错，整个 provider 不注册；若错误被捕获后继续，会留下空/部分目录，测试会以空目录断言失败。",
+        "exceptions": "`cli: false` 是显式禁用，不是无效资产；正文应显示 disabled 说明而不是拒绝加载。"
+      },
+      "applicability": [
+        "when: 任何从目录/打包资源注册技能的 provider。",
+        "preconditions: 注册前可读取资产; 有明确的失败传播路径",
+        "inapplicable: 运行时动态注册的虚拟技能不读资产，但仍需校验 name/description/invocation。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.referenced-resource-integrity",
+        "related: packaged-skill-contracts.invocation-policy; packaged-skill-contracts.single-source-distribution",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把资产校验放在 provider 构造候选之前，并把失败设计成“整批拒绝、注册表为空”，不做部分成功。",
+        "implementation": "实现严格的 frontmatter 解析与绝对路径校验；为每个失败分支写拒绝测试；卸载时清理临时资源；操作技能额外校验可执行路径。",
+        "requiredSupport": [
+          "YAML 解析器",
+          "绝对路径/文件类型检查",
+          "注册表空状态断言",
+          "资源清理生命周期"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.invalid-asset-rejection",
+      "verification": {
+        "positive": [
+          {
+            "check": "以有效 assets 注册 Office 七个技能，目录列出全部七个；卸载后目录为空。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把资产复制到含中文与空格的临时目录并通过真实 Loader 组合加载，resourceBase 指向外部目录且正文正确。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "`assetRoot: 'assets'` 相对路径必须在注册前抛 `absolute directory`。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "删除 office-docx/SKILL.md 后注册必须抛错且目录为空。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "frontmatter 为 `null`、标量、缺 name、`description: 3` 或空字符串时必须抛 `has no description`。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复资产路径/frontmatter 后重新注册；确认失败尝试没有留下候选或临时目录。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未运行测试；YAML 解析器为 `yaml` 包，具体边缘行为未逐项验证。",
+        "ACL 技能的 `mode: 0o600` 在 Windows 上的实际 ACL 语义未验证。",
+        "未覆盖打包后 SKILL.md 缺失的运行时路径。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.windows-acl-one-shot-repair",
+      "title": "Windows ACL 诊断：一次运行内诊断、修复、验证与回滚",
+      "sources": [
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/SKILL.md",
+          "start": 1,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/scripts/diagnose-windows-sandbox-acl.ps1",
+          "start": 58,
+          "end": 74,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/scripts/diagnose-windows-sandbox-acl.ps1",
+          "start": 236,
+          "end": 321,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/scripts/diagnose-windows-sandbox-acl.ps1",
+          "start": 339,
+          "end": 399,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/assets/diagnose-windows-sandbox-acl/scripts/diagnose-windows-sandbox-acl.ps1",
+          "start": 491,
+          "end": 798,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 1,
+          "end": 29,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 421,
+          "end": 534,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 536,
+          "end": 655,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 656,
+          "end": 775,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 777,
+          "end": 848,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/src/acl-skill.ts",
+          "start": 44,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/README.zh.md",
+          "start": 177,
+          "end": 177,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 126,
+          "end": 175,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 176,
+          "end": 243,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 244,
+          "end": 297,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 298,
+          "end": 376,
+          "kind": "test"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts",
+          "start": 377,
+          "end": 420,
+          "kind": "test"
+        }
+      ],
+      "problem": "Windows sandbox 的文件访问拒绝可能来自缺少 WRITE_DAC/WRITE_OWNER、外部 AppContainer 包的 allow ACE，或二者叠加。分开诊断与修复会让树处于半修复状态；手工改 ACL、提权或扩大范围又会造成不可逆的权限破坏。",
+      "triggers": [
+        "Windows 上 DSH sandbox 出现非预期拒绝：工作区写入/列目录失败，或本应可读的路径读不了",
+        "sandbox 在工作区根报告 provisioning 失败",
+        "出现 `REPAIR_REFUSED`、`GRANT_FAILED`、`RESTORE_FAILED` 或 `nextAction` 非成功"
+      ],
+      "obligations": [
+        "脚本没有模式开关：一次调用读取 `-Path` 及其所有祖先，并在同一次运行内修复它能证明的问题；不得拆成诊断调用与修复调用，不得为同一次修复询问两次。",
+        "`-Path`、`-AllowRoot`、`-Out` 语义固定：`-Out` 必须持久且用户自有，优先放在失败工作区旁；绝不能用技能资源目录（技能卸载时会删除）。一次调用只传一个路径。",
+        "必须在**非受限**上下文中运行并为此请求一次审批；受限运行会把 sandbox 自身的限制误报为缺少权限。非受限不等于提权，不得通过 UAC/runas 提权。",
+        "`-AllowRoot` 约束所有修改：对象只能是该目录本身或严格位于其下；重解析点（junction/symlink）路径、盘符根、用户 profile 根、Windows 目录、`Packages`、`WindowsApps` 等受管应用树一律拒绝。",
+        "诊断类拒绝只针对非预期拒绝；工作区外写入、read-only 模式写入、受限 token 的 `spawn EPERM`、ConstrainedLanguage 错误属于预期拒绝，应解释而不是修 ACL。",
+        "每次 DACL 修改前先备份（`acl-backup-<id>.json` + 独立 `.ps1` + `ROLLBACK` 命令），修改后重新读取验证；只信 `verification` 记录，不信 `completed` 动作。",
+        "失败/拒绝/验证失败时，按逆序恢复本次调用所有已尝试的 DACL 修改并停止；不得重复调用或另起一次修复；不得手工删除 deny ACE。",
+        "`RECAP` 是 stdout 尾部必读摘要；完整记录在 `acl-report-*.jsonl`。根据 `details.nextAction`：`verify_original_confined_operation` 表示修复已验证，回受限环境重跑原操作；`stop` 表示未修复或因拒绝停止；`restore_pending_then_stop` 表示回滚未验证，按顺序运行打印的恢复命令后停止。",
+        "ACL 中存在 deny ACE 本身不证明因果，脚本永不删除 deny；DSH 的 `S-1-4-*` grants 与 Everyone 的 `DeleteSubdirectoriesAndFiles` deny 是预期项。",
+        "审批请求必须用用户语言的平实措辞：说明脚本会碰哪个文件夹、在缺权处加入当前用户 full-control、移除外部包条目、文件内容和所有者不变、打印的恢复命令可撤销每项修改；不要在请求中出现错误码、`WRITE_DAC`/`WRITE_OWNER`、`S-1-15-2-*`、`icacls`、ACL/ACE、verdict 名称或开关。",
+        "停止的运行仍欠用户一个决定：说明阻塞对象与缺少的权利/ACE、改了什么/回滚了什么、按序恢复命令与报告路径；请用户临时切换到 full access（完全权限），并请其把会话作为反馈发出。",
+        "提取的诊断脚本与恢复脚本用户可写，不得作为提权入口；诊断无法修复 Low 完整性标签、调用者缺少 WRITE_DAC 或非正常退出后的资源残留。",
+        "测试/运行前置：必须先确认 TEMP/TMP 祖先链的 classify 结果 `packageObjects` 为空，否则套件报错并提示改用干净临时根；该套件绝不修复宿主 ACL。",
+        "scratch 目录必须对 mkdtemp 结果调用 realpathSync.native 后再使用，避免 Windows 8.3 短路径别名与 PowerShell 长路径不一致。",
+        "清理 scratch 前必须递归把当前用户 F 授予其内目录，再删除；否则 grant 用例撤掉的权利会使清理失败。",
+        "补 grant 时必须保留 owner 与完整性标签；只补缺失的 full-control，不重建整个 DACL。",
+        "若 inherit-only ACE 已经授予缺失权利，必须保留该 ACE；不能因为它不是显式 allow 就删除。",
+        "同一 SID 的 deny 与 allow 共存时只删除 allow；`otherEntriesUnchanged` 不得把幸存的 deny 误判为伴随修改。",
+        "显式包 ACE 的删除按祖先优先（parent→child）；修复验证按叶到根（leaf→child→parent）重读；观察链从目标一直覆盖到文件系统根。",
+        "一次调用以工作区根为 -Path 时必须扫描并修复其下所有包 ACE 源（subtree_scan）；classify 的 `details.packageObjects` 必须列出这些源，`scanTruncated` 必须如实反映是否截断。",
+        "每次修改产生一对 `acl-backup-<32hex>.json` + `.ps1`，整次运行只有一个 `acl-report-<32hex>.jsonl`，不得产生 `.txt`；备份记录键恰为 [Dacl, Observed, Path, Protected]，Dacl/Observed 为 SDDL（`D:` 前缀），Protected=false，Path 为被修对象。",
+        "健康对象必须 `VERDICT=NOT_THIS_CLASS`、`decision repair skipped`，且 ACL 字节不变；SUMMARY 的 FIXED/GRANTED/REFUSED/RESTORED 计数必须与实际记录一致。",
+        "验证必须来自修改后的重读：verification grant/fix 为 verified，`remainingPackageAces` 为空且 `otherEntriesUnchanged: true`；最后一条记录 `details.nextAction` 必须是 `verify_original_confined_operation`。",
+        "对象位于 allowRoot 之外时仍必须拒绝且不改 ACL；本次新增的 grant/包 ACE 用例都必须保留既有边界语义。"
+      ],
+      "actors": [
+        "owner: sandbox Windows ACL 维护者",
+        "contributors: 执行者（模型）; 用户（审批与 full access 决策）",
+        "reviewers: 权限/安全评审者",
+        "automation: `diagnose-script.spec.ts` 在 Windows + pwsh 可用时直接运行脚本，覆盖拒绝、回滚、恢复、验证与幂等；非 Windows 跳过。"
+      ],
+      "steps": [
+        "在受限环境重复一次失败操作以确认症状；区分预期与非预期拒绝。",
+        "用平实语言请求一次审批，说明范围、修改、不变项与恢复命令。",
+        "在非受限上下文运行唯一命令：`-Path <失败路径> -AllowRoot <授权目录> -Out <恢复目录>`。",
+        "先读 `RECAP`，必要时查 `acl-report-*.jsonl` 的具体记录。",
+        "按 `nextAction` 决策：验证成功则回受限环境重跑原操作；停止则报告阻塞与恢复信息。",
+        "若已修复但原操作仍失败，从新观察继续；若更深路径仍被拒，对那个路径再运行一次同一命令（一次调用、一次审批）。"
+      ],
+      "enforcement": {
+        "mode": "automated-test-plus-instruction",
+        "implementation": [
+          "脚本：`param` 与 SID/SCAN_LIMIT（58-74）、危险根与拒绝（236-321）、备份/恢复验证（339-399）、主流程与恢复/摘要（491-798）。测试：`diagnose-script.spec.ts` 直接覆盖越界拒绝、重解析点、受管树、回滚逆序、恢复守卫、不可读/不完整观察、幂等；`acl-skill.spec.ts` 与 `skill-composition.spec.ts` 覆盖技能注册与卸载。",
+          "`diagnose-script.spec.ts:126-175` 建立 scratch/stamp/dispose 与干净祖先前置检查；`176-243` 覆盖包 ACE 单次删除与恢复记录布局、健康目录 no-op；`244-297` 覆盖 grant 并保留 owner/完整性标签、grant+fix 同次运行；`298-376` 覆盖祖先优先删除/叶到根验证、子树扫描分类；`377-420` 覆盖 inherit-only 保留与同 SID deny 保留。"
+        ],
+        "trust": [
+          "测试在真实 Windows + pwsh 上运行脚本并读取 SDDL，证据强；但 `describe.skipIf(!isWin32 || !pwshAvailable())` 会在其他平台静默跳过，不能据此声称跨平台通过。",
+          "这些断言直接读取 Windows SDDL、备份 JSON 与 JSONL 记录；本次未在 Windows+pwsh 上执行，且 skipIf 使其他平台的绿测不构成证据。"
+        ],
+        "failure": [
+          "缺少 `-AllowRoot`/`-Out`、越界、重解析点、受管树、观察不完整、缺 WRITE_DAC、验证失败都会以退出码 2 停止并（若已改）回滚；回滚失败为 `restore_pending_then_stop`。",
+          "任何 owner/标签丢失、inherit-only 被删、共同 SID deny 被当成副作用、报告文件数或记录键不符、摘要计数不符，都是契约失败；非干净 TEMP 会直接让套件失败。"
+        ],
+        "exceptions": "`-Restore` 只恢复一个路径且需要 `-AllowRoot` 与 WRITE_DAC；`-AllowRoot` 等于对象本身时允许修复自身；用户拒绝审批时报告未诊断并停止。"
+      },
+      "applicability": [
+        "when: Windows 上 DSH sandbox 出现与文档承诺不一致的文件访问拒绝。",
+        "preconditions: Windows + PowerShell 7（pwsh）; 能请求一次非受限执行审批; 有持久、用户自有的恢复目录; 知道授权目录边界",
+        "inapplicable: 预期 confinement 拒绝（越界写入、read-only、受限 token spawn、ConstrainedLanguage）不需要 ACL 修复；非 Windows 平台不适用。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.invalid-asset-rejection",
+        "related: packaged-skill-contracts.referenced-resource-integrity; packaged-skill-contracts.single-source-distribution",
+        "crossDomain: subsystem-contracts-1; subsystem-contracts-2"
+      ],
+      "migration": {
+        "strategy": "保留“一次运行、边界授权、先备份后修改、重读验证、失败逆序回滚、只信 verification”的结构；不要移植具体 SID 常量而不理解其含义。",
+        "implementation": "在目标仓库提供单一诊断脚本：读取路径与祖先、分类 verdict、按 allowRoot 修复、写 JSONL 报告与 RECAP；为每类拒绝、回滚、恢复、幂等写 Windows 测试；技能正文负责审批措辞与停止决策。",
+        "requiredSupport": [
+          "PowerShell 7",
+          "WRITE_DAC 检查原生 API",
+          "JSONL 报告与恢复脚本",
+          "Windows 测试环境（含 pwsh）",
+          "用户审批与 full access 流程"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.windows-acl-one-shot-repair",
+      "verification": {
+        "positive": [
+          {
+            "check": "对带外部包 allow ACE 的目录运行一次脚本，输出 `FIXED`，`verification fix` 为 verified，恢复记录与 ROLLBACK 命令存在。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "对缺 WRITE_DAC/WRITE_OWNER 的目录运行一次脚本，`GRANTED` 且重读验证两项权利均存在。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "用 `-Restore` 从记录恢复，重读 own ACE 与保护状态与备份一致。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "带外部包 allow ACE 的对象单次运行输出 FIXED、verification fix verified，生成一对备份+脚本与一个 jsonl，记录键与 SDDL 前缀符合约定。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "缺 WRITE_DAC/WRITE_OWNER 的对象补 F 后 owner 与完整性标签不变；inherit-only 授予缺失权利的 ACE 保留；同 SID 的 deny 保留且只删 allow。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "仅命名工作区根时，classify 的 packageObjects 与 subtree_scan.packageSources 都列出深层源，FIXED 计数为 2、GRANTED 为 1，末条 nextAction 为 verify_original_confined_operation。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "`-AllowRoot` 之外的路径必须 `REPAIR_REFUSED`、退出 2，且不产生任何 ACL 修改。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "经过 junction 的路径或 `Packages`/`WindowsApps` 树必须因 reparse point/managed application directory 被拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "deny ACE 阻塞 WRITE_OWNER 时必须 `GRANT_FAILED`、逆序恢复并 `nextAction: stop`。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "健康对象必须 NOT_THIS_CLASS、repair skipped 且 ACL 不变；把健康对象当成本类修复是失败。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "对象在 -AllowRoot 外或 allowRoot 不满足约束时必须拒绝且不改 ACL；本次补读范围内未重复验证该既有用例，只确认新用例未削弱它。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "回滚失败时输出 `restore_pending_then_stop` 与按序恢复命令；运行这些命令后 `verification restore: verified`。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "恢复验证在既有 421-848 用例中更完整；本补充只新增记录布局与配对事实。",
+            "scenario": "每个变更都有可用 ROLLBACK 命令与配对备份；按命令恢复后 own ACE 与保护状态回到修改前。"
+          }
+        ]
+      },
+      "limitations": "本次补读只到 420 行，恢复/拒绝主流程仍由既有 421-848 用例覆盖；所有结论是测试源码证据，未在 Windows+pwsh 执行。",
+      "origin": "source",
+      "sourceBacked": true,
+      "exceptions": [
+        "套件使用 describe.skipIf(!isWin32 || !pwshAvailable())，非 Windows/无 pwsh 时静默跳过；跳过不等于通过。",
+        "fixture 使用真实宿主 ACL；如果 TEMP 祖先链已有个体包 allow ACE，套件会主动失败而不是替宿主清理。"
+      ]
+    },
+    {
+      "id": "packaged-skill-contracts.invocation-policy",
+      "title": "模型选择加载与宿主注入的调用策略",
+      "sources": [
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 44,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 126,
+          "end": 137,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 439,
+          "end": 457,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 470,
+          "end": 535,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 707,
+          "end": 800,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-skill/src/index.ts",
+          "start": 78,
+          "end": 190,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-skill/src/index.ts",
+          "start": 196,
+          "end": 232,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-skill/src/index.ts",
+          "start": 256,
+          "end": 320,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-skill/src/index.ts",
+          "start": 385,
+          "end": 433,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 239,
+          "end": 334,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 905,
+          "end": 1019,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 1022,
+          "end": 1128,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/skill-office/README.zh.md",
+          "start": 90,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 353,
+          "end": 396,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 397,
+          "end": 482,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 483,
+          "end": 526,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 527,
+          "end": 630,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 631,
+          "end": 685,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 686,
+          "end": 751,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 752,
+          "end": 803,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-skill/tests/tool-skill.spec.ts",
+          "start": 804,
+          "end": 904,
+          "kind": "test"
+        }
+      ],
+      "problem": "同一个技能目录同时服务模型和人类命令。若没有统一策略，模型可能看到只该由用户触发的技能，或用户显式调用的技能被模型重复加载；更危险的是，加载前不检查策略会导致未授权正文被返回。",
+      "triggers": [
+        "技能 frontmatter 声明 `disable-model-invocation` 或 `user-invocable`",
+        "模型调用 `skill` 工具",
+        "用户输入 `/name` 显式调用",
+        "技能目录发生变化（新增/删除/正文更新）"
+      ],
+      "obligations": [
+        "每个技能都有 `invocation: { modelInvocable, userInvocable }`，两种组合各自过滤；注册表本身保持 invocation-neutral，由消费边界决定。",
+        "frontmatter 的 `disable-model-invocation: true` 使 `modelInvocable=false`；`user-invocable: false` 使 `userInvocable=false`；省略字段表示允许对应表面。",
+        "只接受 YAML 布尔与大小写不敏感的 true/false、yes/no、on/off、1/0；非法拼写或非布尔值必须丢弃整个技能并告警，不得静默允许。",
+        "模型侧：会话目录只列 `modelInvocable` 技能；`skill` 工具在加载前检查候选策略，加载后再次检查定义策略；被拒时返回错误且不泄露正文。",
+        "模型侧目录只携带 name 与截断/归一化的 description（默认上限 500 字符），不携带 whenToUse、source、resourceBase 或正文；目录是 durable 的 `skill-catalog` 源记录，用 entries 摘要判断是否重发。",
+        "宿主注入侧：`/name` 手势只扫描 `source.kind === 'user'` 的消息文本块；未知名字或 `userInvocable=false` 保持普通行文；手势正则要求空白边界，排除路径、分数与断边界。",
+        "`disable-model-invocation` 技能的唯一入口是用户显式 `/name`；模型目录与 `skill` 工具永不暴露它。",
+        "注入顺序：先背景（工作区规则、runtime policy、目录），最后才是被调用技能正文；注入源为 `skill-invocation`、`form: 'instructions'`，目录结尾提示模型遵循该块而不要再次调用 `skill`。",
+        "存在 `skill` 工具遮蔽（同名不同定义）时，目录不得附加到别的工具；工具被 restrict 掉时目录也不出现。",
+        "get 加载后若定义 name 与候选不一致，使缓存失效并返回 undefined，避免返回错位正文。",
+        "PTC/程序化工具调用必须输出或返回完整的 `tools.skill(...)` 结果，说明才会进入模型上下文；恢复与 fork 依赖既有会话历史及工具声明更新机制，不重放技能。",
+        "目录发布只在所有 provider discovery 完整时发生；任一 provider 不完整必须保留 last-good 目录，不得发布 partial catalog，也不得因不完整快照发空 tombstone。",
+        "首次快照不完整时不记录任何目录消息；恢复后若快照仍为空，也不发空目录消息（空基线不构成待发布变化）。",
+        "目录身份只来自 durable `source.entries`：正文 prose 不参与判定；来源不是本插件 skill-catalog 的同形消息既不算已发布也不抑制发布；entries 缺失、null、非数组或条目形状错误时按不可识别跳过，不得让步骤失败。",
+        "同一 step 内已有拟议目录时：内容未变化则去重（返回 enter 且不追加消息）；快照变化则用新消息替换旧拟议并保留同批其他消息；首次空基线前必须移除陈旧拟议目录。",
+        "新增或描述变化发布完整替换 entries；全部移除发布空 tombstone（明确“当前无可用技能”）；内容不变不发布。",
+        "压缩/隐藏 durable 目录消息后，下一步必须重建当前目录。",
+        "正文变化不得触发目录重发；skill 工具每次加载必须读取并返回最新正文。",
+        "只有调用 agent 实际可见本插件注册的 skill 工具时才附加目录提示；工具被 restrict 剥除，或被 scope 内同名工具遮蔽时，不得把提示附加到该工具或该 agent。分层 scope 的技能可见性必须按调用 agent 的 registry 解析，外部 agent 不得加载仅 scope 可见的技能。",
+        "catalogDescriptionMaxLength 必须 >=3，否则插件加载失败。",
+        "技能加载输出必须按 resourceBase 渲染资源提示：directory 给相对路径基准、url 给相对 URL 基准、opaque 给描述、缺省且存在 provider 时声明由 provider 管理；未知 kind 必须以 INVALID_TOOL_OUTPUT 拒绝，不得输出无资源提示的正文。"
+      ],
+      "actors": [
+        "owner: skill registry 与 tool-skill 维护者",
+        "contributors: 技能作者",
+        "reviewers: 评审者",
+        "automation: `tool-skill.spec.ts` 覆盖目录过滤、策略检查顺序、未知/禁用错误、`/name` 注入、伪造来源、去重与下游 reject；`skill` 注册表实现做候选/定义校验。"
+      ],
+      "steps": [
+        "为技能声明 invocation 策略（或省略表示两者允许）。",
+        "模型侧：先列目录，再按名字调用 `skill`；工具检查策略后加载并渲染。",
+        "用户侧：输入 `/name`；pre-step 监听器只从用户文本提取手势，加载用户可调用技能并追加 instructions 注入。",
+        "目录变化时重新计算 entries 摘要；变化才发 replacement catalog，删除时发空 tombstone。",
+        "恢复/分叉会话时从 durable catalog entries 识别，不解析模型措辞。",
+        "每个 step 先取完整 skill 快照；不完整则沿用 last-good 目录并不发布任何 catalog 消息。",
+        "完整快照与最近可见 durable entries 比较：无变化不发布；新增/描述变化发全量替换；全部移除发空 tombstone；旧拟议目录按同一 step 规则去重或替换。",
+        "从 durable entries 恢复目录身份，不解析正文措辞；畸形记录跳过。加载正文时重新读取 locator，不复用目录摘要。"
+      ],
+      "enforcement": {
+        "mode": "automated-test",
+        "implementation": [
+          "注册表：`packages/skill/skill/src/index.ts:44-54、packages/skill/skill/src/index.ts:126-137、packages/skill/skill/src/index.ts:439-457、packages/skill/skill/src/index.ts:470-535、packages/skill/skill/src/index.ts:707-800`；工具与注入：`packages/skill/tool-skill/src/index.ts:78-190、packages/skill/tool-skill/src/index.ts:196-232、packages/skill/tool-skill/src/index.ts:256-320、packages/skill/tool-skill/src/index.ts:385-433`；测试：`packages/skill/tool-skill/tests/tool-skill.spec.ts:239-334、packages/skill/tool-skill/tests/tool-skill.spec.ts:905-1019、packages/skill/tool-skill/tests/tool-skill.spec.ts:1022-1128`。",
+          "本次新增证据来自 `tool-skill.spec.ts:353-904`：不完整/空基线（353-396）、拟议目录去重与清理（397-482）、增删替换与 tombstone（483-526）、durable entries 身份/畸形记录/缺失事件（527-630）、compaction 与正文刷新（631-685）、分层 scope 与 last-good（686-751）、restrict/遮蔽与描述上限（752-803）、cwd 加载与资源提示/非法 resourceBase（804-904）。运行时实现位于既有 sources 列出的 tool-skill/src/index.ts。"
+        ],
+        "trust": [
+          "测试覆盖策略检查顺序、拒绝不泄露正文、手势来源限制与目录过滤；不覆盖真实模型是否会遵守目录提示。",
+          "测试断言了消息序列、source.entries、错误码与输出文本；本次未执行测试，也不证明真实压缩/恢复或真实模型行为。"
+        ],
+        "failure": [
+          "策略检查失败会返回工具错误；若绕过会在目录中暴露本应隐藏的技能，或注入非用户来源的文本。",
+          "不完整发现若发布 partial catalog 会暂时隐藏技能；解析 prose 判断发布会导致重复注入；忽略 resourceBase 会让模型按错误基准解析相对资源。"
+        ],
+        "exceptions": "`disable-model-invocation` 技能仍可由用户显式调用；`user-invocable: false` 技能仍可由模型加载。"
+      },
+      "applicability": [
+        "when: 任何同时服务模型与用户命令的技能系统。",
+        "preconditions: 技能注册表保留 invocation 元数据; 有模型工具与用户命令两个消费边界; 能区分消息来源",
+        "inapplicable: 只有单一模型接口、没有用户显式调用的系统可省略 user 策略，但仍应保留模型可见性控制。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.invalid-asset-rejection",
+        "related: packaged-skill-contracts.office-router-progressive; packaged-skill-contracts.single-source-distribution",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把 invocation 策略放在注册表数据里，把过滤放在两个消费边界；加载前与加载后都检查，避免目录/定义竞态。",
+        "implementation": "实现 `modelInvocable`/`userInvocable` 字段与校验；模型目录只投影 name/description；`skill` 工具做加载前后策略检查；用户手势监听器限定 user 来源与空白边界；用 durable entries 摘要控制目录重发。",
+        "requiredSupport": [
+          "frontmatter 布尔解析",
+          "模型工具注册",
+          "pre-step 注入管线",
+          "durable session catalog 记录",
+          "来源类型校验"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.invocation-policy",
+      "verification": {
+        "positive": [
+          {
+            "check": "注册 both/model-only/user-only/trusted-only 四种策略，目录只显示 both 与 model-only，用户命令只显示 both 与 user-only。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "用户输入 `/hidden-demo ...`，该 disable-model-invocation 技能被注入为最后一条 instructions，且目录/工具不暴露它。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "恢复会话时从 durable catalog entries 识别并只在摘要变化时重发。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "完整目录建立后，任一项 provider list 抛错时目录消息数不变（保留 last-good）；provider 恢复后仅按新快照变化发布。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "描述变化或新增技能发布包含全部 entries 的替换消息；全部移除发布 empty tombstone 文本；无变化 step 不追加消息；压缩后下一步重建目录。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "正文变化不新增目录消息，随后 skill 工具返回最新正文；未知/禁用技能返回错误且不泄露正文。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "directory/opaque/url/provider 四类 resourceBase 输出对应资源提示；未知 kind 返回 INVALID_TOOL_OUTPUT 且错误指向 value.resourceBase。"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "模型对 `disable-model-invocation` 技能调用 `skill` 工具，必须返回错误且正文不出现。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 `/hidden-demo` 放进非 user 来源的消息，监听器不得注入。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "把 `/hidden-demo/refs`、`5/8` 或 `foo/hidden-demo` 当作手势，必须不匹配。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "畸形 durable entries（缺失/null/非数组/条目缺 name 或 description）必须被跳过且不使 step 失败。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "缺失的 Session 事件（eventAt 返回 undefined）必须抛出显式错误，而不是当作空历史重发目录。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "skill 工具被 restrict 或在 scope 内被同名遮蔽时，不得附加目录提示；把提示附到遮蔽工具上是失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "策略拒绝后保持原会话不变；用户改用显式 `/name`（若 userInvocable）或修正 frontmatter 后重新加载。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "从 durable entries 恢复时，只要最近可见 entries 与当前快照一致就不重发；外部来源的同形 prose 消息既不视为已发布也不阻止首次发布。"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "策略拒绝或加载失败后保持会话不变；修正 frontmatter/技能可见性后下一次完整快照按替换规则发布。"
+          }
+        ]
+      },
+      "limitations": "本次只读测试源码，未运行：消息序列与 INVALID_TOOL_OUTPUT 行为未在目标运行时复现；目录发布依赖 Session 的 compaction/fork 语义，真实模型是否遵守目录提示仍未验证。",
+      "origin": "source",
+      "sourceBacked": true,
+      "exceptions": [
+        "畸形 durable catalog 被当作不可识别而不是致命错误，避免恢复/分叉会话的每个后续 step 失败；但 Session 中缺失低于当前长度的事件必须抛出 `skill catalog cannot read seq N below the current Session length`，不得静默重同步。",
+        "scoped 同名 skill 工具与外部来源消息不携带本插件目录提示；工具被 deny 后该 agent 的目录提示完全省略，其他 agent 不受影响。"
+      ]
+    },
+    {
+      "id": "packaged-skill-contracts.single-source-distribution",
+      "title": "单一来源、别名分发与产品/仓库技能边界",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/tests/skills.spec.ts",
+          "start": 41,
+          "end": 69,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/README.md",
+          "start": 48,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/src/index.ts",
+          "start": 23,
+          "end": 33,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/skill-office/src/index.ts",
+          "start": 69,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/src/acl-skill.ts",
+          "start": 44,
+          "end": 76,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/experimental/webworker-runtime/tests/fixtures/vfs-example/workspace/.agents/skills/preview-tour/SKILL.md",
+          "start": 1,
+          "end": 8,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-skill-invocation-metadata.ts",
+          "start": 1,
+          "end": 122,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/tests/skill-composition.spec.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "test"
+        },
+        {
+          "path": "packages/preset/agent-preset/README.zh.md",
+          "start": 85,
+          "end": 85,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一个技能如果在仓库发现路径和发布包里各存一份，正文必然漂移；如果测试夹具被当成产品技能，会误加发布义务；仓库治理技能与产品技能又各有不同的元数据门禁。需要明确“谁拥有正文、谁只是别名、谁只是夹具”。",
+      "triggers": [
+        "在 `.agents/skills/` 与 `packages/**/skills/` 同时出现同名技能",
+        "修改 agent-experience 或新增 creator skill",
+        "为测试创建 SKILL.md 夹具",
+        "给仓库技能增加 Codex/Claude 元数据"
+      ],
+      "obligations": [
+        "agent-experience 的唯一正文在 `packages/preset/agent-preset/skills/agent-experience/SKILL.md`；仓库发现路径 `.agents/skills/agent-experience/SKILL.md` 只是相对符号链接，发布包包含普通文件。",
+        "不得维护第二份正文；测试断言 canonical 是普通文件、alias 解析后指向 canonical，并在 package 根与启用符号链接的 repository 根分别加载到同一内容。",
+        "Windows `core.symlinks=false` 会把链接物化为包含相对目标的普通文件；alias-not-copy 测试允许 `win32` 下非符号链接并要求内容解析后等于 canonical，但 repository-root 加载用例在该形态下跳过，包内 canonical 仍可加载。",
+        "打包技能由 provider 注册并显式设置 `source: 'bundled'`、provider 名、`rank: BUNDLED_SKILL_RANK`（600）与 `resourceBase`；运行时技能 rank 为 250，项目/用户来源的重复由分层规则处理。",
+        "ACL 技能的资源复制目录是 provider 私有的，dispose 时删除；不得把仓库技能或测试夹具当作它的资源来源。",
+        "测试夹具（如 `preview-tour`）只证明 dot directory/打包行为，不是产品技能，不承担发布、预算或调用策略义务；不得把它计入 12 个产品技能头（13 个 SKILL.md 头中有 1 个是夹具）。",
+        "仓库治理技能（`.agents/skills/**`）与打包产品技能分属不同发现根：前者由 skill-filesystem 从仓库根发现，后者由包内 provider 注册；不要把两者的 frontmatter 门禁混用。",
+        "`verify-skill-invocation-metadata` 只检查 `.agents/skills/<name>` 下同时存在 `agents/openai.yaml` 的仓库技能：校验 SKILL.md frontmatter 是对象、`disable-model-invocation`/`user-invocable` 是布尔、Codex `policy.allow_implicit_invocation` 是布尔，并要求 Claude manual-only 与 Codex manual-only 一致、manual-only 技能仍 user-invocable。",
+        "打包产品技能没有等价的跨产品元数据门禁；若产品需要，应另行实现，而不是声称现有脚本覆盖。",
+        "仓库发现 `agent-experience` 要求 checkout 启用符号链接；`core.symlinks=false` 时 Git 写纯文本，仓库发现不可用；创造模式使用包内普通文件，不依赖别名。"
+      ],
+      "actors": [
+        "owner: 技能发布维护者",
+        "contributors: 仓库治理维护者; 测试维护者",
+        "reviewers: 评审者; 发布核对者",
+        "automation: `skills.spec.ts:41-69` 校验单一来源/别名与双根加载；`verify-skill-invocation-metadata.ts` 只覆盖仓库技能；发布包普通文件形态未自动断言。"
+      ],
+      "steps": [
+        "确定技能正文的 canonical 位置（通常包内）。",
+        "在仓库发现路径只放相对符号链接；发布包放普通文件。",
+        "在技能注册时设置 source/provider/rank/resourceBase，避免与仓库发现技能混淆。",
+        "把测试夹具放在 tests/fixtures 下，并在覆盖记录中标记为非治理。",
+        "对仓库技能运行跨产品元数据门禁；对打包技能单独核对 frontmatter 与调用策略。"
+      ],
+      "enforcement": {
+        "mode": "automated-test-plus-separate-repository-gate",
+        "implementation": "`skills.spec.ts:41-69` 断言 canonical/alias 与双根加载；`verify-skill-invocation-metadata.ts:1-122` 实现仓库技能门禁；`skill/src/index.ts:23-33` 定义 rank 常量；`skill-office/src/index.ts:69-95` 与 `acl-skill.ts:44-76` 设置 bundled provider。",
+        "trust": "单一来源与双根加载由测试覆盖；跨产品元数据门禁只覆盖仓库技能；发布包形态与夹具不被误用的边界靠目录约定与记录。",
+        "failure": "两份正文会漂移；把夹具当产品会引入不必要预算/发布义务；把仓库门禁当产品门禁会留下未检查的打包技能。",
+        "exceptions": "Windows 无符号链接时可物化为普通文件；测试夹具可只有最小正文。"
+      },
+      "applicability": [
+        "when: 一个技能同时需要在仓库内被开发者发现、又需要随产品发布。",
+        "preconditions: 存在两个发现根; 能控制打包内容; 测试可读 canonical 与 alias",
+        "inapplicable: 只在仓库内使用、不发布的治理技能不需要别名；纯测试夹具不进入产品清单。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.referenced-resource-integrity; packaged-skill-contracts.invalid-asset-rejection",
+        "related: packaged-skill-contracts.invocation-policy",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "先确定 canonical，再建链接/别名；用测试证明两个根加载同一内容；把产品、仓库治理、夹具三类的义务写清楚。",
+        "implementation": "在目标仓库建立包内 canonical 技能；仓库发现路径用相对符号链接（Windows 允许物化）；CI 校验链接目标与双根加载；仓库技能另跑跨产品元数据门禁；覆盖记录中显式标记夹具。",
+        "requiredSupport": [
+          "符号链接或可物化的别名机制",
+          "双根技能注册",
+          "跨产品元数据门禁",
+          "目录分类约定"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.single-source-distribution",
+      "verification": {
+        "positive": [
+          {
+            "check": "从 package 根与 repository 根分别加载 agent-experience，得到同一 canonical 内容与 realpath。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "在 Windows core.symlinks=false 的检出中，alias 是包含相对目标的普通文件，解析后仍等于 canonical。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "仓库技能同时有 SKILL.md 与 agents/openai.yaml 时，跨产品策略一致并通过门禁。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 `.agents/skills/agent-experience/SKILL.md` 写入第二份正文，单一来源测试必须失败。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "仓库技能的 `disable-model-invocation` 为 true 但 Codex 允许隐式调用，元数据门禁必须报告不一致。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除第二份正文，恢复相对链接/物化别名；修正仓库技能的 openai.yaml 使两产品策略一致后重跑门禁。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未验证发布 tarball 中 agent-experience 是普通文件；只读了指令与测试。",
+        "未运行 `verify-skill-invocation-metadata`，也不知道它是否在 CI 中执行。",
+        "本机 Windows 检出没有符号链接，alias 为普通文件；这是测试允许的形态，但不是所有平台都相同。",
+        "本机 Windows 检出的 alias 是 70 字节普通文件而非符号链接，因此 repository-root 加载用例在本机跳过；package-root 加载仍成立。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.plugin-creator-procedure",
+      "title": "插件/预设创建技能的操作流程与交付标准",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/SKILL.md",
+          "start": 1,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/editing-cordis-compositions/SKILL.md",
+          "start": 1,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/host-plugin.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/ui-plugin.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/mcp-bundle.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/practices.md",
+          "start": 1,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/user-actions.md",
+          "start": 1,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-plugin-development/references/verification.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-composition-reference/SKILL.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/src/index.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "插件/预设创建涉及 profile 状态、Host/Client 代码、资源导出、Loader patch 与安装审批。若模型直接手写 profile 文件、跳过检查或把“安装成功”当“用户可见”，会留下不可维护或不可见的插件。",
+      "triggers": [
+        "用户要求新增/启用/配置/调试插件、bundle、页面、面板、tool 或 MCP 连接",
+        "用户要求创建/修改 agent preset",
+        "请求涉及没有其他目的地的视觉对象/装饰/小组件",
+        "已安装插件需要设计评审"
+      ],
+      "obligations": [
+        "实现用普通工作区文件编写 bundle，然后通过 `plugin_manager` `action: install_bundle` 与绝对包目录安装；不要手写 profile 的 package.json/cordis.patch.yml、不要在 `$DSH_HOME` 下创建包、不要在 profile 目录跑 pnpm。",
+        "每个 `plugin_manager` 动作（包括 list_plugins/list_bundles）在非 Full access 下都需要审批；只在结果决定下一步时调用。",
+        "设计/评审请求只报告发现，不写文件、不安装、不改 profile 状态（除非用户要求实现）。",
+        "启用 shipped plugin：查 shipped patch 的 disabled 行与原因，在工作区 bundle 中 override 该行 `disabled: false` 并插入依赖的 Host 行；shipped 包从 dsh 安装解析，bundle 不声明依赖。",
+        "先交付可工作的最小版本，再做视觉细化；未指定的视觉目的地是当前 Harness Web UI，独立图片/HTML 不算完成。",
+        "知识来源顺序：`cordis_inspect_query`（Service/Event/Config/Tool/Slots/Theme）→ `Config.listConfigs` 返回的 packageDir 下 README → 构建后的 `lib/index.js` 与 `lib/types`/源码 checkout；不要从 `$DSH_PROFILE_DIR` 猜路径。",
+        "安装后读 `application` 与 `warnings` 判断是否生效，不看日志/进程列表/页面 boot payload；用免审批的 `cordis_inspect_query` 确认新行，而不是 `list_plugins`。",
+        "`application: applied` 后实际执行能力或检查 live Client 注册；验证展示元数据与图标；使用已连接页面；恢复测试中改动的用户状态；报告验证限制。",
+        "展示清单：locale 中的 title/description 必须描述实际能力；图标原创或有再分发许可；export `./locale/*.json` 与 `./icon`，`files` 覆盖所有运行时资源；不得留模板文案。",
+        "预设：声明行 config 必填 `id`（小写字母/数字/连字符）与 `plugins`，可选 name/description/order；Loader 行 id 约定 `preset-<id>`；override 会替换完整 config，必须重述所有字段。",
+        "旧版预设迁移：从 `$DSH_HOME/.agent-presets/<id>/` 读取 preset.yml 与 agent.cordis.yml，按新 bundle 声明迁移，核对重命名插件，安装验证后删除旧目录。",
+        "Host/Client 分离：Host 提供共享服务；预设插件贡献 scoped tools/persona/prompt/policies；提供服务的预设插件必须把 provider 与所有 consumer 隔离在同一 realm；`!!js` 只用于 config 或 disabled。",
+        "UI 插件：使用 slot 渲染 React 组件，不 iframe；只用 `--dsw-alias-*` 主题 token；不 require Harness Client 包；需要原语行为时从 DSH 源码/已安装 `lib/index.js` 或 live 页面复制 markup/CSS/behavior，类名加插件前缀，并保留 Modal 焦点/Escape、`role=\"switch\"` + `aria-checked`、Tooltip 定位等行为；slot 内注册用 `ctx.slots.inject/register` 并在 effect 中清理。"
+      ],
+      "actors": [
+        "owner: 插件/预设技能维护者",
+        "contributors: 模型/执行者; 插件作者",
+        "reviewers: 用户（审批）; 评审者",
+        "automation: 模板 parse 测试与 package-meta 门禁覆盖部分静态形态；安装、激活、视觉与用户可见性没有自动验证。"
+      ],
+      "steps": [
+        "解析请求结果与目的地；未指定视觉目的地时选当前 Web UI。",
+        "按需检查 API（cordis_inspect_list/query），选最小扩展点。",
+        "复制匹配模板到工作区，或编写 package/patch/Host/Client 文件。",
+        "完成展示清单（locale、icon、exports/files），做 JS/YAML/JSON 检查。",
+        "通过 install_bundle 安装，读 application/warnings。",
+        "在 live 环境验证能力、slot 注册与展示；恢复用户状态；报告限制。",
+        "若请求是预设，按声明格式创建/override/迁移并在新会话验证。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-user-approval-plus-selective-tests",
+        "implementation": "技能正文与 7 个 reference 文件定义流程；`skills.spec.ts:92-103` 保证模板可解析；安装审批由 `plugin_manager` 边界执行；展示与 live 验证靠执行者与用户。",
+        "trust": "流程正确性主要靠执行者遵守与用户审批；测试只覆盖模板静态形态，不能证明插件实际安装/可见。",
+        "failure": "手写 profile 会绕过 install_bundle 的安装与选择步骤；只看安装成功会误报用户可见；未恢复用户状态会污染会话。",
+        "exceptions": "用户明确要求设计/评审时不执行安装；用户明确要求无元数据包时可省略展示资源但需解释。"
+      },
+      "applicability": [
+        "when: 任何 Harness profile 的插件/预设/UI/MCP 创建或变更。",
+        "preconditions: 有 `plugin_manager` 与 `cordis_inspect_query` 等价入口; 有工作区可写; 非 Full access 时有审批流程",
+        "inapplicable: 只读代码审查或纯文档任务不触发安装流程。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.template-parse-and-copy; packaged-skill-contracts.no-shell-file-routing",
+        "related: packaged-skill-contracts.referenced-resource-integrity; packaged-skill-contracts.invocation-policy",
+        "crossDomain: automation; subsystem-contracts-1"
+      ],
+      "migration": {
+        "strategy": "把“检查 → 模板 → 安装 → 读结果 → live 验证 → 展示核对”固定为流程；所有 profile 变更只经安装入口。",
+        "implementation": "为目标 harness 提供 install_bundle 等价入口、inspect 查询、模板与展示清单；在技能正文中写明审批与失败处理；用真实 live 环境验证而不是 mock。",
+        "requiredSupport": [
+          "插件管理/安装入口",
+          "inspect 查询",
+          "审批机制",
+          "展示资源规范",
+          "live 页面验证能力"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.plugin-creator-procedure",
+      "verification": {
+        "positive": [
+          {
+            "check": "按 decoration 模板创建插件并 install_bundle，application: applied，slot 在 live 页面注册，locale/icon 可见。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "创建 agent preset bundle 并在新会话验证 `preset-<id>` 行激活，旧会话保持原 revision。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "MCP 模板安装后调用 `mcp__demo__ping` 验证连接。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "直接手写 profile 的 package.json/cordis.patch.yml 安装插件，必须被评审拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "只看安装成功、未做 live 检查就声称用户可见，必须被拒绝。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "override 预设时只写 id/plugins 而丢掉 shipped config 的其他字段，激活必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "application 失败时修复工作区 bundle 并重新安装；overridden 表示更高优先级层获胜，需调整层级；restart-required 则重启后复验。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未实际安装任何插件；所有验证为计划。",
+        "`plugin_manager` 与 `cordis_inspect_query` 的实现不在本域，审批语义来自技能正文。",
+        "UI 视觉验证依赖已连接页面；无浏览器控制时只能报告未验证。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.generated-package-index",
+      "title": "生成式插件包索引与新鲜度门禁",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-composition-reference/references/packages.md",
+          "start": 1,
+          "end": 514,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-plugin-packages.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/preset/agent-preset/skills/cordis-composition-reference/SKILL.md",
+          "start": 27,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "可安装插件包列表如果手写，会随 workspace manifest 漂移；如果整文件读入上下文，又会挤占技能预算。需要生成、校验新鲜度，并指导按需搜索。",
+      "triggers": [
+        "workspace 包新增/删除/改名或描述变化",
+        "修改 config-catalog 分类",
+        "需要查找可安装插件包",
+        "doc-sync/verify-plugin-packages 失败"
+      ],
+      "obligations": [
+        "`references/packages.md` 是生成文件，头行明确标注 GENERATED、生成脚本与新鲜度命令；不得手改。",
+        "生成器从 workspace manifest 与 config-catalog 分类收集 `config`/`no-config` 条目，按 group 与包名排序，输出 group 分节表格。",
+        "`--check` 在提交文件过期时以非零退出；`verify-plugin-packages` 是 `doc-sync` 的一部分。",
+        "manifest 描述变化必须重新生成；seam（抽象 Service Definition）与 library（不导出插件）不进入 Loader 行列表。",
+        "技能正文必须指导用 `grep -n <keyword>` 搜索该文件，而不是整文件读取；列表之外的插件来自已安装 bundle，由 `plugin_manager list_bundles` 提供。",
+        "新增/删除包后必须运行生成与检查，不能只改源 manifest 后假设索引自动更新。"
+      ],
+      "actors": [
+        "owner: agent-preset/技能维护者",
+        "contributors: 包维护者; 发布维护者",
+        "reviewers: 评审者",
+        "automation: `pnpm run verify-plugin-packages`（`gen-plugin-packages.ts --check`）在 doc-sync 中执行；本域未运行。"
+      ],
+      "steps": [
+        "修改包 manifest 或 config-catalog 分类。",
+        "运行 `pnpm run gen-plugin-packages` 重新生成。",
+        "运行 `pnpm run verify-plugin-packages` 确认无漂移。",
+        "在技能中按关键词 grep，而不是整文件读。"
+      ],
+      "enforcement": {
+        "mode": "automated-generator-check",
+        "implementation": "`scripts/gen-plugin-packages.ts:1-60` 定义 OUT 路径、rows 过滤与 render；`packages.md:1-3` 声明生成与校验命令；`cordis-composition-reference/SKILL.md:27-29` 指导 grep。",
+        "trust": "生成器 + `--check` 能证明提交文件与当前 manifest 一致；不证明描述质量或包实际可安装。",
+        "failure": "过期文件会被 `--check` 拒绝；手改会在下次生成时被覆盖。",
+        "exceptions": "实验包标记为 pre-stable，但仍进入列表；列表之外由已安装 bundle 提供。"
+      },
+      "applicability": [
+        "when: 维护可安装插件包索引或依赖该索引做插件选择。",
+        "preconditions: 有 workspace manifest 与 config-catalog 分类; 有生成脚本与 `--check`",
+        "inapplicable: 没有包索引的技能不需要生成门禁。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.referenced-resource-integrity",
+        "related: packaged-skill-contracts.render-budget; packaged-skill-contracts.plugin-creator-procedure",
+        "crossDomain: automation"
+      ],
+      "migration": {
+        "strategy": "把索引当生成产物：源是真 manifest，产物只读，CI 做 `--check`；技能只教搜索不教通读。",
+        "implementation": "实现 collect→render→write/check 的生成器；把 `--check` 接入 doc-sync；在技能正文给出 grep 示例与“列表外看 bundle”的兜底。",
+        "requiredSupport": [
+          "config-catalog 分类",
+          "生成脚本",
+          "doc-sync 门禁",
+          "搜索式读取习惯"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.generated-package-index",
+      "verification": {
+        "positive": [
+          {
+            "check": "运行 `pnpm run gen-plugin-packages` 后 `verify-plugin-packages` 退出 0，文件头与行数/分组稳定。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "按关键词 grep packages.md 能找到目标包及其 Config 列。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "手改 packages.md 的一行描述后运行 `--check`，必须非零退出。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "新增包但不重新生成，`--check` 必须报告过期。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "撤销手改并重新生成；若 manifest 描述本身错误，先修 manifest 再生成。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "未运行生成器或 `--check`；未阅读 `collectConfigCatalog` 实现。",
+        "doc-sync 的实际执行范围与远程 CI 状态未知。",
+        "只机读 packages.md 的结构（514 行、50 个分组、259 行包条目），未逐行 prose 阅读。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "packaged-skill-contracts.tool-definition-hygiene",
+      "title": "模型可见工具定义与上下文预算卫生",
+      "sources": [
+        {
+          "path": "packages/preset/agent-preset/skills/agent-experience/SKILL.md",
+          "start": 1,
+          "end": 19,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "工具定义、参数 schema 与系统提示段会进入每一轮请求。重复、显而易见的约束、实现细节和整段日志会持续消耗上下文，并让模型在真正重要的约束上分心。",
+      "triggers": [
+        "新增/修改模型可见工具的名称、描述、参数 schema 或系统提示段",
+        "设计技能、上下文加载或多步工作流",
+        "发现模型重复搜索、重复读取或忽略关键约束"
+      ],
+      "obligations": [
+        "最小上下文优先：先暴露目的、可用动作与约束，详细说明按需加载。",
+        "每个延迟资源必须有清晰描述与可靠获取方式；关键约束（权限、破坏性效果、必需验证）出现在相关动作之前。",
+        "优先有界输出：返回简洁结果与可检索的标识/路径，不倾倒整份日志或文档。",
+        "利用局部性：在操作结果中附带有限的相关上下文（如线程回复带前几条消息），显式标记省略/截断并提供获取更多的方法。",
+        "评估总工作量：节省上下文只有在不导致更多搜索、重复读取或错误时才有价值。",
+        "删除显而易见的约束（模型能从调用结果学到的，如文件不存在、发送失败未送达）；描述行为而非实现；参数规则放在参数描述/schema；每个事实只说一次；比较改动前后的首轮 prompt token。"
+      ],
+      "actors": [
+        "owner: 工具/技能作者",
+        "contributors: 评审者",
+        "reviewers: 评审者",
+        "automation: 无自动门禁；通过评审与 token 对比执行。"
+      ],
+      "steps": [
+        "列出工具定义、参数与系统提示段中的重复事实。",
+        "删除可从结果学习的约束与实现细节。",
+        "把参数规则移入参数描述/schema。",
+        "为延迟资源写描述与获取方式，标记截断。",
+        "测量首轮 prompt token 变化，确认净收益。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "`agent-experience/SKILL.md:1-19` 给出原则与工具定义 checklist。",
+        "trust": "完全依赖作者与评审判断；没有测试检查重复或 token 增量。",
+        "failure": "重复与实现细节会持续消耗上下文；过度删除会让模型缺少必要约束。",
+        "exceptions": "安全/权限/破坏性效果属于关键约束，即使“显而易见”也应保留在相关动作前。"
+      },
+      "applicability": [
+        "when: 设计任何模型可见工具定义、技能正文或常驻提示段。",
+        "preconditions: 能测量首轮 prompt token; 能区分可学习约束与不可学习约束",
+        "inapplicable: 纯内部实现注释不进入模型上下文，不受此约束。"
+      ],
+      "relationships": [
+        "dependsOn: packaged-skill-contracts.render-budget",
+        "related: packaged-skill-contracts.office-router-progressive",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把工具定义当预算：先写最小可用版本，再用 token 测量决定是否增加。",
+        "implementation": "在目标仓库建立工具定义 review checklist；把参数规则放进 schema；记录首轮 token 基线；对延迟资源写描述与检索路径。",
+        "requiredSupport": [
+          "prompt token 测量",
+          "工具 schema 能力",
+          "评审清单"
+        ]
+      },
+      "reference": "references/packaged-skill-contracts.md#packaged-skill-contracts.tool-definition-hygiene",
+      "verification": {
+        "positive": [
+          {
+            "check": "修改一个工具描述后，首轮 prompt token 下降或持平，且模型仍能正确调用并处理失败。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "参数规则只出现在参数描述中，工具描述与系统提示不再重复。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把同一参数规则同时写进工具描述、参数描述和系统提示段，评审必须要求删除重复。",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "删除权限/破坏性效果约束导致模型误操作，评审必须拒绝。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "check": "token 增加或模型行为退化时回退改动，重新按“目的/动作/约束”最小化。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": [
+        "没有自动测试；token 测量方法未在本域实现。",
+        "“显而易见”的判断依赖模型与任务，无法完全客观化。"
+      ],
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

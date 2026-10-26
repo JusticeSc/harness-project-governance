@@ -1,0 +1,62 @@
+{
+  "name": "harness-project-governance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-contained project governance Skill with source-linked knowledge and a Node.js runtime.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JusticeSc/harness-project-governance.git"
+  },
+  "homepage": "https://github.com/JusticeSc/harness-project-governance#readme",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "bin": {
+    "harness-governance": "bin/governance.mjs"
+  },
+  "scripts": {
+    "verify": "node bin/governance.mjs verify",
+    "demo": "node scripts/demo.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "install-doc-gates": "npm install --prefix tools/doc-gates --ignore-scripts",
+    "verify-upgrade-guides": "node tools/doc-gates/verify-upgrade-guides.mjs",
+    "verify-translation-pairing": "node tools/doc-gates/verify-translation-pairing.mjs",
+    "verify-md-links": "node tools/doc-gates/verify-md-links.mjs",
+    "verify-doc-budgets": "node tools/doc-gates/verify-doc-budgets.mjs",
+    "verify-md-wrap": "node tools/doc-gates/verify-md-wrap.mjs",
+    "doc-typecheck": "node tools/doc-gates/doc-typecheck.mjs",
+    "verify-type-equiv": "node tools/doc-gates/verify-type-equiv.mjs",
+    "verify-subsystem-pages": "node tools/doc-gates/verify-subsystem-pages.mjs",
+    "verify-package-readme-summaries": "node tools/doc-gates/verify-package-readme-summaries.mjs",
+    "verify-package-readme-limitations": "node tools/doc-gates/verify-package-readme-limitations.mjs",
+    "verify-repository-references": "node tools/doc-gates/verify-repository-references.mjs",
+    "test-doc-gates": "node --test research/doc-gates.test.mjs research/doc-typecheck.test.mjs research/type-equiv.test.mjs research/subsystem-pages.test.mjs research/package-readme-summaries.test.mjs research/package-readme-limitations.test.mjs research/repository-references.test.mjs"
+  },
+  "files": [
+    "SKILL.md",
+    "bin/",
+    "knowledge/",
+    "references/",
+    "scripts/package-files.mjs",
+    "scripts/install-skill.mjs",
+    "scripts/demo.mjs",
+    "scripts/smoke.mjs",
+    "examples/",
+    "README.zh.md",
+    "CHANGELOG.md",
+    "PUBLIC-VERIFICATION.md",
+    "tools/github-approval/install.mjs",
+    "tools/github-approval/runtime/*.mjs",
+    "tools/github-approval/runtime/*.py",
+    "tools/github-approval/runtime/*.json",
+    "tools/github-approval/runtime/*.txt",
+    "tools/github-approval/workflows/*.yml",
+    "tools/agent-notes/*.mjs",
+    "tools/doc-gates/*.mjs",
+    "tools/doc-gates/package.json",
+    "tools/doc-gates/package-lock.json",
+    "SOURCE-LICENSE.txt"
+  ]
+}

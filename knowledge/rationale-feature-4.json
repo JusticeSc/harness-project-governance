@@ -1,0 +1,2675 @@
+{
+  "domain": "rationale-feature-4",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale-feature-4.decision-record-lifecycle",
+      "title": "决策记录生命周期与当前权威链",
+      "problem": "设计决策会演进；若旧记录、旧注释和实现各被当作当前权威，后来者会按已废除的规则实施，或把提案/历史当成已交付保证。",
+      "triggers": [
+        "新增、修改、取代或撤回一项架构/行为决策",
+        "发现同一事实在两份记录或代码注释中说法不同",
+        "跨会话交接、维护旧功能或准备升级",
+        "一项设计仍处于 proposed、archived 或部分取代状态"
+      ],
+      "obligations": [
+        "每条记录只声明一个状态，并在顶部或状态行链接取代它的记录。",
+        "明确本记录继续拥有什么、什么已被取代；部分取代必须逐项说明，不得用一句“已取代”覆盖仍有权威的条款。",
+        "保留被否决方案与否决理由，避免后来者重复提议；提案必须标 proposed，未执行的验收与风险不得写成已通过。",
+        "迁移前建立当前权威索引：沿取代链走到末端，只执行末端记录中未被取代的条款。",
+        "旧记录作为历史保留而不是删除；失效入口、旧公共接口和旧兼容层按 no-dead-surfaces 机制删除。"
+      ],
+      "actors": [
+        "决策作者：写清状态、范围、替代方案、后果、验证与限制",
+        "评审者：检查是否存在第二个当前权威或未说明的部分取代",
+        "实现者/后续会话：先读状态与取代链，再实施"
+      ],
+      "steps": [
+        "定位记录的状态行、Archived/Superseded 标记和所有链接。",
+        "沿取代链找到末端记录，确认末端仍为当前状态。",
+        "列出末端记录仍有效的义务，以及被部分取代条款的当前所有者。",
+        "按当前义务改代码、测试、文档和引用；对提案只做知识保留，不当作运行时保证。",
+        "新增记录时补齐 problem/decision/alternatives/consequences/verification/limitations，并写清适用与不适用边界。"
+      ],
+      "enforcement": {
+        "mode": "人工评审加仓库检索；不是自动运行时保证",
+        "implementation": "决策记录模板、状态字段、取代链接、引用检索和评审清单",
+        "trust": "作者与评审者的语义判断；状态文本本身不能证明实现已存在",
+        "failure": "发现两个当前权威时停止实施，合并或明确取代；发现把提案当已交付时降级为历史",
+        "exceptions": "历史记录必须保留；proposed 记录可长期存在，但不得被当作当前义务；archived 记录只在解释历史时引用"
+      },
+      "applicability": "适用于任何跨轮次、跨会话、需要后来者接手的工程决策；小型一次性改动可只保留简短记录。",
+      "relationships": [
+        "依赖 durable-authority-and-process-coordination 判断哪份记录/日志是权威",
+        "与 no-dead-surfaces-and-clean-cutover 共同防止旧入口继续被调用",
+        "为 versioned-compatibility-and-reader-refusal 提供发布与迁移边界"
+      ],
+      "migration": {
+        "strategy": "先建索引再改实现：把现有决策收敛为“状态 + 取代链 + 当前所有者”，然后逐条迁移调用点。",
+        "implementation": "在采用项目建立决策目录；每条记录包含状态、范围、替代方案、后果、验证、限制与取代链接；评审时检索同一主题的所有记录。",
+        "requiredSupport": "版本控制、代码评审、可检索的 Markdown/文本仓库；无需运行时组件。"
+      },
+      "reference": "references/rationale-feature-4.md#m1-decision-record-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "name": "沿取代链只执行当前条款",
+            "action": "选一条含 Superseded/Archived 标记的记录，按链接找到末端记录，列出仍有效条款并对照实现。",
+            "expected": "实施内容只来自末端未取代条款；历史条款仅用于解释。",
+            "evidence": "planned"
+          },
+          {
+            "name": "提案保持非权威",
+            "action": "选取 proposed 记录，检查采用项目的实施清单与运行时开关。",
+            "expected": "没有任何生产义务依赖该提案；验收/风险仍标未执行。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "拒绝无状态/无链接的旧记录作为权威",
+            "action": "给评审者一份没有状态行、没有取代链接但内容与现行实现冲突的记录。",
+            "expected": "评审拒绝据此实施，要求补状态/取代链或找到当前所有者。",
+            "evidence": "planned"
+          },
+          {
+            "name": "拒绝部分取代被当成全部取代",
+            "action": "提供一条只取代部分条款的记录，检查是否仍引用被取代条款。",
+            "expected": "检查发现未说明的残留义务并阻止合并。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "双当前权威的恢复",
+            "action": "制造两份都声称当前的记录，执行迁移流程。",
+            "expected": "流程停在索引阶段，先合并/明确取代，再继续实现；不产生两套代码路径。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "状态、链接和“当前权威”都是文本约定，需评审与检索执行，不能仅靠文件名证明。",
+        "链接可能失效；迁移时必须实际打开末端记录，不能只检查链接存在。",
+        "proposed 记录中的缓存/性能/安全论证可能未经验证，不能当运行时保证。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-08-dsh-run-headless-command.md",
+          "start": 1,
+          "end": 16,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-unified-task-list.md",
+          "start": 1,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md",
+          "start": 46,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/feature/2026-07-06-recallable-compaction.md",
+          "start": 94,
+          "end": 110,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.capability-declaration-gating",
+      "title": "逐路由能力声明与显式降级",
+      "problem": "可选行为若靠协议名、厂商名或部署习惯推断，错误组合会被静默接受；不支持的控制可能在取得所有权后才失败。",
+      "triggers": [
+        "接入模型、协议、后端或工具链，且某行为只在部分路由可用",
+        "同一协议下不同端点支持不同字段或更新语义",
+        "能力只对部分提供方存在，或需要显式终止支持"
+      ],
+      "obligations": [
+        "能力按路由/模型/提供方显式声明；缺省走已知安全路径，不推断。",
+        "非法能力值在加载/归一化时拒绝，不能静默映射为默认值。",
+        "准入读取实际绑定适配器的能力，而不是上一次请求的快照或协议族名称。",
+        "把实际使用的模式记入请求上下文/日志，保证回放可解释。",
+        "不支持的控制在取得所有权、发布运行或持久化之前失败；错误可诊断。",
+        "上游新增能力时，穷尽映射或类型门禁必须失败，迫使重新分类。"
+      ],
+      "actors": [
+        "适配器作者：定义能力枚举与缺省行为",
+        "配置作者/部署者：为路由声明能力",
+        "运行时：在准备调用时解析并记录"
+      ],
+      "steps": [
+        "定义能力枚举和“缺省=何种安全行为”。",
+        "在目录/路由条目中逐项声明，并用 schema/zod/类型校验。",
+        "准备实际调用后读取能力，不读取先前请求快照。",
+        "在请求/上下文日志中记录模式。",
+        "测试：缺省、显式启用、非法值、路由切换、恢复会话和升级后的新能力。"
+      ],
+      "enforcement": {
+        "mode": "类型/schema 加载校验加启动/请求边界失败",
+        "implementation": "LlmResolvedModelInfo/PreparedLlmCall 字段、INVALID_MODEL_INFO、UNSUPPORTED_CAPABILITY、zod 目录、能力位",
+        "trust": "schema 与适配器作者；编译期/加载期能证明结构，不能证明目标端点真实支持",
+        "failure": "非法值在加载时失败；不支持的控制在所有权前失败；缺省走替换/降级路径",
+        "exceptions": "同一协议家族可有不同实现，但必须逐路由声明；实验性能力可显式 opt-in"
+      },
+      "applicability": "模型适配器、协议翻译层、可选后端能力、插件提供方；不适用于所有部署都相同的固定行为。",
+      "relationships": [
+        "由 compile-time-exhaustiveness 防止上游新增字段漏分类",
+        "与 fail-closed-configuration 共享启动/写入边界",
+        "与 cache-prefix-and-context-stability 共享“实际调用能力”读取点"
+      ],
+      "migration": {
+        "strategy": "把隐式假设改为显式声明，并保留旧的缺省路径作为兼容分支；新能力逐路由启用。",
+        "implementation": "能力注册表 + 路由 schema + 准备的调用对象 + 日志字段；对旧配置提供“未声明=旧行为”的明确默认。",
+        "requiredSupport": "配置 schema、适配器目录、启动校验、可观测日志。"
+      },
+      "reference": "references/rationale-feature-4.md#m2-capability-declaration-gating",
+      "verification": {
+        "positive": [
+          {
+            "name": "显式能力走新路径",
+            "action": "为测试路由声明 in-history/新适配能力，发起一次会改变行为的请求。",
+            "expected": "请求走新路径，日志记录能力，旧路径不被调用。",
+            "evidence": "planned"
+          },
+          {
+            "name": "缺省走安全替换路径",
+            "action": "不声明能力，使用同一请求。",
+            "expected": "使用旧行为，不产生新协议字段；无静默混合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "非法能力值加载失败",
+            "action": "配置一个不在枚举内的能力值。",
+            "expected": "加载/归一化报 INVALID_MODEL_INFO，不启动。",
+            "evidence": "planned"
+          },
+          {
+            "name": "不支持的控制在所有权前失败",
+            "action": "向不支持 depthLimit/toolFilter 的提供方请求该控制。",
+            "expected": "返回 UNSUPPORTED_CAPABILITY，不创建子运行/不发布状态。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "路由切换后重新绑定能力",
+            "action": "在两次请求之间切换模型/路由。",
+            "expected": "下一次请求读取新路由能力；不沿用旧快照；缓存未命中可解释。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "显式声明只能证明本地契约，不能证明远端端点真实支持；需要真实网关/模型 e2e 才有更强证据。",
+        "名称和协议族不能作为能力证据；迁移时不得用协议名推导。",
+        "实验能力即使声明也可能在目标环境不可用，必须有回退/拒绝路径。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md",
+          "start": 15,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md",
+          "start": 11,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md",
+          "start": 16,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md",
+          "start": 62,
+          "end": 68,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.durable-authority-and-process-coordination",
+      "title": "持久日志是唯一权威，进程状态只是协调",
+      "problem": "把进程内激活、缓存或 claim 当作持久权威，会在重启、重连、fork 或并发窗口后丢失状态、重复投递或越权。",
+      "triggers": [
+        "持久会话/任务/团队/终端与可重建运行时共存",
+        "接受消息与写入日志之间存在时间窗口",
+        "冷恢复、fork、重连或多宿主进程访问同一存储"
+      ],
+      "obligations": [
+        "持久日志/会话拥有身份、历史、授权输入与可重建状态；进程内对象只做协调。",
+        "冷恢复从日志折叠重建，不依赖仍存活的父对象或提供方。",
+        "旧介质通过 schema 默认值升级；新增字段优先纯新增，避免迁移代码。",
+        "只有实际写入日志的消息才有重启保证；仅被 inbox 接受的消息必须明确标注可能丢失。",
+        "进程内 claim/激活不得成为第二持久权威；重启后应消失，日志中的开放状态重新可编辑/恢复。",
+        "环境相关访问（绝对路径、挂载映射）不得进入持久身份或确定性变体。"
+      ],
+      "actors": [
+        "持久化所有者：定义事件与折叠",
+        "运行时管理器：维护进程内激活/claim",
+        "宿主：在重启/重连后重新读取日志"
+      ],
+      "steps": [
+        "标出所有需要跨重启的事实，确认它们在日志中有事件。",
+        "把进程内状态降级为缓存/协调，并标注生命周期。",
+        "冷恢复实现为日志折叠；对缺失/损坏记录显式失败或进入恢复流程。",
+        "对接受但未落日志的窗口写明保证边界，不宣称 exactly-once。",
+        "测试重启、重连、fork、并发接受与日志损坏。"
+      ],
+      "enforcement": {
+        "mode": "事件溯源存储加恢复测试；文本记录中的保证边界",
+        "implementation": "Session log、projection fold、activation manager、additive schema defaults",
+        "trust": "持久化 seam；记录来源字段不能作为授权",
+        "failure": "日志损坏/缺失时显式失败或进入恢复；进程状态丢失不等于持久状态丢失",
+        "exceptions": "纯瞬态 UI/动画/缓存可不持久化；必须说明重启后丢失"
+      },
+      "applicability": "会话、子代理、团队、任务板、终端关联、导出与任何需要冷恢复的运行时。",
+      "relationships": [
+        "与 single-ordering-authority 共同确定唯一写入/排序点",
+        "与 boundary-snapshot-and-exact-cut 共同确定何时冻结状态",
+        "与 versioned-compatibility-and-reader-refusal 共同处理旧介质"
+      ],
+      "migration": {
+        "strategy": "先确认权威日志，再把内存状态改为可丢弃缓存；新增字段用默认值而非迁移脚本。",
+        "implementation": "事件类型 + 投影 + 恢复入口 + 明确的丢失窗口文档；接受回执只在日志边界返回。",
+        "requiredSupport": "append-only 或事件日志、schema 版本、恢复测试。"
+      },
+      "reference": "references/rationale-feature-4.md#m3-durable-authority-and-process-coordination",
+      "verification": {
+        "positive": [
+          {
+            "name": "冷恢复从日志重建",
+            "action": "结束运行时进程后，仅凭持久会话发起后续消息。",
+            "expected": "从日志恢复同一身份/历史/策略；不需要旧父对象。",
+            "evidence": "planned"
+          },
+          {
+            "name": "旧介质默认升级",
+            "action": "用缺少新字段的旧记录加载。",
+            "expected": "schema 默认值生效，旧记录可读，无需迁移代码。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "进程内 claim 在重启后不生效",
+            "action": "在 claim 阶段终止进程并重启。",
+            "expected": "未落日志的 claim 消失；不得据此拒绝或重复提交；开放状态按日志恢复。",
+            "evidence": "planned"
+          },
+          {
+            "name": "缺失/损坏日志显式失败",
+            "action": "删除或破坏恢复所需的记录。",
+            "expected": "恢复报错或进入明确恢复流程，不静默伪造。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "接受但未落日志的丢失说明",
+            "action": "在 inbox 接受后、日志写入前崩溃。",
+            "expected": "文档/结果明确该消息无重启保证，不自动回放；后续授权消息仍可冷恢复。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "日志是权威不等于所有日志都已被持久化后端确认；flush 布尔或 listener 参与不能证明写入。",
+        "跨进程并发访问同一存储仍需要 lease/邮箱协议；本机制不提供分布式 exactly-once。",
+        "仅接受未落日志的消息可能丢失；这是显式接受的边界，不是可忽略的缺陷。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 53,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 132,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 31,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-session-archive-global-set.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md",
+          "start": 32,
+          "end": 38,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.single-ordering-authority",
+      "title": "单一排序/所有权权威，禁止第二队列与第二台账",
+      "problem": "两个队列、两个定时器、两个注册表或引用计数会制造模糊顺序、重复释放与无法定位的竞态。",
+      "triggers": [
+        "为同一资源增加 follow-up、后台任务、重试、任务板或终端发送",
+        "已有队列/注册表/定时器，新增功能想再建一套",
+        "多个写入者、并发 mutation 或重连"
+      ],
+      "obligations": [
+        "每个排序/所有权域只有一个权威；不得为同一语义维护第二 FIFO、第二 reservation 台账或第二 retry timer。",
+        "所有 mutation 通过该权威串行化；跨步骤的拒绝在最终无 await 的准入区间再次校验。",
+        "资源占用用身份集合而非引用计数；一次只允许一个活跃发送/提交，重复请求返回明确错误。",
+        "共享状态用单调 revision + expectedRevision CAS；删除保留 tombstone；id 耗尽失败而不复用。",
+        "重试只有一个调度器；每次物理尝试有唯一编号与一次 socket 替换；手动恢复走同一路径。"
+      ],
+      "actors": [
+        "运行时所有者：拥有队列/注册表/调度器",
+        "存储所有者：拥有 revision/事务",
+        "消费者：只通过公开操作提交"
+      ],
+      "steps": [
+        "列出该语义的所有写入者和现有队列。",
+        "选一个权威并把其他路径改为委托/删除。",
+        "加入 single-flight、CAS 或串行队列。",
+        "在最终准入点重验身份/修订/所有权。",
+        "测试并发、重试、重复点击、删除与恢复。"
+      ],
+      "enforcement": {
+        "mode": "代码结构加并发测试；错误码显式",
+        "implementation": "Agent inbox、ConnectionController、archive enqueueOperation、expectedRevision、SEND_ACTIVE/submission-pending",
+        "trust": "权威所有者；调用方不能以记录字段代替授权",
+        "failure": "第二写入者被删除或返回错；竞态失败有稳定错误码；不静默丢消息",
+        "exceptions": "纯只读缓存可有多副本；不得成为写入权威"
+      },
+      "applicability": "会话队列、子代理激活、团队任务板、终端发送、连接重试、任何有并发 mutation 的状态。",
+      "relationships": [
+        "是 durable-authority 的进程内执行面",
+        "为 transactional-unpublished-setup 提供准入截止点",
+        "与 boundary-snapshot-and-exact-cut 共同防止过期写入"
+      ],
+      "migration": {
+        "strategy": "先统一写入路径，再删除第二队列/台账；不要用兼容层同时保留两套顺序。",
+        "implementation": "单一服务/队列 + CAS + single-flight + 明确错误码；旧入口标记弃用并迁移调用方。",
+        "requiredSupport": "并发测试、可观测错误码、持久 revision。"
+      },
+      "reference": "references/rationale-feature-4.md#m4-single-ordering-authority",
+      "verification": {
+        "positive": [
+          {
+            "name": "单队列保序",
+            "action": "在同一目标上连续提交两条工作，其中一条在运行中到达。",
+            "expected": "按唯一 FIFO/Steer 规则执行；不出现第二队列的乱序。",
+            "evidence": "planned"
+          },
+          {
+            "name": "CAS 拒绝过期修订",
+            "action": "用旧 expectedRevision 提交任务更新。",
+            "expected": "返回冲突/保留最新状态，不覆盖新修订。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "重复发送/重复提交被拒",
+            "action": "在第一个发送/提交仍活跃时发起第二个。",
+            "expected": "返回 SEND_ACTIVE/submission-pending 等稳定错误，不创建第二份工作。",
+            "evidence": "planned"
+          },
+          {
+            "name": "第二调度器不被接受",
+            "action": "在已有 retry 调度器外再启动一个定时器。",
+            "expected": "评审/测试发现重复重试或重复 socket 替换并阻止。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "竞态后仍可恢复",
+            "action": "让发送与 dispose、提交与断开并发。",
+            "expected": "恰有一方赢；失败方返回可诊断错误或走冷恢复，不双写/双释放。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "单进程权威不能协调两个宿主进程；跨进程仍需 lease/邮箱。",
+        "单一队列降低吞吐；需要按域拆分而不是复制同一语义。",
+        "CAS 只能防止过期写入，不能证明业务语义正确。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 61,
+          "end": 102,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 39,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-session-archive-global-set.md",
+          "start": 12,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 31,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md",
+          "start": 12,
+          "end": 22,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.boundary-snapshot-and-exact-cut",
+      "title": "边界快照与精确切点",
+      "problem": "如果边界状态在后续被重新读取或重新捕获，父级后来变化会追溯改变子级；显式切点被“修正”会丢失用户选择的历史。",
+      "triggers": [
+        "委派、fork、归档、定时、投递或配置授权跨越时间边界",
+        "父级策略/工作区/时钟在子级运行后仍会变化",
+        "用户显式选择某个历史位置或时间"
+      ],
+      "obligations": [
+        "在边界同步捕获快照，且在第一次 await 之前完成；之后父级变化属于父级的未来。",
+        "快照随持久记录/创建输入传递；冷恢复不再重新捕获。",
+        "显式切点精确保留请求的事件，不移动到更完整的步骤/轮次；省略切点才使用声明的默认。",
+        "快照归属持久子记录，不属于当前激活或恢复中的父级。",
+        "时间输入规范化为明确时区/UTC；DST 缺口拒绝，重叠取较早时点；固定间隔只追赶最新序列点。",
+        "授权/同意在不受信任的项目代码可修改环境之前冻结。"
+      ],
+      "actors": [
+        "委派/ fork 管理器：捕获并传递快照",
+        "持久化：保存快照/切点",
+        "恢复路径：读取而不是重算"
+      ],
+      "steps": [
+        "定义边界与默认语义（省略时是什么）。",
+        "在边界同步读取权威状态并生成不可变快照。",
+        "把快照写入创建输入/持久事件，排在 fork 种子之后。",
+        "冷恢复只读快照；显式切点校验存在且精确。",
+        "测试父级切换、冷恢复、省略/显式切点、DST 与时钟回拨。"
+      ],
+      "enforcement": {
+        "mode": "不可变快照 + 持久事件 + 边界测试",
+        "implementation": "MaterializeInputs.create、SessionStore.fork、scheduledAt、source=delegation 事件",
+        "trust": "持久记录；当前父级不是恢复权威",
+        "failure": "边界前失败不发布；无效切点/时间拒绝；冷恢复缺失快照显式失败",
+        "exceptions": "新边界可重新委派；旧记录迁移可补默认值，但不得改变已持久语义"
+      },
+      "applicability": "子代理策略继承、会话 fork、归档、定时提醒、投递快照、部署同意。",
+      "relationships": [
+        "依赖 durable-authority 保存快照",
+        "与 transactional-unpublished-setup 共同保证首次请求正确",
+        "与 versioned-compatibility 共同处理旧记录"
+      ],
+      "migration": {
+        "strategy": "先定义默认与边界，再把快照写入持久记录；恢复路径改为只读。",
+        "implementation": "不可变创建输入 + 持久字段 + 精确切点校验 + 默认值文档。",
+        "requiredSupport": "不可变事件日志、时间库、schema 默认值。"
+      },
+      "reference": "references/rationale-feature-4.md#m5-boundary-snapshot-and-exact-cut",
+      "verification": {
+        "positive": [
+          {
+            "name": "委派时快照",
+            "action": "父级切换沙箱/审批策略后启动子级，再在子级运行中再次切换。",
+            "expected": "子级使用启动时快照；后续切换不改变子级。",
+            "evidence": "planned"
+          },
+          {
+            "name": "精确切点保留",
+            "action": "在工具结果到达前 fork 一个已完成的父会话。",
+            "expected": "生成的子历史精确停在请求的 seq，只补齐开放尾部所需事件。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "冷恢复不重新捕获",
+            "action": "子级冷恢复前改变父级策略。",
+            "expected": "恢复沿用子日志快照；不因恢复时机改变策略。",
+            "evidence": "planned"
+          },
+          {
+            "name": "DST 缺口拒绝",
+            "action": "提交落在夏令时缺口内的本地时间。",
+            "expected": "校验拒绝；重叠选择较早时点；不静默偏移。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "显式切点损坏时可诊断",
+            "action": "请求不存在的 seq 或损坏的 fork 记录。",
+            "expected": "在最早解析点失败，返回类型化错误；不移动到其他切点。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "快照语义意味着父级后续收紧不会自动作用于已存在子级；需要新委派。",
+        "精确切点可能保留不完整历史；修复只补开放尾部，不修复更早的畸形历史。",
+        "固定间隔“只追赶最新点”意味着中间发生时点不会逐个回放。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-continuable-subagent-policy-inheritance.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md",
+          "start": 12,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-durable-web-schedule.md",
+          "start": 16,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-session-archive-global-set.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md",
+          "start": 12,
+          "end": 20,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.transactional-unpublished-setup",
+      "title": "未发布设置、事务式准入与回滚",
+      "problem": "在子级/运行可见之前未完成设置，会让第一次请求使用错误策略或工具集；失败后留下孤儿会污染后续状态。",
+      "triggers": [
+        "启动子代理、团队、PTY 或一次性任务",
+        "首次请求依赖策略/工具/提示词组装",
+        "接受消息与发布运行之间存在异步步骤"
+      ],
+      "obligations": [
+        "所有子级局部组装在发布前完成；观察者不得看到半配置状态。",
+        "预留身份后，失败必须回滚已创建的句柄、激活、所有权成员关系。",
+        "回执只在 inbox 接受（或等价提交边界）返回；之前失败不返回 id。",
+        "调用方 signal 只拥有未发布工作；接受后由管理器独立拥有。",
+        "最终无 await 的准入区间再次检查取消、作用域、dispose 与父级权限。",
+        "发布失败不产生无配对的终止事件；closing promise 让并发投递与 drain 只有一个赢家。"
+      ],
+      "actors": [
+        "管理器：预留、设置、回滚、发布",
+        "提供方：只提供分离的创建输入",
+        "宿主：发出取消/关闭"
+      ],
+      "steps": [
+        "预留身份/容量。",
+        "在私有作用域中创建并安装句柄。",
+        "恢复历史覆盖、组装首个提示词/工具视图、安装结构化输出。",
+        "提交初始消息并取得 MessageId。",
+        "返回回执并发布；任何前置失败走关闭事务回滚。",
+        "测试每条失败路径、并发投递、dispose 与首次请求内容。"
+      ],
+      "enforcement": {
+        "mode": "代码事务 + 回滚测试 + 发布边界",
+        "implementation": "activation-owner scope、MaterializeInputs、closing promise、receipt at inbox acceptance",
+        "trust": "管理器；提供方不得直接创建/投递/恢复",
+        "failure": "失败不返回 id，回滚全部；发布后失败通过正常 dispose 闭合",
+        "exceptions": "外部执行可由 provider start 建立，但仍受同一管理器容量/结算"
+      },
+      "applicability": "子代理/团队/PTY/任何需要“首次请求即正确”的运行时。",
+      "relationships": [
+        "依赖 boundary-snapshot 捕获首次状态",
+        "依赖 single-ordering 的最终准入区间",
+        "由 lifecycle-teardown 收尾"
+      ],
+      "migration": {
+        "strategy": "把设置从发布后移到发布前，并建立回滚事务；提供方只保留纯创建输入。",
+        "implementation": "私有 owner scope + 创建输入 + 回执边界 + 回滚/关闭 promise。",
+        "requiredSupport": "可回滚的资源创建、锁、测试注入。"
+      },
+      "reference": "references/rationale-feature-4.md#m6-transactional-unpublished-setup",
+      "verification": {
+        "positive": [
+          {
+            "name": "首次请求即正确",
+            "action": "带历史 persona/工具过滤/深度上限启动子级，检查第一次模型请求。",
+            "expected": "第一次请求已使用恢复后的配置，不出现先错误后修正。",
+            "evidence": "planned"
+          },
+          {
+            "name": "回执边界准确",
+            "action": "在 inbox 接受后立即取消调用方 signal。",
+            "expected": "已接受工作继续；回执已返回；调用方取消不影响激活。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "设置失败不留孤儿",
+            "action": "让工具过滤/提供方初始化失败。",
+            "expected": "无 id 返回；创建的句柄/激活/所有权回滚；无孤儿日志。",
+            "evidence": "planned"
+          },
+          {
+            "name": "最后准入点拒绝替换的父级",
+            "action": "在物化期间注销/替换父级 Agent。",
+            "expected": "最终无 await 检查拒绝投递；不向关闭句柄提交。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "发布失败无未配对事件",
+            "action": "让生命周期 start 发布失败。",
+            "expected": "不产生只有 start 没有终态的边；回滚后可重试。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "未发布设置在单进程内成立；跨进程创建需要额外协议。",
+        "回执在 inbox 接受时返回，不保证消息已写入持久日志；见 durable-authority 的丢失窗口。",
+        "关闭事务只能回滚自己创建的资源；外部副作用需另行处理。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md",
+          "start": 68,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 37,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 31,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 31,
+          "end": 41,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.fail-closed-configuration",
+      "title": "配置/引用失败关闭，拒绝接受后丢弃",
+      "problem": "schema 放行未知键、解析只读取部分字段或恢复时静默回退，会让操作员看到“写入成功”但行为不变，或留下孤儿。",
+      "triggers": [
+        "配置 schema、适配器兼容字段、过滤器、持久引用或恢复记录",
+        "写入/挂载/启动可能接受无效值",
+        "未知或缺失字段可能被默认值掩盖"
+      ],
+      "obligations": [
+        "未知、被扣留、无值或拼错的键在写入/挂载/启动时拒绝，而不是持久化后丢弃。",
+        "过滤器既无 allow 也无 deny、命名作用域外条目时显式失败；allow:[] 合法且表示隐藏全部。",
+        "引用在最早可解析点校验；畸形附件/会话引用使请求失败，不静默跳过。",
+        "不受支持的模式按拒绝处理，遥测等旁路不得改变命令结果。",
+        "恢复发现不匹配/损坏时报告冲突或 failed，不保留孤儿、不重建未持久化的初始提示。",
+        "错误应点名可用集合或失败位置，帮助操作员修正。"
+      ],
+      "actors": [
+        "schema/配置所有者：实现写入边界校验",
+        "适配器/恢复器：最早点校验引用",
+        "操作员：读取诊断并修正"
+      ],
+      "steps": [
+        "枚举允许键与作用域，区分 offer/withhold。",
+        "在原始输入上检查未知/无值键，早于任何协议解析。",
+        "schema 拒绝非法类型/枚举；挂载/启动传播失败。",
+        "引用解析校验 id/摘要/父级；失败类型化。",
+        "恢复对账未终结记录，冲突显式报告。",
+        "测试错拼、无值、作用域外、损坏引用与恢复冲突。"
+      ],
+      "enforcement": {
+        "mode": "写入/挂载/启动失败 + 类型化错误",
+        "implementation": "settings-rejected、plugin mount failure、INVALID_RESPONSE、provisioning conflict、allow/deny 校验",
+        "trust": "schema 与解析器；外部文件编辑可能只能保留 last-good 并告警",
+        "failure": "拒绝而非静默；外部编辑的 last-good 限制显式记录",
+        "exceptions": "显式空集合/显式默认值合法；必须与“未设置”区分"
+      },
+      "applicability": "配置系统、适配器兼容面、过滤器、持久引用、恢复流程。",
+      "relationships": [
+        "与 capability-declaration 共同保证不支持项失败",
+        "与 compile-time-exhaustiveness 共同覆盖新增键",
+        "与 durable-authority 的恢复路径共同处理冲突"
+      ],
+      "migration": {
+        "strategy": "从“接受并忽略”改为写入/启动时拒绝，并提供可用键清单；对旧配置先做迁移检查。",
+        "implementation": "原始键校验 + schema + 早解析引用 + 类型化错误 + 恢复对账。",
+        "requiredSupport": "配置加载器、schema、错误目录、恢复流程。"
+      },
+      "reference": "references/rationale-feature-4.md#m7-fail-closed-configuration",
+      "verification": {
+        "positive": [
+          {
+            "name": "未知键在写入时失败",
+            "action": "提交一个 schema 未声明的 compat/配置键。",
+            "expected": "写入被拒并点名可用集合；不落盘为 inert。",
+            "evidence": "planned"
+          },
+          {
+            "name": "畸形引用在最早点失败",
+            "action": "在持久历史中放入畸形附件引用并组装请求。",
+            "expected": "请求组装失败，返回类型化错误；不发送无路径/错误路径。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "过滤器无 allow/deny 被拒",
+            "action": "配置一个空过滤器或作用域外工具名。",
+            "expected": "启动失败；不表现为“过滤生效”。",
+            "evidence": "planned"
+          },
+          {
+            "name": "恢复冲突不产生孤儿",
+            "action": "让 provisioning 记录显示失败但子会话实际创建成功。",
+            "expected": "drain 子级并报告 provisioning conflict；不保留孤儿。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "外部编辑 last-good 的可见信号",
+            "action": "直接编辑设置文件引入非法段。",
+            "expected": "服务保留上一有效值并告警；下一次启动失败或操作员看到告警；不假装写入成功。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "外部文件编辑的 last-good 行为可能只写日志，没有用户可见通道；该缺口属于设置 seam。",
+        "拒绝只能证明本地契约，不能证明远端不会忽略字段。",
+        "过严校验可能阻止合法但未知的扩展；需要显式扩展点或版本化。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md",
+          "start": 26,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 31,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md",
+          "start": 12,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-20-spawn-agent-preset-selection.md",
+          "start": 11,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md",
+          "start": 37,
+          "end": 52,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.compile-time-exhaustiveness",
+      "title": "编译期穷尽门禁与单一类型真源",
+      "problem": "上游类型/工具 schema 会新增成员；手工维护的 interface/schema 会静默落后，导致接受的配置被丢弃或 execute 偏离对模型的承诺。",
+      "triggers": [
+        "包装持续演进的上游类型、协议字段或工具结果",
+        "配置界面、schema 与运行时类型三处描述同一集合",
+        "新增一个上游枚举/联合分支"
+      ],
+      "obligations": [
+        "为每个上游类型维护 Record<keyof Upstream, Disposition>，逐字段分类 offer/withhold。",
+        "用类型级 AssertNever/对称差证明显式 profile 恰好命名开放集；schema 注解与 exactOptionalPropertyTypes 让缺键失败。",
+        "字段类型从上游派生而非重述；另加可赋值性证明，防止值域被悄悄收窄。",
+        "协议适用性按上游 compat 类型分组，协议集从上游条件类型派生；新增类型按名失败。",
+        "工具结果声明完整 schema 并由共享 helper 一致渲染；未声明结果类型视为缺陷。",
+        "升级上游后先跑类型门禁，再逐项分类，不靠运行时抽查。"
+      ],
+      "actors": [
+        "适配器作者：维护映射与类型证明",
+        "编译器/CI：执行穷尽检查",
+        "评审者：审查分类语义"
+      ],
+      "steps": [
+        "定义 disposition 映射与显式 profile。",
+        "加入对称差 AssertNever 与 schema 注解。",
+        "派生字段类型并加可赋值性测试。",
+        "从上游条件类型派生协议集。",
+        "为每个工具声明结果 schema；共享紧凑渲染。",
+        "升级上游，观察编译失败并逐项处理。"
+      ],
+      "enforcement": {
+        "mode": "TypeScript 类型检查/构建失败",
+        "implementation": "Record<keyof …>、AssertNever、z<Profile>、exactOptionalPropertyTypes、完整 ToolResult schema",
+        "trust": "编译器；分类是否正确仍需评审",
+        "failure": "新增字段/漏键/漏 schema 键在编译期失败；运行时不再有静默丢弃",
+        "exceptions": "无法类型化的动态扩展需显式 opaque 字段和独立验证"
+      },
+      "applicability": "适配器、配置 schema、工具结果、任何与外部词汇同步的接口。",
+      "relationships": [
+        "为 capability-declaration 提供上游完整性",
+        "与 fail-closed-configuration 共同阻止未知键",
+        "与 verification-matrix 共同要求升级后重跑"
+      ],
+      "migration": {
+        "strategy": "先建立映射与编译门禁，再删除手写重复字段；升级路径以编译失败为提示。",
+        "implementation": "类型映射 + schema 注解 + 结果 schema + CI 类型检查。",
+        "requiredSupport": "TypeScript strict/exactOptionalPropertyTypes、CI、上游类型导出。"
+      },
+      "reference": "references/rationale-feature-4.md#m8-compile-time-exhaustiveness",
+      "verification": {
+        "positive": [
+          {
+            "name": "新增上游字段导致编译失败",
+            "action": "在测试副本中给上游 compat 类型加一个字段。",
+            "expected": "门禁映射缺项导致类型检查失败；补分类后才通过。",
+            "evidence": "planned"
+          },
+          {
+            "name": "schema 与 profile 同步",
+            "action": "从 profile 删掉一个字段但保留 schema 键。",
+            "expected": "编译失败，而不是运行时接受后丢弃。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "未声明结果类型被拒",
+            "action": "新增一个返回未类型化 JSON 的工具。",
+            "expected": "评审/类型检查阻止；要求完整结果 schema。",
+            "evidence": "planned"
+          },
+          {
+            "name": "收窄值域被发现",
+            "action": "把 profile 字段类型改成更窄的联合。",
+            "expected": "可赋值性证明失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "上游升级后的分类流程",
+            "action": "升级依赖并运行类型检查。",
+            "expected": "失败点名新增字段；逐项 offer/withhold 后恢复绿色。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "编译期只证明结构一致，不证明分类语义正确或下游端点接受。",
+        "类型级技巧增加维护成本；需要清晰错误信息与文档。",
+        "动态/插件扩展无法完全穷尽，需显式 opaque 边界。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md",
+          "start": 16,
+          "end": 26,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 15,
+          "end": 23,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md",
+          "start": 11,
+          "end": 19,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.bounded-resources-and-streaming",
+      "title": "有界资源、分页与流式背压",
+      "problem": "无界输出、归档、任务板或投影会耗尽内存、token 与延迟；单个超长项可绕过普通分页限制。",
+      "triggers": [
+        "导出/下载、命令输出、预览解析、长会话投影、工具结果",
+        "结果可能大于内存或模型上下文",
+        "多个并发调用共享慢后端"
+      ],
+      "obligations": [
+        "对字节、行数、块数、字段数、表格行数设置配置化上限；后端与最终渲染各执行一次。",
+        "流式生产使用有界队列与消费者背压；不把完整归档/文件放进单缓冲区。",
+        "分页从最新/指定位置读取，带 total/truncated 等元数据；单条超长项仍受字节上限。",
+        "错误/元数据包装后重新执行最终上限；不能把后端载荷上限当作模型看到的最终上限。",
+        "对过小上限显式拒绝（会破坏 id/确认），并说明限制不是硬内存沙箱。",
+        "并发慢后端限制启动数而不是无限累积 I/O。"
+      ],
+      "actors": [
+        "生产者：执行流式与上限",
+        "消费者：拉取/背压",
+        "部署者：配置预算"
+      ],
+      "steps": [
+        "定义各项预算及最小合法值。",
+        "在后端读取、序列化和最终结果三处执行。",
+        "用流式 API + 高水位等待消费者。",
+        "分页并暴露截断/总量。",
+        "测试超大单行、空结果、取消与超时。"
+      ],
+      "enforcement": {
+        "mode": "代码上限 + 配置校验 + 流式背压",
+        "implementation": "maxResultBytes、fflate streaming ZIP、scrollback/maxReadBytes、Worker 字节/矩阵限制、游标分页",
+        "trust": "生产者与部署配置；上限不是安全沙箱",
+        "failure": "超限截断并标注/报错；单条超长项不得绕过；取消终止生产",
+        "exceptions": "保留单个超大项以保留信息时，必须仍受观察到的预算约束"
+      },
+      "applicability": "导出、PTY、任务板、长会话投影、文件预览、工具结果。",
+      "relationships": [
+        "与 typed-evidence 共同保证截断不被误报为完整",
+        "与 verification-matrix 共同覆盖超大/取消",
+        "与 single-ordering 共同限制并发启动"
+      ],
+      "migration": {
+        "strategy": "先测量最大输出，再设预算与流式路径；对现有无界接口做兼容上限。",
+        "implementation": "流式生产 + 分页 + 最终上限 + 配置 schema。",
+        "requiredSupport": "流式库、背压机制、可观测截断元数据。"
+      },
+      "reference": "references/rationale-feature-4.md#m9-bounded-resources-and-streaming",
+      "verification": {
+        "positive": [
+          {
+            "name": "流式导出有界内存",
+            "action": "导出包含多个子会话的会话树。",
+            "expected": "响应分块输出；宿主只持有有界缓冲；归档完整可解压。",
+            "evidence": "planned"
+          },
+          {
+            "name": "超大单行仍受限",
+            "action": "向终端/结果写入一个超过字节上限的单行。",
+            "expected": "结果被截断并标记，不能绕过上限。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "过小上限被拒",
+            "action": "配置 maxResultBytes 低于确认 id 所需最小值。",
+            "expected": "创建/加载失败；不产生无法再次寻址的结果。",
+            "evidence": "planned"
+          },
+          {
+            "name": "缺失引用导致导出失败",
+            "action": "导出包含缺失后代日志/附件的会话。",
+            "expected": "流失败并报错，不静默少导出。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "取消终止生产",
+            "action": "在流式导出/解析中途取消。",
+            "expected": "生产者信号取消读取/压缩；无后台继续写入；重试可重新开始。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "字节/矩阵限制不等于硬内存沙箱；解压后内存仍可能超限。",
+        "流式导出是逐会话读取边界快照，不是整棵树的原子快照。",
+        "完整 token DOM/投影仍可能随内容增长，需要额外虚拟化。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-session-log-export.md",
+          "start": 12,
+          "end": 19,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 52,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md",
+          "start": 13,
+          "end": 29,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-30-web-turn-rail-outline-jump.md",
+          "start": 12,
+          "end": 24,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 15,
+          "end": 23,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.typed-evidence-and-uncertainty",
+      "title": "类型化证据：精确、推断与未知分开",
+      "problem": "把静默/超时/缺失当成完成或零，会制造假就绪、假退出、假 100% 或误杀长任务。",
+      "triggers": [
+        "外部进程就绪/活动检测",
+        "指标与比率展示",
+        "队列准入与完成、网络存活",
+        "未知进程/语言/平台"
+      ],
+      "obligations": [
+        "结果类型必须区分精确证据、推断和未知；超时不等于进程退出。",
+        "缺失采样/分母为零时省略指标，不显示 0 或 100%。",
+        "未知活动保持 unknown 并保留资源，不按空闲回收。",
+        "只向已确认的前台进程组发信号；解析失败就失败，不猜 PID。",
+        "队列准入不等于完成；崩溃可能重复，不承诺 exactly-once。",
+        "显示精度只在能保持“非满命中 vs 满命中”区别时增加；用精确整数运算避免浮点临界。"
+      ],
+      "actors": [
+        "检测器/后端：产生类型化事实",
+        "UI/消费者：按类型展示，不自行推断",
+        "清理器：未知时保留"
+      ],
+      "steps": [
+        "定义结果联合类型与未知分支。",
+        "要求正向证据；不可读/不支持一律 miss/unknown。",
+        "给出有界回退与超时，但不把超时映射为 exit。",
+        "清理/回收仅在确认空闲时进行。",
+        "测试未知、缺失、超时、负值与临界舍入。"
+      ],
+      "enforcement": {
+        "mode": "类型联合 + 测试 + 保留策略",
+        "implementation": "waitReason/sessionStatus、activity state/revision、TokenUsage 投影、cacheHit 精度算法",
+        "trust": "检测器；类型不能证明检测正确",
+        "failure": "unknown 保留；timeout 不杀；缺失省略；非法值拒绝",
+        "exceptions": "启发式回退可存在，但必须标 inferred 并保留不确定性"
+      },
+      "applicability": "进程/终端、在线状态、指标、调度、任何异步完成检测。",
+      "relationships": [
+        "为 bounded-resources 提供截断/总量语义",
+        "为 lifecycle-teardown 提供安全回收条件",
+        "为 replay-determinism 提供可重复的展示规则"
+      ],
+      "migration": {
+        "strategy": "把布尔/数字结果改为带来源的联合类型；未知分支保留旧行为（保留/不清理）。",
+        "implementation": "类型化结果 + 正向证据检测 + 省略/保留规则。",
+        "requiredSupport": "进程/网络观测、类型系统、测试时钟。"
+      },
+      "reference": "references/rationale-feature-4.md#m10-typed-evidence-and-uncertainty",
+      "verification": {
+        "positive": [
+          {
+            "name": "精确就绪与推断分开",
+            "action": "在可读 syscall 的 Linux 上等待真实 stdin 读取；在不可读环境下重复。",
+            "expected": "前者 stdin_read，后者 inferred_idle/timeout；不混淆。",
+            "evidence": "planned"
+          },
+          {
+            "name": "缺失指标省略",
+            "action": "提供没有计时/usage 的步骤。",
+            "expected": "对应数字省略，不渲染为 0。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "未知活动不回收",
+            "action": "让终端活动为 unknown 且无窗口持有。",
+            "expected": "保留终端，不启动两小时回收。",
+            "evidence": "planned"
+          },
+          {
+            "name": "超时不被当作退出",
+            "action": "让前台发送超时但进程仍运行。",
+            "expected": "返回 timeout，sessionStatus 仍 running；不杀进程。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "未知转确认后重新计时",
+            "action": "unknown 变为确认空闲。",
+            "expected": "从第一次确认空闲开始完整宽限期；运行中工作完成后重新给完整宽限。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "启发式推断仍可能误判（静默构建、网络阻塞）；类型化只是不隐藏不确定性。",
+        "未知可能永久保留资源；需要显式关闭/人工处置。",
+        "精确证据依赖平台能力；不支持平台只能降级。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 75,
+          "end": 89,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md",
+          "start": 11,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md",
+          "start": 12,
+          "end": 20,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-19-high-cache-hit-decimal-display.md",
+          "start": 14,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-durable-web-schedule.md",
+          "start": 28,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.replay-determinism-and-presentation-fidelity",
+      "title": "回放确定性与呈现保真",
+      "problem": "渲染器/客户端若从实时目录、当前环境或非确定性时钟取值，会改写模型看到的字节、产生死链或在回放中漂移。",
+      "triggers": [
+        "展示持久模型输入/工具结果",
+        "流式到定稿的切换",
+        "快照/黄金文件比较",
+        "链接、路径、系统提示词或指标渲染"
+      ],
+      "obligations": [
+        "只从持久日志/当前窗口取值；不读取实时 skill/tool 目录来决定历史展示。",
+        "模型可见文本按原始字节呈现；不把 Markdown 重新排版成模型未收到的文档。",
+        "不臆造日志未命名的分段/生产者/来源；缺失字段显示为未知而非补全。",
+        "链接/提及只对已确认存在的目标生效，歧义/未知保持惰性，绝不产生 404。",
+        "流式增量必须与从头解析/定稿结果等价；非追加输入或语法变化重置。",
+        "不可复现的墙钟指标在快照中归一化；提供确定性种子/固定比率。"
+      ],
+      "actors": [
+        "投影/渲染器：读取持久值",
+        "快照作者：固定种子/归一化",
+        "评审者：检查是否改写模型输入"
+      ],
+      "steps": [
+        "确认展示数据的权威来源。",
+        "对模型输入使用 opaque/原文字节渲染。",
+        "对链接/提及建立显式词表，歧义不猜。",
+        "流式实现保留前沿并与全量结果做等价测试。",
+        "快照中对时间/吞吐等做归一化，并 pin 字节。",
+        "测试回放、分页窗口、实时目录变化与未知版本。"
+      ],
+      "enforcement": {
+        "mode": "快照/字节测试 + 纯函数投影",
+        "implementation": "OpaqueBody、Keyed slot 仅读窗口、增量 parser/highlighter 等价测试、确定性 replay sidecar",
+        "trust": "持久日志与测试；渲染器不拥有词表",
+        "failure": "未知版本回退通用结果；链接歧义惰性；流式非追加重置",
+        "exceptions": "明确的视觉装饰可不同，但不得改变模型可见文本/导航目标"
+      },
+      "applicability": "聊天/轨迹/终端 UI、快照测试、任何展示持久模型输入的表面。",
+      "relationships": [
+        "依赖 durable-authority 的日志",
+        "与 presentation-fidelity 的单一所有者共同防止漂移",
+        "与 verification-matrix 的 golden 测试共同固定"
+      ],
+      "migration": {
+        "strategy": "先找出展示层读取的实时源，改为持久投影；再为关键输出加字节/等价测试。",
+        "implementation": "opaque renderer + 显式词表 + 增量等价测试 + 确定性 fixture。",
+        "requiredSupport": "持久投影、快照基础设施、字节比较。"
+      },
+      "reference": "references/rationale-feature-4.md#m11-replay-determinism-and-presentation-fidelity",
+      "verification": {
+        "positive": [
+          {
+            "name": "回放字节一致",
+            "action": "对同一持久工具结果分别在实时与冷回放中展开。",
+            "expected": "显示相同名称/指令/字节；不依赖当前 skill 目录。",
+            "evidence": "planned"
+          },
+          {
+            "name": "增量与全量等价",
+            "action": "对流式代码围栏逐分片高亮，并与完整文档解析比较。",
+            "expected": "token 序列一致；定稿保留同一树。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "歧义提及不成链",
+            "action": "让两个产出文件共享 basename，并在正文提及该 basename。",
+            "expected": "保持惰性文本，不猜测目标，不产生死链。",
+            "evidence": "planned"
+          },
+          {
+            "name": "未知版本回退",
+            "action": "提供未知版本的持久模型。",
+            "expected": "渲染通用结果/回退，不部分解释。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "语法/追加变化重置增量",
+            "action": "在高亮过程中改变 info string 或提交非追加输入。",
+            "expected": "重置缓存并全量重算；不保留错误语法状态。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "完整字节保真可能牺牲可读性/交互；需明确产品取舍。",
+        "窗口分页会限制可见历史；未加载部分不能冒充已加载。",
+        "快照归一化可能掩盖真实性能变化；仍需单独指标/基准。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md",
+          "start": 12,
+          "end": 20,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-17-web-system-prompt-opaque-body.md",
+          "start": 12,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md",
+          "start": 28,
+          "end": 32,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-markdown-file-preview-links.md",
+          "start": 12,
+          "end": 20,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md",
+          "start": 12,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md",
+          "start": 12,
+          "end": 23,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.composition-ownership-and-public-contracts",
+      "title": "组合所有权、公共契约与实验隔离",
+      "problem": "多个包/插件共同拥有一个表面会导致漂移、不可复用内部实现和稳定依赖被实验能力污染；禁用行仍会随交付物发布依赖。",
+      "triggers": [
+        "新增 UI/后端能力需要跨包组合",
+        "两个包共享渲染/数据/提示词",
+        "实验性能力需要进入产品",
+        "替换旧包/旧公共接口"
+      ],
+      "obligations": [
+        "每项能力有唯一所有者；数据/渲染/提示词归属明确，其他包只通过公开 slot/契约消费。",
+        "可选能力用可选服务/provider；其缺席是关闭态，不导致挂载失败。",
+        "一个组合行应同时启停渲染器与对应提示词/行为，避免二者漂移。",
+        "实验包与稳定包隔离：不向稳定 API/UC 包增加实验依赖；不把禁用行留在随附组合。",
+        "替换旧包时预发布直接删除，不留兼容 shim；删除后迁移所有调用方。",
+        "没有当前所有者的公共接口不发布；禁用行不是“关闭”。"
+      ],
+      "actors": [
+        "包所有者：维护契约与生命周期",
+        "组合作者：选择挂载行",
+        "评审者：检查跨包 import/稳定依赖"
+      ],
+      "steps": [
+        "列出数据、渲染、提示词、持久化的所有者。",
+        "定义公开 slot/服务契约，避免直接 import 内部。",
+        "把可选部分做成 provider，缺席即关闭。",
+        "实验包放独立目录，显式挂载；稳定包不依赖。",
+        "删除旧包/旧 RPC 并迁移调用方。",
+        "测试组合有无该行、实验隔离、HMR/dispose。"
+      ],
+      "enforcement": {
+        "mode": "包边界/评审 + 组合测试",
+        "implementation": "slot/公开契约、可选 ctx.get、experimental 包、单行组合、删除旧包",
+        "trust": "包所有者与评审；组合测试证明当前装配",
+        "failure": "跨包内部 import 被评审拒绝；实验依赖稳定包被阻止；缺行退化为关闭",
+        "exceptions": "type-only import 可跨包；纯类型不产生运行时依赖"
+      },
+      "applicability": "插件化 UI/后端、实验能力、可替换包、跨包共享表面。",
+      "relationships": [
+        "与 decision-record-lifecycle 共同确定当前所有者",
+        "与 explicit-opt-in 共同决定实验能力默认关闭",
+        "与 no-dead-surfaces 共同删除旧入口"
+      ],
+      "migration": {
+        "strategy": "按所有权变化拆包，先建公开契约再迁移消费方；实验能力独立挂载。",
+        "implementation": "包拆分 + slot/provider + 组合行 + 旧包删除。",
+        "requiredSupport": "插件/依赖注入框架、组合配置、包边界检查。"
+      },
+      "reference": "references/rationale-feature-4.md#m12-composition-ownership-and-public-contracts",
+      "verification": {
+        "positive": [
+          {
+            "name": "单行启停整个能力",
+            "action": "在组合中删除该能力行。",
+            "expected": "渲染器、提示词和行为一起消失；无残留死 UI/死提示。",
+            "evidence": "planned"
+          },
+          {
+            "name": "实验包不进入稳定依赖",
+            "action": "检查稳定 API/Web bundle 的依赖图。",
+            "expected": "无实验包依赖或 Team 专用契约。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "跨包内部 import 被拒",
+            "action": "让一个插件直接 import 另一个插件的内部组件。",
+            "expected": "评审/依赖规则阻止；改为公开 slot/契约。",
+            "evidence": "planned"
+          },
+          {
+            "name": "禁用行不被接受为 opt-out",
+            "action": "在随附组合保留一行但禁用实验消费者。",
+            "expected": "评审要求删除消费者；禁用行仍发布依赖。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "可选服务缺席退化",
+            "action": "卸载提供词表/活动/附件的服务。",
+            "expected": "功能退化为通用/只读路径，不挂载失败、不丢历史。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "包边界增加脚手架/发布成本；小功能可能不值得拆包。",
+        "可选服务缺席的降级路径需要单独测试，否则可能只是理论。",
+        "实验隔离不能替代权限/安全边界。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md",
+          "start": 16,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-07-web-inline-file-mentions.md",
+          "start": 14,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 15,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-unified-task-list.md",
+          "start": 14,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-session-log-export.md",
+          "start": 19,
+          "end": 26,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.explicit-opt-in-and-consent",
+      "title": "显式启用、正向同意与最小默认面",
+      "problem": "出站数据、实验能力或重运行时若默认开启，会违反同意/最小面原则；禁用行仍会发布依赖。",
+      "triggers": [
+        "遥测/上传/远端调用",
+        "实验性或高成本能力",
+        "隐私/凭据/工作区数据",
+        "默认工具目录/组合"
+      ],
+      "obligations": [
+        "出站/隐私能力必须有正向授权；当前共享 base 未设置/空 DSH_TELEMETRY_MODE 与后端省略 mode 都为 FEEDBACK_ONLY，不是默认 DISABLED。普通活动不授权采集，只有新的本 Session 显式反馈才释放到该事件的未 handoff 前缀，包含存储上下文；handoff 不代表送达。",
+        "非空 DSH_TELEMETRY_DISABLED（包括字符串 0/false）是加载前硬 opt-out；显式 DISABLED 不构造传输。当前后端拒绝 FULL/未知直接配置，不能把旧 SDK launcher 的 deny-not-throw 边界泛化为后端配置规则。",
+        "不能让不受信任项目 .env/代码自行授权导出配置。启动环境冻结是可迁移的信任边界；旧 dsh-sdk launcher 的具体实现与 FULL 授权路径已删除，不能据此声称当前仍有该工具链。",
+        "对 session-search 等有明确未随附义务的能力，从默认目录移除消费者而不是保留禁用行，并保留宿主所需提供方；不得因此删除当前 base 的反馈门控后端。",
+        "实验/重能力显式挂载或显式操作，不因普通任务自动触发。",
+        "产品不得用缺少提示/披露来替代授权；需要时明确披露数据内容。"
+      ],
+      "actors": [
+        "部署者：记录同意",
+        "运行时：启动前解析并冻结",
+        "产品：默认最小面"
+      ],
+      "steps": [
+        "定义单一同意变量/开关和默认值。",
+        "在加载不受信任项目环境前确定可信授权；保持当前反馈门控、显式 DISABLED 与硬 opt-out 的不同作用域。",
+        "按各自来源移除默认消费者或提供显式组合；session-search 的移除行要求不是删除当前 base 的反馈门控后端。",
+        "文档说明可导出完整上下文、反馈时脱敏、覆盖值、硬 opt-out 与 handoff 非送达保证；不得用披露替代授权。",
+        "测试 unset/empty/省略后端 mode、DISABLED、FULL/未知值拒绝、新的本 Session 反馈、继承反馈不授权、项目环境篡改与硬 opt-out。"
+      ],
+      "enforcement": {
+        "mode": "配置默认值 + 启动检查 + 组合测试",
+        "implementation": "源端当前 base/后端配置与反馈授权实现；目标接入仍 planned。旧 SDK launcher 的冻结规则只作为历史信任边界，不声称重新实现该已删除工具链",
+        "trust": "部署者；代码不能替用户授权",
+        "failure": "未授权则不发送/不启用；不支持模式拒绝；硬 opt-out 优先",
+        "exceptions": "当前 OTel 后端不提供内部部署 FULL 例外；归档中的 FULL/旧 launcher 许可仅保留为历史，不覆盖当前闭合模式"
+      },
+      "applicability": "遥测、上传、实验工具、终端/工作树等重能力。",
+      "relationships": [
+        "与 composition-ownership 共同决定默认组合",
+        "与 fail-closed 共同拒绝非法模式",
+        "与 boundary-snapshot 共同冻结启动时同意"
+      ],
+      "migration": {
+        "strategy": "逐能力保留显式授权和最小默认面：当前遥测为反馈门控而非连续上传，禁用/硬 opt-out 独立保留；默认目录移除消费者只适用于有该来源义务的能力。",
+        "implementation": "可信配置边界 + 当前反馈授权 + 硬 opt-out + 按能力的显式组合 + 文档；目标采用与平台验证仍 planned。",
+        "requiredSupport": "配置加载、部署文档、默认组合清单。"
+      },
+      "reference": "references/rationale-feature-4.md#m13-explicit-opt-in-and-consent",
+      "verification": {
+        "positive": [
+          {
+            "name": "当前默认反馈门控而非默认禁用",
+            "action": "共享 base 分别 unset/empty 模式并直接省略后端 mode；先运行普通活动，再提交新的本 Session 反馈。",
+            "expected": "三种默认均为 FEEDBACK_ONLY；普通活动不采集；新反馈仅授权到其事件的未 handoff 前缀，包含存储上下文；不是永不外发或送达证明。",
+            "evidence": "planned"
+          },
+          {
+            "name": "显式禁用与反馈授权分离",
+            "action": "分别选择 DISABLED 与 FEEDBACK_ONLY；尝试直接 emit、继承反馈和新的本 Session 评分编辑/撤回。",
+            "expected": "DISABLED 不构造传输；FEEDBACK_ONLY 仅新的本 Session 反馈授权前缀，直接 emit/继承反馈不授权；撤回事件不证明远端抹除。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "项目环境不能自行授权",
+            "action": "在项目 .env/代码中设置同意变量后启动。",
+            "expected": "启动前冻结的部署值优先；项目不能授权导出自身配置。",
+            "evidence": "planned"
+          },
+          {
+            "name": "硬 opt-out 优先",
+            "action": "分别将禁用变量设为非空 0/false 并同时启用反馈模式；另以 FULL/未知值直接构造后端。",
+            "expected": "非空硬 opt-out 均阻止加载/发送；未走硬 opt-out 的非法后端模式在传输设置前失败，不按已删除 launcher 的静默拒绝规则处理。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "关闭后恢复本地",
+            "action": "从启用切回禁用并重启。",
+            "expected": "新 DISABLED 实例不采集/构造传输，本地反馈仍可用；先前已授权批次按 SDK 关闭期限处置，不能声称立即撤销在途请求、远端抹除或 durable outbox。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "同意变量只能约束本系统；外部代理/网关仍可能记录。",
+        "反馈门控默认不采集普通活动，但显式反馈可导出完整上下文；无部署脱敏规则时不能声称数据已最小化或匿名。确认记录、handoff 与 collector 送达是不同事实。",
+        "归档 Note 的省略 mode=DISABLED、FULL 覆盖与 SDK launcher 许可已被当前后端代码/README 或工具链删除事实替代，不构成当前例外。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-telemetry-default-off.md",
+          "start": 12,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md",
+          "start": 12,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": "packages/bundle/base/cordis.patch.yml",
+          "start": 205,
+          "end": 221,
+          "kind": "config"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/src/index.ts",
+          "start": 31,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 32,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 142,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-02-session-search-not-shipped-default.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 15,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 15,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md",
+          "start": 11,
+          "end": 21,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.versioned-compatibility-and-reader-refusal",
+      "title": "版本化兼容、迁移与读者拒绝",
+      "problem": "格式/发布变化若被旧读者静默忽略，会丢失授权索引、混合不兼容代码或把旧数据解释错。",
+      "triggers": [
+        "持久格式新增事件/字段",
+        "发布/热替换跨版本",
+        "旧会话/旧介质恢复",
+        "新事件是后续操作的授权索引"
+      ],
+      "obligations": [
+        "新记录带版本；旧介质用 schema 默认值升级，迁移不丢事件。",
+        "新增强制事件若是授权/索引，旧读者必须拒绝而不是静默丢弃；不支持则明确失败。",
+        "已发布校验器不修改；新变体走新版本/新检查。",
+        "发布身份（版本+commit）固定在构建产物；页面只应用启动 release 的图，跨 release 暂停热替换并提示刷新。",
+        "未知版本/缺失身份回退到通用/未知显示，不部分解释。",
+        "不自动 reload；让用户确认，避免丢草稿。"
+      ],
+      "actors": [
+        "schema 所有者：版本与迁移",
+        "发布者：固定身份",
+        "客户端：检查并拒绝/提示"
+      ],
+      "steps": [
+        "定义版本字段与旧默认。",
+        "新增事件/字段；旧读者判断是否可安全忽略。",
+        "若是授权索引，旧读者拒绝。",
+        "构建时固定 release 身份；每帧携带。",
+        "跨 release 暂停应用并提示；刷新后重新基线。",
+        "测试旧介质、未知版本、跨 release、返回启动 release。"
+      ],
+      "enforcement": {
+        "mode": "版本校验/读者拒绝 + 构建身份门禁",
+        "implementation": "V4 fork 校验、required-on-read delivery event、WebBootRelease gate、schema default",
+        "trust": "schema/发布所有者；文本状态不能替代实际校验",
+        "failure": "不支持则拒绝/失败；不静默丢引用；不混合 release",
+        "exceptions": "纯展示元数据可安全忽略；授权/索引事件不可"
+      },
+      "applicability": "持久事件格式、会话 fork、导出、Web 静态 shell/Host 升级。",
+      "relationships": [
+        "依赖 durable-authority 的日志",
+        "与 fail-closed 共同拒绝不可读数据",
+        "与 ui-state 共同保证刷新提示不丢输入"
+      ],
+      "migration": {
+        "strategy": "先发布能理解新格式的读者，再写新格式；跨 release 用身份门禁而非热替换。",
+        "implementation": "版本字段 + 迁移 + 读者拒绝 + release gate + 刷新提示。",
+        "requiredSupport": "版本化存储、构建注入、客户端状态机。"
+      },
+      "reference": "references/rationale-feature-4.md#m14-versioned-compatibility-and-reader-refusal",
+      "verification": {
+        "positive": [
+          {
+            "name": "旧介质可读",
+            "action": "加载缺少新字段的旧会话/旧事件。",
+            "expected": "默认值生效，旧事件保留；不丢历史。",
+            "evidence": "planned"
+          },
+          {
+            "name": "跨 release 不热替换",
+            "action": "让 Host 升级到另一个 release 并推送图。",
+            "expected": "页面不应用任何新模块；显示刷新提示；旧页面继续工作。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "旧读者拒绝授权事件",
+            "action": "用不认识新交付事件的旧读取器重建会话。",
+            "expected": "读取器拒绝，不静默丢掉交付引用。",
+            "evidence": "planned"
+          },
+          {
+            "name": "未知版本不部分解释",
+            "action": "提供未知版本的持久 UI/模型。",
+            "expected": "回退通用结果/错误，不执行部分字段。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "刷新后重新基线",
+            "action": "用户确认刷新到新 release。",
+            "expected": "新页面以新 release 为基线；无残留旧模块；未被撤回的更新正常应用。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "旧读者拒绝要求部署/发布顺序正确；先写新格式会让旧读者不可用。",
+        "release 身份依赖构建注入；源码启动可能只有版本没有 commit。",
+        "刷新提示可能被忽略；页面仍需保持自身 release 可用。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md",
+          "start": 12,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md",
+          "start": 32,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md",
+          "start": 20,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-session-archive-global-set.md",
+          "start": 12,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md",
+          "start": 11,
+          "end": 19,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.authority-not-visibility",
+      "title": "可见性不是授权；显式声明非保证",
+      "problem": "工具过滤、队友范围、工作树或所有权例外若被描述成安全边界，会制造虚假的非升权保证。",
+      "triggers": [
+        "工具过滤/能力限制",
+        "多代理/团队/共享 checkout",
+        "Queue mutation 的所有权例外",
+        "工作树/共享目录"
+      ],
+      "obligations": [
+        "明确写出不保证什么：过滤不阻止直接服务调用、不要求子集、不沙箱插件。",
+        "新工作/提示词仍要求确切在线直接父级；只有目标本地事实足够时才允许窄例外。",
+        "记录来源字段（MessageSource/senderSessionId）不能作为授权依据。",
+        "不为没有具体消费方的权限铸造 API/用户分支。",
+        "写作用域是建议而非锁；外部写者绕过 CAS；不声称互斥。",
+        "共享 checkout 的集成边界留给 Lead/人工测试，不自动创建隔离。"
+      ],
+      "actors": [
+        "安全评审者：定义威胁模型",
+        "运行时所有者：实现窄检查",
+        "文档作者：写明非保证"
+      ],
+      "steps": [
+        "列出攻击者/可信进程模型。",
+        "区分组合（可见性）与授权（谁可做什么）。",
+        "为 mutation 找目标本地证据（身份/descriptor/seq）。",
+        "保留新工作的强授权；只放宽已存在本地状态的 mutation。",
+        "测试绕过路径并写入限制。"
+      ],
+      "enforcement": {
+        "mode": "授权检查 + 文档限制；不是通用安全沙箱",
+        "implementation": "exact live parent、own-suffix descriptor、advisory writeScopes、same-world sandbox",
+        "trust": "授权检查与评审；过滤本身不可信为边界",
+        "failure": "不满足则拒绝；非保证必须显式",
+        "exceptions": "同一可信进程内的组合可放宽可见性；跨信任边界不可"
+      },
+      "applicability": "子代理工具、多代理协作、任务板、工作树、任何“限制视图”的功能。",
+      "relationships": [
+        "与 single-ordering 共同保护 mutation",
+        "与 transactional 的最终权限检查共同防止替换父级",
+        "与 lifecycle 共同处理共享资源"
+      ],
+      "migration": {
+        "strategy": "先写威胁模型与非保证，再实现最小窄例外；不要用过滤器替代授权。",
+        "implementation": "强授权入口 + 目标本地例外 + 文档 + 绕过测试。",
+        "requiredSupport": "身份/谱系、权限检查、评审。"
+      },
+      "reference": "references/rationale-feature-4.md#m15-authority-not-visibility",
+      "verification": {
+        "positive": [
+          {
+            "name": "新提示仍要求直接父级",
+            "action": "由非直接父级向子代理提交新提示。",
+            "expected": "拒绝；只有确切在线直接父级可提交。",
+            "evidence": "planned"
+          },
+          {
+            "name": "队列 mutation 的窄例外",
+            "action": "父级离线时，对子代理已存在 inbox 项执行编辑/删除。",
+            "expected": "仅在子代理有效 own-suffix descriptor 时允许；目标会话 id 足够。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "过滤器不被当作授权",
+            "action": "从另一个 Cordis 上下文直接调用被过滤的服务。",
+            "expected": "调用仍可能成功；文档/评审不得声称过滤器阻止它。",
+            "evidence": "planned"
+          },
+          {
+            "name": "写作用域不阻止 claim",
+            "action": "让两个任务写作用域重叠但都 claim 成功。",
+            "expected": "允许并给出重叠诊断；不制造互斥假象。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "来源字段不能翻案",
+            "action": "伪造 MessageSource/senderSessionId 后尝试投递。",
+            "expected": "最终准入仍按实时身份拒绝；记录字段不授权。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "同进程可信模型下无法防止恶意插件直接调用服务；需要独立沙箱/权限系统。",
+        "共享 checkout 的冲突只能降低，不能消除。",
+        "窄例外可能被知道 MessageId 的调用方滥用；需评估目标本地状态是否足够。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md",
+          "start": 74,
+          "end": 82,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-27-continuable-subagent-human-inbox-control.md",
+          "start": 14,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 51,
+          "end": 57,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md",
+          "start": 11,
+          "end": 21,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.lifecycle-teardown-and-resource-ownership",
+      "title": "生命周期拆卸、child-first 与结构化所有者",
+      "problem": "动态所有权图、反向注册顺序和异步清理会让资源泄漏、过早释放或让祖先永久等待。",
+      "triggers": [
+        "子代理/团队/终端/插件/宿主关闭",
+        "资源所有权图在运行时动态变化",
+        "清理失败或取消与 dispose 竞争"
+      ],
+      "obligations": [
+        "每个资源有结构化所有者；不要只靠注册逆序表达动态 child 图。",
+        "释放 child-first；父级在所有 child 完成 dispose 前不得结算。",
+        "关闭准入后 drain 已准入的创建/发送；等待 quiescence；保留持久会话。",
+        "closing promise 记忆化，使宿主关闭、管理器卸载、child 释放汇合而不重复释放。",
+        "单个分支失败仍继续其余分支，最后聚合报告；清理失败保持 tracked，可重试。",
+        "身份关闭后不可复用；清理等待 provider 停稳与最终输出排空。"
+      ],
+      "actors": [
+        "生命周期所有者：注册 disposer",
+        "宿主：关闭准入并 drain",
+        "清理器：等待 quiescence"
+      ],
+      "steps": [
+        "画出所有权图与动态边。",
+        "先注册结构化 disposer，再注册 drain disposer，确保逆序先 drain。",
+        "关闭准入、停止工作、等待已准入物化。",
+        "child-first 释放，聚合失败。",
+        "验证无存活进程/句柄；保留持久状态。",
+        "测试并发 dispose、清理失败、重试与身份复用。"
+      ],
+      "enforcement": {
+        "mode": "结构化 owner + 关闭协议 + 测试",
+        "implementation": "activation-owner scope、closing promise、drainDescendants、PTY terminate/quiescence",
+        "trust": "生命周期所有者；单个布尔不能证明后端停稳",
+        "failure": "失败记录并聚合；不缓存失败关闭；不释放未停稳资源",
+        "exceptions": "宿主可只 drain 自己拥有的子树；管理器全局卸载仍全局"
+      },
+      "applicability": "代理/团队/终端/插件/任何动态资源图。",
+      "relationships": [
+        "依赖 single-ordering 的准入截止",
+        "与 durable-authority 共同保留持久状态",
+        "与 typed-evidence 共同判断 quiescence"
+      ],
+      "migration": {
+        "strategy": "先建 owner scope 与 drain，再迁移资源创建；不要依赖注册逆序。",
+        "implementation": "结构化 disposer + 关闭准入 + child-first + 聚合错误。",
+        "requiredSupport": "生命周期框架、进程/句柄管理、测试。"
+      },
+      "reference": "references/rationale-feature-4.md#m16-lifecycle-teardown-and-resource-ownership",
+      "verification": {
+        "positive": [
+          {
+            "name": "child-first 释放",
+            "action": "在 child 仍运行时关闭父级 Activation。",
+            "expected": "父级等待 child dispose；自身不先释放；持久会话保留。",
+            "evidence": "planned"
+          },
+          {
+            "name": "分层 drain 隔离",
+            "action": "只关闭宿主拥有的顶层 Agent 子树。",
+            "expected": "无关森林继续运行；选定分支 child-first 停止。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "不缓存失败关闭",
+            "action": "让 close 第一次失败，再显式 close。",
+            "expected": "第二次重试；不因旧失败永久拒绝；不干扰更新并发尝试。",
+            "evidence": "planned"
+          },
+          {
+            "name": "身份不复用",
+            "action": "尝试重新打开已关闭的会话/终端 id。",
+            "expected": "拒绝；必须新身份。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "部分失败后继续",
+            "action": "让一个分支 dispose 失败。",
+            "expected": "其余分支仍被尝试；聚合报告失败；资源状态可诊断。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "进程内拆卸不清理持久日志；崩溃后仍可能留下需要恢复的状态。",
+        "等待 quiescence 可能无限/很长；需要 grace 与显式关闭。",
+        "外部副作用（push/API 调用）不能由本地 teardown 撤销。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 102,
+          "end": 116,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md",
+          "start": 176,
+          "end": 204,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 31,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 95,
+          "end": 103,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 31,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md",
+          "start": 11,
+          "end": 38,
+          "kind": "implementation"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.ui-state-accessibility-and-layout-stability",
+      "title": "UI 状态、焦点、无障碍与布局稳定",
+      "problem": "弹窗/卡片/刷新/连接状态若重建状态或改变几何，会丢草稿、隐藏可交互面、移动控件或误触提交；一个控件承载两个不可区分意图会让调用方无法判断实际动作。",
+      "triggers": [
+        "模态、卡片、composer、连接/发布提示",
+        "状态切换隐藏/显示区域",
+        "异步提交/重连/刷新",
+        "一个菜单行/控件同时承载选择与下钻等两个意图，或结果无法区分实际执行的动作"
+      ],
+      "obligations": [
+        "草稿/当前位置/已选答案存放在组件状态而非 DOM，折叠/展开不重置。",
+        "隐藏的可交互面从 a11y 树卸载；`aria-expanded`/标签随状态变化。",
+        "提交/取消进行中禁用会改变状态的控制；忙碌状态不得静默接受。",
+        "焦点与 DOM identity 在状态过渡中保留；常驻 textarea 同一节点变可编辑。",
+        "覆盖层 portal 到 body，避免 transform 困住 fixed。",
+        "为最宽本地化标签预留几何；状态变化不移动/缩放控件。",
+        "刷新提示不得自动 reload；初始焦点留在页面，Enter 不丢草稿。",
+        "一个控件/语法只承载一个意图；动作结果显式报告实际分支（如 pick|drill），旧调用方按默认分支保持行为；新增维度应是可加性而不是平行路径。"
+      ],
+      "actors": [
+        "UI 所有者：状态与焦点设计",
+        "无障碍评审者：树/键盘",
+        "测试作者：几何/状态快照"
+      ],
+      "steps": [
+        "确定状态所有者（组件而非 DOM）。",
+        "隐藏时卸载交互面；保留可见信号。",
+        "加 busy 守卫与焦点恢复。",
+        "固定几何/预留标签宽度。",
+        "用键盘/屏幕阅读器/多视口测试。",
+        "刷新/重连场景验证不丢草稿。",
+        "为动作结果增加显式 action 字段；保持旧处理器默认分支；用键盘/鼠标/触屏分别测试每个手势。"
+      ],
+      "enforcement": {
+        "mode": "组件测试/无障碍检查 + 视觉快照",
+        "implementation": "QuestionFlow state、Modal/inert、ConnectionIndicator 固定列、release dialog autofocus",
+        "trust": "UI 测试与评审；视觉差异需人工确认",
+        "failure": "隐藏面仍在 a11y 树/焦点丢失/布局移动时测试失败",
+        "exceptions": "纯装饰动画可不同；不得影响输入/焦点/可点击区域"
+      },
+      "applicability": "聊天/设置/弹窗/连接状态/任何有异步状态的 UI。",
+      "relationships": [
+        "与 replay-determinism 共同保证快照稳定",
+        "与 versioned-compatibility 共同处理刷新提示",
+        "与 verification-matrix 共同覆盖键盘/多视口"
+      ],
+      "migration": {
+        "strategy": "先把状态从 DOM 移到组件/服务，再加无障碍与几何约束；刷新/重连走显式确认。",
+        "implementation": "状态组件 + inert/portal + busy 守卫 + 固定几何 + 键盘测试。",
+        "requiredSupport": "组件测试、浏览器 e2e、无障碍工具。"
+      },
+      "reference": "references/rationale-feature-4.md#m17-ui-state-accessibility-and-layout-stability",
+      "verification": {
+        "positive": [
+          {
+            "name": "折叠保留草稿",
+            "action": "在提问卡输入答案/选择后折叠再展开。",
+            "expected": "草稿与当前题号保留；已选答案可提交。",
+            "evidence": "planned"
+          },
+          {
+            "name": "忙碌时禁用变更",
+            "action": "在提交/取消进行中点击折叠或关闭。",
+            "expected": "控制禁用；不产生第二次提交/取消。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "隐藏面不留在 a11y 树",
+            "action": "折叠后检查可聚焦元素。",
+            "expected": "选项/底部按钮不在树中；头部仍显示待答信号。",
+            "evidence": "planned"
+          },
+          {
+            "name": "刷新不丢草稿",
+            "action": "在 release 对话框打开时于 composer 输入并按 Enter。",
+            "expected": "页面不自动刷新；草稿保留；需显式点击刷新。",
+            "evidence": "planned"
+          },
+          {
+            "name": "两个意图不可区分被拒",
+            "action": "让同一菜单行的选择与下钻都返回同一结果，调用方无法判断实际动作。",
+            "expected": "评审/测试拒绝；要求显式 action 或拆成两个可区分操作。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "连接恢复不移动控件",
+            "action": "在 disconnected/connecting/connected 之间切换。",
+            "expected": "控件几何稳定；最宽标签预留；无布局跳动。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "快照/组件测试不能覆盖所有屏幕阅读器；仍需人工检查。",
+        "固定几何可能浪费空间；需按最宽本地化文本权衡。",
+        "视觉产品决策本身不是治理机制。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-collapsible-ask-user-question-card.md",
+          "start": 12,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md",
+          "start": 107,
+          "end": 117,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md",
+          "start": 12,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md",
+          "start": 16,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-24-folder-reference-pick-vs-drill.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.verification-matrix-and-honest-limits",
+      "title": "分层验证矩阵与诚实的未覆盖声明",
+      "problem": "单一测试层或代表性样本会掩盖平台、真实引擎、并发与打包路径；把源码/人工检查说成运行证据会制造假保证。",
+      "triggers": [
+        "声明功能完成、修复或可发布",
+        "涉及平台/native/真实浏览器/真实模型",
+        "存在无法自动化的手动检查"
+      ],
+      "obligations": [
+        "按风险分层：纯逻辑单测、组件/集成、真实引擎 fixture、组装应用快照、平台冒烟、手动检查。",
+        "纯逻辑可注入并在所有平台测试；真实平台路径单独 job。",
+        "确定性 fixture/固定比率/固定时钟；非确定性值在快照中归一化。",
+        "最终验收覆盖真实入口（组装/安装/构建产物），不以源码级测试替代。",
+        "明确列出未测试分支（打包自我 spawn、真实渲染、手动交互）与覆盖缺口。",
+        "证据状态区分 planned/manual/executed；提取阶段不声称运行。"
+      ],
+      "actors": [
+        "作者：设计矩阵",
+        "验证者：执行并记录",
+        "评审者：检查声明与证据匹配"
+      ],
+      "steps": [
+        "列出风险与平台矩阵。",
+        "为每层选择最小但真实的测试。",
+        "对不可自动化项写手动步骤与已知缺口。",
+        "用固定种子/归一度量稳定快照。",
+        "在组装/构建产物上跑关键路径。",
+        "报告失败与未覆盖，不只报绿色。"
+      ],
+      "enforcement": {
+        "mode": "CI/测试 + 评审 + 未覆盖清单",
+        "implementation": "per-file coverage、keyless snapshots、real PTY/browser fixtures、manual matrix",
+        "trust": "验证执行者；源码存在不等于已运行",
+        "failure": "失败保留并报告；未覆盖显式标注；不以抽样代表全量",
+        "exceptions": "成本极高的平台/打包路径可手动，但必须命名"
+      },
+      "applicability": "所有功能，尤其平台/native/UI/打包/并发。",
+      "relationships": [
+        "为 typed-evidence 提供测试证据",
+        "与 bounded-resources 共同覆盖超大/取消",
+        "与 native-risk 共同覆盖平台隔离"
+      ],
+      "migration": {
+        "strategy": "先定义验收矩阵与未覆盖清单，再写测试；用真实入口做最终证据。",
+        "implementation": "分层测试 + 组装快照 + 手动矩阵 + 失败保留。",
+        "requiredSupport": "CI、浏览器/PTY 环境、快照基础设施。"
+      },
+      "reference": "references/rationale-feature-4.md#m18-verification-matrix-and-honest-limits",
+      "verification": {
+        "positive": [
+          {
+            "name": "真实浏览器关系 golden",
+            "action": "在真实 Chromium 中跨视口/缩放运行表格布局。",
+            "expected": "断言实际几何关系，不只是类名。",
+            "evidence": "planned"
+          },
+          {
+            "name": "真实 PTY 冒烟",
+            "action": "在支持的 OS 上打开真实终端并中止。",
+            "expected": "覆盖打开/中止/清理；不以 fake 替代。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "抽样不能宣称全量",
+            "action": "只读部分 Note/文件却提交全量覆盖声明。",
+            "expected": "审计拒绝；要求实际范围或降级声明。",
+            "evidence": "planned"
+          },
+          {
+            "name": "人工检查不能冒充自动保证",
+            "action": "把“手动看过”写成自动测试通过。",
+            "expected": "验证器/评审要求改为 manual/planned。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "失败保留并重跑",
+            "action": "让测试首次失败后修复。",
+            "expected": "保留首次失败证据；重跑通过后才更新状态。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "测试通过只证明被测场景；不能证明所有代理/网关/平台。",
+        "真实模型/网关测试可能受凭据与环境限制，需跳过而非伪造。",
+        "覆盖率是结构指标，不代表语义完整。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 161,
+          "end": 185,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-session-log-export.md",
+          "start": 26,
+          "end": 31,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-19-web-markdown-wide-table-view.md",
+          "start": 28,
+          "end": 38,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md",
+          "start": 23,
+          "end": 27,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md",
+          "start": 48,
+          "end": 56,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md",
+          "start": 41,
+          "end": 45,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-05-agent-teams.md",
+          "start": 81,
+          "end": 87,
+          "kind": "test"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.no-dead-surfaces-and-clean-cutover",
+      "title": "删除死接口、预发布直改与调用方全迁移",
+      "problem": "旧 RPC、旧包、禁用行和未使用占位符会继续被调用或发布依赖，制造双路径与无效承诺。",
+      "triggers": [
+        "替换/删除功能或包",
+        "公共接口失去唯一消费者",
+        "预发布阶段的形状变化",
+        "共享常量/包装函数无生产调用方"
+      ],
+      "obligations": [
+        "替换时迁移所有调用方并删除旧公共面；不留无当前所有者的接口。",
+        "预发布阶段直接改形状，不加兼容层/shim/转发文件。",
+        "删除被替换包（如 job 列表）并让新入口占用其 slot；不保留禁用行。",
+        "删除无生产调用方的常量/包装/旧参数；同步删除文档与快照。",
+        "确认删除后引用为零；不要用“以后可能有用”保留死代码。"
+      ],
+      "actors": [
+        "实现者：迁移与删除",
+        "评审者：检查残留引用/所有者",
+        "测试：组装/构建验证无旧路径"
+      ],
+      "steps": [
+        "列出旧接口/包的所有调用方与文档。",
+        "迁移到新入口并更新测试/快照。",
+        "删除旧实现、兼容导出、配置行、常量。",
+        "全局检索引用并构建。",
+        "在组装应用验证只有新路径。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 类型检查/构建 + 引用检索",
+        "implementation": "删除 RPC/package/placeholder、无兼容 shim、组合测试",
+        "trust": "评审与构建；文本“已删除”不能证明无引用",
+        "failure": "残留引用导致构建/测试失败；旧路径仍存在则阻止合并",
+        "exceptions": "已发布版本的兼容窗口需单独政策；预发布无"
+      },
+      "applicability": "预发布产品、内部包替换、公共接口清理。",
+      "relationships": [
+        "与 decision-record 共同标记旧记录为历史",
+        "与 composition-ownership 共同删除旧包/行",
+        "与 versioned-compatibility 区分预发布直改与已发布兼容"
+      ],
+      "migration": {
+        "strategy": "先迁移再删除；在同一个变更中移除旧面，避免双路径长期共存。",
+        "implementation": "调用方迁移 + 删除 + 引用检查 + 组装测试。",
+        "requiredSupport": "版本控制、类型检查、全局检索。"
+      },
+      "reference": "references/rationale-feature-4.md#m19-no-dead-surfaces-and-clean-cutover",
+      "verification": {
+        "positive": [
+          {
+            "name": "旧接口无引用",
+            "action": "删除旧 RPC/包后全局检索并构建。",
+            "expected": "零引用；构建通过；新入口有测试。",
+            "evidence": "planned"
+          },
+          {
+            "name": "单入口占用 slot",
+            "action": "检查合并列表/附件/技能行的注册。",
+            "expected": "只有一个新入口，旧包不存在。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "无所有者接口被拒",
+            "action": "提交一个没有当前消费者的新公共接口。",
+            "expected": "评审拒绝；删除或补真实消费者。",
+            "evidence": "planned"
+          },
+          {
+            "name": "兼容 shim 在预发布被拒",
+            "action": "保留旧形状转发到新实现。",
+            "expected": "评审要求直改并迁移调用方。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "删除后发现遗漏调用方",
+            "action": "构建/测试暴露残留。",
+            "expected": "迁移该调用方，不恢复旧接口。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "已发布版本可能需要兼容窗口；本机制面向预发布/内部替换。",
+        "删除可能破坏外部消费者；需版本政策与迁移说明。",
+        "全局检索不能证明动态调用/字符串引用不存在。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-session-log-export.md",
+          "start": 19,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-unified-task-list.md",
+          "start": 14,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md",
+          "start": 12,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md",
+          "start": 29,
+          "end": 39,
+          "kind": "instruction"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.cache-prefix-and-context-stability",
+      "title": "缓存前缀稳定与上下文分离",
+      "problem": "把会变化的事实放在请求前缀或确定性身份中，会让每次变更都损失全部缓存，或让环境变化污染可复现数据。",
+      "triggers": [
+        "系统提示词/工具 schema 频繁变化",
+        "图片/附件路径依赖宿主环境",
+        "长会话重复请求"
+      ],
+      "obligations": [
+        "把频繁变化的事实移出缓存前缀（运行时上下文/尾部追加），或用路由能力追加 system 节点而非重写 message 0。",
+        "能力按实际路由声明；无能力时退回重写/替换，不强行追加。",
+        "环境相关访问路径不进入确定性请求版本/variantId；请求时从当前环境解析。",
+        "在系列开始/压缩/工具 schema 变化时重新基线；恢复不是系列开始。",
+        "披露追加节点的 token 成本与缓存收益；用真实 API 缓存命中指标检测代理重写。",
+        "模型契约若收窄，需要额外的重新基线触发条件。"
+      ],
+      "actors": [
+        "循环/适配器：选择追加或重写",
+        "投影/计量：按 surface 顺序解释",
+        "验证者：真实缓存指标"
+      ],
+      "steps": [
+        "识别缓存前缀中的动态事实。",
+        "实现能力门禁与追加/重写决策表。",
+        "在系列开始/压缩时归并；空渲染清除所有版本。",
+        "把环境访问排除出确定性身份。",
+        "用固定会话比较追加 vs 重写的缓存 token。",
+        "记录模型契约风险与代理检测。"
+      ],
+      "enforcement": {
+        "mode": "能力门禁 + 投影规则 + 缓存指标测试",
+        "implementation": "SystemPromptProjection、system/message surface、RequestImageAttachment/variantId、request/context",
+        "trust": "模型契约与适配器；本地测试不能证明远端缓存",
+        "failure": "无能力则替换；契约不符则缓存未命中；代理重写静默破坏语义",
+        "exceptions": "路由切换本身已 miss，追加无额外收益；系列开始必须归并"
+      },
+      "applicability": "长会话提示词、附件路径、任何 provider 前缀缓存。",
+      "relationships": [
+        "依赖 capability-declaration 的逐路由能力",
+        "与 durable-authority 的确定性身份分离",
+        "与 replay-determinism 共同保证历史文本可重建"
+      ],
+      "migration": {
+        "strategy": "先测量缓存命中，再引入追加/分离；无能力路由保持旧行为。",
+        "implementation": "能力枚举 + 投影决策表 + 环境解析与确定性身份分离 + 缓存 e2e。",
+        "requiredSupport": "模型能力目录、请求投影、真实 API 测试。"
+      },
+      "reference": "references/rationale-feature-4.md#m20-cache-prefix-and-context-stability",
+      "verification": {
+        "positive": [
+          {
+            "name": "追加保持前缀缓存",
+            "action": "在支持路由上改变提示词并继续同一会话。",
+            "expected": "追加 system 节点；message 0 不变；后续请求缓存读取更多 token。",
+            "evidence": "planned"
+          },
+          {
+            "name": "环境访问不污染变体",
+            "action": "同一附件在不同 DSH_HOME/执行环境下恢复。",
+            "expected": "variantId/字节不变；路径按当前环境重建或无路径。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "无能力路由不追加",
+            "action": "在未声明能力的路由上改变提示词。",
+            "expected": "重写/归并 message 0；不发送可能被当作普通历史的追加 system。",
+            "evidence": "planned"
+          },
+          {
+            "name": "空渲染清除全部版本",
+            "action": "清空提示词后再恢复。",
+            "expected": "所有生效 system 节点被清除；旧提示词不复活；恢复按准入规则。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "压缩/系列开始重新基线",
+            "action": "压缩后继续会话。",
+            "expected": "非空提示词归并回头部；不携带过时头部+替换。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "追加节点在每个请求上付出自身 token，直到被压缩遮蔽；频繁变化时应移入运行时上下文。",
+        "模型契约由外部提供，可能收窄；需要重新基线触发条件。",
+        "代理重写/重排 system 消息会静默破坏语义，只有真实缓存断言能检测。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md",
+          "start": 15,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md",
+          "start": 12,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md",
+          "start": 11,
+          "end": 19,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/proposed/feature/2026-07-06-recallable-compaction.md",
+          "start": 51,
+          "end": 58,
+          "kind": "history"
+        }
+      ]
+    },
+    {
+      "id": "rationale-feature-4.native-risk-containment-and-platform-gating",
+      "title": "原生风险隔离与平台门禁",
+      "problem": "原生模态/ABI/二进制解析若在宿主进程或所有平台无条件运行，可能阻塞事件循环、崩溃宿主或改变其他平台行为。",
+      "triggers": [
+        "Windows/macOS 原生 UI、PTY、系统集成",
+        "原生 ABI/COM/API 调用",
+        "浏览器二进制格式解析",
+        "平台专属外观"
+      ],
+      "obligations": [
+        "高风险原生模态放入子进程/隔离层；宿主事件循环不被阻塞。",
+        "提供有界中止/终止路径；失败限制在隔离层，宿主存活并报告。",
+        "平台规则由 preload/平台标记限定，纯 Web/其他平台零影响。",
+        "原生 ABI/崩溃风险通过子进程、mock 与真实平台冒烟分层覆盖。",
+        "可选增强（DPI/毛玻璃）best-effort，缺失不降级核心功能；移除的回退层不再保留。",
+        "打包/自我 spawn 等无法自动覆盖的路径显式命名。"
+      ],
+      "actors": [
+        "平台所有者：隔离与门禁",
+        "CI：平台矩阵",
+        "发布者：记录手动缺口"
+      ],
+      "steps": [
+        "把原生调用放入子进程/隔离模块。",
+        "加平台标记与发送者/参数校验。",
+        "实现有界中止和强制终止。",
+        "纯逻辑/驱动/mock/真实平台分层测试。",
+        "记录无法自动化的打包/渲染路径。"
+      ],
+      "enforcement": {
+        "mode": "进程隔离 + 平台门禁 + 分层测试",
+        "implementation": "koffi 子进程、titleBarStyle darwin gate、Worker parser、PTY scope",
+        "trust": "平台测试；隔离层不能证明 ABI 正确",
+        "failure": "子进程崩溃不拖垮宿主；非目标平台不受影响；失败显式上报",
+        "exceptions": "best-effort 外观增强可降级；核心功能不可"
+      },
+      "applicability": "桌面原生 UI、终端、二进制解析、任何平台专属危险调用。",
+      "relationships": [
+        "与 lifecycle-teardown 共同清理子进程",
+        "与 verification-matrix 共同覆盖真实平台",
+        "与 ui-state 共同处理平台外观"
+      ],
+      "migration": {
+        "strategy": "先把原生调用移出宿主，再加平台门禁；不要用全局标志影响其他平台。",
+        "implementation": "隔离进程 + 平台标记 + 有界中止 + 平台测试。",
+        "requiredSupport": "原生绑定、子进程管理、平台 CI。"
+      },
+      "reference": "references/rationale-feature-4.md#m21-native-risk-containment-and-platform-gating",
+      "verification": {
+        "positive": [
+          {
+            "name": "原生模态不阻塞宿主",
+            "action": "打开系统文件夹对话框并同时请求宿主 RPC。",
+            "expected": "宿主继续服务；对话框在子进程。",
+            "evidence": "planned"
+          },
+          {
+            "name": "平台门禁隔离",
+            "action": "在纯 Web/非 darwin 平台加载桌面样式/规则。",
+            "expected": "规则不生效；无布局变化。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "name": "中止路径可关闭对话框",
+            "action": "打开对话框后请求中止。",
+            "expected": "通过线程消息/有界等待关闭；超时强制终止；宿主存活。",
+            "evidence": "planned"
+          },
+          {
+            "name": "原生加载失败被限制",
+            "action": "让 koffi/COM 加载失败。",
+            "expected": "失败在隔离层上报；宿主进程不崩溃；可选增强降级。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "name": "子进程残留清理",
+            "action": "在原生调用中途关闭宿主/会话。",
+            "expected": "子进程被终止/回收；无孤儿；下次打开正常。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "隔离不能修复错误 ABI；仍可能访问冲突，但限制在子进程。",
+        "打包后自我 spawn/真实渲染可能无法自动测试，需要手动检查。",
+        "平台门禁依赖 preload 标记；缺失时可能不生效或误生效。"
+      ],
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-02-win32-in-process-folder-dialog.md",
+          "start": 12,
+          "end": 28,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-13-macos-hidden-titlebar-vibrancy.md",
+          "start": 12,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md",
+          "start": 41,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md",
+          "start": 11,
+          "end": 38,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md",
+          "start": 13,
+          "end": 29,
+          "kind": "implementation"
+        }
+      ]
+    }
+  ]
+}

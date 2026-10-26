@@ -1,0 +1,801 @@
+{
+  "domain": "persistence-release-history",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "persistence-release-history.frozen-baseline-and-delta",
+      "title": "冻结的逐 tag 比较基线：首条全量、后续增量、空记录保留、从空前驱重放",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 24,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.md",
+          "start": 24,
+          "end": 201,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.schema.json",
+          "start": 1,
+          "end": 39868,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.2.md",
+          "start": 36,
+          "end": 192,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.3.md",
+          "start": 44,
+          "end": 126,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.4.md",
+          "start": 36,
+          "end": 75,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.5-rc.2.md",
+          "start": 24,
+          "end": 75,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 187,
+          "end": 231,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "跨 alpha/RC tag 比较持久化结构需要稳定的历史基线。只保存当前 schema 会丢失旧 tag 实际类型；只保存 diff 而不声明前驱无法恢复完整状态；用当前 schema 回填旧 tag 会制造伪历史。",
+      "triggers": [
+        "需要解释某个旧 tag 实际有哪些持久化 root 类型",
+        "新增或补录一个预发布 tag 的历史记录",
+        "审查 before/after 链是否可用于回归比较",
+        "解释单条快照大小与 README 索引累计值为何不同"
+      ],
+      "obligations": [
+        "记录按 manifest 语义版本顺序串联，每条 previous 等于紧邻前驱，首条为 null",
+        "首条记录必须列出全部提取 root（基线记录 42 roots / 341 types），before 全为 null，并声明它只是比较起点而非变更声明",
+        "后续记录只列仍存在且发生变化或新增的 root 及其可达类型；未变 root 不重复出现",
+        "后续 tag 的完整根状态只能由之前记录重放得到；README 索引的 roots/types 是累计值，单条 schema 是增量值",
+        "无变化 tag 必须 changes: [] 且快照为空对象（formatVersion 1, roots [], types []），不得省略快照",
+        "删除 root 用 after: null 表示，重放时从累计状态删除",
+        "每个声明的 change 必须至少产生一个结构差异；不得声明未变化 root"
+      ],
+      "actors": [
+        "历史归档作者",
+        "Session/持久化维护者",
+        "评审者"
+      ],
+      "steps": [
+        "从空前驱开始，按 manifest 顺序逐 tag 读取机器声明",
+        "对每条 change 断言 before 等于当前累计状态中该 root 的 digest（缺失则 null）",
+        "应用 after：非 null 写入累计状态，null 删除该 root",
+        "加载该 tag 的 .schema.json，断言 root key 集合恰等于本记录 after 非 null 的集合，且每个 root digest 与 after 一致",
+        "用累计 root 集合计算根数与可达类型数，与 README 索引和记录清单单元格比对"
+      ],
+      "enforcement": {
+        "mode": "offline-replay-verifier-plus-generated-facts",
+        "implementation": "scripts/persistence-releases.ts 的 loadPersistenceReleases 从空前驱重放；快照 roots 必须等于非空 after 集合；classifyPersistenceChange 必须产生至少一个差异；scripts/persistence-release-facts.ts 从重放状态生成索引、清单和结构变化事实",
+        "trust": "链的自洽、增量/累计区分和空记录语义可自动检查；被捕获 tag 的真实性、抽取器是否漏类型不在离线检查能力内",
+        "failure": "before digest mismatch、snapshot roots do not match changed after schemas、unchanged transition、重复 root、previous 错误、空记录带非空快照都会失败",
+        "exceptions": "首条没有比较输入，changes 是建立基线而非变更声明；空记录表示相邻 tag 类型图相同，不表示未采集"
+      },
+      "applicability": "适用于存在多个 alpha/beta/RC tag 且需要审计每个 tag 持久化结构的项目。若 tag 很少，可缩减 capture 范围，但仍应保留首条全量、后续增量与空记录三态。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: persistence-release-history.digest-and-union-binding; persistence-release-history.capture-scope-lifecycle; release-persistence-release-archive; release-persistence-format-archive",
+        "crossDomain: 发布域拥有 manifest/README 的归档级校验规则与 writer/released 权威"
+      ],
+      "migration": {
+        "strategy": "以 manifest 固定 tag 序列，第一条存全量快照，后续只存增量，用空前驱重放恢复每个 tag 的完整状态；不要用当前 schema 回填旧 tag",
+        "implementation": "manifest（语义版本顺序）+ 每条记录的 previous/changes + 每条 tag 的增量 schema + 重放验证器 + 由重放状态生成的索引/清单事实",
+        "requiredSupport": [
+          "可枚举的历史 tag 源码",
+          "稳定 schema 抽取器",
+          "canonical schema 与 digest 函数",
+          "结构变化分类器",
+          "双语记录与 pairing"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.frozen-baseline-and-delta",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "从空前驱重放 26 条记录，末条得到 59 roots / 462 types，与 README 索引末行一致",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "dsh-v0.0.1-rc.2 的 45 个变化 root 快照重放后得到 47 roots / 374 types 累计清单",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "dsh-v0.0.1-rc.4 的 changes: [] 与空快照使累计状态保持不变",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 dsh-v0.0.1-rc.3 的 compact/* before 改成任意其他值，重放报 before digest mismatch",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "给 dsh-v0.0.1-rc.4 的空快照加入任意 root，报 snapshot roots do not match changed after schemas",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "声明一个 before 与 after 相同的 change，报 unchanged transition",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正机器声明或重新抽取快照后重跑默认验证；若仅生成事实过期，先完整验证再 --write",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行 verify-persistence-releases。链只证明声明之间自洽，不证明历史 tag 真实存在，也不证明抽取器与分类器完备。"
+    },
+    {
+      "id": "persistence-release-history.digest-and-union-binding",
+      "title": "规范化图摘要与方向绑定：before=前驱、after=快照、null=缺失、union 变更可见",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.schema.json",
+          "start": 1,
+          "end": 39868,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.2.md",
+          "start": 44,
+          "end": 192,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.3.md",
+          "start": 44,
+          "end": 126,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.1-rc.1.md",
+          "start": 44,
+          "end": 82,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.1-rc.2.md",
+          "start": 44,
+          "end": 119,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.5-alpha.1.schema.json",
+          "start": 1,
+          "end": 24597,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 80,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 155,
+          "end": 182,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "若 digest 取源文本哈希，格式化或注释变化会污染历史；若 before/after 没有方向绑定，复制粘贴或互换可以静默通过，历史链失去证据价值。",
+      "triggers": [
+        "解释某个 root 的 digest 为什么变化或不变",
+        "审查新增/删除事件对 SessionEventEnvelope 的影响",
+        "判断 digest 相同是否等于行为兼容",
+        "为迁移设计结构指纹与回归断言"
+      ],
+      "obligations": [
+        "digest 必须是规范化后 schema 图的 SHA-256，对 root 与每个可达类型分别计算",
+        "change.before 必须等于前驱累计状态中该 root 的 digest；root 不存在时必须为 null",
+        "change.after 必须等于本 tag 快照中该 root 的 digest；删除时必须为 null",
+        "快照 types[] 必须恰好覆盖从 roots 可达的类型集合：不得重复、不得未引用、不得遗漏",
+        "root key 仅限 SessionHeader、JsonlHeaderLine、SessionEventEnvelope 或 event:*，同一 tag 不得重复 root",
+        "SessionHeader.version 必须是 required 字段，且为 number 原语或等于记录版本的字面量",
+        "digest 只描述声明的持久化类型，不描述运行时；规范化覆盖与例外类的 canonical 规则由 persistence-current-records.digest-scope 与 persistence-historical-finalized.schema-fingerprint-equivalence 拥有；本域只负责历史 release 链的 before/after 方向绑定",
+        "历史源码引用只保留文件路径，不得写行号"
+      ],
+      "actors": [
+        "持久化类型维护者",
+        "历史归档作者",
+        "评审者",
+        "迁移实现者"
+      ],
+      "steps": [
+        "对每个 root 及其可达类型计算 canonical digest",
+        "把前驱累计状态中的 digest 写入 before，把当前快照 digest 写入 after",
+        "用 null 表示缺失：新增 root 的 before 为 null，删除 root 的 after 为 null",
+        "校验快照 types[] 与 roots 的可达集合完全相等",
+        "对 envelope 这类 union 节点，确认新增/删除事件成员会改变其 digest"
+      ],
+      "enforcement": {
+        "mode": "verifier-digest-binding-plus-reachability-check",
+        "implementation": "scripts/persistence-releases.ts 的 validateTypes 从每个 root 的节点集合计算可达 digest 并核对 types[]；loadPersistenceReleases 核对 before/after 与重放状态、快照 digest；DIGEST_PATTERN 限制 64 位小写 hex",
+        "trust": "digest 格式、方向绑定和可达性自动检查；canonicalization 规则本身由 schema 模型实现拥有，本域不重新定义",
+        "failure": "before/after 不匹配、digest 非 64 位 hex、重复 root、types 不可达/重复/遗漏、SessionHeader.version 缺失或类型不符都会失败",
+        "exceptions": "历史 SessionHeader.version 允许宽泛 number，此时版本常量由记录单独给出；没有发生变化的 root 不出现在增量快照中"
+      },
+      "applicability": "适用于任何需要跨版本比较结构指纹的持久化格式。若无法复用源抽取器，必须自行定义稳定 canonical form 并保持同样方向绑定；不要把源文本哈希当作结构指纹。",
+      "relationships": [
+        "dependsOn: persistence-release-history.frozen-baseline-and-delta",
+        "related: release-persistence-schema-policy; release-persistence-format-archive; persistence-release-history.snapshot-evidence-limits; persistence-current-records.digest-scope; persistence-historical-finalized.schema-fingerprint-equivalence",
+        "crossDomain: 发布域拥有 schema 指纹域/保留标记策略；本域只消费规范化结果"
+      ],
+      "migration": {
+        "strategy": "把 digest 定义为规范化类型图摘要，并用 before/after 显式绑定的链保存；null 表示缺失，删除必须显式表达",
+        "implementation": "canonicalizeSchema + schemaDigest；机器声明中的 before/after；types[] 可达性校验；envelope union 成员变化纳入结构差异",
+        "requiredSupport": [
+          "稳定 canonical form",
+          "root 与类型两级 digest",
+          "可达集合计算",
+          "结构变化分类器"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.digest-and-union-binding",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "rc.1 的 42 个 root digest 与快照 roots[].digest 一一相等，341 个类型 digest 全部可达且无重复",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "permission/preset 在 v0.1.1-rc.1 变更为 7271e4b7… 后在 v0.1.1-rc.2 恢复为 5c45bf4c…，链可通过重放",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "v0.1.5-alpha.1 因新增 system/message 与删除 code-dispatch，SessionEventEnvelope digest 由 04184edc… 变为 5776e555…",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把任意 after 改成合法 64 位 hex 但不等于快照 root digest，报 after digest mismatch",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在快照 types[] 中加入一个不可达类型，validateTypes 报 unreferenced schema type",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除一个类型仍被 root 引用，报 schema types must cover every reachable type",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重新从 tag 源码抽取并计算 canonical digest，修正机器声明与快照后重跑；不得手工伪造 digest",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行验证。digest 只描述声明的持久化类型，不证明运行时行为、codec 或迁移安全；canonicalization 细节由 scripts/persistence-schema-model.ts 拥有，本域未逐行审计该实现。"
+    },
+    {
+      "id": "persistence-release-history.immutable-publication",
+      "title": "不可变发布：精确 artifact 集、双语机器块、marker 生成区域与 --write 边界",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 82,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-release.md",
+          "start": 24,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.md",
+          "start": 189,
+          "end": 201,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 232,
+          "end": 257,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-release-facts.ts",
+          "start": 1,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/persistence-changes/releases/README.i18n.yaml",
+          "start": 1,
+          "end": 31,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.i18n.yaml",
+          "start": 1,
+          "end": 31,
+          "kind": "config"
+        }
+      ],
+      "problem": "历史记录一旦被手改就不再是发布证据。若每次验证都重写整页，人工撰写的摘要和源码证据会丢失；若允许任意文件留在目录里，未声明记录会冒充历史。",
+      "triggers": [
+        "运行 verify-persistence-releases 或 --write",
+        "编辑某条记录的中英文页面",
+        "新增/移除归档文件",
+        "发现生成索引或结构变化表与快照不一致"
+      ],
+      "obligations": [
+        "目录必须恰好包含 manifest.json、README 三件套与每个 tag 的 .md/.zh.md/.i18n.yaml/.schema.json；缺失与未引用文件都失败",
+        "每条记录 frontmatter kind=persistence-release，且恰好一个 yaml persistence-release 机器块",
+        "中英文机器块必须逐字相等；配对 sidecar 记录每个 heading 的 en/zh 哈希",
+        "历史源码引用禁止行号，验证器用正则拒绝带行号的 .ts 引用",
+        "--write 只在完整验证通过后刷新有界生成区域与 pairing，保留人工概述、源码证据、机器声明与 schema",
+        "默认验证拒绝 stale 生成事实；生成区域必须各恰好一对 marker",
+        "不得为容纳旧发布而重写已提交基线或修改历史标识符"
+      ],
+      "actors": [
+        "历史归档作者",
+        "文档维护者",
+        "评审者",
+        "发布前校验者"
+      ],
+      "steps": [
+        "编辑人工区域或机器数据，不改生成区域",
+        "运行默认验证，确认无 stale 与无 artifact 集错误",
+        "若仅生成事实过期，先完整验证机器数据，再运行 --write",
+        "检查 --write 后机器声明、schema 与人工概述未被改写",
+        "同步中英文后重新记录 sidecar 哈希"
+      ],
+      "enforcement": {
+        "mode": "exact-artifact-set-plus-bilingual-machine-block-plus-generated-region-freshness",
+        "implementation": "scripts/persistence-releases.ts 的 expected 集合与 machineBlock/双语比较；scripts/persistence-release-facts.ts 的 replaceFacts 要求每类 marker 恰好一对；runPersistenceReleases 比较重新生成内容并拒绝 stale，--write 才写入 changed artifacts",
+        "trust": "artifact 集、机器块数量/相等性、行号禁令和生成区域新鲜度自动；人工概述是否准确仍由作者与评审负责",
+        "failure": "缺文件/未引用文件、机器块数量不为 1、中英不一致、历史引用带行号、marker 缺失或重复、stale 事实都会失败",
+        "exceptions": "--write 可刷新生成区域与 pairing，但不得改机器声明、schema 或人工概述；配对检查本身由文档域通用门承担"
+      },
+      "applicability": "适用于任何把历史记录当发布证据维护的项目。若没有双语要求，可去掉 zh/sidecar，但必须保留精确 artifact 集、机器声明唯一性与生成区域新鲜度检查。",
+      "relationships": [
+        "dependsOn: persistence-release-history.frozen-baseline-and-delta",
+        "related: documentation-i18n-pair-gate; documentation-generated-source-pairing; release-persistence-release-archive",
+        "crossDomain: 文档域拥有 pairing/链接/生成事实刷新通用门；agent-workflows 域拥有 persistence-release 模板"
+      ],
+      "migration": {
+        "strategy": "把人工撰写与机器生成分成互不覆盖的区域；默认只读验证并拒绝 stale，写模式必须先在内存中完成全量验证",
+        "implementation": "精确 artifact 集校验 + 单一机器块 + 中英逐字比较 + marker 区域替换 + 默认 stale 拒绝 + --write 全量验证后写入",
+        "requiredSupport": [
+          "稳定 heading 哈希/配对工具",
+          "marker 区域生成器",
+          "完整验证与写入分离的 CLI",
+          "历史引用去行号规则"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.immutable-publication",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "26 条记录各有一个机器块且中英逐字相等，默认验证无 stale",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "README 索引、每条清单单元格与结构变化表均由重放状态生成，与磁盘内容一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "在目录中加入一个 manifest 之外的 .md，报 unreferenced persistence release artifact",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "只改英文机器块的一位 digest，报 bilingual machine records differ",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "手改生成索引但不改机器数据，默认验证报 stale",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在记录中写 packages/core/session/src/types.ts:12，machineBlock 报历史引用不得带行号",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正人工区域或机器数据后重跑；若仅生成区域过期，先完整验证再 --write，随后重跑默认验证",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行 --write 或 doc-sync；未重算 sidecar 哈希。生成器只保证有界区域，人工概述的事实准确性无法自动证明。"
+    },
+    {
+      "id": "persistence-release-history.capture-scope-lifecycle",
+      "title": "捕获范围与 tag 生命周期：固定 capturedAt、语义顺序、publishedAt 空/非空、writer 常量单独记录",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/manifest.json",
+          "start": 1,
+          "end": 162,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 24,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.3-alpha.1.md",
+          "start": 10,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.5-alpha.1.md",
+          "start": 10,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 103,
+          "end": 122,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "归档必须明确覆盖到哪里，否则“没有记录”会被误读为“没有发生”。产品 tag 的 writer 版本是源码常量，若从 schema 的宽泛 number 声明反推会得到错误结论。",
+      "triggers": [
+        "新增一个 alpha/RC tag 记录",
+        "判断某个 tag 是否在归档范围内",
+        "解释为什么某些 tag 没有发布事实",
+        "核对历史 writer 版本与当前版本"
+      ],
+      "obligations": [
+        "manifest schemaVersion=1，capturedAt 为真实 YYYY-MM-DD，releases 非空",
+        "tag 匹配 dsh-v<major>.<minor>.<patch>-(alpha|rc).<N>，语义版本严格递增且不重复",
+        "sourceDate 必填 ISO 时间戳；publishedAt 可为 null；sessionFormatVersion 为非负安全整数",
+        "最早的 10 个 tag publishedAt 为 null；后 16 个有发布时间；缺失 tag 不补造",
+        "writer 值来自该 tag 源码常量 SESSION_FORMAT_VERSION 并单独记录，不从 schema 推导",
+        "离线检查的完整性只相对于 manifest 声明的 capture 范围，不自动发现后续新 tag"
+      ],
+      "actors": [
+        "历史归档作者",
+        "发布经理",
+        "Session 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "确定 capture 日期与 tag 前缀，按语义版本建立 manifest",
+        "为每个 tag 记录 sourceDate、publishedAt（可 null）与该 tag 的 SESSION_FORMAT_VERSION",
+        "为每个 tag 生成四件套并接入前一 tag",
+        "运行默认验证；仅生成事实需要刷新时才 --write",
+        "新增 tag 时追加到 manifest 末尾并保持既有条目不变"
+      ],
+      "enforcement": {
+        "mode": "manifest-schema-plus-semver-order-plus-offline-scope",
+        "implementation": "scripts/persistence-releases.ts 的 TAG_PATTERN、compareTags、parseManifest；验证器只读归档目录，不访问 Git/网络，也不枚举远端 tag",
+        "trust": "格式、顺序、日期形状和 writer 整数可自动；tag 真实存在、publishedAt 准确性与 capture 是否漏 tag 需外部证据",
+        "failure": "tag 格式错误、乱序、重复、capturedAt 非法、sourceDate/publishedAt 非法、sessionFormatVersion 非整数都会失败",
+        "exceptions": "publishedAt 允许 null；capture 范围允许跳过不存在或未捕获的 tag，但不得伪造记录"
+      },
+      "applicability": "适用于有多个预发布 tag 的产品。若 tag 很少，可缩小 capture 范围；必须保留“范围是声明的、缺失不补造、writer 常量单独记录”三条。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: persistence-release-history.frozen-baseline-and-delta; persistence-release-history.immutable-publication",
+        "crossDomain: 发布域拥有 tag 发布事实、writer/released 权威与 evidenceTag 校验"
+      ],
+      "migration": {
+        "strategy": "先声明 capture 边界，再按语义顺序追加；writer 常量作为每条记录的独立事实采集",
+        "implementation": "manifest（capturedAt + releases[]）+ tag 正则 + 语义排序 + sourceDate/publishedAt + sessionFormatVersion + 四件套",
+        "requiredSupport": [
+          "tag 枚举证据",
+          "真实发布日期来源",
+          "每个 tag 的 writer 常量",
+          "语义版本比较器"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.capture-scope-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "manifest 26 条按 semver 递增，10 条 publishedAt=null、16 条非空，capturedAt=2026-09-12",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "writer 序列为 0（至 v0.1.2-rc.1）、2（v0.1.3-alpha.1/2）、3（v0.1.5-alpha.1 起），无 writer 1",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 v0.1.0-rc.5 放在 v0.1.0-rc.3 之前，报 release tags must be in semantic-version order",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把某个 publishedAt 写成非 ISO 字符串，parseManifest 报 invalid timestamp",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "为不存在的 tag 补造记录，离线检查无法发现，但人工审查必须拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按真实 tag 与日期修正 manifest 并重新生成四件套；缺失 tag 保持缺失，不伪造",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未联网核对 tag 与发布日期；离线验证不会发现捕获日期之后的新 tag。writer 常量来自记录中的源码证据行，本域未 checkout 每个 tag 复核。"
+    },
+    {
+      "id": "persistence-release-history.snapshot-evidence-limits",
+      "title": "版本快照的证据上限：规范化重建、历史解析例外与“不能证明”清单",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 62,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.1.md",
+          "start": 24,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.2-alpha.1.md",
+          "start": 10,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.5-alpha.1.md",
+          "start": 10,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-release.md",
+          "start": 14,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 169,
+          "end": 182,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "schema 快照看起来像“当年的源码 schema”，很容易被当成运行时兼容、迁移安全或逐字源码复现的证明。若不写明证据上限，归档会被过度引用。",
+      "triggers": [
+        "有人引用历史快照证明兼容性或迁移安全",
+        "解释为什么旧 tag 的 surfaceOp 是可选而当前是必需",
+        "解释为什么 SessionHeader.version 是宽泛 number",
+        "为历史行为写回归测试或升级指南"
+      ],
+      "obligations": [
+        "明确归档是近似回填，只用于阅读和格式校验，不建立历史运行时兼容",
+        "说明重建使用 tag 源码 + TypeScript 6.0.3 + 已合入抽取器；唯一适配是省略早期交叉类型中冗余的 object 成员",
+        "保留 any/unknown 为不透明，不为缺失引用额外替换不透明类型；保留历史标识符",
+        "前 22 个 tag 的 surface 事件允许可选 surfaceOp；当前解析要求 required",
+        "早期 SessionHeader.version: number 按原声明保留，writer 常量另行记录；宽泛 number 不能提供常量",
+        "声明不能证明：逐字源码、原工具链复现、运行时兼容、codec 行为、迁移安全、摘要完备性、digest 不变等于行为不变",
+        "当前规则对旧变化的分类只是阅读辅助，不表示历史合规或迁移义务"
+      ],
+      "actors": [
+        "历史归档作者",
+        "评审者",
+        "迁移实现者",
+        "升级指南作者"
+      ],
+      "steps": [
+        "阅读归档 README 的 Extraction and limitations 与每条记录的 Release evidence",
+        "确认所要回答的问题属于“结构是什么”还是“运行时是否兼容”",
+        "对结构问题使用快照与 digest；对兼容/迁移问题转向迁移实现与真实回放测试",
+        "引用历史例外（surfaceOp、number 版本）时同时说明当前规则更严格",
+        "在回归 fixture 中区分“历史结构”与“当前解析要求”"
+      ],
+      "enforcement": {
+        "mode": "documented-evidence-boundary-plus-structural-verifier",
+        "implementation": "README 的 Extraction and limitations；记录中的 writer 常量与可选性说明；验证器的 validateVersion 允许 required number 或匹配字面量；模板要求不得把当前规则写成历史义务",
+        "trust": "结构/digest 与版本字段可自动；证据上限是文档承诺，无法机械证明摘要没有过度概括",
+        "failure": "把历史快照当兼容证明、把 number 声明当版本常量、把当前 review-required 当历史违规，都是使用错误而非验证器失败",
+        "exceptions": "历史解析允许可选 surfaceOp 与宽泛 number；仅限历史记录，当前 schema/解析仍严格"
+      },
+      "applicability": "适用于任何保存历史 schema 快照的项目。即使产品只有一个历史版本，也应写明快照不证明运行时行为。",
+      "relationships": [
+        "dependsOn: persistence-release-history.digest-and-union-binding",
+        "related: release-persistence-schema-policy; release-session-migrations; persistence-release-history.historical-vs-current-compatibility; persistence-historical-finalized.historical-evidence-limits",
+        "crossDomain: 测试域/迁移域拥有真实回放与兼容证据；本域只提供历史结构事实"
+      ],
+      "migration": {
+        "strategy": "把“结构事实”与“兼容结论”分开写；对每个快照声明抽取器、适配和禁止推断",
+        "implementation": "README 限制段 + 每条记录 writer 常量/源码证据 + 历史解析例外清单 + 禁止推断清单",
+        "requiredSupport": [
+          "可复现的抽取器与版本",
+          "历史源码引用",
+          "当前规则对照说明",
+          "真实回放/迁移测试（不属于本域）"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.snapshot-evidence-limits",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "归档声明 26 条快照通过 canonical-graph/root-digest/reachable-type-digest 校验，且明确不证明运行时兼容",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "writer 0 的 v0.1.2-alpha.1 有 61 项结构差异，证明历史记录不因版本不变而视为无变化",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 rc.1 的 SessionHeader.version: number 解释为 writer=0 的证明，审查应拒绝并指向记录中的源码常量证据",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 rc.1 的 required primitive number 当成字面量 0，validateVersion 不会拒绝但语义上不能据此推出常量；审查应拒绝该推断",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "引用记录中的 writer 常量与源码证据行重新表述；对兼容问题补充真实回放/迁移测试",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未重放旧应用、未验证 codec 或迁移。摘要与结构差异由抽取器/分类器生成，其完备性不在本域证明范围。"
+    },
+    {
+      "id": "persistence-release-history.historical-vs-current-compatibility",
+      "title": "历史归档与当前兼容决策的边界：不是 contemporaneous acknowledgement，也不能授权当前豁免",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.0.1-rc.2.md",
+          "start": 190,
+          "end": 248,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/releases/dsh-v0.1.2-alpha.1.md",
+          "start": 10,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/persistence-release.md",
+          "start": 24,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 183,
+          "end": 186,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "当前类型变更确认链与历史 tag 归档形态相似。混淆会让当前 PR 用一条回填记录逃避 acknowledgement 或版本提升，也会让评审把当前规则误当成历史义务。",
+      "triggers": [
+        "当前 PR 引用历史记录作为兼容证据",
+        "判断某个旧变化是否“当年就合规”",
+        "决定是否需要当前版本提升或 acknowledgement",
+        "审查历史目录与当前目录是否被混用"
+      ],
+      "obligations": [
+        "历史记录不是当时的兼容性确认，与父目录当前确认链分开校验",
+        "回填记录不能授权当前 PR 省略 acknowledgement 或必需版本提升",
+        "不得为容纳旧发布而重写已提交基线或把历史记录插入当前链",
+        "当前规则的 review-required/not-required 只作比较，不表示历史合规、迁移正确或运行时兼容",
+        "历史 writer 0 确实发生过不升版本的结构变化；不能用历史行为为当前不升版本辩护",
+        "当前 writer/released/finalized 与变更确认分别由当前记录与源码常量决定，不由归档决定"
+      ],
+      "actors": [
+        "发布经理",
+        "Session 维护者",
+        "评审者",
+        "文档维护者"
+      ],
+      "steps": [
+        "判断问题属于历史结构（用归档）还是当前兼容（用当前记录/源码常量）",
+        "若当前 PR 引用归档，要求补当前 acknowledgement 与版本决策",
+        "检查历史变更是否被写入当前目录或当前链",
+        "保留历史分类为阅读辅助，不写成迁移义务",
+        "在升级指南中引用归档时同时标注证据上限"
+      ],
+      "enforcement": {
+        "mode": "directory-and-verifier-separation-plus-review",
+        "implementation": "releases 目录独立验证，只读 manifest/records/snapshots；模板明确禁止插入当前链；当前链由 release-persistence-records 与 doc-standard 校验",
+        "trust": "目录分离与归档验证自动；‘不得引用历史作为授权’主要靠评审，机器不会检测论证动机",
+        "failure": "把归档记录当当前 acknowledgement、用回填豁免版本提升、把当前规则写成历史义务，都会造成治理缺陷；通常由评审而非验证器发现",
+        "exceptions": "历史记录可作为“旧 tag 实际写出过该结构”的证据，也可作为迁移 fixture 的来源；不能作为当前豁免"
+      },
+      "applicability": "适用于同时维护当前变更确认链与历史 tag 归档的项目。若只有一个目录，也应明确区分“当前决策”与“历史观察”。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-persistence-schema-policy; release-persistence-format-archive; persistence-release-history.snapshot-evidence-limits; persistence-current-records.archive-separation",
+        "crossDomain: 发布域拥有当前 acknowledgement、writer/released 权威与 schema 策略；本域只拥有历史快照"
+      ],
+      "migration": {
+        "strategy": "把历史观察与当前决策放在不同目录、不同验证器和不同文档入口；在模板中写明禁止交叉授权",
+        "implementation": "releases/ 独立 manifest+验证器；当前目录保留 dated acknowledgement；评审清单检查引用来源",
+        "requiredSupport": [
+          "当前 writer/released 记录",
+          "当前变更确认流程",
+          "独立的归档验证器",
+          "评审规则"
+        ]
+      },
+      "reference": "references/persistence-release-history.md#persistence-release-history.historical-vs-current-compatibility",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "归档验证只读 releases 目录，当前 doc-standard 校验当前目录，两者互不替代",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "当前 PR 的版本决策只引用 writer/released 记录与当前 acknowledgement，历史归档仅作背景",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "某 PR 以 releases 中重建记录为证据省略当前 acknowledgement，评审应拒绝",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 v0.1.2-alpha.1 的 61 项差异说成“历史允许不升版本，所以当前也可以”，评审应拒绝该推理",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补当前 acknowledgement/版本决策，并把历史引用降级为背景证据；若历史记录误入当前链，移出并修正链接",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行当前 doc-standard 或归档验证。‘不得用历史授权当前’没有自动检测器，属于评审义务；本域未审计当前确认链的全部规则。"
+    }
+  ]
+}

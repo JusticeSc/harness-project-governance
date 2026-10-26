@@ -1,0 +1,106 @@
+{
+  "domain": "policy-tests-1",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "policy-tests-1.committed-session-fixture-corpus-admission",
+      "title": "提交的 Session 语料按文件名声明代际、异常清单闭合且源字节不变",
+      "sources": [
+        {
+          "path": "packages/test-support/llm-replay/tests/session-format-corpus.spec.ts",
+          "start": 1,
+          "end": 138,
+          "kind": "test"
+        }
+      ],
+      "problem": "仓库里散落着 snapshots/、packages/ 与脚本目录下的历史 session*.jsonl。若文件名、header.version 与实际代际不一致，或历史拒绝例外从清单里消失、改错原因、把当前代际当成历史例外，读者会在错误代际上解析文件；一旦测试为通过而改写旧字节，原始证据也被破坏。",
+      "triggers": [
+        "新增或移动一个提交的 session*.jsonl 语料",
+        "升级 SESSION_FORMAT_VERSION 或改变某代际的恢复行为",
+        "新增/删除历史不支持迁移的例外",
+        "修改 session-format-corpus-inventory 的清单键或原因",
+        "评审涉及 snapshots/ 或 packages/ 下历史会话文件的变更"
+      ],
+      "obligations": [
+        "递归发现 snapshots/、packages/ 与 scripts/snapshots/python-sdk-single-exe/ 下的提交语料，跳过符号链接以及 dist、lib、node_modules 目录。",
+        "只有匹配 `^session(?:\\.[1-9][0-9]*)?(?:\\.v[1-9][0-9]*)?\\.jsonl$` 的文件才是合法语料；其他以 session 开头并以 .jsonl 结尾的文件直接报错并带上绝对路径。",
+        "除显式无版本协议夹具外，每个语料首个非空行必须是 JSON 对象且声明 version；文件名中的代际（无 .vN 时为 0）必须等于 header.version。",
+        "expectedUnsupported 与 unversionedProtocolFixtures 的每个键都必须对应真实发现的语料；例外清单不能指向不存在的文件。",
+        "无版本协议夹具必须不声明 version、文件名代际为 0，且不得同时出现在历史拒绝清单中。",
+        "历史拒绝例外必须满足 sourceVersion 小于当前 SESSION_FORMAT_VERSION，并等于清单记录的 sourceVersion；恢复必须抛出 SessionFormatUnsupportedMigrationError，消息必须与清单 reason 完全相等。",
+        "当前代际语料不得获得历史拒绝例外；任何其他恢复异常都必须失败并带语料路径，不能把损坏伪装成受支持的历史拒绝。",
+        "无论恢复成功还是拒绝，读取结束后必须逐字节比较源文件，证明测试没有改写提交的语料。"
+      ],
+      "actors": [
+        "语料作者",
+        "Session 格式 owner",
+        "历史迁移评审者",
+        "复核例外清单的维护者"
+      ],
+      "steps": [
+        "新增语料时先确定它属于哪个格式代际，并把代际写进文件名和首个 header。",
+        "运行提交语料测试，确认文件名/header 代际一致且恢复行为符合该代际。",
+        "若该代际确实无法恢复，在 inventory 中登记路径、sourceVersion、错误类型与精确 reason，并说明为何是永久拒绝而不是待修 bug。",
+        "删除或移动语料时同步删除/移动例外键，避免清单悬空。",
+        "评审差异时同时检查语料字节与例外清单，不只看测试是否绿。"
+      ],
+      "enforcement": {
+        "mode": "ci",
+        "implementation": "session-format-corpus.spec.ts 的 committedSessionFixtures 发现与文件名校验、declaresFormat/header 代际比较、assertRestoration 的 typed error 与 exact-reason 断言，以及 finally 中的源字节不变断言；inventory 提供 expectedUnsupported 与 unversionedProtocolFixtures。",
+        "trust": "文件名、header、清单闭合、错误类型与 reason、字节不变均可机械验证；某个历史拒绝是否在语义上合理、exception 是否应继续存在仍需格式 owner 评审。",
+        "failure": "非法文件名、缺失/多余 version、文件名与 header 代际不一致、清单键悬空、协议夹具带版本、当前代际被列为 unsupported、错误类型或 reason 不匹配、损坏被当作历史拒绝，都会使测试失败并指出语料路径。",
+        "exceptions": [
+          "无版本协议夹具可豁免 header.version，但必须显式列在 unversionedProtocolFixtures 且文件名代际为 0。",
+          "测试只读取发现的语料；未被该发现范围覆盖的会话文件不在本门禁内。"
+        ]
+      },
+      "applicability": "任何长期保留多代际会话/日志夹具、且需要证明历史文件未被悄悄重写的项目。若项目只有一个当前格式且没有历史拒绝清单，可缩减为单代际 golden 测试，但文件名与 header 代际一致、读取不改字节的规则仍应保留。",
+      "relationships": [
+        "package-contracts-7.session-format-compat",
+        "testing-snapshot-corpus-policy",
+        "persistence-historical-finalized.historical-format-coverage",
+        "documentation-procedures.session-format-authority"
+      ],
+      "migration": {
+        "strategy": "先固定语料发现范围与文件名语法，再建立例外清单；把 in-place 改写视为缺陷而不是修复。",
+        "implementation": "把发现根、文件名正则、header 代际规则、inventory 结构与 typed refusal 参数化；保留 finally 中的字节比较，避免测试自身成为历史篡改者。",
+        "requiredSupport": [
+          "Session 格式版本常量与 catalog 恢复入口",
+          "历史拒绝 inventory（路径、代际、错误类型、精确 reason）",
+          "无版本协议夹具的独立清单",
+          "能在 CI 中访问完整仓库语料的测试运行器"
+        ]
+      },
+      "reference": "references/policy-tests-1.md#policy-tests-1.committed-session-fixture-corpus-admission",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "对现有提交语料运行 session-format-corpus.spec.ts：每个文件都被发现，filename 代际与 header.version 一致，支持代际恢复成功，无版本协议夹具保持无版本。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用一个当前代际语料和一个已登记历史拒绝语料分别运行：当前语料正常恢复，历史语料只抛出清单中的 typed error 与精确 reason。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "构造 filename 与 header 代际不一致、清单键不存在、当前代际被列为 unsupported、错误 reason 不匹配、或损坏被当作历史拒绝的夹具，测试必须失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在恢复过程中改写源字节，finally 的逐字节比较必须失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正文件名/header 或补正 inventory 条目后重跑；若历史文件被意外改写，从版本控制恢复原字节再重跑。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本次只读测试，未运行 vitest，也未检查 inventory 内容之外的语料语义；发现范围限定为 snapshots/、packages/ 与 scripts/snapshots/python-sdk-single-exe/，其他目录的会话文件不会受到该测试保护。"
+    }
+  ]
+}

@@ -1,0 +1,2688 @@
+{
+  "domain": "rationale-feature-2",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale-feature-2.authoritative-context-sources",
+      "title": "Read instructions and state from their authoritative source with explicit scope",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-06-24-workspace-context.md",
+          "start": 1,
+          "end": 90,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-10-session-query-service.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-20-dsh-cli-personal-config.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-follow-instruction-symlinks.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-instruction-load-all-dedup.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-tmux-location-context.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-web-session-search.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        }
+      ],
+      "problem": "Agents and reviewers otherwise treat derived indexes, cached copies or global prompt overlays as authority, or let an instruction from one directory leak into another. The notes repeatedly keep per-session/workspace scope, read canonical files first, and mark derived or personal layers as such.",
+      "triggers": [
+        "cwd or workspace changes",
+        "adding personal/global configuration",
+        "reading history, issues or generated indexes",
+        "instruction discovery through links",
+        "pulling location context from a shell",
+        "deciding which file wins between AGENTS.md and CLAUDE.md"
+      ],
+      "obligations": [
+        "Load instructions for the session cwd from the workspace hierarchy; nearest applicable directory wins per category, with root/global defaults only as declared fallbacks.",
+        "Prefer the documented primary file per directory and treat the .local/data overlay as additive user-owned data that never rewrites committed policy.",
+        "Keep personal preferences and credentials outside committed files under the harness home; resolve that home in one shared place.",
+        "Follow instruction symlinks to a regular file, treat a resolved non-file as confirmed absence, and keep an already-loaded scope on transient resolve/stat errors.",
+        "Load all existing candidates in configured order; deduplicate only byte-identical trimmed content within one directory, never globally, and render the survivor original bytes.",
+        "Read exact live state from the live store for known sessions; when reading persistence, prove existence and reject header/list mismatch rather than trusting cached metadata.",
+        "Treat generated indexes (SQLite search, inventories, rendered references) as discardable, rebuildable projections; they may be stale and MUST NOT grant visibility or widen authorization.",
+        "Bound any context enrichment with an explicit size/node/time budget and an explicit truncation signal.",
+        "For shell/tmux location context, pull once on the first step of each turn through the configured ctx.shell seam (never raw child_process); distinguish a real pane by matching the process's controlling tty (ps -o tty= -p <pid>) to the pane's #{pane_tty}, because $TMUX_PANE/$TMUX are inherited; no-op when ctx.shell, tmux env, field count or pane id is absent; inject one durable sourced user/message only when the rendered state block changes, comparing against the latest injection found by scanning raw durable session events (no process-local cache), with an optional non-negative safe-integer refreshIntervalMs floor; keep only own session/window/pane/layout fields (no pane contents or pixel sizes); the reading is a per-turn snapshot with no cross-event invariant, and a preparation append may remain if a later pre-step listener cancels or fails."
+      ],
+      "actors": [
+        "agent runtime/context loader",
+        "workspace/user configuration owner",
+        "session query service",
+        "reviewer/checker"
+      ],
+      "steps": [
+        "Resolve session cwd/workspace and enumerate the declared instruction scopes for that locality.",
+        "Read each candidate from its canonical path; record the winning file per scope and the additive local layer separately.",
+        "Apply symlink resolution rules and dedupe per directory, recording which candidates collapsed.",
+        "When answering a state question, read the authoritative live store or proven persisted source, not a cache/index.",
+        "If a derived index is used for discovery, re-read the authoritative record before acting or claiming.",
+        "Record known omissions caused by budgets/truncation instead of presenting a partial context as complete."
+      ],
+      "enforcement": {
+        "mode": "runtime resolution plus review",
+        "implementation": "context loader and query service in the source; tmux-context: first-step agent/pre-step listener; ctx.shell read; ps -o tty= vs #{pane_tty}; one durable user/message on change; scan raw durable events; optional refreshIntervalMs; planned in the adopting project",
+        "trust": "repository owner may choose precedence and personal-layer location; an agent MUST NOT invent precedence",
+        "failure": "missing scopes are explicit; transient instruction errors retain the prior scope; a header mismatch is a typed query error",
+        "exceptions": "A deliberate overlay order or legacy file name is allowed only when documented and tested; a symlink exception is a declared owner trade-off, not a default. tmux-context is opt-in; outside a real pane, without ctx.shell, without tmux env, with a wrong field count or with an empty pane id it is a no-op; a pane moved mid-turn is reflected next turn; the reading is a per-turn snapshot with no cross-event invariant; a prepended append may remain if a later pre-step listener cancels or fails; pixel sizes and sibling-pane contents are excluded."
+      },
+      "applicability": "All projects with nested agent instructions, personal configuration, or any generated index/search surface. Not a license to commit personal settings.",
+      "relationships": [
+        "change-discipline",
+        "logging-reconstructability",
+        "honest-evidence"
+      ],
+      "migration": {
+        "strategy": "Start from the repository hierarchy already in use; add explicit scope/precedence documentation and a single resolver before adding personal or global layers.",
+        "implementation": "Planned; requires a resolver, loader tests for symlinks/dedup/transient errors, and query tests for live-vs-persisted conflicts.",
+        "requiredSupport": "Authoritative file locations, precedence table, and a documented policy for derived indexes; for tmux location, a ctx.shell executor, tmux environment, raw durable session events and an optional refreshIntervalMs config."
+      },
+      "reference": "references/rationale-feature-2.md#authoritative-context-sources",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Nested AGENTS.md files produce the nearest instructions plus the additive local layer; the chosen sources are recorded.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A stale search index omits a record but the authoritative read still finds it and authorization is unchanged.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "In a real tmux pane, the first step injects one source-attributed durable user/message with session/window/pane/layout; later steps in the same turn do not repeat it; the next turn with unchanged state injects nothing; a moved or renamed pane injects on the next turn; the comparison baseline is found by scanning raw durable session events, so resume/compaction still suppresses duplicates.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A generated index is used directly to claim a file does not exist; the check fails because the authoritative read was skipped.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An instruction candidate from a sibling directory leaks into the session; the scope test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Launch from a terminal that inherited $TMUX/$TMUX_PANE (for example a VS Code integrated terminal): the tty does not match the pane's #{pane_tty}, so the attempt is a no-op and no stale location is injected; run every step or use raw child_process: the per-turn/ctx.shell contract fails; use a process-local cache: resume/compaction loses the suppression baseline.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A transient symlink resolve error leaves the previously loaded scope in place and records unavailability.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A corrupt persisted header is reported as a source conflict enabling a live re-read rather than silently preferring the cache.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Missing ctx.shell, missing tmux env, wrong field count, empty pane id, nonzero exit, aborted signal or a contained executor rejection: the attempt is a no-op or warning and the turn continues; a corrupt prior reading (non-text or single-line) does not break suppression; refreshIntervalMs rejects negative and non-integer values at load; a prepended listener's append may remain if a later pre-step listener cancels or fails, and no rollback is assumed.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The fixed source has multiple archived proposals whose entry modes/file names were later superseded; the adopting project MUST re-derive current names from its own repository.",
+        "Deduplication is per-directory and byte-based; semantically equivalent but differently formatted files both load.",
+        "No guarantee that a derived index converges immediately; authorization and existence must not be inferred from it.",
+        "The tmux location plugin is opt-in; shipped profile trees do not mount it by default (the TUI opts in). A pane moved mid-turn is reflected next turn. The prepended listener's append may remain if a later pre-step listener cancels or fails. The published invariant registers no runtime check because a reading is a per-turn external snapshot. Pixel sizes and sibling-pane contents are excluded."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.bounded-operations",
+      "title": "Make multi-step operations atomic, bounded, observable and safely cancellable",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-provider-retry-policies.md",
+          "start": 1,
+          "end": 72,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-workspace-registration-deletion.md",
+          "start": 1,
+          "end": 60,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-28-sdk-max-output-tokens.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-persistent-bash-str-replace-editor.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-queue-steer-action.md",
+          "start": 1,
+          "end": 72,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-continuable-subagent-interrupt.md",
+          "start": 1,
+          "end": 49,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-plugin-configuration.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-web-export-command-and-dialog.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-open-ready-web-ui.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-standard-acp-automation-controls.md",
+          "start": 1,
+          "end": 80,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-shell-execute-projection-and-jobs-at-start.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-14-docs-mermaid-viewer.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-continuable-activation-capacity.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-16-sandbox-same-mode.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-27-desktop-cli-runtime.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-15-deepseek-search-fetch-api.md",
+          "start": 1,
+          "end": 84,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md",
+          "start": 1,
+          "end": 345,
+          "kind": "history"
+        }
+      ],
+      "problem": "Long-running or concurrent work can interleave, exhaust resources, publish partially ready state or leave orphaned watchers. The notes use one atomic intent, bounded pools, durable readiness/registration and cancellation ordering.",
+      "triggers": [
+        "concurrent tool/agent execution",
+        "starting shell jobs",
+        "publishing a server or UI",
+        "watching files",
+        "acquiring capacity",
+        "retrying after failure",
+        "cancelling work"
+      ],
+      "obligations": [
+        "Model one user intent as one atomic operation with typed refusals; do not split it into separately authorized RPCs that can partially succeed.",
+        "Bound concurrency with a pool that reserves capacity, fails with a diagnostic instead of queueing without limit, and rolls reservations back on failure.",
+        "A timeout bounds the wait, not the underlying work; cancellation stops waiting and releases resources in a defined order.",
+        "Register work/watch before declaring readiness; establish subscriptions, then announce ready, then read; converge after missed/duplicate events without replaying stale state.",
+        "Publish only after the complete composition is ready; never expose a URL/status before all required parts are mounted.",
+        "On cancellation/unmount, close owned watchers/streams even if the producer is suspended; late results must not recreate state.",
+        "Use explicit, measured budgets for enrichment/retries and record when the budget truncates coverage.",
+        "For side effects gated by capability/authorization, check before starting; do not start work and then deny it.",
+        "For fire-and-forget operations, state at-most-process-lifetime semantics and refuse to reinterpret them as durable automation. A foreground timeout bounds the wait, not the job; a registered job needs an explicit kill/stop path."
+      ],
+      "actors": [
+        "operation owner",
+        "scheduler/pool",
+        "server runtime",
+        "file watcher",
+        "reviewer"
+      ],
+      "steps": [
+        "Define the atomic intent and its refusal cases.",
+        "Reserve required capacity/resources before starting.",
+        "Register durable/lifecycle state (lock/start/watch) and make it observable.",
+        "Perform the work with bounded timeouts and cancellation propagation.",
+        "Publish/announce only after all components are ready.",
+        "On failure/cancel, release in order and preserve diagnostics.",
+        "Test concurrency limits, cancellation late-arrival and readiness ordering."
+      ],
+      "enforcement": {
+        "mode": "runtime lifecycle code plus bounded-pool tests",
+        "implementation": "planned; source notes describe specific pools, readiness points and watch lifetimes",
+        "trust": "runtime owner; cancellers must not bypass release",
+        "failure": "typed diagnostic/cancelled status; no unbounded queue; no partial publication",
+        "exceptions": "A deliberately fire-and-forget operation is allowed only when it stores no delivery/execution state and the loss semantics are documented."
+      },
+      "applicability": "Tool/agent concurrency, shell jobs, web server startup, file observation and any staged publication.",
+      "relationships": [
+        "durable-state-integrity",
+        "fail-closed-defaults",
+        "enforcement-placement"
+      ],
+      "migration": {
+        "strategy": "Start with the publication/readiness path, then add explicit pools and cancellation ordering for each long-running operation.",
+        "implementation": "Planned; specific limits and lifecycle hooks depend on the target runtime.",
+        "requiredSupport": "A ready-signal contract, cancellation API and measured capacity limits."
+      },
+      "reference": "references/rationale-feature-2.md#bounded-operations",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "The server announces its URL only after the loader tree settles; an early request cannot observe a half-mounted app.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A pool at capacity fails with a clear diagnostic and rolls back its reservation.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A cancelled read recreates a watcher/state after unmount; the lifetime test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A timeout kills the underlying job; the wait-vs-work test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A fire-and-forget webhook runtime is documented as durable automation; the semantics test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Duplicate/coalesced watch events trigger a bounded reread that converges and leaves no recursive scan.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Some source operations are deliberately not retried/deduped and accept duplicate delivery; this must be explicit, not accidental.",
+        "Ready signals may be unavailable on unsupported backends; the fallback must be declared honestly.",
+        "Budgets are only as good as their measurement; unmeasured limits are guesses."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.capability-and-interface-negotiation",
+      "title": "Expose fields, methods and addresses only when the resolved route supports them",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-06-30-session-store-fork-api.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-07-mcp-client-plugin.md",
+          "start": 1,
+          "end": 226,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-web-subagent-conversations.md",
+          "start": 1,
+          "end": 120,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-08-pi-ai-per-model-reasoning-declarations.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-shell-execute-projection-and-jobs-at-start.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-24-user-authorized-subagent-model-routes.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        }
+      ],
+      "problem": "Interfaces that expose every possible option invite unsupported combinations, ambiguous addresses and duplicated methods. The notes bind model-facing fields to advertised provider capability, include mode in addresses, validate lifecycle boundaries, and collapse apparent method variants into one method plus projections.",
+      "triggers": [
+        "adding a provider/model/effort selector",
+        "addressing a subagent or fork",
+        "starting shell work",
+        "loading a plugin whose backend lacks a feature",
+        "defining a public protocol"
+      ],
+      "obligations": [
+        "Expose provider/model/effort fields to the model only when a session policy resolves and the bound provider advertises the capability; provide no unrestricted static mode.",
+        "Require provider and model together as one route; allow optional effort only within the declared capability.",
+        "Fail the plugin mount (or configuration) when settings enable a capability the bound provider does not advertise.",
+        "Include the mode discriminator in subagent/fork addresses rather than inferring it from lineage or an origin marker.",
+        "Validate fork seeds for contiguity and for ending outside an active turn; use typed errors for missing/stale/duplicate/invalid boundaries.",
+        "Prefer one execution method with orthogonal projection/wait options over separate run/start methods that drift.",
+        "Implement only the documented standard protocol subset; omit unsupported capabilities rather than adding private flags or _meta extensions.",
+        "A per-model declaration is the whole offer; do not silently fall back to catalog defaults for omitted keys. New adapter/model registrations do not expand user authorization; catalogs are advisory, and an exact saved route remains usable while its adapter accepts it."
+      ],
+      "actors": [
+        "route/session policy resolver",
+        "plugin loader",
+        "subagent service",
+        "shell tool",
+        "protocol adapter"
+      ],
+      "steps": [
+        "Resolve the actual provider/backend and its declared capability set.",
+        "Compute the exposed field/address/method set from that resolution.",
+        "Reject or omit unsupported combinations before execution.",
+        "Validate lifecycle boundary inputs and return typed errors.",
+        "Record the resolved capability in the model-facing/logged request shape.",
+        "Test unsupported combinations and protocol conformance."
+      ],
+      "enforcement": {
+        "mode": "runtime resolution plus interface/schema tests",
+        "implementation": "planned; source notes define concrete route and mount rules",
+        "trust": "configuration/route owner; the model cannot widen its own exposed fields",
+        "failure": "mount/config error or typed refusal; never silently drop an option",
+        "exceptions": "Advisory catalogs may omit requestable models; do not use catalog membership as the routability check."
+      },
+      "applicability": "Provider selection, subagent control, shell/start APIs, plugin capability advertisement and external protocol surfaces.",
+      "relationships": [
+        "pinned-policy-and-config",
+        "fail-closed-defaults",
+        "single-source-and-dedup"
+      ],
+      "migration": {
+        "strategy": "Define the capability table and address schema first, then generate both UI and model projections from it.",
+        "implementation": "Planned; requires a capability registry and schema generation for tool presentations.",
+        "requiredSupport": "Provider capability declarations, route schema, and conformance tests."
+      },
+      "reference": "references/rationale-feature-2.md#capability-and-interface-negotiation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Effort is exposed only when the resolved provider advertises it; the schema snapshot matches.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A subagent address with a mode selects the correct transport; lineage is never consulted.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "provider supplied without model is accepted; the schema test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An unknown _meta extension is emitted; the protocol conformance test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A newly registered adapter expands a saved user authorization without an explicit settings change; the authorization-boundary test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A settings-enabled route against a non-capable provider fails the mount with an actionable error and no partial registration.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Capability declarations can themselves be wrong; the source generally trusts the bound provider declaration, not a probe.",
+        "Advisory catalogs and routability are deliberately separate; implementations must keep both concepts.",
+        "Protocol subsets evolve; the adopting project must version its conformance target."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.change-discipline",
+      "title": "Make each change state its scope, supersession, exceptions and rollout boundary",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-28-dsh-guided-skill-session-commands.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-01-pwsh-tool-and-executor.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-web-install-manifest.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-web-preview-product-badge.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-durable-workflow-runs-in-chat.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-standard-acp-automation-controls.md",
+          "start": 1,
+          "end": 80,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-shell-execute-projection-and-jobs-at-start.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-web-elevation-stroke-shadows.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-continuable-activation-capacity.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-27-desktop-cli-runtime.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-14-built-in-plugin-feature-previews.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-15-deepseek-search-fetch-api.md",
+          "start": 1,
+          "end": 84,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md",
+          "start": 1,
+          "end": 345,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-02-web-thinking-tail-scroll.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ],
+      "problem": "Feature work otherwise expands silently into adjacent behavior, leaves stale documentation, or replaces a design without saying what remains authoritative. The notes use explicit non-goals, precise supersession, deliberate exceptions and staged rollout.",
+      "triggers": [
+        "writing an Agent Note/ADR or PR",
+        "replacing an earlier decision",
+        "adding a protocol or abstraction",
+        "changing defaults",
+        "deleting or migrating documentation",
+        "planning a rollout"
+      ],
+      "obligations": [
+        "State explicit non-goals and what interfaces/state/contracts remain unchanged.",
+        "Name the exact prior decision/paragraph a change supersedes; do not mark an entire document obsolete when only part changed.",
+        "Record deliberate exceptions and rejected alternatives with observed reasons; do not erase history.",
+        "Prefer the standard vocabulary/protocol subset over private extensions; publicly document any extension.",
+        "Do not introduce a public contract before it has an implemented use; keep the seam internal until justified.",
+        "Introduce a behavior as opt-in, verify it in the real composition, then change the default in a separate step; migrate stored selections explicitly.",
+        "Keep one authoritative narrative: update/supersede the existing note instead of leaving contradictory live documents.",
+        "Preserve archived notes as historical records; mark them archived rather than rewriting them as current authority.",
+        "Any public metadata/manifest change requires an explicit test-contract edit; a path-prefix deployment must revisit all absolute links/identity/scope/icon URLs together."
+      ],
+      "actors": [
+        "author",
+        "reviewer",
+        "release/migration owner"
+      ],
+      "steps": [
+        "Write the problem, decision, alternatives and consequences in the repository-approved format.",
+        "List non-goals and unchanged contracts.",
+        "Cite the exact superseded decision and the new authority.",
+        "Implement behind the smallest seam; test in the shipped composition.",
+        "Update paired documentation/indexes and mark obsolete material without deleting historical records.",
+        "Roll out opt-in, measure, then switch defaults with an explicit migration and rollback."
+      ],
+      "enforcement": {
+        "mode": "review plus documentation/index checks",
+        "implementation": "planned; the source repository has note/review conventions",
+        "trust": "author/reviewer; maintainers own default changes",
+        "failure": "review rejects undocumented scope/supersession; stale docs fail a link/consistency check",
+        "exceptions": "Urgent fixes may land first only if the note/supersession is added in the same change or immediately after, with an owner."
+      },
+      "applicability": "Design decisions, dependency changes, protocol additions, default changes and documentation of historical proposals.",
+      "relationships": [
+        "authoritative-context-sources",
+        "honest-evidence",
+        "single-source-and-dedup"
+      ],
+      "migration": {
+        "strategy": "Adopt a lightweight decision record with mandatory non-goals/supersession fields and a pairing/link check.",
+        "implementation": "Planned; the source format is guidance, not a reusable checker.",
+        "requiredSupport": "A note template, index, and review convention."
+      },
+      "reference": "references/rationale-feature-2.md#change-discipline",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A new note names the prior decision it supersedes and the contracts it leaves unchanged; reviewers can follow the chain.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A default change lands only after an opt-in rollout with measured evidence.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A change deletes an earlier note instead of archiving it; the history check fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A public protocol flag is added without a documented use; review rejects it.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A manifest field changes without updating the built-artifact contract test; the check fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A rollback restores the prior default and leaves the stored selection/migration state explicit.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source repository conventions are specific to its own process and cannot be copied wholesale.",
+        "Documentation checks cannot establish semantic truth; authors/reviewers remain responsible.",
+        "Rollout evidence is product-specific; a passing test does not prove adoption."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.consent-data-minimization",
+      "title": "Release user data only through an explicit consent gate and structural authorization",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-feedback-gated-session-telemetry.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md",
+          "start": 12,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": "packages/bundle/base/cordis.patch.yml",
+          "start": 205,
+          "end": 221,
+          "kind": "config"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/src/index.ts",
+          "start": 31,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/src/index.ts",
+          "start": 152,
+          "end": 165,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 32,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/README.md",
+          "start": 142,
+          "end": 144,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-telemetry/README.md",
+          "start": 50,
+          "end": 119,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Telemetry can export unrelated or excessive data when configuration, public emit or replay bypasses explicit feedback. The archived three-mode/default-off design is history: the fixed source's current shared base and direct backend both default to FEEDBACK_ONLY, while FULL is rejected. Authorization, current redaction and best-effort handoff must remain distinct.",
+      "triggers": [
+        "collecting telemetry/diagnostics",
+        "enabling debug export",
+        "submitting feedback",
+        "replaying a recorded session",
+        "adding a backend exporter"
+      ],
+      "obligations": [
+        "Preserve the current source composition: unset/empty DSH_TELEMETRY_MODE in the shared base and omitted backend mode resolve to FEEDBACK_ONLY. Explicit DISABLED constructs no coordinator/provider/processor/exporter and warns on live feedback; cold mutations remain silent.",
+        "Use a closed vocabulary of modes and fail before transport/setup when an unknown value is supplied.",
+        "Only new own canonical text feedback, message-rating creation/edit, note edit or withdrawal authorizes the unhanded prefix through that event, including stored context. Stored or inherited parent feedback, mount, ordinary activity and direct emit calls do not authorize capture; later records wait for new feedback.",
+        "Redact each outbound copy before backend handoff. On-demand replay uses the policy mounted at feedback/capture time, not record-creation policy; a throwing rule withholds that record, and the canonical log is not rewritten.",
+        "Make authorization structural: the current OTel backend's public emit is a no-op in every supported mode; private canonical feedback capture cannot be bypassed by reentrant callers. The archived FULL/public-emit design is not a current escape hatch.",
+        "Commit the canonical feedback event before publishing it, so capture includes that event but cannot cross its boundary; committing a row is not a disk-durability or delivery receipt.",
+        "Keep same-Session-object highest-handed-off-seq cursors separate from receiver deduplication by (session id, format version, event seq). Cold snapshots, restart and backend retries can repeat prefixes; do not promise exactly-once export.",
+        "State clearly that absence of shutdown/error records is not a crash signal when those records are excluded."
+      ],
+      "actors": [
+        "telemetry service",
+        "exporter/backend",
+        "session store",
+        "user/feedback UI",
+        "reviewer"
+      ],
+      "steps": [
+        "Use the current two-mode backend enum and feedback-only default; reject FULL and other unknown direct values before transport setup, and make explicit DISABLED construct no transport.",
+        "Bind release to new own canonical feedback, including edits and withdrawals; inherited or stored feedback must not authorize a child export.",
+        "Copy and redact at actual capture time on every path, without rewriting the canonical log.",
+        "Keep public emit non-authorizing and private feedback capture structurally separate.",
+        "Commit the feedback row before publication and release only its inclusive canonical prefix.",
+        "Exercise defaults, hard opt-out, disabled/feedback-only, FULL rejection, reentrant/direct emit, current-policy replay and receiver deduplication; distinguish handed-off from delivered."
+      ],
+      "enforcement": {
+        "mode": "runtime mode gate plus structural access control",
+        "implementation": "planned target adoption; current source config, backend implementation and seam README inspected, not executed here",
+        "trust": "telemetry service owner; a backend must not receive un-gated records",
+        "failure": "disabled constructs no transport; FULL/unknown direct mode fails before setup; public or reentrant emit cannot authorize capture",
+        "exceptions": "A local diagnostic log may remain local without consent if it never leaves the machine and is documented."
+      },
+      "applicability": "Any telemetry, analytics, crash reporting or feedback upload; especially systems with debug modes and replay.",
+      "relationships": [
+        "privileged-capability-and-secrets",
+        "logging-reconstructability",
+        "untrusted-boundary"
+      ],
+      "migration": {
+        "strategy": "Preserve the current feedback-only composition and closed enum, explicit DISABLED and pre-load hard opt-out; bind capture to new own canonical feedback and add current-policy redaction, cursor and receiver-deduplication scenarios.",
+        "implementation": "Planned; requires a telemetry seam with structural access control.",
+        "requiredSupport": "Consent UX, redaction policy, mode config and a replay harness."
+      },
+      "reference": "references/rationale-feature-2.md#consent-data-minimization",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Disabled mode creates no exporter and reports that data stays local.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Feedback-only releases exactly the prefix through the feedback event; later records remain local.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Shared-base unset/empty mode and omitted backend mode select FEEDBACK_ONLY; ordinary activity and inherited feedback capture nothing, while new own feedback authorizes its inclusive prefix including stored context.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A redaction listener reenters public emit with an unrelated record; no extra capture or handoff is authorized.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "FULL or an unknown direct-construction mode is rejected before transport setup; generic coordinator live/full vocabulary does not enable FULL in this backend.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "After a rule change, a later authorized capture uses the current redaction policy. A same-object cursor skips handed-off rows; after restart or a cold snapshot, the receiver deduplicates repeated identities without assuming collector acknowledgement or durable exactly-once delivery.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The archived August notes retain DISABLED/FULL-era claims, including an omitted-backend default contradicted by the fixed source's current DEFAULT_TELEMETRY_MODE and README. Current source config/code own the resolved default; do not apply the old review's proposed DISABLED fix mechanically.",
+        "Redaction cannot guarantee anonymity, and no built-in rules means captured content can leave unchanged. Handoff, shutdown and feedback acknowledgement do not prove collector acceptance; withdrawal is a deletion event, not remote erasure.",
+        "Feedback event shapes and history admission are product policy. The source backend's included-history behavior and rejected FULL mode must not be replaced by the archived lifecycle-only/three-mode policy."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.dangerous-action-approval",
+      "title": "Gate widened authority behind an explicit, revocable and auditable approval",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-gui-full-access-confirmation.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-continuable-subagent-interrupt.md",
+          "start": 1,
+          "end": 49,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-standard-acp-automation-controls.md",
+          "start": 1,
+          "end": 80,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-16-sandbox-same-mode.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-discover.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-06-approval-seam.md",
+          "start": 1,
+          "end": 139,
+          "kind": "history"
+        }
+      ],
+      "problem": "Permission widening and destructive/control operations must not be triggered by a single ambiguous gesture, nor silently persist after the conditions that justified them. The notes require explicit acknowledgement, dismissal that changes nothing, closed authority variants, and durable evidence of the granted mode.",
+      "triggers": [
+        "enabling danger-full-access or a wider sandbox",
+        "interrupting a running subagent",
+        "accepting a persistent permission preset",
+        "registering an approval answerer",
+        "exposing a control operation over a protocol"
+      ],
+      "obligations": [
+        "Route every permission picker through one shared confirmation component; keep the enabling action disabled until an explicit acknowledgement checkbox is checked.",
+        "Every dismissal path (cancel, Escape, close, mask) submits nothing, leaves the current preset untouched, and resets the acknowledgement.",
+        "Revoke the widened mode when the session locks or the justifying condition ends; reset confirmation state on re-entry.",
+        "Model approval as one service with a closed vocabulary; policy (who answers, whether the session is asked) lives in registered answerers and a per-session tier.",
+        "With no answerer, deny; never default to allow.",
+        "Authorize control operations synchronously and return a minimal result; do not cascade into disposal or lifecycle changes unless the operation is explicitly a lifecycle operation.",
+        "Record the accepted mode and its source as durable evidence; treat a no-op (already in the requested mode) as an accepted no-op with no extra write.",
+        "Require approval for the effect (install/write/execute), not for read-only discovery that changes nothing; adding a source/index that introduces a new code origin is a privileged change."
+      ],
+      "actors": [
+        "approval service/answerer",
+        "client permission picker",
+        "subagent controller",
+        "reviewer"
+      ],
+      "steps": [
+        "Classify the requested operation and the authority it needs.",
+        "Resolve the session policy and available answerers.",
+        "Present the narrowest confirmation with explicit acknowledgement; keep the enabling action disabled.",
+        "On approval, apply the mode, record the accepted authority and audit pair, and enforce the scope.",
+        "On denial/dismissal, keep prior state and record the refusal where required.",
+        "Re-check/revoke when the session locks or the justification disappears.",
+        "Test all dismissal paths, zero-answerer denial and repeated same-mode requests."
+      ],
+      "enforcement": {
+        "mode": "runtime gate plus durable audit and UI tests",
+        "implementation": "planned; source has an approval seam and a risk-confirmation component",
+        "trust": "session owner/answerer; UI is only an affordance",
+        "failure": "denied/unavailable result; state untouched; auditable refusal",
+        "exceptions": "A platform-level emergency override may exist only if documented, visible and independently audited."
+      },
+      "applicability": "Sandbox/permission presets, destructive filesystem/network operations, subagent interruption and any operation that broadens execution authority.",
+      "relationships": [
+        "fail-closed-defaults",
+        "pinned-policy-and-config",
+        "logging-reconstructability"
+      ],
+      "migration": {
+        "strategy": "Centralize the approval seam first; then wire every danger picker to one confirmation and add audit evidence.",
+        "implementation": "Planned; requires the approval service, durable audit fields and UI dismissal tests.",
+        "requiredSupport": "Closed authority vocabulary, answerer registration contract and session-lock hook."
+      },
+      "reference": "references/rationale-feature-2.md#dangerous-action-approval",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Enabling full access requires the checkbox; approval records the mode and the tool executes within it.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A repeated request for the already-active mode is accepted without a duplicate durable write.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Pressing Escape dismisses the dialog but leaves the old preset; no approval event is written.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "With no answerer, the dangerous call is denied rather than allowed.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A read-only market discovery call demands approval while an install proceeds without it; the approval-placement test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Session lock revokes full access and a later call is denied until re-approved.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Approval UIs can be socially engineered; the gate reduces ambiguity, not user error.",
+        "Durable audit does not itself prove the operation was safe.",
+        "Per-session policy tiers are product policy; the adopting project must define them explicitly."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.durable-state-integrity",
+      "title": "Make durable state the authority for lifecycle decisions and keep recording observational",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-05-dynamic-workflows.md",
+          "start": 1,
+          "end": 76,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-07-mcp-client-plugin.md",
+          "start": 1,
+          "end": 226,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-16-durable-per-step-time-context.md",
+          "start": 1,
+          "end": 75,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-22-durable-subagent-catalog-and-list-agents.md",
+          "start": 1,
+          "end": 113,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-workspace-registration-deletion.md",
+          "start": 1,
+          "end": 60,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-28-cross-workspace-resume.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-28-todo-plan-clears-on-next-turn.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-compaction-progress-visibility.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-queued-manual-compaction.md",
+          "start": 1,
+          "end": 111,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-tui-details-command.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-versioned-gui-welcome-onboarding.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-durable-workflow-runs-in-chat.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-22-archive-admission-reads-stored-tasks.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md",
+          "start": 1,
+          "end": 345,
+          "kind": "history"
+        }
+      ],
+      "problem": "UI caches, process-local flags or live runtime objects are tempting sources for admission, locks, plans and status. The notes show each such substitution producing wrong behavior after resume/replay, and repeatedly require decisions to read stored rows or the log and to keep optional recording from changing execution.",
+      "triggers": [
+        "admitting archived work",
+        "locking compaction",
+        "clearing a plan at turn start",
+        "resuming/forking a session",
+        "showing progress or live status",
+        "deleting a workspace registration",
+        "recording workflow runs",
+        "storing uploaded files",
+        "watching files"
+      ],
+      "obligations": [
+        "Answer lifecycle/admission questions from stored authoritative state, not from live Agent liveness or a runtime mirror.",
+        "Use one durable lock event as the single compaction authority; append it before expensive work so crashes and slow attempts are observable; never add a process-local mutex or locked/unlocked split.",
+        "Fold UI-only lifetimes (for example a plan cleared on the next turn) into a projection; do not append a fabricated event just to express a view rule.",
+        "Keep optional recording observational: after the first failed append, disable later writes for that run, log once, and never change cancellation, result mapping or disposal.",
+        "Guarantee every recorded run is either absent or a legal continuous prefix; enforce duplicate-start and ordering invariants mechanically and fail loudly on violation.",
+        "Only an observed live start bracket may open an in-flight indicator; replay must not create phantom work from an orphan start.",
+        "Persist acknowledgements and identity in the authoritative settings/session store, not browser storage or ambient process state; a fresh profile must not inherit them.",
+        "Delete only what the owning record owns; a registration deletion must not delete files or session logs, and unknown ids map to a typed not-found."
+      ],
+      "actors": [
+        "session/workspace store",
+        "display projection owner",
+        "file upload store",
+        "reviewer"
+      ],
+      "steps": [
+        "Identify the durable record or event that is authoritative for the decision.",
+        "Read it through the owning store/API; assert shape/continuity and fail with a typed error on conflict.",
+        "Append any required lock/start/acknowledgement synchronously before side effects, then perform the work.",
+        "Derive UI-only lifetimes and live indicators from observed live brackets, not from replay scans.",
+        "On recording failure, stop optional writes and preserve execution semantics; report the degradation once.",
+        "Verify with resume/replay, duplicate delivery, crash-prefix and unknown-id scenarios."
+      ],
+      "enforcement": {
+        "mode": "runtime invariants plus mechanical prefix checks and review",
+        "implementation": "planned; source notes describe store APIs and projection units but not a reusable checker",
+        "trust": "store owners and session writers; an agent must not bypass the authoritative read",
+        "failure": "typed conflict/not-found/invariant errors; a failed optional recording is an explicit warning, not silent data loss",
+        "exceptions": "A display-only lifetime may be derived in a projection; it still must not fabricate a durable write."
+      },
+      "applicability": "Sessions, workspaces, workflows, archives, file storage and any UI whose state survives or is reconstructed across processes.",
+      "relationships": [
+        "logging-reconstructability",
+        "honest-evidence",
+        "bounded-operations"
+      ],
+      "migration": {
+        "strategy": "Inventory every decision currently made from a live object or cache; move it to the owning durable row/event and add continuity/invariant tests.",
+        "implementation": "Planned; requires store APIs that expose the authoritative record and a projection seam for display-only lifetimes.",
+        "requiredSupport": "Documented ownership of each record, event ordering rules, and crash/resume test fixtures."
+      },
+      "reference": "references/rationale-feature-2.md#durable-state-integrity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A cold session with armed stored tasks still triggers admission confirmation; the decision reads stored rows.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A slow compaction holds the durable lock, and resume sees the lock rather than starting a second attempt.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A repeated workflow append after the first failure is attempted; the invariant test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A workspace deletion removes session logs; the ownership test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A crash mid-compaction leaves an observable started lock and no second concurrent writer; recovery reports the incomplete attempt.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Replay of an orphan compact/start does not open a permanent indicator.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The notes describe several independent subsystems; the adopting project must bind each rule to an actual store, not assume one shared session schema.",
+        "Prefix invariants vary per record type and require per-type checkers.",
+        "No claim that live and durable availability can be unified; independent reporting is deliberate."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.enforcement-placement",
+      "title": "Enforce at the real execution boundary, not only in the client affordance",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-07-default-model-follows-the-picker.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-web-elevation-stroke-shadows.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-07-session-prose-local-media-display.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-docs-page-markdown-actions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-24-user-authorized-subagent-model-routes.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md",
+          "start": 1,
+          "end": 345,
+          "kind": "history"
+        }
+      ],
+      "problem": "A disabled button, hidden field or advisory client check does not stop a direct request. The notes place authorization/validation in the server/executor and keep client state merely affording the action; mechanical scans enforce style/invariants that review would miss.",
+      "triggers": [
+        "adding a UI control that triggers a privileged action",
+        "exposing an RPC/route",
+        "enforcing a limit",
+        "rendering untrusted content",
+        "validating a model route",
+        "deleting resources"
+      ],
+      "obligations": [
+        "Enforce authorization and capability checks in the executor/server method before side effects; treat disabled/hidden client controls as affordances only.",
+        "Derive the authorization set on the host from the authoritative identity/config; never accept a client-supplied allowlist.",
+        "Re-validate provider/route identity and credentials after any await that could change them.",
+        "Apply output/rendering policy at the settled rendering boundary, not only while streaming.",
+        "Add a mechanical scan for rules that are decidable over the tree (for example forbidden style/token pairings), and document the rule so new code can comply.",
+        "Make invariant checks scan the actual artifact set and fail on violations; do not trust a hand-maintained checklist.",
+        "For server-side privileged operations, require the authenticated channel/session on every exposed invocation, not just at page load."
+      ],
+      "actors": [
+        "server/executor",
+        "host route/guard",
+        "renderer/settled pass",
+        "style/static checker",
+        "reviewer"
+      ],
+      "steps": [
+        "List every entry point that can reach the effect, including direct RPC/tests.",
+        "Place the authoritative check at the narrowest common executor boundary.",
+        "Keep client checks for UX but never as the sole gate.",
+        "Add mechanical/static checks for decidable invariants.",
+        "Test bypass paths with direct calls and malformed client state.",
+        "Document the boundary so future entry points reuse it."
+      ],
+      "enforcement": {
+        "mode": "runtime enforcement plus mechanical scans",
+        "implementation": "planned; some source scans and host guards exist",
+        "trust": "executor owner; clients cannot grant themselves authority",
+        "failure": "typed denial/error before side effect; a scan violation fails the check",
+        "exceptions": "A genuinely local-only affordance may rely on client state only if it cannot trigger a privileged effect."
+      },
+      "applicability": "Server routes, tool execution, file operations, rendering, model selection, style/token invariants and docs generation.",
+      "relationships": [
+        "single-source-and-dedup",
+        "fail-closed-defaults",
+        "untrusted-boundary"
+      ],
+      "migration": {
+        "strategy": "For each privileged effect, trace all callers and move the check into the executor; add bypass tests and a static scan for recurring rules.",
+        "implementation": "Planned.",
+        "requiredSupport": "A documented boundary map and a checker harness."
+      },
+      "reference": "references/rationale-feature-2.md#enforcement-placement",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A direct RPC bypassing the UI still gets denied by the executor.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A stylesheet violating an elevation rule fails the scan.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Disabling the composer is the only defense against an unserved model; the direct prompt succeeds and the test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A client supplies the authorization set; the host accepts it and the test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed renderer policy emits escaped fallback rather than raw content.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Mechanical scans cover only decidable rules; semantic enforcement remains runtime/review.",
+        "A single executor boundary may not exist in legacy code; the adopting project may need staged migration.",
+        "Client affordances still matter for usability even when not authoritative."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.fail-closed-defaults",
+      "title": "Default to denial, unavailability or explicit refusal when authoritative conditions are absent",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-06-30-session-store-fork-api.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-05-dynamic-workflows.md",
+          "start": 1,
+          "end": 76,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-22-web-bind-address.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-ask-question-web-presentation.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-workspace-write-surface-default.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-feedback-gated-session-telemetry.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-07-default-model-follows-the-picker.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-open-ready-web-ui.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-web-image-intake-and-limits-alignment.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-continuable-activation-capacity.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-16-sandbox-same-mode.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-20-config-schema-dump-validation-policy.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-06-approval-seam.md",
+          "start": 1,
+          "end": 139,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        }
+      ],
+      "problem": "A missing answerer, unknown permission mode, unserved model, unsupported provider, ambiguous config or interrupted approval must not degrade into allow. The notes show fail-closed composition and explicit refusal replacing permissive fallbacks.",
+      "triggers": [
+        "no approval answerer is registered",
+        "a permission mode is unknown or a session is locked",
+        "no adapter serves the selected model",
+        "a provider lacks a feature",
+        "a configuration value is missing/invalid",
+        "a Web server would bind publicly",
+        "a plugin is not mounted"
+      ],
+      "obligations": [
+        "With zero registered answerers every approval ask resolves unavailable and the tool call denies; not loading the seam is the explicit fail-closed opt-out.",
+        "Unknown direct-construction permission values fail before any transport/setup is read; unknown modes are never normalized to a permissive default.",
+        "Refuse at the real operation boundary (for example session.prompt) when no adapter can serve the selected provider, before opening a turn.",
+        "Enable a feature only after its capability is confirmed; a settings-enabled instance against a provider lacking the capability fails the mount.",
+        "Bind local Web surfaces to loopback and reject public host values; authentication does not silently broaden the deployment contract.",
+        "Validate config in three states (absent/default/override) and reject unknown keys/values instead of ignoring them.",
+        "When initialization is incomplete or a required dependency fails, report unavailability and perform no side effect; do not publish a half-ready state.",
+        "When config/schema export is only partially supported, still emit usable output but report complete:false and exit non-zero; consumers must read the diagnostics before treating it as complete or usable."
+      ],
+      "actors": [
+        "approval service",
+        "session/model router",
+        "server composition",
+        "plugin loader",
+        "reviewer"
+      ],
+      "steps": [
+        "Enumerate absent/unknown/error states for the operation.",
+        "Decide which of them is safe to treat as a denial/unavailability.",
+        "Place the check before the first side effect or setup read.",
+        "Return a typed, actionable refusal and keep prior state untouched.",
+        "Test zero-answerer, unknown-mode, unserved-model and public-bind cases."
+      ],
+      "enforcement": {
+        "mode": "runtime guard plus composition tests",
+        "implementation": "planned; specific seams exist in the source",
+        "trust": "runtime owner; no client-side toggle may override",
+        "failure": "typed refusal/unavailable; no partial effect",
+        "exceptions": "A documented offline/local mode may continue with reduced capability, but must announce the reduction and must not silently allow a dangerous effect."
+      },
+      "applicability": "Permissions/approvals, provider selection, feature mounts, network exposure, config parsing and startup readiness.",
+      "relationships": [
+        "dangerous-action-approval",
+        "pinned-policy-and-config",
+        "honest-evidence"
+      ],
+      "migration": {
+        "strategy": "For each capability, write the unsafe-absence table first, then implement the refusal before side effects and test it.",
+        "implementation": "Planned; needs typed error vocabulary and composition-level tests.",
+        "requiredSupport": "Documented defaults and an owner for each capability."
+      },
+      "reference": "references/rationale-feature-2.md#fail-closed-defaults",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "With no answerer, an approval request returns unavailable and the tool call is denied.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A public bind flag is rejected and the server stays on loopback.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "An unknown permission mode is coerced to workspace-write; the negative test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A model with no serving adapter still opens a turn; the boundary test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A partially supported config dump reports complete:true and exits 0; the completeness test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed plugin mount reports the missing capability and leaves the previous composition intact.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Fail-closed behavior depends on complete enumeration of absence states; new optional fields can create new gaps.",
+        "Some product surfaces intentionally permit reduced functionality; the exception must be documented and observable.",
+        "The source notes do not establish a universal default for every capability; per-capability policy remains necessary."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.honest-evidence",
+      "title": "Claim only what was observed; make failures actionable and state gaps explicitly",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-tui-auto-pane-title.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-tui-auto-title-default-on.md",
+          "start": 1,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-23-tui-file-reference-autocomplete.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-tmux-location-context.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-29-persistent-bash-str-replace-editor.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-plan-review-presentation-intent.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-web-workspace-file-links.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-continuable-subagent-interrupt.md",
+          "start": 1,
+          "end": 49,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-web-install-manifest.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-05-web-preview-product-badge.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-durable-workflow-runs-in-chat.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-web-export-command-and-dialog.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-web-image-intake-and-limits-alignment.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-26-shell-execute-projection-and-jobs-at-start.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-07-session-prose-local-media-display.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-file-display-through-filesystem.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-ptc-trajectory-code-inspection.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-14-docs-mermaid-viewer.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-continuable-activation-capacity.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-docs-page-markdown-actions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-27-desktop-cli-runtime.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-20-config-schema-dump-validation-policy.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-22-archive-admission-reads-stored-tasks.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-discover.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-06-approval-seam.md",
+          "start": 1,
+          "end": 139,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-20-ptc-typed-tool-returns.md",
+          "start": 1,
+          "end": 116,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-15-deepseek-search-fetch-api.md",
+          "start": 1,
+          "end": 84,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md",
+          "start": 1,
+          "end": 345,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-02-web-thinking-tail-scroll.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-03-fs-tool-error-remedy.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ],
+      "problem": "The notes repeatedly reject claims that overstate what a status, test, UI signal or diagnostic proves. A 200 from a proxy is not evidence about the target; a live animation is not throughput evidence; a missing answerer is denial; an unrun check is not a pass.",
+      "triggers": [
+        "reporting completion or debugging",
+        "writing diagnostics/errors",
+        "showing live status/progress",
+        "documenting verification",
+        "responding to \"not found\"/\"unsupported\"",
+        "replaying fixtures",
+        "handling ambiguous or stale state"
+      ],
+      "obligations": [
+        "Separate what the service returned from what the client observed (for example a service-side 200 does not prove the target page status).",
+        "Make errors actionable at the decision point: include the only correct recovery, preserve the machine code/cause, and pass unrelated errors untouched.",
+        "Do not fabricate liveness: motion/status must follow real deltas or observed live brackets, never an independent animation or replayed orphan.",
+        "State coverage and verification exactly: read vs unread, run vs planned, passed vs not exercised; enumerating limits is part of the result.",
+        "Use a measured rejection register: record rejected alternatives and the observed reason, not a later reconstructed reason.",
+        "When evidence is ambiguous, reset to an explicit unknown/needs-recheck state instead of guessing; prefer a typed conflict.",
+        "Report absence only after reading the authoritative source, and distinguish confirmed absence from temporary unavailability.",
+        "In tests, fail loudly when replay fixtures diverge from recorded/live behavior instead of normalizing the mismatch away.",
+        "Do not claim unverified savings or compatibility; experimental dependencies sit behind one seam with a replacement path, and measured guidance is explicitly post-ship. Fail explicitly on oversized output instead of silently truncating or stringifying, and state caps plus what they exclude."
+      ],
+      "actors": [
+        "author/reviewer",
+        "diagnostic owner",
+        "UI status owner",
+        "test author"
+      ],
+      "steps": [
+        "Write the exact proposition being claimed and the observation that would support it.",
+        "Identify the observation boundary (client/server, live/replay, read/unread).",
+        "Collect the observation; if unavailable, label the claim unverified.",
+        "For failures, emit a typed code plus an actionable next step while preserving the original cause.",
+        "For UI, drive status only from observed live events.",
+        "List unexercised paths/limitations explicitly in the result.",
+        "In replay tests, assert parity and fail on divergence."
+      ],
+      "enforcement": {
+        "mode": "review plus diagnostics/tests",
+        "implementation": "planned; some diagnostics and replay goldens exist in the source",
+        "trust": "author/reviewer; automated checks can only validate consistency, not semantic honesty",
+        "failure": "overclaim is a review finding; a divergent replay fixture fails loudly",
+        "exceptions": "A documented approximation may be reported as an approximation, never as an observation."
+      },
+      "applicability": "All completion reports, error messages, status indicators, verification sections, coverage ledgers and replay tests.",
+      "relationships": [
+        "logging-reconstructability",
+        "durable-state-integrity",
+        "single-source-and-dedup"
+      ],
+      "migration": {
+        "strategy": "Add an evidence section to the change template and make diagnostics carry typed codes plus recovery; add replay-parity assertions.",
+        "implementation": "Planned.",
+        "requiredSupport": "A claim/evidence vocabulary and review checklist."
+      },
+      "reference": "references/rationale-feature-2.md#honest-evidence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A completion report separates executed tests from planned checks and names unread files.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A stale-file error appends only the correct re-read/retry remedy while preserving the code and cause.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A service-side 200 is reported as the target HTTP status; the claim is rejected.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A live indicator is driven by a recorded orphan start; the parity test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A note claims unconditional prompt-token savings for an experimental SDK; the evidence review rejects the claim.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "On ambiguous evidence the result says unknown and names the next check rather than guessing.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "No automated checker can prove semantic honesty; this remains review-authored.",
+        "Some diagnostics must remain terse; actionability must not leak untrusted content.",
+        "Coverage ledgers can be mechanically consistent yet semantically wrong; independent audit remains necessary."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.logging-reconstructability",
+      "title": "Log the facts the model sees, with stable canonical values and reconstructable provenance",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-read-card.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-web-workspace-file-links.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-standard-acp-automation-controls.md",
+          "start": 1,
+          "end": 80,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-ptc-trajectory-code-inspection.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-24-user-authorized-subagent-model-routes.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-20-ptc-typed-tool-returns.md",
+          "start": 1,
+          "end": 116,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        }
+      ],
+      "problem": "If the model or a replay depends on derived display text, transient timestamps or untrusted names, the recorded session cannot reconstruct what actually influenced behavior. The notes persist canonical values as durable surface nodes and derive presentations from them.",
+      "triggers": [
+        "adding a model-visible value",
+        "formatting tool results",
+        "naming tools/providers",
+        "recording time/location",
+        "persisting subagent catalogs",
+        "replaying a session"
+      ],
+      "obligations": [
+        "Persist a model-visible fact in the session log at the position where the model receives it; do not leave it only in a rebuilt system prompt.",
+        "Record canonical values (ids, raw names, timestamps, structured fields) and generate display text from them; never log only presentation.",
+        "Derive stable public identities from trusted local config and deterministic normalization; document collision/length limits.",
+        "Keep provenance for derived data: describe the input, version, parser/algorithm and timestamp needed to reconstruct it.",
+        "Append durable nodes in a defined order relative to step/start and request derivation; request reconstruction must recover exactly what the model saw.",
+        "Record the resolved presentation (for example the tool schema actually returned) in the request header, not an after-the-fact approximation.",
+        "Treat the canonical value as the API and presentation as one projection; intermediate execution-local values may be unreplayable and must be declared as such rather than presented as durable."
+      ],
+      "actors": [
+        "session log writer",
+        "presentation/projection owner",
+        "tool registry",
+        "reviewer"
+      ],
+      "steps": [
+        "Identify the model-visible fact and its exact position in the request.",
+        "Choose a canonical representation that is stable across replay and safe against name collisions.",
+        "Persist it as a durable node before/with request derivation.",
+        "Derive all UI/display strings from it without changing the canonical value.",
+        "Provide a reconstruction test that reads the log and reproduces the request.",
+        "Document provenance and any lossy presentation."
+      ],
+      "enforcement": {
+        "mode": "runtime logging contract plus reconstruction tests",
+        "implementation": "planned; source has durable surface nodes and request reconstruction",
+        "trust": "log/persistence owner",
+        "failure": "missing/duplicate/misordered nodes fail reconstruction; a collision produces a deterministic error",
+        "exceptions": "Ephemeral UI-only state may stay unlogged if it never influences model input or durable decisions."
+      },
+      "applicability": "Session persistence, tool/result formatting, provider/tool naming, time/context injection, subagent catalogs and replay fixtures.",
+      "relationships": [
+        "durable-state-integrity",
+        "honest-evidence",
+        "single-source-and-dedup"
+      ],
+      "migration": {
+        "strategy": "Add a reconstruction test first, then move each model-visible presentation to a persisted canonical value.",
+        "implementation": "Planned; requires schema/versioning and a log reader.",
+        "requiredSupport": "Durable node schema, deterministic identity rules and a reconstruction harness."
+      },
+      "reference": "references/rationale-feature-2.md#logging-reconstructability",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A per-step time node is replayed and the reconstructed request contains exactly the reading the model saw.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A resumed session reconstructs the same canonical tool identity, with display-only differences isolated.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A timestamp exists only in the rebuilt system prompt; reconstruction fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A remote self-reported name is logged as the permission identity; the identity test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An oversized canonical value is silently truncated into a string; the output-limit test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A duplicate or malformed log node is reported as a typed conflict instead of silently skipped.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Logging the canonical value does not guarantee the model interpreted it as intended.",
+        "Presentation changes can still alter perceived behavior while canonical values stay stable.",
+        "Session format migrations require versioning; old sessions may not reconstruct under new code."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.pinned-policy-and-config",
+      "title": "Pin effective policy at creation, fence writes by revision, and validate configuration shape",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-tui-shell-prompt-editor.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-permission-default-for-new-sessions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-workspace-write-surface-default.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-01-pwsh-tool-and-executor.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-07-default-model-follows-the-picker.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-08-pi-ai-per-model-reasoning-declarations.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-durable-workflow-runs-in-chat.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-plugin-configuration.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-20-config-schema-dump-validation-policy.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-24-user-authorized-subagent-model-routes.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-15-deepseek-search-fetch-api.md",
+          "start": 1,
+          "end": 84,
+          "kind": "history"
+        }
+      ],
+      "problem": "Configuration and permission state change while work is in flight; reading it repeatedly yields mixed snapshots, and blind writes overwrite concurrent edits. The notes pin the effective policy per session/operation, require revision checks, reject unknown config, and stage changes.",
+      "triggers": [
+        "session creation/resume/fork",
+        "changing provider or permission settings",
+        "saving a settings section",
+        "upgrading a dependency",
+        "writing a file based on an earlier read"
+      ],
+      "obligations": [
+        "Snapshot the effective policy/configuration when the session or operation starts; resume/fork use the recorded policy rather than the current global settings.",
+        "Apply settings changes to future sessions; an explicit switch is needed to change a live operation, and the switch must be visible.",
+        "Fence every mutable write with the revision/version read before it; on mismatch return a typed stale error and require re-read.",
+        "Validate config as explicit shapes: distinguish absent/default/override, reject unknown keys and invalid values, and fail parsing loudly.",
+        "When saving a section, write the complete section from one snapshot; do not merge partial fields into an unknown concurrent state.",
+        "Pin dependency upgrades and re-run the affected verification; do not silently float a version.",
+        "Detect drift between expected generated artifacts and their source; fail the check rather than accept a stale artifact.",
+        "After saving, read the section back and report whether the write landed; do not predict validator outcome, and keep drafts on failure. A new adapter/model registration must not expand a saved authorization or route selection."
+      ],
+      "actors": [
+        "session factory",
+        "settings store",
+        "config loader",
+        "file writer",
+        "reviewer"
+      ],
+      "steps": [
+        "Resolve the effective policy and record it with the session/operation identity.",
+        "Expose whether each config value is default or explicit.",
+        "Read the current revision before mutating.",
+        "Write with a revision/version condition and reread on success.",
+        "Reject unknown/invalid config with an actionable message.",
+        "Test resume-after-global-change, concurrent-write conflict and unknown-key rejection."
+      ],
+      "enforcement": {
+        "mode": "runtime checks plus schema validation and drift checks",
+        "implementation": "planned; source notes define pinned policy and stale-version behavior",
+        "trust": "session/store owner; clients cannot bypass revision checks",
+        "failure": "typed stale/validation error; no overwrite; no silent default",
+        "exceptions": "Read-only/default values may be resolved at read time; a pinned value is required wherever behavior depends on it."
+      },
+      "applicability": "Session policy, provider/permission defaults, settings APIs, mutable file edits, dependency manifests and generated docs.",
+      "relationships": [
+        "durable-state-integrity",
+        "fail-closed-defaults",
+        "single-source-and-dedup"
+      ],
+      "migration": {
+        "strategy": "Add an explicit policy snapshot to the session record, then convert mutable writes to revision-fenced operations.",
+        "implementation": "Planned; needs schema/version fields and conflict tests.",
+        "requiredSupport": "Versioned records, config schema, and a documented migration for existing sessions."
+      },
+      "reference": "references/rationale-feature-2.md#pinned-policy-and-config",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Changing the global default does not alter an existing session; a new session uses the new value.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Two writers with the same revision: the second gets a stale error and rereads.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "An unknown config key is silently ignored; the schema test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A blind whole-file overwrite loses a concurrent edit; the revision test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A save reports success without reading the section back and the validator silently rejected it; the save-honesty test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A stale write reports the remedy and leaves the file untouched; a reread permits a clean retry.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Pinning can surprise users who expect live settings changes; the switch semantics must be explicit.",
+        "Revision checks protect only participants that use them; external editors remain outside the protocol.",
+        "Config schema coverage is never complete; unknown-key rejection is the safeguard, not semantic validation of every value."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.privileged-capability-and-secrets",
+      "title": "Expose privileged local capabilities only to authenticated local callers and keep secrets in their owning store",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-05-dynamic-workflows.md",
+          "start": 1,
+          "end": 76,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-07-mcp-client-plugin.md",
+          "start": 1,
+          "end": 226,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-10-agent-session-identity-and-log-location.md",
+          "start": 1,
+          "end": 66,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-follow-instruction-symlinks.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-native-workspace-directory-picker.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-28-tool-call-file-open-in-os.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-deepseek-onboarding-credential-setup.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-plugin-configuration.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-open-ready-web-ui.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        }
+      ],
+      "problem": "Capabilities such as native dialogs, opening OS paths, sandboxed process creation and credential entry can act with the host user authority. The notes restrict invocation to the authenticated local carrier, avoid shell mediation, keep secrets out of settings/logs/child environments, and state what the sandbox mechanism cannot govern.",
+      "triggers": [
+        "adding a host capability reachable from the Web UI",
+        "storing or editing provider credentials",
+        "spawning child processes",
+        "selecting a sandbox mechanism",
+        "injecting environment variables",
+        "mounting a plugin with privileged tools"
+      ],
+      "obligations": [
+        "Accept a privileged host capability only from a loopback socket with same-origin browser metadata and an authenticated session on every invocation, not merely at page load.",
+        "Open native tools without a shell; use a platform adapter and prefer a browser-renderable handler where appropriate.",
+        "Never store secrets in provider settings: a literal would traverse the settings mutation path and whole-section replacement cannot reconstruct redacted values; the credential store owns storage, validation, failures and invalidation.",
+        "Never write secrets to logs, model-visible diagnostics, tool input or child process environments; if a child must inherit configuration, pass an immutable per-execution snapshot and scrub secret-bearing variables.",
+        "Choose a sandbox/privilege mechanism against an explicit threat model and report the effects it cannot govern; do not claim reads, network or process visibility are controlled when they are not.",
+        "Keep a per-execution environment snapshot owned by the fact owner; do not rely on process-global mutable state across resume/fork/concurrency.",
+        "Require each environment/config contributor to declare a stable name and managed keys; fail loudly on duplicate names/keys rather than shadowing.",
+        "Apply deployment sandbox/policy through the existing shell seam; do not add raw child_process code in a plugin that bypasses it.",
+        "For a sandbox mechanism, publish an explicit gained/lost table including effects it cannot govern (hard links, other-AppContainer SIDs, console isolation, unverified filesystem targets) and fail with the API name and platform error code."
+      ],
+      "actors": [
+        "host route/capability owner",
+        "credential store",
+        "sandbox adapter",
+        "plugin/runtime loader",
+        "reviewer"
+      ],
+      "steps": [
+        "Classify the capability and the authority it grants.",
+        "Verify the transport/session is local and authenticated before accepting the request.",
+        "Resolve secrets through the credential store; keep them out of settings and logs.",
+        "Build a per-execution environment snapshot and scrub secrets before spawning.",
+        "Apply the sandbox policy at the real process seam and state ungoverned effects.",
+        "Test non-loopback/direct calls, secret leakage paths, duplicate env keys and unsupported sandbox effects."
+      ],
+      "enforcement": {
+        "mode": "runtime transport/session guard plus secret-store contract and review",
+        "implementation": "planned; the source has concrete host guards and a Windows ACL sandbox",
+        "trust": "host runtime owner; clients cannot self-authorize",
+        "failure": "denied or typed unsupported error; secrets are not written; duplicate keys fail at load",
+        "exceptions": "A deliberately trusted local-only composition may relax transport checks only if documented and not exposed remotely; sandbox modes may leave effects ungoverned only when reported."
+      },
+      "applicability": "Native dialogs, OS file opening, shell/process creation, sandbox tiers, credential entry and any plugin with privileged host access.",
+      "relationships": [
+        "untrusted-boundary",
+        "fail-closed-defaults",
+        "consent-data-minimization"
+      ],
+      "migration": {
+        "strategy": "Inventory privileged host methods first, then add transport/session guards, a credential-store path and an explicit sandbox effect table.",
+        "implementation": "Planned; platform-specific adapters and credential storage must be supplied by the target project.",
+        "requiredSupport": "Authenticated local transport, credential store API and a documented sandbox threat model."
+      },
+      "reference": "references/rationale-feature-2.md#privileged-capability-and-secrets",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A directory picker invoked from the loopback same-origin page opens; the request carries the authenticated session.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Credential entry writes only to the credential store; settings and logs contain no literal secret.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A non-loopback caller invokes the privileged method and is denied before the dialog opens.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A duplicate environment contributor key is accepted; the registry test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A sandbox note omits that hard links escape path confinement; the mechanism report is incomplete and rejected.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A missing credential produces an actionable credential error and no partial provider settings.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An unsupported sandbox effect is reported as ungoverned instead of being claimed as blocked.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Loopback/same-origin checks do not constitute a remote-deployment security model.",
+        "Same-user local processes may still read memory or credentials outside this boundary.",
+        "Sandbox guarantees differ by platform and are only as strong as the stated mechanism.",
+        "The archived GUI/config notes describe product-specific adapters; the target must re-derive its own."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.single-source-and-dedup",
+      "title": "Keep one owner and one derivation for each rule, state and presentation",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-tool-row-unified-expand-and-inspect.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-result-card-frontend.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-gui-full-access-confirmation.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-session-completed-done-dot.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-08-pi-ai-per-model-reasoning-declarations.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-plugin-configuration.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-web-export-command-and-dialog.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-12-web-image-intake-and-limits-alignment.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md",
+          "start": 1,
+          "end": 59,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-web-elevation-stroke-shadows.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-07-session-prose-local-media-display.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-file-display-through-filesystem.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-docs-page-markdown-actions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-14-built-in-plugin-feature-previews.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-discover.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-06-15-ptc.md",
+          "start": 1,
+          "end": 138,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-26-generic-file-upload.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-03-fs-tool-error-remedy.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        }
+      ],
+      "problem": "Duplicating a security default across surface compositions, validating the same invariant in several layers, or maintaining a second projection creates disagreement after changes. The notes place each rule/state in one owner and derive other views from it.",
+      "triggers": [
+        "adding a second surface (web/TUI/headless)",
+        "adding a client-side check for a server rule",
+        "creating a cached/mirrored list",
+        "adding a second method with slightly different behavior",
+        "splitting presentation from execution"
+      ],
+      "obligations": [
+        "Keep security/permission composition in one base composition; surface overlays must not duplicate the stack.",
+        "Implement an invariant once at the owning seam; callers may rely on it but must not re-implement divergent copies.",
+        "Keep one canonical state/derivation and generate UI/model projections from it; do not hand-maintain parallel lists.",
+        "When integrity with UI state matters, derive the view from the authoritative model rather than storing a duplicate.",
+        "Prefer one execution method with orthogonal options over parallel methods; eliminate drift.",
+        "Separate model-facing wording from machine-oriented vocabulary: the boundary owner formats model text, while providers keep stable codes/messages.",
+        "Project limits/counts from one source; do not restate caps in several enforcement points."
+      ],
+      "actors": [
+        "composition owner",
+        "service owner",
+        "projection author",
+        "reviewer"
+      ],
+      "steps": [
+        "List all copies/projections of the rule or state.",
+        "Choose the owner with the necessary authority and context.",
+        "Make other sites derive/consume the owned value or enforce through the owner.",
+        "Delete obsolete duplicate paths and their tests.",
+        "Add a test that the derived view and authoritative value agree, and a negative test for bypass."
+      ],
+      "enforcement": {
+        "mode": "review plus structural tests",
+        "implementation": "planned; the adopting project must identify its actual owners",
+        "trust": "architecture owner; changes require updating the single owner",
+        "failure": "duplicate divergence is a review failure; a bypass test fails",
+        "exceptions": "A deliberate cache is allowed only with a documented invalidation/derivation rule and explicit staleness semantics."
+      },
+      "applicability": "Security composition, permission checks, limits, config defaults, model-facing schemas, client projections and protocol presentation.",
+      "relationships": [
+        "enforcement-placement",
+        "logging-reconstructability",
+        "change-discipline"
+      ],
+      "migration": {
+        "strategy": "For each duplicated rule, name the owner and replace copies with derivation or calls; add agreement tests.",
+        "implementation": "Planned.",
+        "requiredSupport": "Composition diagram and owner list for the adopting project."
+      },
+      "reference": "references/rationale-feature-2.md#single-source-and-dedup",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A base composition change reaches all surfaces; no overlay overrides the security default.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A UI count and the authoritative stored count agree after concurrent changes because both derive from one source.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A second surface defines a divergent permission stack; the composition check fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A client-side check is the only enforcement for a server operation; the bypass test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A stale cached projection is invalidated by the owner rather than silently persisting.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Some duplication is intentional for defense in depth; it must be a checked, equivalent derivation, not a hand-maintained copy.",
+        "Identifying the true owner is context-dependent and cannot be fully automated.",
+        "The source notes occasionally retain legacy aliases; clean cutover remains a project decision."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.untrusted-boundary",
+      "title": "Treat all external content and remote values as untrusted at the boundary",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-06-29-todo-write-tool.md",
+          "start": 1,
+          "end": 61,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-cross-session-references.md",
+          "start": 1,
+          "end": 63,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-23-web-assistant-markdown.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-result-card-frontend.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-permission-default-for-new-sessions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-web-plugin-configuration.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md",
+          "start": 1,
+          "end": 87,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-07-session-prose-local-media-display.md",
+          "start": 1,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-file-display-through-filesystem.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-15-docs-page-markdown-actions.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-discover.md",
+          "start": 1,
+          "end": 56,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-20-ptc-typed-tool-returns.md",
+          "start": 1,
+          "end": 116,
+          "kind": "history"
+        }
+      ],
+      "problem": "Model-visible history, tool output, child diagnostics, remote server metadata, URLs and uploaded content cross trust boundaries. The notes consistently refuse to copy untrusted text into authoritative or model-visible positions, restrict protocols/addresses, and keep external content labeled rather than promoted.",
+      "triggers": [
+        "ingesting external documents or web results",
+        "rendering model/tool output",
+        "naming MCP tools",
+        "opening URLs or fetching pages",
+        "showing child-process diagnostics",
+        "embedding third-party content in UI"
+      ],
+      "obligations": [
+        "Derive identity from trusted local configuration (for example server name plus raw local name), never from a remote self-reported display name.",
+        "Validate scheme/address/redirect targets against a closed allowlist before fetching; prevent server-side request forgery by rejecting private/loopback/metadata targets and re-checking redirects.",
+        "Pass external text to the model as data with provenance/labeling; never splice it into instructions, canonical names or tool schemas.",
+        "Render external/markdown content through an allowlisted sanitizer; never inject raw HTML or execute embedded scripts.",
+        "Map untrusted child/worker failures to fixed, safe diagnostic text; never copy exceptions, stderr, task content, tool input, paths, env values, credentials or protocol payloads into model-visible diagnostics.",
+        "Keep tool-argument validation at the tool boundary and reject unknown/invalid fields rather than coercing them to null.",
+        "Do not cache a renderer/parser handler before streaming settles in a way that freezes untrusted content mid-render.",
+        "Diagnostics may include only closed protocol values, typed errors and call-site facts; they are display text, and consumers must not branch on their format."
+      ],
+      "actors": [
+        "tool gateway",
+        "web fetch/search provider",
+        "client renderer",
+        "MCP/plugin loader",
+        "reviewer"
+      ],
+      "steps": [
+        "Classify the data source and the trust boundary it crosses.",
+        "Apply the narrowest parser/validator/allowlist owned by that boundary.",
+        "Keep trusted identity separate from untrusted display fields and record both distinctly.",
+        "Render/fetch through an approved handler with timeouts, size limits and redirect checks.",
+        "On validation failure, return a typed refusal with a safe message; do not fall back to raw content.",
+        "Test hostile/ambiguous inputs and ensure untrusted text cannot reach instruction or identity positions."
+      ],
+      "enforcement": {
+        "mode": "runtime validation plus mechanical rendering tests and review",
+        "implementation": "planned; source has validators and sanitizers at specific seams",
+        "trust": "boundary owners; callers cannot opt out silently",
+        "failure": "reject/refuse with a safe diagnostic; no partial raw fallback",
+        "exceptions": "Only explicitly documented local/trusted sources may skip URL checks, and that exception must be visible in configuration."
+      },
+      "applicability": "All external network/file content, model-visible diagnostics, rendered markdown/HTML and plugin/MCP metadata.",
+      "relationships": [
+        "privileged-capability-and-secrets",
+        "fail-closed-defaults",
+        "enforcement-placement"
+      ],
+      "migration": {
+        "strategy": "Map every boundary, assign one validator per boundary, and add hostile-input tests before enabling new providers.",
+        "implementation": "Planned; requires concrete fetch/render/diagnostic adapters and a provenance field in the model-facing representation.",
+        "requiredSupport": "Allowlists, address policy, sanitizer, and a fixed diagnostic vocabulary."
+      },
+      "reference": "references/rationale-feature-2.md#untrusted-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A search result containing an injected instruction is passed as labeled data and does not change the instruction hierarchy.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A redirect to a private address is rejected before content is read.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A remote MCP serverInfo name becomes a permission key; the identity test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Child stderr text appears in a model diagnostic; the boundary test fails.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A diagnostic contains raw child stderr, or a consumer branches on diagnostic text; the trust-boundary test fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "An unsupported renderer vocabulary falls back to escaped plain text without executing embedded content.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "\"Untrusted\" judgments are source-specific; the adopting project must document which local sources are trusted.",
+        "Address validation cannot make a remote service safe; target access policy may be delegated and must be stated.",
+        "Sanitizer coverage is not proof against all content classes; limitations must be preserved."
+      ]
+    }
+  ]
+}

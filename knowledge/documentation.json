@@ -1,0 +1,5030 @@
+{
+  "domain": "documentation",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "documentation-tier-placement",
+      "title": "一事实一家的分层与放置",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 7,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 170,
+          "end": 178,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 79,
+          "end": 125,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档膨胀和漂移的主要原因是同一事实在多个层级被复述。源仓库用“主题+树位置”限定作用域，并规定每类文档只承担一种职责，低层细节链接到拥有它的后代。",
+      "triggers": [
+        "新增文档页",
+        "把一段内容从 README 搬到 docs",
+        "发现两处规则互相矛盾",
+        "评审要求补充背景或示例"
+      ],
+      "obligations": [
+        "按树位置确定作用域：只详述本主题，直接子主题只写目的/职责/高层行为。",
+        "文档类型不得扩大作用域；参考只可对自己的主题穷尽。",
+        "为每个事实指定唯一所有者；别处只链接。",
+        "根 AGENTS.md 只放常驻命令；子树 AGENTS.md 只放子树特有规则。",
+        "生成参考、JSDoc、测试/包/状态清单不得手抄。",
+        "测试机制、夹具、harness 放最低拥有层。",
+        "按源放置表落位：缺陷→postmortem，理由→Agent Note，操作步骤→cookbook，类型定义→subsystems，包合同→包 README，常驻命令→根 AGENTS.md 并链接理由，评审强制规则→defensive-patterns/。"
+      ],
+      "actors": [
+        "owner: 文档所有者/模块所有者",
+        "contributors: 改动作者",
+        "reviewers: 代码评审者; 文档评审者",
+        "automation: 脚本/测试在本地与 CI 中执行；远程必需检查是否配置不在本域证据内。"
+      ],
+      "steps": [
+        "判定文档主题与树位置。",
+        "判定它在层级表中的职责和不属于它的内容。",
+        "把不属于本层的内容迁到所有者或改成链接。",
+        "检查新内容没有重复已有权威叙述。",
+        "运行预算、链接、换行等适用门禁。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review-plus-selected-gates",
+        "implementation": "docs/AGENTS.md 的层级表与放置段落；根 AGENTS.md 的文档常驻命令；dsh-doc 的放置/预算流程。",
+        "trust": "层级判断主要靠作者与评审；只有部分形态（预算、链接、生成区域）被脚本检查。",
+        "failure": "错层不会被单一门禁直接拒绝，但会造成重复、预算超限或生成页手改冲突；评审应要求迁移或删除。",
+        "exceptions": "事故叙事只进 postmortem；历史理由只进 Agent Note/归档；发布记录按持久化域规则。"
+      },
+      "applicability": [
+        "when: 任何人类文档的新增、搬迁或重写。",
+        "preconditions: 已存在可判定的目录结构与文档类型; 已指定该主题的所有者",
+        "inapplicable: 纯代码注释的局部修正不触发分层迁移，但仍受 JSDoc/注释规则约束。"
+      ],
+      "relationships": [
+        "related: documentation-tutorial-vs-reference; documentation-page-skeleton",
+        "crossDomain: architecture; packaging"
+      ],
+      "migration": {
+        "strategy": "先建层级表和事实所有者，再写内容；不要先写再找位置。",
+        "implementation": "在 AGENTS.md 写“放什么/不放什么”，为每类文档建模板；评审清单加入“这条事实的所有者是谁”。",
+        "requiredSupport": [
+          "文档目录约定",
+          "每类文档模板",
+          "事实所有者清单"
+        ]
+      },
+      "reference": "references/documentation.md#tier-placement",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "新页按主题放到唯一层级，低层细节以链接指向所有者。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "同一事实在别处只保留链接。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把类型定义写进架构页、把测试夹具写进高层指南时，评审可依据层级表拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误放后按“迁到所有者→改链接→删重复”恢复，不保留两份。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "层级表本身可能过时；未列入的类型需要先扩展表再放置。",
+        "评审是主要执行者，脚本只覆盖部分形态。"
+      ]
+    },
+    {
+      "id": "documentation-tutorial-vs-reference",
+      "title": "教程与参考的二分及教程难度顺序",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 4,
+          "end": 87,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "教程和参考的读者任务不同：教程按结果路径组织，参考按查找范围组织。混写会让新手被无关细节淹没，也让有经验的读者找不到定义。",
+      "triggers": [
+        "新增指南或教程",
+        "重写一篇混合了步骤与定义的页面",
+        "评审发现页面既不能照做也不能查"
+      ],
+      "obligations": [
+        "每篇范围内文档归为教程或参考，不能两者兼得。",
+        "教程按达成结果的顺序组织，只引入当前步骤所需概念。",
+        "参考定义查找范围和当前行为，不承担教学顺序。",
+        "教程写作前判定读者起点与概念难度，先前置后依赖。",
+        "两者内容都多时分开；任一部分较小时显式标注。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: 无专用自动检查；预算/换行/链接门禁间接覆盖。"
+      ],
+      "steps": [
+        "判定读者任务：完成一件事还是查一个事实。",
+        "教程列出前置、步骤、完成信号；参考列出范围、定义、边界。",
+        "把不属于本类型的段落拆出或改链接。",
+        "教程按初/中/高级重排概念。",
+        "用新手测试检查首屏与路径。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "docs/AGENTS.md 的教程/参考段落；dsh-doc 的结构层级参考与审阅清单。",
+        "trust": "完全依赖作者判断和评审；没有脚本能判定“这是好教程”。",
+        "failure": "混写不会被自动拒绝，但会让新手测试失败、参考查找变慢；评审应要求拆分。",
+        "exceptions": "很短的页面可在一节内标注“教程部分/参考部分”；不要为形式强行拆文件。"
+      },
+      "applicability": [
+        "when: 新增面向人的解释性文档，或重构现有混合页。",
+        "preconditions: 知道读者起点和目标结果; 能区分步骤性内容与定义性内容",
+        "inapplicable: 纯生成参考、包合同、决策记录按各自类型规则，不强行二分。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement",
+        "related: documentation-page-skeleton"
+      ],
+      "migration": {
+        "strategy": "先问读者是来做事还是来查词，再决定结构。",
+        "implementation": "模板中给教程和参考两套骨架；评审用“新手测试”与“三次点击”检查。",
+        "requiredSupport": [
+          "两类模板",
+          "读者起点说明",
+          "可运行的教程步骤"
+        ]
+      },
+      "reference": "references/documentation.md#authoring-quality",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "教程能让目标读者按步骤完成结果；参考能按主题查到定义。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "新手只读首屏能判断是否来对地方。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "教程中塞入未前置的高级概念或参考中插入教学叙事时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "拆页后保留双向链接：教程链到参考定义，参考链到教程路径。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "“好教程”无法由机械门禁证明；需要真实读者/运行证据。",
+        "难度分级是作者私有判断，可能不一致。"
+      ]
+    },
+    {
+      "id": "documentation-page-skeleton",
+      "title": "页面骨架、摘要、目录与 Dev Note",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-doc/references/structure-hierarchy.md",
+          "start": 4,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/style.md",
+          "start": 5,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 110,
+          "end": 118,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 154,
+          "end": 160,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 401,
+          "end": 406,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 443,
+          "end": 456,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "统一骨架让读者在首屏知道页面讲什么、如何导航、维护者注记在哪；没有骨架的页面容易把元叙述、目录和实现细节混在一起。",
+      "triggers": [
+        "新建页面",
+        "页面标题或 H2 重排",
+        "把维护者说明写进正文"
+      ],
+      "obligations": [
+        "一个一级标题；YAML title/description；语言切换行；## Summary；## Table of Contents；正文 H2；## Dev Note 最后。",
+        "包 README 的自动骨架检查只覆盖路径深度恰为 packages/<group>/<pkg>/README.md 的英文与中文页：英文必须有 ## Summary、## Table of Contents、## Dev Note（H2 或 H3）；中文必须有 ## 概述、## 目录、## 开发备注（H2 或 H3）。",
+        "Summary 写读者能做什么、何时选、主要代价、最重要边界，一到五句。",
+        "目录锚点匹配 H2；新页按模板顺序，重排需结构理由。",
+        "Dev Note 可写 None.，只放维护者需要但正文不宜展开的工程事实。",
+        "标题用具体名词短语，不用口号/问句。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: doc-standard.spec 检查包 README 的 frontmatter、路径深度恰为 4 的英文/中文骨架标题，以及 session-persistence-jsonl 参考配对的物理行数与 sidecar 形态；其他页面靠评审。"
+      ],
+      "steps": [
+        "选模板并写 YAML。",
+        "写语言切换行。",
+        "写 Summary（最后写，确保具体）。",
+        "列 H2 目录。",
+        "写正文，最后写 Dev Note。",
+        "检查标题层级与锚点。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-template-plus-selected-tests",
+        "implementation": "structure-hierarchy.md 的顺序与模板；style.md 的标题/摘要规则；doc-standard.spec 读取每个匹配包 README 的 YAML frontmatter（110-118），对路径深度恰为 4 的 README.md/README.zh.md 断言 Summary/概述、Table of Contents/目录、Dev Note/开发备注（154-160, 401-406），并对参考 README 配对断言物理行数相等与 sidecar 形态（443-456）。这些测试由 run-gates.ts:859-862 在 doc-quick/test:docs 中运行。",
+        "trust": "模板和评审覆盖大多数页面；自动检查只覆盖包 README 骨架与参考 README 配对，不覆盖任意页面的标题、摘要质量或目录锚点可达性。",
+        "failure": "包 README 缺 Summary/概述、Table of Contents/目录或 Dev Note/开发备注时 vitest 失败；参考配对行数或 sidecar 形态不符也失败。缺 YAML frontmatter 同样使包 README 元数据测试失败。其他页面缺摘要/目录通常只由评审拒绝。",
+        "exceptions": "生成页由生成器决定骨架；归档页保留封印时格式；很短的索引页可省略目录但仍需摘要；组/根 README 不进入路径深度 4 的骨架断言。"
+      },
+      "applicability": [
+        "when: 新增人类文档页或大改页面结构。",
+        "preconditions: 页面有稳定主题和文件名; 知道读者首屏需要什么",
+        "inapplicable: 纯生成页、网站首页重定向页、归档页按各自规则。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement",
+        "related: documentation-tutorial-vs-reference",
+        "crossDomain: website-publication"
+      ],
+      "migration": {
+        "strategy": "把骨架做成模板和检查器共用的常量，减少手写偏差。",
+        "implementation": "模板固定标题顺序；评审检查 Summary 与目录；对关键页面加精确断言。",
+        "requiredSupport": [
+          "页面模板",
+          "锚点生成/检查",
+          "摘要写作规范"
+        ]
+      },
+      "reference": "references/documentation.md#authoring-quality",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "页面首屏有摘要，目录锚点可达，Dev Note 在最后。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "Summary 不写“本文介绍”式元叙述。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 Summary、目录锚点错误、Dev Note 不在最后时，评审应拒绝或由测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "锚点改名后同改目录与入站链接；缺摘要时补写而非删目录。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "只有包 README 骨架、包 README frontmatter 与参考 README 配对受 doc-standard 自动断言；其余页面靠评审。",
+        "骨架检查只匹配精确标题，不验证摘要质量、目录锚点是否可达或 Dev Note 内容是否真实。",
+        "Dev Note 的“工程事实”边界没有机械定义。",
+        "结构通过不证明页面语义正确；中文页的语义等价也不由该测试证明。"
+      ],
+      "notes": "2026-10-24 全文读取 scripts/doc-standard.spec.ts:1-456。kind/metadata 检查覆盖 glob 匹配的英文与中文 README；骨架检查只覆盖路径深度恰为 4 的英文/中文页；参考配对断言只对应 session-persistence-jsonl。静态读取见 _working/audit/readme-gates-full-source-repair.json；未执行 vitest。"
+    },
+    {
+      "id": "documentation-package-readme-kinds",
+      "title": "包 README 种类、元数据与模板选择",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 18,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 59,
+          "end": 62,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+          "start": 3,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+          "start": 50,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 18,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 40,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 57,
+          "end": 160,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 339,
+          "end": 406,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包 README 的合同随包形态变化：组、库、插件参考、bundle 的能力面不同。用错模板会写出不存在的配置/入口，或把库误写成插件。",
+      "triggers": [
+        "新增包",
+        "包从库变成插件或 bundle",
+        "修改包元数据",
+        "README 的 kind 与 package.json 不一致"
+      ],
+      "obligations": [
+        "按路径/清单推导种类：路径段数 ≤3 的 packages 页为 group；有 dsh.bundle.patch 为 bundle；登记在 PACKAGE_LIBRARIES 为 library；其余插件为 reference。",
+        "doc-standard 对 glob 匹配的 packages/README.md、packages/README.zh.md、packages/*/README(.zh).md、packages/*/*/README(.zh).md 读 YAML frontmatter；kind 必须等于路径/清单推导值，description 必须为非空字符串。",
+        "frontmatter 中 name、audience、tags、i18n 任一出现即失败（被视为冗余或无受治理消费者）；其他自定义字段不由该测试治理。",
+        "docs/persistence-changes/*.md（排除 README）kind 必须为 persistence-change；releases/dsh-*.md 为 persistence-release；historical-formats/v*.md 为 persistence-format，且文件数等于当前 writer 版本×2。",
+        "不要重复文件名、包清单或门禁已拥有的字段；没有 taxonomy/搜索消费者时不要加 tags。",
+        ".i18n.yaml 是 YAML 一致性记录，不是 TOML，也不由 kind 决定其格式。",
+        "不得复述 JSDoc、生成目录或其他包关切。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 包作者; 文档作者",
+        "reviewers: 包评审者; 文档评审者",
+        "automation: doc-standard.spec 对每个匹配的英文/中文包 README 推导并断言 kind、检查非空 description 与禁用字段，复核 library 入口，并断言 persistence 文档 kind；配对门禁只检查双语结构。"
+      ],
+      "steps": [
+        "读 package.json 和包入口，判定 group/library/reference/bundle。",
+        "选对应模板并写 frontmatter。",
+        "按模板顺序写 Metadata。",
+        "检查 description 是用户结果而非内部身份。",
+        "跑 doc-standard/配对/README 门禁。"
+      ],
+      "enforcement": {
+        "mode": "automatic-kind-and-metadata-tests-plus-template-review",
+        "implementation": "dsh-doc 的种类判定与模板；metadata 参考；doc-standard.spec 用路径段数、dsh.bundle.patch 和 PACKAGE_LIBRARIES 推导 expectedKind（133-140），对所有 glob 匹配的 README.md/README.zh.md 断言 kind 与 description 并拒绝 name/audience/tags/i18n（142-152, 348-356），复核 library 入口确为普通模块且无 bundle 声明（390-399），并断言 persistence 文档 kind（358-387）。测试由 run-gates.ts:859-862 在 doc-quick/test:docs 中运行。",
+        "trust": "kind、frontmatter 字段、模板存在性、library 入口形态自动检查；但“这个包是否真是库”仍取决于人工维护的 PACKAGE_LIBRARIES 与清单事实，README 内容是否真实描述包语义不由该测试证明。",
+        "failure": "kind 与推导值不符、description 缺失/为空、出现 name/audience/tags/i18n、KIND_TEMPLATES 缺模板、library 条目有 bundle 声明或入口含默认/apply 导出、persistence 文档 kind 错时 vitest 失败。错误的库登记或不存在的 package.json 事实仍可能让错误 kind 通过。",
+        "exceptions": "私有包/纯类型包可按 library/group 处理；bundle patch 是显式信号；vendored 文档可能没有本仓库 frontmatter 约定。"
+      },
+      "applicability": [
+        "when: 新增或重写包 README、改变包形态。",
+        "preconditions: 能读到 package.json 与入口导出; 已维护 library 清单",
+        "inapplicable: 仓库根 README/组 README 不完全适用包模板，但组页仍有自身骨架。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-page-skeleton",
+        "related: documentation-package-readme-summary; documentation-package-readme-model-experience",
+        "crossDomain: packaging; supply-chain"
+      ],
+      "migration": {
+        "strategy": "先判定包形态，再选模板；不要用一套 README 模板覆盖所有包。",
+        "implementation": "维护 library 注册表与 bundle patch 信号；用模板生成骨架；门禁校验 kind 与标题。",
+        "requiredSupport": [
+          "包形态清单",
+          "四种 README 模板",
+          "包入口/导出检查"
+        ]
+      },
+      "reference": "references/documentation.md#package-readme",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "新包 README 的 kind、入口、metadata 与包形态一致。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "组页/库页/插件页/ bundle 页使用正确模板。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把库写成插件、把 bundle 写成普通 reference、或 metadata kind 不符时，测试/评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "选错模板后按正确种类重写骨架并迁移内容，不保留两套标题。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "library 清单是人工维护的，可能漏登新库或把插件误登记为库；kind 推导只与这些事实一致，不独立证明包形态。",
+        "模板种类有限，特殊包可能需要明确豁免。",
+        "kind/frontmatter 检查覆盖 glob 匹配的英文与中文 README；它不证明 README 语义、章节完整性或双语等价。",
+        "persistence kind 测试只断言指定路径的 frontmatter，不验证迁移内容。"
+      ],
+      "notes": "实际格式是 YAML frontmatter + YAML sidecar；先前 TOML 说法错误，已按 metadata-links-i18n.md:3-30 修正。kind 映射模板，不映射 sidecar 格式。2026-10-24 更正：kind 不是纯书面约定；doc-standard.spec.ts 对每个 glob 匹配的 README.md/README.zh.md 断言路径/清单推导的 kind，并拒绝 name/audience/tags/i18n。静态读取见 _working/audit/readme-gates-full-source-repair.json；门禁未执行。"
+    },
+    {
+      "id": "documentation-package-readme-summary",
+      "title": "包 README Summary 的 100 词上限与用户结果语气",
+      "sources": [
+        {
+          "path": "scripts/verify-package-readme-summaries.ts",
+          "start": 1,
+          "end": 43,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-readme-summaries.ts",
+          "start": 44,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/package-reference.md",
+          "start": 19,
+          "end": 25,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包 README 的首屏摘要决定读者是否继续。按内部角色写“这是一个 X 包”不能帮助选择；过长摘要会挤占使用路径。",
+      "triggers": [
+        "新增包 README",
+        "重写 Summary",
+        "Summary 超过 100 词"
+      ],
+      "obligations": [
+        "英文包 README 必须有 ## Summary。",
+        "Summary 最多 100 个 wc -w 式单词。",
+        "写用户/agent 能用包做什么、何时选、主要代价、最重要边界。",
+        "不写角色、类型或内部身份；不写“本文介绍”。",
+        "超出时先读对应 kind 模板再重写。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 包作者; 文档作者",
+        "reviewers: 文档评审者",
+        "automation: verify-package-readme-summaries 读取英文 README 并计数。"
+      ],
+      "steps": [
+        "在目标 .doc-gates/package-readme-summaries.json 声明真实 packagesRoot 与英文 readme 文件名，安装座内运行 verify-package-readme-summaries.mjs；扫描包根、组和包三级 README，不允许通过选择单文件降低源范围。",
+        "跑门禁得到当前词数。",
+        "删掉角色/类型句，保留用户结果与边界。",
+        "用具体动词和场景替换抽象名词。",
+        "复查是否仍在 100 词内且没有丢关键代价。",
+        "跑门禁确认。"
+      ],
+      "enforcement": {
+        "mode": "automatic-word-count-plus-review",
+        "implementation": "来源脚本1-77：三层README模式11-15，空白分词18-19，原始文本精确H2提取23-26，kind模板提示29-53，空扫描与缺节/超限拒绝64-76。目标 tools/doc-gates/verify-package-readme-summaries.mjs 保留三级扫描、100词硬上限、精确原始H2提取和空扫描拒绝，可配置真实包根/文件名并经安装座入口运行；源doc-quick/doc-sync接入不自动成为目标CI。",
+        "trust": "自动效果仅为发现到的英文README词数/缺节/空扫描；目标诊断指向已安装的README合同参考并显示kind，不假装源模板已安装。用户结果、代价、语义完整性与目标扫描完整性仍需评审。",
+        "failure": "缺Summary、超过100词或空扫描退出1；目标参数、配置或不可读输入退出2。超限后按目标kind模板（若有）及完整README合同重写，不提高上限或删除边界；源诊断对应其自身dsh-doc模板。",
+        "exceptions": "wording 可因包类型调整，但 100 词上限不因 kind 放宽；中文侧不重复计数。"
+      },
+      "applicability": [
+        "when: 任何英文包 README 的 Summary。",
+        "preconditions: Node.js >=22.19.0、目标包README布局配置；本词数执行器不需要外部解析器。目标kind模板按项目实际约定，完整合同仍需评审。",
+        "inactive: 真正无包README体系时须记录事实和重新激活条件。扫描包含包根README、组README和包README；只有目标仓库外层的普通根README不在该包根扫描内。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-package-readme-kinds",
+        "related: documentation-package-readme-model-experience; documentation-package-readme-limitations"
+      ],
+      "migration": {
+        "strategy": "先写“谁能做什么”，再补“何时不选/代价”，最后压词数。",
+        "implementation": "配置 .doc-gates/package-readme-summaries.json（packagesRoot默认packages，readme默认README.md），从目标根运行 node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-readme-summaries.mjs；异地 --root，配置 --config。保持100词上限；评审按包kind检查用户结果和边界，目标模板由采用方真实维护。接入目标既有顶层入口/适用CI须另有实际证据。",
+        "requiredSupport": [
+          "已交付的词数/缺节/空扫描执行器及目标包布局配置",
+          "Summary语气与完整命题的人工评审程序",
+          "目标实际kind模板（若有）和顶层检查/CI接入"
+        ]
+      },
+      "reference": "references/documentation.md#package-readme",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "英文Summary恰100词仍通过，包根/组/包三级扫描均运行；这不证明首句用户结果。",
+            "evidence": "verification/evidence/raw/p1-package-readme-summary-installed.json",
+            "observed": "默认隐藏安装座的顶层npm check:summaries，three-depth-scan-and-exact100-admitted退出0；3项CLI行为回归均通过。用户结果/选型语义仍待人工执行证据。"
+          },
+          {
+            "obligation": "读者能据此判断是否选这个包。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "超过100词、缺Summary、空扫描自动拒绝；内部角色介绍由评审判断，不由词数门禁识别。",
+            "evidence": "verification/evidence/raw/p1-package-readme-summary-installed.json",
+            "observed": "101-words-refused、missing-group-summary-refused、empty-scan-refused退出1；missing-configuration-unusable退出2。语义评审尚无本批实际拒绝证据。"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "超限后压缩而非升限，缺Summary后补写，空扫描后恢复真实包README，并重跑同一顶层入口。",
+            "evidence": "verification/evidence/raw/p1-package-readme-summary-installed.json",
+            "observed": "shortened-summary-recovers、group-summary-restored、real-root-summary-recovers及configuration-restored均退出0；命题是否无损仍需人工评审。"
+          }
+        ]
+      },
+      "limitations": [
+        "只扫英文；中文侧结构与译文质量不受此门禁。",
+        "词数不等于信息量，短而空仍可能通过。源使用原始文本H2正则而非AST，代码围栏内伪Summary亦可通过；实际source-raw-heading-blind-spot-preserved观察0。不是完整README结构/模型可见面/限制节检查。",
+        "10条实测命令消费默认隐藏安装座的零依赖物理模块副本，不是全Skill安装、独立采用、源脚本运行、全仓适用范围或可信CI/平台阻断。"
+      ],
+      "notes": "来源1-77已重新逐行读；精确行号与包根/组README适用边界已纠正。实际运行的是目标安装座执行器；源脚本、用户选型语义评审与完整模板采用未运行。旧静态修复记录保留为历史，不作当前自动落实证据。"
+    },
+    {
+      "id": "documentation-package-readme-model-experience",
+      "title": "包 README 的 Model Experience 结构与模型可见面",
+      "sources": [
+        {
+          "path": "scripts/verify-package-readme-model-experience.ts",
+          "start": 1,
+          "end": 638,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 1,
+          "end": 170,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包可能通过系统提示、工具 schema 或上下文注入影响模型。读者需要知道模型实际看到什么、token 成本和 KV-cache 影响；自由散文会让这些事实不可比较。",
+      "triggers": [
+        "新增插件包 README",
+        "包改变系统提示/工具 schema/上下文注入",
+        "模型可见面没有可核对文字"
+      ],
+      "obligations": [
+        "每个扫描包 README 要么有唯一 H2 `## Model Experience`，要么在 NO_MODEL_EXPERIENCE_SECTION 白名单（模型无关；条目必须仍存在且保留理由）。",
+        "有该节时必须是最后一个 H2，或倒数第二且后接唯一 `## Known Limitations and Deferred Work`；H2 必须逐字符匹配，变体失败。",
+        "短形式只允许 SENTENCE_MODEL_EXPERIENCE 白名单：恰好一句 `None, as ….` 或 `Indirectly, through ….`，空行，精确 `#### KV Cache effect`，空行，一个非空段落；白名单不能与无节白名单重叠。",
+        "结构化包有一个或多个 `###` 条目，标题非空且 fragment 唯一；每节恰好按序三个 H4：`#### What the model sees`、`#### Token effect`、`#### KV Cache effect`。",
+        "每个 H4 后空行加一个非空段落；字段不得用本地 `](#…)` 链接代替嵌套。",
+        "字段段落之后可选接 `#####` 标题 + 精确非空 ```markdown 围栏；每个 H5 恰好一个围栏，标题在条目内唯一，标题前空行。",
+        "标题含 system prompt 的条目在 What the model sees 下必须有嵌套围栏；标题含 schema/schemas 的条目必须链接 ../../../docs/tool-catalog.md 的存在 H2 fragment。",
+        "至少一个结构化条目用行内代码、嵌套 markdown 或工具目录锚点落到具体文字。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 包作者; 模型接口维护者",
+        "reviewers: 文档评审者; 工具目录维护者",
+        "automation: verify-package-readme-model-experience 逐包读取 README，检查白名单、节顺序、短形式/结构化语法、H5 围栏、system-prompt 证据和 tool-catalog 锚点。"
+      ],
+      "steps": [
+        "判定包是否在系统提示/工具 schema/上下文路径上。",
+        "若无，选对应精确短形式。",
+        "若有，按场景列 H4/H5，每项落到具体文字。",
+        "工具 schema 链接到目录 H2。",
+        "写 token 与 KV-cache 影响。",
+        "跑门禁并修正标题/空行/围栏。"
+      ],
+      "enforcement": {
+        "mode": "automatic-readme-model-experience-gate",
+        "implementation": "glob packages/*/*/package.json（333）；对每个包把 package.json 替换为 README.md（366-368），解析 Markdown，比较 H2 名称/顺序（396-427），按 NO_MODEL_EXPERIENCE_SECTION/SENTENCE_MODEL_EXPERIENCE 分支（345-364, 429-480），校验 H3/H4/H5 层级、空行、围栏、system-prompt 围栏与 tool-catalog 锚点（481-627），失败退出 1（629-638）。常量与两个白名单见 13-18、32-45、47-250；helper 与类型见 252-330。",
+        "trust": "H2 名称/顺序、白名单成员及其理由、H3/H4/H5 层级、空行、围栏、system-prompt 围栏存在性、tool-catalog 锚点存在性自动；'模型确实看到什么'的语义真实性、披露是否完整、中文页、工具目录内容是否最新均不检查。汇总计数不是语义证明。",
+        "failure": "缺 README/节、非白名单短句、节顺序错、字段/H5 形态错、system-prompt 无围栏、schema 链缺失或 fragment 不存在、白名单条目不存在/无理由/重叠时退出 1。",
+        "exceptions": "NO_MODEL_EXPERIENCE_SECTION 包可完全省略；SENTENCE_MODEL_EXPERIENCE 包可只写一句+KV field；两者都需审计理由。生成页/中文页不在本门禁范围。bundle 包不豁免。"
+      },
+      "applicability": [
+        "when: 每个 packages/*/*/package.json 对应的英文 README.md，包括 bundle 包；bundle 只影响 README kind，不豁免 Model Experience。",
+        "preconditions: 知道包是否注册工具/系统提示/上下文注入; 工具目录已生成",
+        "inapplicable: 中文 README.zh.md 不在本门禁语料；组/根 README 不在 packages/*/*/package.json 扫描内。不参与模型上下文的纯内部工具必须走 NO_MODEL_EXPERIENCE_SECTION 白名单或短形式，而不是省略。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-package-readme-kinds; documentation-generated-reference-freshness",
+        "related: documentation-package-readme-summary",
+        "crossDomain: tools; system-prompt; model-context"
+      ],
+      "migration": {
+        "strategy": "完整描述模型实际看到的文字/工具及其 token/KV-cache 影响；不能用形容词或简化模板代替。",
+        "implementation": "按源语法落地：每个适用包有 H2 `## Model Experience`，结构化条目用 H3 标题、三个有序 H4（What the model sees / Token effect / KV Cache effect）、必要时 H5+非空 ```markdown 围栏；维护 NO_MODEL_EXPERIENCE_SECTION 与 SENTENCE_MODEL_EXPERIENCE 白名单及理由；system-prompt 条目必须有围栏，schema 条目必须链接存在的 tool-catalog H2。",
+        "requiredSupport": [
+          "完整 H3/H4/H5 语法",
+          "两个审计白名单",
+          "system-prompt 证据",
+          "tool-catalog 锚点",
+          "token/KV-cache 事实"
+        ]
+      },
+      "reference": "references/documentation.md#package-readme",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个非豁免 README 的 Model Experience 结构、顺序、字段、短形式/H5/锚点符合源规则。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺节、白名单外短句、字段顺序错、H5 无围栏、schema 链缺失或 fragment 不存在时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "先判断包是否模型无关；是则加入 NO_MODEL_EXPERIENCE_SECTION 并写理由，否则按对应条目补结构/证据。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "不判断字段文字是否真实描述模型可见内容，只检查结构/锚点。",
+        "白名单是人工审计集合，新增模型无关包必须显式登记；成员或理由缺失本身会失败。",
+        "只扫英文 package README.md（366-368）；中文 README.zh.md 不在本门禁语料。配对门禁只证明结构与逐节哈希，不证明中文语义等价。",
+        "不执行任何 README 示例，也不检查工具目录内容是否最新。",
+        "bundle 包不豁免本门禁；只有两个白名单可以省略节或使用短形式。",
+        "结构通过不证明披露完整或 token/KV-cache 声明与真实请求一致。"
+      ],
+      "notes": "全文 1-638 已读（wc -l 638）。2026-10-24 分段复核：1-31 header/root/常量；32-45 NO_MODEL_EXPERIENCE_SECTION；47-250 SENTENCE_MODEL_EXPERIENCE（含 136-249 的剩余条目）；252-330 类型与 validateNestedVerbatim/headingFragment 等 helper；332-364 计数、package 扫描与白名单校验；366-627 逐包 H2/顺序、短形式、结构化 H3/H4/H5、system-prompt/tool-catalog/verbatim 检查；629-638 输出与退出码。关键修正：先前“非 bundle 包都写节”的说法不准确——扫描全部 packages/*/* 包（bundle 也在内），只在 NO_MODEL_EXPERIENCE_SECTION 或 SENTENCE_MODEL_EXPERIENCE 白名单的包才可省略/短写。字段是 H4 的 What the model sees/Token effect/KV Cache effect，不是 H3 Model View/Token Effect/KV-cache Effect。短句允许 None, as… 与 Indirectly, through… 两种。"
+    },
+    {
+      "id": "documentation-package-readme-limitations",
+      "title": "包 README 的限制节与无限制白名单",
+      "sources": [
+        {
+          "path": "scripts/verify-package-readme-limitations.ts",
+          "start": 1,
+          "end": 95,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包的边界、未实现项和延迟工作如果只散落在 issue/对话中，使用者会误以为能力完整。统一限制节让“不能做什么”成为合同的一部分。",
+      "triggers": [
+        "新增包 README",
+        "包能力边界变化",
+        "准备声称“完整/生产可用”"
+      ],
+      "obligations": [
+        "每个非白名单包必须有唯一 H2 ## Known Limitations and Deferred Work。",
+        "该节至少一个顶层 `- ` 列表项。",
+        "不得出现变体标题（limitations、deferred work、non-goals 等近似写法）。",
+        "确实无限制的包加入 NO_LIMITATIONS 并逐包写理由。",
+        "白名单条目必须指向仍存在的扫描包；重命名/删除同改。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 包作者",
+        "reviewers: 文档评审者; 包评审者",
+        "automation: verify-package-readme-limitations 扫描每个 packages/*/*/package.json 对应的 README.md，检查唯一标准 H2、顶层 bullet 和 NO_LIMITATIONS 白名单；由 run-gates.ts:872 在 doc-quick/test:docs 中运行。"
+      ],
+      "steps": [
+        "在目标 .doc-gates/package-readme-limitations.json 声明 packagesRoot、manifest、readme 与 exemptions（包目录→理由），从安装座运行 verify-package-readme-limitations.mjs；使用真实包清单发现，不沿用来源包名或来源白名单。",
+        "列出已知限制、未实现项、延迟工作。",
+        "用读者可见的顶层列表写具体边界，不写“暂无”。",
+        "若确实无限制，经审计后登记豁免并写理由。",
+        "检查没有第二个近似标题。",
+        "跑门禁并按诊断修复。"
+      ],
+      "enforcement": {
+        "mode": "automatic-heading-and-bullet-gate",
+        "implementation": "来源1-95：模块说明1-7，标准H2 16，NO_LIMITATIONS 19-22，近似标题谓词24-32，glob 34-35，白名单存在性/理由检查38-45，逐包README/唯一节/深度与原文标题/可见顶层bullet 47-87，失败退出1 89-95。目标 tools/doc-gates/verify-package-readme-limitations.mjs 以包manifest发现可配置两级包、按AST删除代码块与HTML注释后的可见行判定 bullet、校验唯一原文H2与豁免存在/理由，并保留退出1/2分层；来源doc-quick接入不自动成为目标CI。",
+        "trust": "标题原文/深度、数量、可见顶层bullet与豁免形态是自动的；限制是否真实完整最新、中文节是否存在与内容均由评审承担。",
+        "failure": "缺README/节、变体或多节标题、无读者可见顶层bullet、豁免指向不存在包或理由为空退出1；参数/配置/读取/解析器不可用退出2。修复文档或审计豁免后重跑，不用空豁免或删除边界恢复。",
+        "exceptions": "来源NO_LIMITATIONS只给其审计后确实无延迟工作的包；不能因为“写不出”而豁免。只有该豁免集合可以完全省略限制节；bundle 包同样在扫描集内。目标exemptions必须逐包给理由，不继承来源条目。"
+      },
+      "applicability": [
+        "when: 目标包清单声明的每个包英文readme，包括bundle/实验包；包集合由配置的manifest发现。",
+        "preconditions: Node.js >=22.19.0、可选文档模块的固定Markdown依赖、真实包边界与延迟工作清单。",
+        "inactive: 中文readme、组readme与仓库根readme不在本门禁扫描内，不因配对哈希获得精确标题/bullet检查。目标确无该包形式时记录事实与重新激活条件；零包扫描只给机械结果，不证明完整覆盖。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-package-readme-kinds",
+        "related: documentation-package-readme-summary",
+        "crossDomain: release; product-scope"
+      ],
+      "migration": {
+        "strategy": "把限制写成可验证的“当前不支持/未验证/需额外配置”，不要写愿望。",
+        "implementation": "配置 .doc-gates/package-readme-limitations.json（packagesRoot、manifest、readme、exemptions），从目标根运行 node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-readme-limitations.mjs，或 npm run verify-package-readme-limitations -- --root <目标根>。豁免必须按真实包目录逐项写理由，不继承来源内容；接入目标顶层检查/CI须另证。",
+        "requiredSupport": [
+          "已交付的结构执行器、Markdown可见行依赖与目标包清单/布局配置",
+          "目标包边界与延迟工作的评审程序",
+          "目标真实顶层检查/CI接入证据"
+        ]
+      },
+      "reference": "references/documentation.md#package-readme",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "manifest发现的包有唯一标准限制节、至少一个读者可见顶层bullet，或有审计豁免。",
+            "evidence": "verification/evidence/raw/p1-package-readme-limitations-installed.json",
+            "observed": "默认隐藏安装座的canonical-limitations-admitted与justified-exemption-admitted退出0；4项CLI行为回归通过。限制内容完整性仍待评审。"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "变体/深度错误标题、代码围栏或HTML注释里的bullet、多节、缺节、空理由或指向不存在包的豁免自动拒绝。",
+            "evidence": "verification/evidence/raw/p1-package-readme-limitations-installed.json",
+            "observed": "variant-heading-refused、wrong-depth-refused、fenced-bullet-refused、comment-bullet-refused、duplicate-limitations-refused、missing-section-refused、linked-section-with-exemption-refused、empty-justification-refused、unexempted-missing-section-returns均退出1；missing-installed-parser-unusable退出2。"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补真实限制节/可见bullet、移除过期豁免或恢复解析器后重跑同一顶层入口。",
+            "evidence": "verification/evidence/raw/p1-package-readme-limitations-installed.json",
+            "observed": "section-restored-recovers退出0；同一临时目标，未通过弱化政策恢复。"
+          }
+        ]
+      },
+      "limitations": [
+        "只检查形态，不证明限制完整。",
+        "只扫英文；中文结构与译文质量不受本门禁，配对哈希也不证明语义等价。",
+        "检查不判断 bullet 内容是否真实、是否覆盖主要风险，也不检查限制是否随实现过期。",
+        "豁免是人工审计集合；理由存在不等于“确实无限制”为真。",
+        "13条实测命令消费默认隐藏安装座的物理模块副本与既有本地解析器；不是干净依赖安装、完整Skill安装、独立采用、全仓适用范围或可信CI/平台阻断。"
+      ],
+      "notes": "来源1-95已重新逐行读；标准标题、近似谓词、manifest发现、豁免检查与退出语义已对齐。目标新增可见行判定（代码/注释不计）与可配置两级包发现，属显式目标适配，不声称与源实现逐行等价。实际运行的是安装座执行器；源脚本、完整依赖安装与语义评审未执行；旧静态修复记录保留为历史。"
+    },
+    {
+      "id": "documentation-prose-budgets",
+      "title": "常驻文档词数预算与升降级规则",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 51,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-doc-budgets.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 8,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "常驻上下文文档会持续膨胀，挤占 agent 的注意力和 token。固定上限迫使作者迁移/压缩，而不是不断加规则。",
+      "triggers": [
+        "新增或扩写根/子树 AGENTS.md",
+        "架构/测试/入门文档变长",
+        "预算门禁报超限或清单缺文件"
+      ],
+      "obligations": [
+        "scripts/doc-budgets.manifest.json 对常驻文档设上限；门禁拒绝超限或清单指向的缺失文件。",
+        "超限按“迁移到其他层→压缩→有理由提高上限”处理。",
+        "上限是护栏不是缩减目标；低于目标至少保留 5% 余量。",
+        "高于目标时冻结上限，直到迁移/压缩回到目标以下。",
+        "只有文档仍有空间时才降低上限；提高上限需在 PR 说明理由。",
+        "预算只覆盖清单中的常驻文档；未列入预算的层级仍受评审清单治理，不能视为无审查豁免，也不能据此宣称全仓预算覆盖。",
+        "源写作目标默认子树 AGENTS.md≤600词，packages≤810、docs≤1430、examples≤310具名；根≤2080、architecture≤2400、packages README≤994、cordis-primer≤600、testing≤1300。源目标与 manifest 执行上限分别保留，迁移数值按目标事实评审，不能把这些常量变成所有采用项目的自动阈值。"
+      ],
+      "actors": [
+        "owner: 文档所有者/维护者",
+        "contributors: 改动作者",
+        "reviewers: 评审者",
+        "automation: verify-doc-budgets 逐文件按空白分词并与清单比较。"
+      ],
+      "steps": [
+        "跑门禁看当前词数与上限。",
+        "判断超出的内容属于哪一层，先迁移。",
+        "压缩本层可短的句子，保留限定与例外。",
+        "确实需要空间才改 manifest，并写理由。",
+        "重跑门禁，确认没有缺失文件。"
+      ],
+      "enforcement": {
+        "mode": "automatic-word-count-gate-plus-review",
+        "implementation": "doc-budgets.manifest.json 提供上限；verify-doc-budgets 统计空白分隔词并拒绝超限/缺失。",
+        "trust": "词数与清单存在性自动；预算是否合理、内容是否该迁移靠评审。",
+        "failure": "超限或清单文件缺失时退出 1；门禁不检查未列入清单的文件。",
+        "exceptions": "生成页/归档/模板通常不列入常驻预算；一次性文档不设预算。"
+      },
+      "applicability": [
+        "when: 修改清单内的常驻文档，或新增需要常驻上下文的规则。",
+        "preconditions: 已确定文档是否必须常驻; 已有预算清单",
+        "inapplicable: 普通参考页、生成页、归档页、一次性分析不套用常驻预算。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement",
+        "related: documentation-slop-checklist",
+        "crossDomain: agent-context"
+      ],
+      "migration": {
+        "strategy": "先问“这条规则必须每次都在上下文里吗”，不是先问“能不能压到多少词”。",
+        "implementation": "只对必须常驻上下文的文件设预算并保留 5% 余量；采用方以非空 .doc-gates/doc-budgets.json 声明路径/正整数上限，从目标 cwd 执行 tools/doc-gates/verify-doc-budgets.mjs，跨目录可用 --root/--config。普通模式超限/缺文件/非法上限拒绝1；配置或调用不可用拒绝2；--list 只诊断且退出0，不能用于CI阻断。源仓未列预算的层级仍由评审治理，记录理由、所有者和重新激活条件；超限先迁移/压缩，提高上限附理由。目标与执行上限可不同，5%余量及升限理由不是该计数器的自动保证。",
+        "requiredSupport": [
+          "词数统计",
+          "预算清单",
+          "分层所有者"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "清单内文件均存在且词数不超过上限。",
+            "evidence": "verification/evidence/raw/p1-installed-doc-budget.json",
+            "observedScope": "离线安装的真实消费者在默认 .agents/skills 位置，4词文档/上限4退出0；该原始产物绑定实际执行器字节，不代表后续文档修改后的全包C3或独立审计。"
+          },
+          {
+            "obligation": "超限内容已迁移或压缩，预算变更附理由。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "超限或清单指向缺失文件时门禁退出 1。",
+            "evidence": "verification/evidence/raw/p1-installed-doc-budget.json",
+            "observedScope": "5词/上限4、清单缺文件、上限0分别退出1；空清单退出2；超限时--list仍输出OVER并退出0。"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误删必要内容后从历史/所有者页恢复，并重新评估预算而非继续删。",
+            "evidence": "planned"
+          }
+        ],
+        "localRecoveryObservation": {"evidence":"verification/evidence/raw/p1-installed-doc-budget.json","observed":"去除实验新增的超限词并恢复真实清单后，不提高上限，跨目录显式--root检查退出0。","boundary":"没有演练误删必要决策后从历史恢复，原 recovery 场景仍为 planned；本地成功不证明CI/平台强制或已完成人工预算评审。"}
+      },
+      "limitations": [
+        "源仓目标与执行上限存在数字差异；源文允许超目标时冻结上限，不能仅凭差异推断目标过时。计数门禁只信清单，不检查5%余量与升限理由。",
+        "未列入清单的文档不受词数门禁约束；它们仍由评审治理，但门禁层面可无限增长。",
+        "空白分词对中文/代码的计数不等同语义长度。"
+      ]
+    },
+    {
+      "id": "documentation-slop-checklist",
+      "title": "反 slop 九项审查",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 65,
+          "end": 71,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/SKILL.md",
+          "start": 79,
+          "end": 125,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "重复规则、历史越层、状态标注、手抄目录、推理流水账、段落墙和强调膨胀会让文档看起来充实但不可维护。",
+      "triggers": [
+        "任何文档评审",
+        "页面显得冗长但说不出哪里错",
+        "生成参考/README 出现手抄表"
+      ],
+      "obligations": [
+        "重复规则：搜索特征短语，保留一个家，其余链接。",
+        "历史越层：写当前事实，链接历史所有者。",
+        "删除正文/图中的实现状态标注。",
+        "删除手抄目录、JSDoc、测试/包/状态清单。",
+        "删除推理流水账、测试走查、被拒局部替代方案。",
+        "把兄弟方法旁重复理由收敛到 owning capability。",
+        "拆段落墙；收敛装饰性强调；已实现 Agent Note 去规格语。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: dsh-doc 把清单当审计步骤；没有单独自动检查。"
+      ],
+      "steps": [
+        "通读目标页并标记九类问题。",
+        "对每个可疑重复搜索特征短语。",
+        "判断历史/状态是否应迁到所有者层。",
+        "把可生成事实改为生成或链接。",
+        "重写段落墙和强调。",
+        "复查删除后是否丢了限定/例外。"
+      ],
+      "enforcement": {
+        "mode": "review-checklist",
+        "implementation": "docs/AGENTS.md 的九项清单；dsh-doc 的审计流程；prose-standard 的删改判断。",
+        "trust": "完全依赖评审；没有脚本能识别“slop”。",
+        "failure": "漏检不会自动失败，但会造成重复/漂移；评审应把清单作为必过项。",
+        "exceptions": "postmortem 可有叙事；Agent Note 可有理由；教程可有教学顺序；这些不是 slop。"
+      },
+      "applicability": [
+        "when: 任何人类文档的评审或重写。",
+        "preconditions: 知道每类事实的所有者; 能搜索特征短语",
+        "inapplicable: 生成页的生成区域不要按 slop 手改；归档页冻结。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement; documentation-current-state",
+        "related: documentation-complete-proposition"
+      ],
+      "migration": {
+        "strategy": "把九项变成评审清单，而不是写作口号；每项都给一个可操作搜索/判断。",
+        "implementation": "评审时逐项标记；对重复规则做特征短语搜索；对状态标注查源/manifest。",
+        "requiredSupport": [
+          "评审清单",
+          "可搜索的规则名",
+          "事实所有者表"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "评审记录显示九项均已检查，重复规则已收敛。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "删除内容后仍保留必要限定与链接。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "发现重复规则、状态标注或手抄目录而未处理时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误删后从所有者/历史恢复，并把重复改为链接。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "清单是判断性的，无法证明“没有 slop”。",
+        "评审者可能对“段落墙”阈值不一致。"
+      ]
+    },
+    {
+      "id": "documentation-complete-proposition",
+      "title": "删改时保留完整命题与合同强度",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-prose-standard/SKILL.md",
+          "start": 14,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/review.md",
+          "start": 4,
+          "end": 67,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "压缩文档时最容易删掉否定、条件、例外、所有权和失败方向，导致读者做出错误假设。",
+      "triggers": [
+        "精简/重写段落",
+        "评审要求“更简洁”",
+        "合并重复规则"
+      ],
+      "obligations": [
+        "删除一句话必须能指出它不属于本主题、由别处拥有、重复、过时或不可核验。",
+        "保留否定、条件、例外、范围、时序、所有权、失败方向与量词。",
+        "不得把“可能”写成“会”，不得把“默认”写成“总是”。",
+        "改写合同句时保留前置/后置条件、不变量、兼容承诺。",
+        "合并重复时保留最强约束，不要取交集/弱化。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: 无自动语义检查；类型/示例门禁只覆盖代码形态。"
+      ],
+      "steps": [
+        "逐句问“删掉后读者会失去哪个行为/条件”。",
+        "把限定词和失败方向标出来。",
+        "合并重复句时选信息量最大的一处。",
+        "改完后对照源实现/测试确认合同强度。",
+        "评审做反向检查：是否有人会因新句做出更强假设。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "prose-standard 的覆盖/边界/删改规则；dsh-doc review 的事实核查顺序。",
+        "trust": "完全依赖作者/评审语义判断；没有自动等价证明。",
+        "failure": "弱化合同不会被门禁抓住，可能造成实现/使用错误；评审应把合同强度作为必查项。",
+        "exceptions": "纯装饰句、重复修辞、实现流水账可删；历史叙事可迁到 postmortem/Agent Note。"
+      },
+      "applicability": [
+        "when: 任何精简、重写、合并或翻译合同性文字。",
+        "preconditions: 能访问源实现/测试/原始决策; 知道该句的读者与用途",
+        "inapplicable: 纯生成目录的机械更新不涉及语义删改；归档页不改。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-slop-checklist",
+        "related: documentation-current-state; documentation-i18n-translation-rules",
+        "crossDomain: all-engineering-domains"
+      ],
+      "migration": {
+        "strategy": "先标出合同句（条件/例外/失败/所有权），再删装饰；不要从“字数”开始。",
+        "implementation": "评审用“反例测试”：新句子是否允许一个源规则禁止的行为；翻译用同等强度。",
+        "requiredSupport": [
+          "源实现/测试访问",
+          "合同句清单",
+          "评审反例"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "改写后每个原命题仍可在新文中找到等价表达，强度不变。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "否定/例外/失败方向未被合并掉。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "新文允许源规则禁止的行为、或把默认写成总是时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误删限定后从源/历史恢复，并补一个能区分强弱表述的例子。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "语义等价无法机械证明；只能靠评审/测试。",
+        "评审可能把“更简洁”误当成“更弱”。"
+      ]
+    },
+    {
+      "id": "documentation-current-state",
+      "title": "当前状态写作与历史归属",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 37,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 173,
+          "end": 177,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档一旦写“已实现/未来/曾经”，状态会随代码腐烂。源仓库要求写当前事实，历史放到提交、PR、Agent Note、postmortem 或持久化记录。",
+      "triggers": [
+        "描述功能状态",
+        "重写旧文档",
+        "发现“implemented/future”标注"
+      ],
+      "obligations": [
+        "文档写当前行为，不写变更史或栈位置。",
+        "历史理由放 Agent Note/postmortem/提交/PR；通用历史链接到所有者。",
+        "Session 格式等版本化主题链接权威页；只有版本特定合同/示例/证据保留数字。",
+        "删除“implemented!”“future: …”状态标注；仓库布局/manifest 是状态权威。",
+        "实现状态注解不得进正文或图。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: 无专门自动检查；slop 评审与生成门禁间接覆盖。"
+      ],
+      "steps": [
+        "把句子改成现在时事实。",
+        "把“为什么变成这样”迁到 Agent Note/postmortem。",
+        "把版本数字改为链接权威页，除非是特定合同/示例。",
+        "删除状态标注，指向代码/manifest。",
+        "检查同一事实没有第二个历史叙述。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "docs/AGENTS.md 的当前状态段；根 AGENTS.md 的注释/文档命令；slop 清单的状态标注项。",
+        "trust": "完全依赖评审；没有脚本能识别所有状态叙述。",
+        "failure": "状态腐烂不会被自动拒绝，但会误导读者；评审应要求改现在时/链接。",
+        "exceptions": "postmortem 可写过去；Agent Note 可写决策历史；版本特定合同可保留数字。"
+      },
+      "applicability": [
+        "when: 任何描述行为、能力、版本的文档。",
+        "preconditions: 知道当前代码/清单状态; 知道历史所有者",
+        "inapplicable: 事故叙事、决策记录、发布记录按各自时间语义。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement",
+        "related: documentation-slop-checklist",
+        "crossDomain: release; persistence"
+      ],
+      "migration": {
+        "strategy": "把“何时/为什么变”移出正文，只留“现在是什么”。",
+        "implementation": "评审搜索 implemented/future/soon/legacy；版本数字改为权威链接；状态由 manifest/代码表达。",
+        "requiredSupport": [
+          "当前代码/清单访问",
+          "历史所有者",
+          "版本权威页"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "正文只写当前事实；历史有明确所有者链接。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "状态标注已删除或改为代码/manifest 引用。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "发现“implemented/future”或旧版本数字被当作当前事实时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误删历史后从提交/Agent Note 恢复并改为链接，不在正文重述。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "“当前”本身会过时；需要定期评审。",
+        "版本特定合同允许数字，边界需判断。"
+      ]
+    },
+    {
+      "id": "documentation-fact-check-evidence",
+      "title": "文档评审中的事实核查与证据层级",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-doc/references/review.md",
+          "start": 4,
+          "end": 67,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 65,
+          "end": 71,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档评审若只读文字，会复制旧文档的错误。源仓库要求对照代码、运行操作/示例、查看旧文档与 origin/master 的差异，并删除不可复现的说法。",
+      "triggers": [
+        "评审文档 PR",
+        "重写旧页",
+        "示例/命令看起来过时"
+      ],
+      "obligations": [
+        "先看该变更与 origin/master 的旧文档差异，确认旧文未覆盖的事实。",
+        "运行文档中的操作/示例/代码片段；不能运行就重跑或删除。",
+        "证据优先级：源文件/测试/运行输出/生成器高于相邻文档/记忆。",
+        "删除无法复现的说法，不保留“可能/据说”。",
+        "包 README 还要核对包形状/入口/导出。"
+      ],
+      "actors": [
+        "owner: 文档评审者",
+        "contributors: 改动作者; 领域所有者",
+        "reviewers: 评审者; 维护者",
+        "automation: 没有自动事实核查；测试/生成器/链接门禁提供部分证据。"
+      ],
+      "steps": [
+        "取旧文档与当前变更的 diff。",
+        "逐条核对新增/修改事实的源。",
+        "运行命令/示例，记录实际输出。",
+        "无法复现的事实删除或标为未知。",
+        "把可机械化的事实接入生成器/测试。"
+      ],
+      "enforcement": {
+        "mode": "review-procedure-plus-selected-automation",
+        "implementation": "dsh-doc review 的证据顺序与运行要求；docs/AGENTS 的 slop/事实归属；生成器和测试提供可重复证据。",
+        "trust": "评审负责语义事实；自动门禁只覆盖其检查的形态。",
+        "failure": "不运行示例可能让错误命令进入文档；评审应拒绝无证据的“可行/已支持”声明。",
+        "exceptions": "纯历史叙事可由 Agent Note/postmortem 证据支持；外部服务不可运行时明确标注未验证。"
+      },
+      "applicability": [
+        "when: 任何文档 PR 的评审，尤其是命令、示例、版本、能力声明。",
+        "preconditions: 能访问源/测试/运行环境; 能取得旧文档基线",
+        "inapplicable: 纯格式修正可跳过运行，但仍需确认没有改变事实。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-current-state",
+        "related: documentation-doc-typecheck; documentation-generated-reference-freshness",
+        "crossDomain: testing; release"
+      ],
+      "migration": {
+        "strategy": "把“读起来对”换成“能复现/能指向源”。",
+        "implementation": "评审清单固定：旧文 diff→源→运行→删除不可复现；对重复事实接生成器。",
+        "requiredSupport": [
+          "可运行环境",
+          "旧文档基线",
+          "源/测试访问"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "新增/修改的每个行为声明都有源、测试或运行输出支持。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "示例命令已实际运行并记录输出。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "无法复现、与源冲突或只凭记忆的声明被评审拒绝/删除。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "发现旧文错误后修当前文并链接正确源；不要把错误复制到新页。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "运行环境可能不可用；此时只能标注未验证，不能声称通过。",
+        "评审可能漏掉非命令类事实。"
+      ]
+    },
+    {
+      "id": "documentation-one-physical-line",
+      "title": "每段一个物理行与 Markdown 换行门禁",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 41,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-md-wrap.ts",
+          "start": 1,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/translation-rules.md",
+          "start": 25,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "硬换行的段落让 diff 噪声大、翻译结构难对齐，也让读者在窄屏看到破碎句子。源仓库要求每个散文段落占一个物理行，由编辑器软换行。",
+      "triggers": [
+        "新增/编辑 Markdown 段落",
+        "从编辑器粘贴硬换行文本",
+        "翻译后段落边界变化"
+      ],
+      "obligations": [
+        "散文段落在源文件中占一个物理行。",
+        "标题、列表项、引用不得硬折行。",
+        "代码块、表格、HTML 块、注释、多行 JSX 保持原格式。",
+        "段落之间用空行，不用行内换行制造段落。",
+        "代码注释遵守 linter 列宽，不受本规则约束。"
+      ],
+      "actors": [
+        "owner: 文档作者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: verify-md-wrap 只拒绝 AST paragraph 节点跨物理行，包括列表与引用中的段落；heading 节点不是自动检查对象。"
+      ],
+      "steps": [
+        "把段落合并为一行（编辑器软换行）。",
+        "保留列表项/标题的一行形态。",
+        "检查围栏/表格/HTML 不被误合并。",
+        "运行 verify-md-wrap。",
+        "翻译时只改段落内部，不引入物理换行。"
+      ],
+      "enforcement": {
+        "mode": "automatic-format-gate",
+        "implementation": "verify-md-wrap 遍历 GFM AST，仅在 paragraph 的 end.line > start.line 时报错；遮盖 LF frontmatter 与 ::: 容器分隔行，去重真实文件并排除冻结归档。它不跳过任意生成区域，也不单独校验 heading 节点。",
+        "trust": "段落格式自动检查；节点类别由解析器决定。标题的一行写作要求仍由评审承担，不能从该门禁通过推断满足。",
+        "failure": "普通、列表或引用中的跨行段落退出1，并指出源路径与起始行；合并段落内容后重跑，不能删除内容规避。",
+        "exceptions": "非 paragraph 的围栏、表格、HTML/注释等结构不作为段落检查；冻结归档源不参与。复杂 JSX 是否成为 paragraph 由解析器决定。"
+      },
+      "applicability": [
+        "when: 任何受检 Markdown 的散文编辑。",
+        "preconditions: 编辑器支持软换行; Markdown 解析器与检查器一致",
+        "inapplicable: AST 中的代码块/表格/HTML 等非段落结构与冻结归档源；生成区域不是 blanket 豁免，其 prose paragraph 仍在检查范围。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-page-skeleton",
+        "related: documentation-i18n-pair-contract"
+      ],
+      "migration": {
+        "strategy": "把“软换行”写进编辑器/模板，减少事后修复。",
+        "implementation": "已交付 tools/doc-gates/verify-md-wrap.mjs；准备固定版本解析器后，在目标 .doc-gates/markdown-wrap.json 以 roots/files/archiveRoots 声明完整适用语料，从目标 cwd 运行；支持 --root/--config。与链接程序复用 corpus.mjs，保留归档跳过和真实路径去重；空语料/错误配置/解析器缺失拒绝2。CI仍需实际接入，标题与内容归属须评审，不能用核心verify替代。",
+        "requiredSupport": [
+          "Markdown 解析器",
+          "格式门禁",
+          "编辑器配置"
+        ]
+      },
+      "reference": "references/documentation.md#prose-budgets",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有受检散文段落在源文件中各占一行。",
+            "evidence": "verification/evidence/raw/p1-installed-markdown-wrap.json",
+            "observedScope": "默认隐藏Skill位置的实际离线消费者检查了声明fixture语料；LF frontmatter/容器和多行表格/围栏不误报，单行段落通过，不声称覆盖真实采用项目全仓。"
+          },
+          {
+            "obligation": "标题/列表项未被硬折行。",
+            "evidence": "planned",
+            "boundary": "标题仍需写作评审；实际多行Setext heading通过该程序，不能把它标为标题自动验证。"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "普通段落、列表或引用中的硬换行 paragraph 节点被指出并退出1；标题写作要求不得被误称为本程序的自动保证。",
+            "evidence": "verification/evidence/raw/p1-installed-markdown-wrap.json"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "把硬换行合并为一行后重跑门禁；不要删除内容来规避。",
+            "evidence": "verification/evidence/raw/p1-installed-markdown-wrap.json",
+            "observedScope": "实际合并三类段落且保留词句后退出0；独立复核与可信CI/平台效果仍未完成。"
+          }
+        ]
+      },
+      "limitations": [
+        "检查器依赖 Markdown AST，复杂 HTML/JSX 可能误判。",
+        "既有提取的“自动检查标题/任意结构行”和“全部生成区域不适用”表述强于固定源实现，已按 scripts/verify-md-wrap.ts51-74 更正；原写作义务保留，待独立来源复核。",
+        "长行在编辑器里需要软换行，否则阅读体验差。"
+      ]
+    },
+    {
+      "id": "documentation-comments-export-jsdoc",
+      "title": "注释合同与导出 JSDoc 门禁",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 170,
+          "end": 178,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 43,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-export-jsdoc.ts",
+          "start": 1,
+          "end": 607,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/core/agent/tests/verify-export-jsdoc.spec.ts",
+          "start": 1,
+          "end": 561,
+          "kind": "test"
+        }
+      ],
+      "problem": "公共 API 的合同若只在实现或评审对话里，使用者和 agent 只能猜。源仓库要求每个非 vendor 导出有 JSDoc，函数/公共方法有参数与返回说明。",
+      "triggers": [
+        "新增/修改导出",
+        "公共类方法变化",
+        "评审发现注释是推理流水账"
+      ],
+      "obligations": [
+        "每个非 vendor 包 packages/*/*/src/**/*.ts 的导出必须有 JSDoc；无 import/export 的脚本式 .d.ts 成员隐式导出。",
+        "导出声明需描述性 prose；函数/公共类方法每个参数一个 @param（this 除外，前导下划线归一化），非 void 结果 @returns。",
+        "类需类级 prose、公共方法合同、公共属性/访问器 prose；get/set 对由 getter 覆盖；重载实现免检；构造器不检查。",
+        "内联 callable 注解只接受单一 call signature；混合 call/construct+其它成员失败关闭，要求命名类型。",
+        "例外：类静态协议槽 Config/inject/name/reusable；顶层导出另含 apply；公开基类且无新增参数/具体返回时继承文档；公共覆写受保护基类是新 API。",
+        "import x = 指向 callable/class/namespace 时拒绝；指向纯 prose 目标时别名自身写说明。export = 拒绝；带 moduleSpecifier 的再导出跳过；无 specifier 的 export {…} 解析本地声明；string-literal module/global augmentation 跳过。",
+        "包无 ./src/* 导出时，只检查 package.json exports 入口可达的名称；其余包遍历全部模块级导出。未识别导出形态失败关闭。",
+        "跑 pnpm run verify-export-jsdoc 直到无违规;它只查标签/描述存在，不判断语义真假。",
+        "（测试证据补充，2026-10-24）verify-export-jsdoc.spec.ts:334-561 明确覆盖：非标识符 default/括号与 satisfies 包裹初始化器按函数合同；ambient declare namespace 成员逐检；export import 别名自身说明、指向 callable/class/namespace 拒绝；export =、混合 callable literal、hybrid call/construct 失败关闭；继承覆盖时 binding pattern/下划线重命名参数、protected-only 基类、基类 void→具体返回（含 checker 推导）与基类已承担 @returns 的豁免。"
+      ],
+      "actors": [
+        "owner: 模块所有者",
+        "contributors: API 作者",
+        "reviewers: 代码评审者",
+        "automation: verify-export-jsdoc 用 TypeScript AST/检查器扫描导出并检查标签。"
+      ],
+      "steps": [
+        "写导出声明的一句话合同。",
+        "补每个参数的用途/约束和返回语义。",
+        "公共类方法补合同；私有/受保护成员不强行补。",
+        "重载只在声明合同处写一次。",
+        "跑 verify-export-jsdoc 并修所有违规。"
+      ],
+      "enforcement": {
+        "mode": "automatic-ast-gate-plus-review",
+        "implementation": "verify-export-jsdoc 遍历非 vendor 包源码，识别导出/公共成员，检查描述、@param、@returns；未知形态失败关闭。",
+        "trust": "标签存在和基本形态自动；注释语义是否准确靠评审。",
+        "failure": "缺描述/参数/返回时列出文件与导出并退出 1；未知形态失败而不是跳过。",
+        "exceptions": "框架槽 Config/inject/name/reusable/apply、构造器、继承合同、增强、源码再导出；文档在声明处。"
+      },
+      "applicability": [
+        "when: 任何公共导出或公共类成员变化。",
+        "preconditions: 有 TypeScript 类型检查器; 知道哪些是公共 API",
+        "inapplicable: 私有/受保护成员；纯内部实现；vendor 代码。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-complete-proposition",
+        "related: documentation-type-equiv",
+        "crossDomain: api-design; type-safety"
+      ],
+      "migration": {
+        "strategy": "先定义公共面，再要求文档；不要给所有成员机械补标签。",
+        "implementation": "AST 门禁检查导出；评审检查合同是否说明失败/时序/所有权；重载/继承只在声明处写。",
+        "requiredSupport": [
+          "TypeScript AST/检查器",
+          "公共 API 清单",
+          "JSDoc 规范"
+        ]
+      },
+      "reference": "references/documentation.md#comments-jsdoc",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有非 vendor 导出有描述；函数/公共方法有参数和非 void 返回说明。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "协议槽/继承成员在声明合同处有文档。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 JSDoc、缺 @param/@returns 或未知导出形态时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补声明处文档或调整导出面后重跑；不要用空 @param 占位。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "verify-export-jsdoc.ts:1-43 合同与协议槽常量。",
+          "checkClass 188-260：类/属性/访问器/继承/重载/协议静态槽。",
+          "checkDecl 260-430：函数/变量/命名空间/import alias/未知形态。",
+          "checkScope 380-540：导出列表、default、export=、增强跳过。",
+          "restrictedPublicNames 540-607：按 package.json exports 裁剪公共面。",
+          "verify-export-jsdoc.spec.ts:1-561 全文已读；334-561 为 fail-closed/heritage 测试，覆盖 default/declare namespace/export import/export=/callable literal/hybrid signature 与继承返回/参数。",
+          "未执行门禁；只做源码阅读。"
+        ]
+      },
+      "limitations": [
+        "门禁不验证语义真假；可能奖励“有标签但无信息”。",
+        "继承/重载的归属规则需要评审理解。"
+      ],
+      "notes": "源码全文 1-607 已读。header 与常量 1-43 给出合同；checkClass/checkDecl/checkScope/restrictedPublicNames 给出实现。例外不是'有 JSDoc 即可'，继承/协议槽/重载/别名各有精确条件；constructors 不检查是刻意豁免。[2026-10-24 复核] packages/core/agent/tests/verify-export-jsdoc.spec.ts 全文 1-561 已读；334-561 的 fail-closed/heritage 用例给出上列拒绝与继承边界，1-333 覆盖函数/类/重载/别名/作用域基础。测试未执行。"
+    },
+    {
+      "id": "documentation-markdown-links",
+      "title": "Markdown 相对链接、锚点与网站路由禁用",
+      "sources": [
+        {
+          "path": "scripts/verify-md-links.ts",
+          "start": 1,
+          "end": 254,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 73,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
+          "start": 31,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-md-links.spec.ts",
+          "start": 1,
+          "end": 29,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-md-links.spec.ts",
+          "start": 64,
+          "end": 140,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-md-links.ts",
+          "start": 204,
+          "end": 254,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "文档链接在 GitHub、编辑器和网站三处解析规则不同。提交号/绝对站内路由/失效锚点会让读者跳到 404，且网站投影无法修复源错误。",
+      "triggers": [
+        "新增/修改链接",
+        "标题改名",
+        "移动文件/目录",
+        "网站发布新页"
+      ],
+      "obligations": [
+        "当前文件用相对 Markdown 链接；历史引用用 tag 或 PR 号。",
+        "本地目标必须存在：剥离 #fragment 与 ?query 后探测；目录本身存在即可通过（不强制 README）。",
+        "外部 URL、协议相对 //host、根绝对 /path 被跳过；纯页内 #frag 对源文件本身检查。",
+        "片段只对 .md 目标检查；file.ts#L10 等非 Markdown 片段交给渲染器，不判。",
+        "锚点按 GitHub slug（小写、保留字母数字下划线空格连字符、空格转连字符）或显式 <a id> 校验；fenced/inline code 与 HTML 注释中的 id 不算。重复标题按占用集加 -1/-2，匹配大小写敏感。",
+        "Markdown 中不写 /docs/... 站内绝对路由；网站投影负责转换。",
+        "标题改名时同改入站引用；没有自动别名放行表。",
+        "链接门禁测试覆盖源发现：`packages/README.md` 与 `README.zh.md` 两个顶层索引都受检；`packages/AGENTS.md`、`packages/core/README.md`、`packages/core/probe/README.md` 受检；`.agents/notes/archived/` 冻结 Note 不作为源。",
+        "锚点测试覆盖：rendered heading text 的 GitHub slug、下划线保留、heading 内 link 按 rendered text slug、重复标题按 occupied-set 递增后缀、fenced/inline code 与 HTML 注释中的 `<a id>` 无效。",
+        "fragment 测试覆盖：同文件/跨文件有效 fragment、非 Markdown 目标 fragment 跳过、外部 URL 跳过；缺 anchor、大小写变体、跨文件 stale anchor 拒绝；目标文件缺失优先报 target 而非 anchor。",
+        "CLI 成功时打印检查文件数并 exit 0；失败时逐条打印 file:line、URL 和 reason（target does not exist / no such anchor in target）并 exit 1；checker 不重写文件。"
+      ],
+      "actors": [
+        "owner: 文档作者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: verify-md-links 对受检源文件的链接/图片/定义做本地存在性检查，并对 .md 目标做 GitHub slug/显式 id 锚点检查；归档笔记不作为源扫描，但指向它们的链接仍检查。"
+      ],
+      "steps": [
+        "用相对路径写链接。",
+        "剥离 query/fragment 确认目标存在。",
+        "改标题后搜索入站锚点。",
+        "源文档中不用网站路由。",
+        "跑 verify-md-links，按 target/anchor 原因修目标或锚点。"
+      ],
+      "enforcement": {
+        "mode": "automatic-local-link-and-anchor-gate",
+        "implementation": [
+          "verify-md-links 解析 Markdown AST 的 link/image/definition；isExternal 排除 scheme、//、/；existsSync 探测目标；documentAnchors 用 githubSlug+显式 <a id> 建集合，重复标题加后缀。",
+          "verify-md-links.spec.ts 用临时 fixture 树验证 source discovery、documentAnchors 与 findViolations；verify-md-links.ts 的 CLI tail 做成功计数/失败逐条 stderr 与退出码。"
+        ],
+        "trust": "只证明本地目标存在与 Markdown 锚点存在；不检查远端 URL、目录是否含 README、非 Markdown 片段、网站部署。",
+        "failure": "target 或 anchor 不存在时退出 1；没有自动别名建议。",
+        "exceptions": "外部/协议相对/根绝对目标跳过；归档笔记不从源扫描；非 Markdown 目标片段不判；生成区域由生成器负责。"
+      },
+      "applicability": [
+        "when: 任何 Markdown 链接/标题/文件移动；网站发布前。",
+        "preconditions: 链接解析器与 GitHub slug 规则一致; 知道哪些目录是生成物",
+        "inapplicable: 纯代码注释中的路径由 verify-doc-refs 管；网站生成物不手改。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-page-skeleton",
+        "related: documentation-source-doc-refs; documentation-website-link-projection",
+        "crossDomain: website"
+      ],
+      "migration": {
+        "strategy": "源文件只写相对链接，网站转换集中在投影器；标题改名视为 API 变更。",
+        "implementation": "已交付 tools/doc-gates/verify-md-links.mjs：从目标 cwd 读取 .doc-gates/markdown-links.json 的 roots/files/archiveRoots，以固定 GFM 解析器校验相对目标与 .md 锚点。先准备 tools/doc-gates/package-lock.json 的依赖；安装后同一路径可执行。标题改名须修入站；源码注释/换行/Mermaid/预算及真实 CI/平台仍为独立义务。",
+        "requiredSupport": [
+          "tools/doc-gates/package-lock.json 固定的 Markdown AST 依赖",
+          "真实目标全部适用语料的 roots/files 声明，归档位置改变时同步 archiveRoots",
+          "真实 CI 调用与受信门禁代码、平台 required protection；本地退出码不能证明已接入",
+          "源网站路由禁令及目标是否完整的人工评审，不依赖自动别名放行"
+        ]
+      },
+      "reference": "references/documentation.md#markdown-gates",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有本地相对目标存在，Markdown 片段可在目标锚点集合中找到。",
+            "evidence": "verification/evidence/raw/p1-installed-doc-note-chain-r3.json：离线 npm 安装后的默认 Skill seat 与真实 Note 语料组合检查退出0；仅证明该局部目标，不证明所有采用项目或远端。"
+          },
+          {
+            "obligation": "源文档没有站内绝对路由（评审规则，门禁跳过）。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺目标或 Markdown 锚点失效时门禁拒绝。",
+            "evidence": "verification/evidence/raw/p1-installed-doc-note-chain-r3.json：活跃 Note 指向归档的缺失锚点实际退出1；research/doc-gates.test.mjs 另覆盖缺目标、大小写、伪 HTML anchor 和编码路径等消费者行为。"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "改标题/移动文件后更新所有入站引用；需要保留旧锚点时手写 <a id>，而不是依赖自动别名。",
+            "evidence": "verification/evidence/raw/p1-installed-doc-note-chain-r3.json：修复同一入站锚点、同步两侧并重录后，分类/格式/配对/链接/归档五条实际命令恢复退出0。"
+          }
+        ]
+      },
+      "limitations": "仅本地链接/片段能力已实现并在一个隔离离线安装消费者中组合实测；根绝对网站路由仍由人工评审。配置语料必须由目标事实与评审确定，不自动证明完整性。未实测远端 URL 存活、站点发布/重定向、跨平台 symlink 去重或真实 CI/平台 required protection，独立来源等价关闭仍缺。"
+    },
+    {
+      "id": "documentation-source-doc-refs",
+      "title": "源码注释中的文档路径引用检查",
+      "sources": [
+        {
+          "path": "scripts/verify-doc-refs.ts",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "代码注释经常写 docs/... 路径；相对路径或过期路径会把读者带到错误位置。源仓库要求根相对、带扩展名、目标存在。",
+      "triggers": [
+        "代码注释引用文档",
+        "移动文档",
+        "新增源码说明"
+      ],
+      "obligations": [
+        "源码注释/字符串中的文档引用必须是仓库根开始的 docs/... 路径。",
+        "必须带扩展名；不能 ./ 或 ../。",
+        "扫描排除 vendor、lib、.d.ts；符号链接去重。",
+        "目标必须存在。",
+        "每个引用都要能被 verify-doc-refs 解析。"
+      ],
+      "actors": [
+        "owner: 代码作者",
+        "contributors: 模块作者",
+        "reviewers: 代码评审者",
+        "automation: verify-doc-refs 扫描源码注释/字符串并解析路径。"
+      ],
+      "steps": [
+        "写 docs/<path>.<ext> 根相对路径。",
+        "移动文档时搜索源码引用。",
+        "避免在注释里写相对路径。",
+        "跑 verify-doc-refs。"
+      ],
+      "enforcement": {
+        "mode": "automatic-source-reference-gate",
+        "implementation": "verify-doc-refs 用正则匹配代码中的 docs 路径，规范化后检查存在性；排除 vendor/lib/.d.ts。",
+        "trust": "路径存在性自动；引用是否语义正确靠评审。",
+        "failure": "相对路径、缺扩展名或目标不存在时失败。",
+        "exceptions": "非 docs 路径、生成代码、vendor/lib 不检查；外部 URL 不在此门禁。"
+      },
+      "applicability": [
+        "when: 源码注释/字符串提到文档路径，或移动文档。",
+        "preconditions: 源码扫描范围明确; 文档路径根相对",
+        "inapplicable: 纯 Markdown 链接由 verify-md-links 管；生成代码/vendor 不检查。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-markdown-links",
+        "related: documentation-repository-reference-policy",
+        "crossDomain: code-comments"
+      ],
+      "migration": {
+        "strategy": "把源码引用当 API 路径：根相对、带扩展名、可解析。",
+        "implementation": "CI 扫源码；移动文档时全仓搜索旧路径；不要写相对路径。",
+        "requiredSupport": [
+          "源码扫描",
+          "文档路径规范"
+        ]
+      },
+      "reference": "references/documentation.md#markdown-gates",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有源码 docs 引用是根相对、带扩展名且目标存在。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "移动文档后没有旧路径残留。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "相对路径、缺扩展名或目标不存在时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "把引用改为根相对并修目标；不要创建空文件骗过检查。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "只扫注释中的 docs 路径，不检查其他字符串语义。",
+        "符号链接/生成代码可能造成漏检。"
+      ]
+    },
+    {
+      "id": "documentation-repository-reference-policy",
+      "title": "提交号、组织 URL 与具体术语的仓库引用政策",
+      "sources": [
+        {
+          "path": "scripts/verify-repository-references.ts",
+          "start": 1,
+          "end": 155,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-public-repository-links.ts",
+          "start": 1,
+          "end": 99,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-concrete-terms.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "维护文档中的提交号会腐烂，私有/旧组织 URL 会泄露或误导，笼统术语会掩盖具体事实。源仓库用三个门禁分别限制提交号、公开链接和禁用词。",
+      "triggers": [
+        "写历史引用",
+        "链接 GitHub 仓库/发布",
+        "使用“provenance”等笼统词",
+        "移动/重命名仓库"
+      ],
+      "obligations": [
+        "当前文件用相对链接；历史引用用 tag 或 PR 号。",
+        "维护文件不得指向实际 Git 对象的提交号（7-40 位且对象存在），也不得出现 github.com/deepseek-harness 组织 URL（kit 仓库例外）。",
+        "不得出现旧仓库 deepseek-ai/deepseek-harness-sdk；编码转义先解码再判断。",
+        "维护文件不使用 provenance；发布快照/历史格式 schema/i18n 等精确例外。",
+        "例外必须精确、有理由、范围最小。"
+      ],
+      "actors": [
+        "owner: 文档作者",
+        "contributors: 改动作者",
+        "reviewers: 评审者; 安全/发布评审",
+        "automation: 三个脚本分别扫描 Git 对象、公开仓库 URL、禁用词。"
+      ],
+      "steps": [
+        "历史引用改为 tag/PR 号。",
+        "链接用允许的仓库简写/release 形式。",
+        "搜索编码转义形式。",
+        "把 provenance 改为具体来源/字段/机制。",
+        "跑三个门禁。"
+      ],
+      "enforcement": {
+        "mode": "automatic-policy-gates",
+        "implementation": "verify-repository-references 用 git cat-file 解析十六进制前缀并拒绝真实提交；verify-public-repository-links 解码后匹配禁用组织；verify-concrete-terms 匹配禁用词并排除历史/发布/归档。",
+        "trust": "已存在 Git 对象的提交号自动检测；浅克隆缺失对象可能漏报；远端 URL 存活不检查。",
+        "failure": "发现提交号/禁用 URL/禁用词时退出 1 并指出文件行。",
+        "exceptions": "verify-repository-references 只排除 vendor/ 与归档，并允许一个精确的 kit 仓库 URL；verify-public-repository-links 只排除归档来源，禁止旧仓库 deepseek-ai/deepseek-harness-sdk；verify-concrete-terms 排除 vendor/、归档、发布快照与历史格式 schema/i18n 及其生成区域。"
+      },
+      "applicability": [
+        "when: 任何维护文档/注释中的历史引用、GitHub 链接、来源术语。",
+        "preconditions: 有 Git 对象库（提交号检测）; 维护允许 URL/术语例外清单",
+        "inapplicable: 生成历史记录/归档/发布说明可按精确例外；外部非仓库 URL 不受组织规则。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-markdown-links",
+        "related: documentation-current-state",
+        "crossDomain: release; security"
+      ],
+      "migration": {
+        "strategy": "用标签/PR 代替提交号；用允许的仓库简写；用具体机制名代替笼统词。",
+        "implementation": "目标 tools/doc-gates/verify-repository-references.mjs 从安装座或 npm run verify-repository-references 调用。声明真实 roots/files、gitRoot 和各规则；可选 gitDiscovery 完整声明逐提交/术语/URL的 tracked 或 tracked-and-untracked，URL另声明skipNul。使用真实Git索引与非忽略新文件发现，再与字面语料求交；ruleExclusions支持前缀/文件/精确pathPatterns，urlLiteral只豁免某个禁用URL；generatedRegions验证精确路径和唯一完整marker family后仅豁免内部指定规则。requiredAreas条目尾部有/则要求至少一个目录下的Git跟踪成员，否则要求精确Git跟踪路径；缺项退出2，补回恢复，目录替代精确文件不成立。检查的是完整Git索引，不是存在/可读性或语料覆盖证明；重复、glob、..、空串及根目录拒绝。省略或空数组不启用该守卫，不能声称取得来源同等保证。历史模式在参考提供源式配置，不自行推断目标政策。配置/Git前提错误退出2，违规退出1，普通通过0，list不能阻断。",
+        "requiredSupport": [
+          "Git 历史/对象库",
+          "允许 URL 规则",
+          "禁用词表与例外"
+        ]
+      },
+      "reference": "references/documentation.md#reference-policy",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "维护文件无真实提交号、无禁用组织 URL、无禁用词。",
+            "evidence": "verification/evidence/raw/repository-references-installed-consumer.json"
+          },
+          {
+            "obligation": "历史引用使用 tag/PR 且可追溯。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "发现真实提交号、禁用组织/旧仓库 URL 或 provenance 时门禁拒绝。",
+            "evidence": "verification/evidence/raw/repository-references-installed-consumer.json"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "改为 tag/PR/允许 URL/具体术语后重跑；不要用编码绕过。",
+            "evidence": "verification/evidence/raw/repository-references-installed-consumer.json"
+          }
+        ]
+      },
+      "limitations": [
+        "浅克隆/缺失对象会漏报提交号。",
+        "禁用词表是局部的，可能误伤合理用法；需要例外。",
+        "不检查远端链接是否 404。",
+        "Git发现、精确历史正则及requiredAreas守卫已实现，目标范围仍须审核声明。28项回归与10条当前安装座npm命令分别见 verification/evidence/raw/repository-references-required-areas-exact-regressions.json、repository-references-required-areas-installed-current.json；前版27项/8命令与测试夹具错误仍保留为历史，不冒充当前字节。精确文件/目录替代的真实错误接受已修，保存failing-before；本批守卫待独立复核，之前74探针结论不覆盖新字节。省略gitDiscovery保留显式递归语料及URL默认跳NUL，不等于源三个脚本共同边界。",
+        "目标支持显式关闭 commitIdentifiers 或用空数组关闭 URL/词项规则；这不是对应保证已成立。--list 退出0仅为诊断，CI必须运行普通检查。",
+        "初始显式语料版本独立correct结论保留；范围扩展原incorrect与修复复核correct分别为 _working/audit/repository-references-scope-runtime-independent.json、_working/audit/repository-references-scope-repaired-independent.json（80独立探针含8安装座npm调用）。本批Git发现/逐URL NUL/精确历史配置的独立复核为correct：_working/audit/reference-discovery-runtime-independent.json，74条真实安装座npm探针全部符合预期且无偏差（refusal/recovery/noUnintendedPass均真），17个冻结文件前后hash一致；并据此在参考补充策略文件自身须排除的指引。证据：verification/evidence/raw/repository-references-git-discovery-regressions.json（25项回归）、repository-references-git-discovery-installed.json（18条，绑定逐URL豁免改动前字节）、repository-references-url-specific-installed.json（2条当前字节）。完整采用、远端强制与C1–C6未闭合。"
+      ]
+    },
+    {
+      "id": "documentation-mermaid-syntax",
+      "title": "Mermaid 围栏语法与复杂度门禁",
+      "sources": [
+        {
+          "path": "scripts/verify-mermaid.ts",
+          "start": 1,
+          "end": 106,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Mermaid 图容易因语法错误或过大而无法渲染；文档评审通常不会逐图渲染，错误会到网站上才暴露。",
+      "triggers": [
+        "新增/修改 Mermaid 图",
+        "文档构建失败",
+        "图过于复杂"
+      ],
+      "obligations": [
+        "每个 Mermaid 围栏都被解析/校验。",
+        "单图边数不超过源实现的上限（64）。",
+        "不使用未定义节点/非法语法。",
+        "图仍由人审语义；门禁只保证可解析。",
+        "构建/投影阶段也要处理图，不能只在源 Markdown 中检查。"
+      ],
+      "actors": [
+        "owner: 文档作者",
+        "contributors: 改动作者",
+        "reviewers: 文档评审者",
+        "automation: verify-mermaid 解析所有 Mermaid 围栏并校验图结构。"
+      ],
+      "steps": [
+        "写合法 Mermaid。",
+        "控制节点/边数量。",
+        "跑 verify-mermaid。",
+        "在网站构建中确认渲染。"
+      ],
+      "enforcement": {
+        "mode": "automatic-syntax-gate",
+        "implementation": "verify-mermaid 包装 Markdown AST，提取 mermaid 围栏，用解析器/校验器检查语法和 maxEdges。",
+        "trust": "语法/边数自动；布局可读性与语义正确靠人审/实际渲染。",
+        "failure": "解析失败或超边数时退出 1。",
+        "exceptions": "非 Mermaid 代码块不检查；复杂图可拆分而不是提高上限。"
+      },
+      "applicability": [
+        "when: 新增/修改 Mermaid 图。",
+        "preconditions: 文档使用 Mermaid 围栏; 解析器支持所用语法",
+        "inapplicable: 纯文本/其他图表；生成图由生成器负责。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-markdown-links",
+        "related: documentation-website-link-projection",
+        "crossDomain: website"
+      ],
+      "migration": {
+        "strategy": "把图当代码：可解析、有上限、构建时渲染验证。",
+        "implementation": "CI 跑语法门禁；复杂图拆成多图；网站端到端测试覆盖渲染。",
+        "requiredSupport": [
+          "Mermaid 解析器",
+          "边数上限",
+          "网站渲染测试"
+        ]
+      },
+      "reference": "references/documentation.md#markdown-gates",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有 Mermaid 围栏可解析，边数在限内。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "网站构建能渲染。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "语法错误或超边数时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修语法/拆图后重跑；不要删除图来规避。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "只验证语法，不验证视觉/语义。",
+        "解析器版本与网站渲染器可能不一致。"
+      ]
+    },
+    {
+      "id": "documentation-doc-typecheck",
+      "title": "文档 TypeScript 围栏编译检查",
+      "sources": [
+        {
+          "path": "scripts/doc-typecheck.ts",
+          "start": 1,
+          "end": 252,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/doc-typecheck-paths.ts",
+          "start": 1,
+          "end": 24,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/paired-markdown-derivatives.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "文档示例会腐烂：类型改名、导入路径变化、API 删除后，复制粘贴的代码块仍看起来合理。源仓库把受检 Markdown 的 ts 围栏投影成虚拟文件并编译。",
+      "triggers": [
+        "新增/修改 ts 代码块",
+        "公开 API/类型改名",
+        "教程示例过时"
+      ],
+      "obligations": [
+        "扫描 README.md、.agents/notes/**/*.md、docs/**/*.md、packages/*/*.md、packages/*/*/*.md；排除归档 Agent Note。",
+        "只编译 info 恰好为 `ts` 的围栏；`ts ignore-check` 计入 opt-out，`ts type-equiv`/`public-api`/`cordis-catalog`/`persistence-catalog`/`config-catalog` 跳过并由各自门禁负责。",
+        "仅当同一文档的完整受识别围栏序列在kind和代码字节上与英文兄弟相同，.zh.md才复用英文编译；部分、重排或变化序列保持primary。",
+        "用真实 TypeScript 编译（协调构建声明或临时 tsconfig 项目引用）；诊断路径映射回 Markdown 文件与围栏行。",
+        "没有待编译块时退出 0；有编译错误时退出 1。",
+        "存在check块时，opt-out比例=ignore/(check+ignore)，分母≥4且比例>50%失败；没有check块会先退出0，不能宣称全ignore也触发比例门禁。",
+        "`ignore-check` 本身只计数；紧邻理由/标准测试是评审/其他门禁职责，不能声称本脚本强制。"
+      ],
+      "actors": [
+        "owner: 文档作者",
+        "contributors: 示例作者",
+        "reviewers: 代码评审者",
+        "automation: doc-typecheck 投影围栏为虚拟 TS 文件并用仓库编译器选项检查。"
+      ],
+      "steps": [
+        "把示例写成可编译的 ts 围栏。",
+        "导入使用真实包路径/类型。",
+        "避免省略关键声明导致不可编译。",
+        "需要忽略时写理由。",
+        "跑 doc-typecheck 并修复所有诊断。"
+      ],
+      "enforcement": {
+        "mode": "automatic-compilation-gate",
+        "implementation": "源doc-typecheck提供真实编译和诊断定位；目标tools/doc-gates/doc-typecheck.mjs通过目标自有编译器、显式语料/tsconfig、项目引用或既有声明执行同一分类、完整序列去重和比例规则。目标对文档强制noCheck:false；project配置保留所选tsconfig目录并用明确files选择提取块；declarations清理emitDeclarationOnly依赖选项。程序存在或本地通过不证明required CI。",
+        "trust": "编译通过自动；示例行为/输出不运行。",
+        "failure": "类型/语法/导入编译错误及存在check块时超限的opt-out比例退出1；目标缺编译器、解析器、坏配置或不可映射声明别名退出2。无受编译块按源规则退出0，声明为空语料则由目标语料配置拒绝。",
+        "exceptions": "type-equiv/public-api/catalog fences 由各自门禁负责；字节相同的 .zh.md 副本复用英文编译结果，内容不同则独立编译；不在扫描 glob 内的路径不进入语料。"
+      },
+      "applicability": [
+        "when: 任何受检 Markdown 的 TypeScript 示例。",
+        "preconditions: 仓库 TypeScript 配置可加载; 示例依赖可解析",
+        "不编译：非普通ts围栏、由独立owner负责的type-equiv/public-api/catalog、归档页；中文仅在完整受识别序列与英文相同时复用，不能一概豁免。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-complete-proposition",
+        "related: documentation-type-equiv",
+        "crossDomain: type-safety; testing"
+      ],
+      "migration": {
+        "strategy": "示例优先写成真实可编译代码；不能编译的片段明确标注并限制。",
+        "implementation": "采用tools/doc-gates/doc-typecheck.mjs，声明目标语料/tsconfig并接入真实顶层检查；project模式真实构建引用并编译文档，临时配置与所选配置同目录以保留configDir语义；declarations模式只消费已构建的src→lib/types布局。两模式都强制检查文档类型，不继承noCheck跳过检查。其它布局走project；声明新鲜度、type-equiv和生成器门禁由各owner负责。",
+        "requiredSupport": [
+          "目标项目自身已安装的TypeScript编译器（已实际验证6.0.3，其他版本未认证）",
+          "固定Markdown解析器、显式语料配置、目标真实tsconfig与依赖解析",
+          "project模式对目标根、所选配置目录和真实引用构建产物的写权限；declarations模式已有正确且新鲜的协调构建"
+        ]
+      },
+      "reference": "references/documentation.md#code-equivalence",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有受检 ts 围栏编译通过，诊断能映射回 Markdown。",
+            "evidence": "verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/0; verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/3; verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/6（修复后产物）；verification/evidence/raw/p2-doc-typecheck-consumer.json#/commands/0和3为原始版本观察"
+          },
+          {
+            "obligation": "忽略项只计数，比例在限制内；具体理由由评审核对。",
+            "evidence": "verification/evidence/raw/p2-doc-typecheck-consumer.json#/commands/8（只证明本地计数/比例，忽略理由仍须评审）"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "类型改名/导入失效/语法错误导致编译失败时门禁拒绝。",
+            "evidence": "verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/1; verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/4（修复后产物）；verification/evidence/raw/p2-doc-typecheck-consumer.json#/commands/1、5和7为原始版本漂移/比例拒绝"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修复示例或更新导入；不要用 ignore 掩盖大面积腐烂。",
+            "evidence": "verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/2; verification/evidence/raw/p2-doc-typecheck-config-consumer.json#/commands/5（修复后产物）；verification/evidence/raw/p2-doc-typecheck-consumer.json#/commands/2、6和8为原始版本漂移/比例恢复"
+          }
+        ],
+        "evidence": [
+          "doc-typecheck.ts:1-252 全文件；include/exclude、fence kind、虚拟编译、诊断映射、比例和无块退出。",
+          "doc-typecheck-paths.ts:1-24 source alias→declaration 映射；无法映射时抛错。",
+          "初始12条命令与原版本模块绑定见verification/evidence/raw/p2-doc-typecheck-consumer.json；修复后7条真实目标入口命令、4模块hash及完整目标编译器/解析器分发文件绑定见verification/evidence/raw/p2-doc-typecheck-config-consumer.json。前者不是当前模块认证；两者均不是源仓脚本执行、示例行为、独立采用或CI/平台强制。"
+        ]
+      },
+      "limitations": [
+        "不运行示例，只编译；不能验证输出/行为。",
+        "源在无check块时提前0（包括全部ignore）；目标明确空语料拒绝2，但有语料无check时保留源边界，忽略理由由评审负责。",
+        "ignore-check 理由不在本脚本校验；它只统计比例。",
+        "只有完整受识别序列相同才复用中文；declarations模式不证明构建新鲜度，project模式会写所选配置目录、自有临时目录及真实引用项目的构建产物；临时配置/片段在finally中清理。"
+      ]
+    },
+    {
+      "id": "documentation-type-equiv",
+      "title": "逐字类型粘贴与公共类形状的等价清单",
+      "sources": [
+        {
+          "path": "scripts/verify-type-equiv.ts",
+          "start": 1,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-type-equiv.ts",
+          "start": 214,
+          "end": 391,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/type-equiv.manifest.json",
+          "start": 1,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 43,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 74,
+          "end": 76,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档中的类型声明若靠手抄，会与源声明悄悄分叉。源仓库用 ```ts type-equiv 保存声明+原 JSDoc，用 ```ts public-api 保存去函数体公共类，并用清单保证一对一。",
+      "triggers": [
+        "文档粘贴源类型",
+        "公共类形状变化",
+        "源码类型改名/改字段"
+      ],
+      "obligations": [
+        "```ts type-equiv 保存原始类型声明及其 JSDoc。",
+        "```ts public-api 保存 body-stripped 公共类声明。",
+        "两者必须登记在 scripts/type-equiv.manifest.json，清单与围栏一对一。",
+        "未登记围栏、孤儿清单项、结构/JSDoc 差异、投影差异都失败。",
+        "源码变化时先改源，再跑等价检查定位所有粘贴。",
+        "不要用 type-equiv 绕过普通示例编译。"
+      ],
+      "actors": [
+        "owner: 类型所有者",
+        "contributors: 文档作者; API 作者",
+        "reviewers: 代码评审者",
+        "automation: verify-type-equiv 解析围栏、清单、源声明并比较结构/JSDoc/投影。"
+      ],
+      "steps": [
+        "从源复制声明与 JSDoc 到 type-equiv 围栏。",
+        "把公共类去函数体放 public-api 围栏。",
+        "在清单登记路径/符号。",
+        "改源后重跑检查。",
+        "修所有差异，不手改清单的期望结构。"
+      ],
+      "enforcement": {
+        "mode": "automatic-manifest-and-equivalence-gate",
+        "implementation": "源verify-type-equiv扫描受检Markdown、清单和声明/JSDoc/公共投影。目标tools/doc-gates/verify-type-equiv.mjs通过显式语料、目标自有TypeScript、目标清单执行双射、完整中文序列复用、公共类投影和显式模块接口合并；真实token比对保留字面量内容，合并继承使用一个有效extends列表，属于目标适配而非固定来源已有实现。",
+        "trust": "登记范围内的等价自动；未登记的新类型不会被要求文档化。",
+        "failure": "未登记、重复、孤儿、缺源符号、未闭合围栏、结构/JSDoc或投影差异退出1；目标坏配置/清单、空语料、缺编译器/解析器退出2。非空语料无等价块且清单为空保留退出0边界。",
+        "exceptions": "类型等价只覆盖 manifest 中的声明；普通 ts 示例不走此检查。"
+      },
+      "applicability": [
+        "when: 文档逐字展示源类型/公共类，或源类型变化。",
+        "preconditions: 有源声明与 JSDoc; 维护 type-equiv.manifest.json",
+        "inapplicable: 教程式示例、伪代码、非 TS 类型、未登记的新类型。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-doc-typecheck",
+        "related: documentation-subsystem-page-ownership",
+        "crossDomain: api-design; type-safety"
+      ],
+      "migration": {
+        "strategy": "只对“必须逐字一致”的声明用 type-equiv；其他示例用普通 ts。",
+        "implementation": "采用tools/doc-gates/verify-type-equiv.mjs；目标.doc-gates/type-equiv.json声明实际roots/files/archiveRoots和manifest；清单绑定doc/symbol/source/projection及可选显式augmentations。接入目标现有检查/适用CI；本地命令和脚本不证明CI必跑。源码变化后改文档匹配原合同，不放宽清单或排除掩盖分叉。",
+        "requiredSupport": [
+          "目标自有TypeScript（已实际验证6.0.3，其它版本未认证）及固定GFM解析器",
+          "显式目标语料和.doc-gates/type-equiv.manifest.json entries清单",
+          "目标源声明/JSDoc，public-api限类；接口合并显式指定字符串模块和来源"
+        ]
+      },
+      "reference": "references/documentation.md#code-equivalence",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有 type-equiv/public-api 围栏与源声明结构、JSDoc、投影一致。",
+            "evidence": "verification/evidence/raw/type-equiv-physical-consumer-after.json#/commands/0（物理目标完整声明、原JSDoc、公共投影、显式合并和完整中文序列）；不证明全目标所有声明或类型正确性"
+          },
+          {
+            "obligation": "清单与围栏一对一，无孤儿。",
+            "evidence": "verification/evidence/raw/type-equiv-physical-consumer-after.json#/commands/0; research/type-equiv.test.mjs（实际CLI双射/重复/孤儿/范围边界，观察输出见verification/evidence/raw/type-equiv-affected-regressions.json）"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "未登记围栏、孤儿清单、结构/JSDoc 差异时门禁拒绝。",
+            "evidence": "verification/evidence/raw/type-equiv-physical-consumer-after.json#/commands/1、3、5、6和8（真实源漂移/JSDoc/中文投影/未登记/重复拒绝）；孤儿项/重复块/范围边界由受影响实际CLI回归覆盖"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按差异修文档或源；不要改清单来掩盖分叉。",
+            "evidence": "verification/evidence/raw/type-equiv-physical-consumer-after.json#/commands/2、4和7（先改源后同步原合同/JSDoc及移除孤儿，不改manifest/排除放宽）"
+          }
+        ]
+      },
+      "limitations": [
+        "未登记的新类型不会被要求；覆盖是主动选择。",
+        "JSDoc仅规范空白；内容和顺序仍比较。完整声明真实token忽略普通注释/token间空白，不抹掉字面量内容；public-api/合并只保留源码附着JSDoc。",
+        "只覆盖显式受检Markdown与选定源；不执行、类型检查或证明源语义正确。",
+        "物理可选模块/独立目标编译器11命令不是完整Skill安装、独立采用、全目标范围或真实CI/平台强制。"
+      ]
+    },
+    {
+      "id": "documentation-subsystem-page-ownership",
+      "title": "子系统页拥有类型文档并在同变更更新",
+      "sources": [
+        {
+          "path": "scripts/verify-subsystem-pages.ts",
+          "start": 1,
+          "end": 137,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 43,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/README.md",
+          "start": 1,
+          "end": 76,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "类型定义若散落在架构页/包 README，读者找不到权威语义；新类型若没有页面，则永远不会被文档化。源仓库要求类型在声明包组的子系统页上。",
+      "triggers": [
+        "新增/重塑公共类型",
+        "新包组出现",
+        "架构页出现类型定义"
+      ],
+      "obligations": [
+        "组集合来自 packages/*/README.md 与 packages/*/*/package.json 的并集；每组必须有英文组 README，并链接至少一个存在的独立子系统页或具有显式、非空理由的豁免。",
+        "类型定义、语义和生成 Cordis API 放子系统页；架构页只写行为。",
+        "重塑已文档化类型时，同一变更更新 owning 子系统页。",
+        "链接必须是 Markdown AST 中读者可见的 link；代码、注释、图片、索引 README 和 .zh.md 对应页不计 owning 页。链接检查不枚举所有公共类型，未文档化新类型仍需评审。",
+        "孤儿豁免、空理由、已经链接 owning 页却保留的豁免均拒绝；不能因组是内部实现就自动豁免。"
+      ],
+      "actors": [
+        "owner: 子系统所有者",
+        "contributors: 类型作者; 文档作者",
+        "reviewers: 文档评审者; 架构评审者",
+        "automation: verify-subsystem-pages 检查组 README 的链接/豁免；type-equiv 抓已登记漂移。"
+      ],
+      "steps": [
+        "确定声明类型的包组与唯一 owning 子系统页；类型语义归该页，跨系统行为归架构页。",
+        "在英文组 README 加读者可见的直接页链接，或由 owner 评审并登记该组没有独立页的具体理由；已链接页面时删豁免。",
+        "在目标 .doc-gates/subsystem-pages.json 配置真实包组布局、页目录与豁免对象；不要照抄来源五个组名。",
+        "准备可选文档模块的固定 Markdown 解析器，从目标根执行安装座内 tools/doc-gates/verify-subsystem-pages.mjs；异地调用传 --root，配置默认相对该根解析。",
+        "按诊断补组 README、修链接实际落点、建 owning 页或修豁免后重跑同一入口；将命令接入目标既有顶层检查及适用 CI，但必须另证 CI 必跑与平台阻断。",
+        "重塑已文档化类型时同一变更更新 owning 页并运行 type-equiv；评审者仍须检查新类型、页面语义、归属及双语完整性。"
+      ],
+      "enforcement": {
+        "mode": "automatic-group-link-check-plus-review",
+        "implementation": "来源 scripts/verify-subsystem-pages.ts:1-137 自动检查组链接与豁免，docs/AGENTS.md:44 规定同变更归属。目标 tools/doc-gates/verify-subsystem-pages.mjs 已提供可配置执行器与 npm run verify-subsystem-pages 入口；声明粘贴漂移由独立 type-equiv owner 检查。",
+        "trust": "自动效果限于发现到的组、读者可见链接的实际文件落点、豁免存在性/非空/一致性；豁免理由是否合理、每个类型是否文档化、语义与双语正确性仍由评审承担。目标布局与检查接入必须由采用方如实配置。",
+        "failure": "组 README 缺失、缺链接、页面不存在、孤儿/空理由/过期豁免退出1；配置文件缺失/非法、参数错误或 Markdown 解析器不可用退出2。修复对应文件或配置再跑同一入口；不以添加无理由豁免恢复。",
+        "exceptions": "显式豁免是组级可评审政策，不是“纯内部”通用例外；来源的 acp/bundle/sdk/test-support/util 理由属于固定项目事实，目标不得自动继承。Cordis 生成区域仍由其生成器负责；此门禁不生成内容。"
+      },
+      "applicability": [
+        "when: 新增/重塑公共类型，新增包组，或架构页出现类型定义。",
+        "preconditions: Node.js >=22.19.0；可选文档模块的固定 Markdown 依赖；目标 .doc-gates/subsystem-pages.json 声明真实包组与 owning 页布局。本门禁不需要目标 TypeScript 编译器。",
+        "inactive: 目标确实没有该形式的包组时须记录事实与重新激活条件；没有公共类型不等于现有包组自动豁免。零发现组只给出0组的机械结果，不证明目标发现配置完整。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-type-equiv; documentation-tier-placement",
+        "related: documentation-generated-reference-freshness",
+        "crossDomain: architecture; type-safety"
+      ],
+      "migration": {
+        "strategy": "保留组 README→独立 owning 页或显式理由豁免的自动效果，类型语义完整性和同变更更新由评审加 type-equiv 共同承担。",
+        "implementation": "在 .doc-gates/subsystem-pages.json 声明 packagesRoot、docsRoot、pageRoot、groupReadme、manifest、pageSuffix 与 exemptions（组名到理由的对象）；从目标根运行 node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-pages.mjs。目标适配按 README 所在目录规范化链接实际落点，再检查处于 pageRoot 且为存在文件；不复用已废弃的 linkPrefix。来源使用固定 ../../docs/subsystems/<page>.md 字面形式，目标接受规范化后等效的相对路径，属显式布局适配。",
+        "requiredSupport": [
+          "tools/doc-gates 的固定 Markdown 解析器及 package-lock.json",
+          "目标包组→独立 owning 页映射与有理由的组级豁免政策",
+          "目标现有顶层检查/适用 CI 的实际接入与独立证据；type-equiv 清单按其独立程序维护"
+        ]
+      },
+      "reference": "references/documentation.md#code-equivalence",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "组 README 链接存在的 owning 页，或由显式理由豁免；安装座内入口读取目标配置，非源产品布局也能检查。",
+            "evidence": "verification/evidence/raw/subsystem-pages-installed-consumer.json",
+            "observed": "conform-with-undocumented-new-type 从目标 npm 入口退出0。固定源树的52组只读目标执行器观察另见 verification/evidence/raw/subsystem-pages-physical-consumer.json，不是源脚本执行。"
+          },
+          {
+            "obligation": "groupReadme 含子目录时从 README 的实际目录解析相对链接，而不是从包组根目录解析；拒绝错误落点并允许正确链接恢复。",
+            "evidence": "verification/evidence/raw/subsystem-pages-nested-readme-installed.json",
+            "observed": "默认隐藏安装座的顶层 npm check:owners 对嵌套 docs/OWNERS.md 的错误落点退出1，正确 ../../../guide/owners/compute.md 恢复0，实际页删除后退出1，恢复页面后退出0。v13 独立复核发现的旧误通过/误拒绝保留，新增行为回归修复前失败、修复后全15项通过。"
+          },
+          {
+            "obligation": "已文档化类型在同变更更新。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺组链接、实际落点越界、owning 页缺失、已经链接却保留豁免退出1，安装座解析器缺失退出2；类型粘贴漂移另归 type-equiv。",
+            "evidence": "verification/evidence/raw/subsystem-pages-installed-consumer.json",
+            "observed": "missing-link-refused、actual-destination-outside-root-refused、missing-actual-page-refused、linked-group-still-exempt-refused 均退出1；missing-installed-parser-refused 退出2。"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补正确链接、修实际落点、恢复页面、移除过期豁免或恢复安装座解析器后，重跑同一目标 npm 检查入口恢复通过。",
+            "evidence": "verification/evidence/raw/subsystem-pages-installed-consumer.json",
+            "observed": "restore-link-recovery、correct-destination-recovery、restore-page-recovery、remove-stale-exemption-recovery、restore-installed-parser-recovery 均恢复退出0；同一临时目标，未通过降低政策恢复。"
+          }
+        ]
+      },
+      "limitations": [
+        "链接通过不证明每个公共类型已文档化；实际含 NeverDocumented 新类型的目标仍通过，符合源程序边界而不是缺陷修复承诺。",
+        "显式豁免理由仅检查非空，合理性、owning 页语义、中文内容、索引表和生成区域新鲜度仍属各自 owner/评审。",
+        "原11条命令验证默认隐藏安装座的物理可选模块副本与926分发文件，使用已有本地解析器；该执行器版本早于嵌套 README 修复，保留为历史观察而非当前字节绑定。当前嵌套路径另有4条安装座 npm 命令和15项行为回归；历史15项中的 wiring 测试曾删除，此次新增的第15项是真实拒绝/恢复回归。以上均不是完整 Skill 安装、干净依赖安装、独立采用、全仓适用范围或可信 CI/平台阻断证据。",
+        "来源的固定链接字面形式与目标规范化实际落点形式有明确差异；不声称逐输入完全等价。子系统页同变更更新义务仍需类型等价与人工评审，不被组链接门禁独自证明。"
+      ]
+    },
+    {
+      "id": "documentation-generated-reference-freshness",
+      "title": "生成参考的源真源、失败关闭与 --check",
+      "sources": [
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 1,
+          "end": 103,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 104,
+          "end": 944,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 981,
+          "end": 1504,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 1531,
+          "end": 1759,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tool-catalog.ts",
+          "start": 1,
+          "end": 133,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tool-catalog.ts",
+          "start": 134,
+          "end": 699,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tool-catalog.ts",
+          "start": 700,
+          "end": 849,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 1,
+          "end": 120,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 121,
+          "end": 239,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 240,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 311,
+          "end": 929,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 930,
+          "end": 1074,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tool-catalog.ts",
+          "start": 111,
+          "end": 119,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tool-catalog.ts",
+          "start": 850,
+          "end": 898,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 945,
+          "end": 980,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 1505,
+          "end": 1530,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.ts",
+          "start": 1760,
+          "end": 1861,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cli-help.ts",
+          "start": 1,
+          "end": 229,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cli-help.ts",
+          "start": 230,
+          "end": 298,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-persistence-catalog.ts",
+          "start": 1,
+          "end": 209,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-persistence-catalog.ts",
+          "start": 210,
+          "end": 267,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-catalog-source.ts",
+          "start": 134,
+          "end": 310,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.ts",
+          "start": 1,
+          "end": 199,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.ts",
+          "start": 200,
+          "end": 261,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.spec.ts",
+          "start": 1,
+          "end": 195,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/gen-cli-help.spec.ts",
+          "start": 1,
+          "end": 134,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.spec.ts",
+          "start": 1,
+          "end": 167,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/gen-doc-graphs.spec.ts",
+          "start": 1,
+          "end": 165,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/persistence-catalog-source.ts",
+          "start": 1,
+          "end": 133,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-catalog-source.ts",
+          "start": 311,
+          "end": 311,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/core/session/tests/gen-persistence-catalog.spec.ts",
+          "start": 1,
+          "end": 306,
+          "kind": "test"
+        }
+      ],
+      "problem": "配置、工具、模块图、Cordis API 等事实手写必漂移。源仓库用生成器从代码/运行时 schema/清单生成英文参考，中文按配对更新，并用 --check 阻止手改和过期。",
+      "triggers": [
+        "新增配置项/工具/模块/Cordis 服务",
+        "修改生成器",
+        "发现生成页被手改",
+        "发布前"
+      ],
+      "obligations": [
+        "每个生成事实族必须有生成器 + --check；默认写文件，--check 比较提交内容并失败于 stale。",
+        "配置目录：遍历 packages/*/*/package.json；缺 name 或入口 src/index.ts 缺失/不可读失败，os+cpu 原生平台包跳过。按默认类/函数、导出 apply、否则 library 分类，abstract 默认类为 seam；config 参数必须是命名类型引用且 config 类型必须在本包。粘贴包内传递类型闭包；同名声明冲突、包内声明与导入冲突、既非本地声明也非导入/全局类型失败；导入类型只记 ref，不要求可粘贴；每个粘贴类型检查成员 JSDoc。",
+        "配置 schema：只接受可静态遍历的 object/array/intersect/union/refinement/const alias；递归 alias、非 plain key、动态表达式、无法解析的 intersect/union 元素失败。schema key 在声明类型上确定缺失时失败；未知类型路径记为 unknown 而不是缺失；composed 包必须在本轮扫描中。",
+        "工具目录：manifest 必须覆盖磁盘上每个 packages/*/tool-*；每个条目在独立 Context 中启动并 finally dispose；每个包必须注册至少一个工具，每个工具必须有 source mapping。默认 config 之外，无默认的必填 config 字段必须选分支并注记；examples/ 不在范围；--check 检查 stale。",
+        "文档图：服务角色分类必须完整（无缺失/过期），索引逐页声明 generated/hybrid/curated 模式。事件矩阵由真实 TypeScript Program 收集，声明事件必须有 dispatcher；Client 声明因只种 Host 聚合程序而豁免，未声明但出现的 event string 必须单列。事件收集器测试覆盖 local/alias/global script 与文件系统 memo；--check 检查所有图页 stale。",
+        "CLI 帮助：实际启动每个 --help，独立临时 Harness/agents homes，禁用遥测/颜色并清除 NODE_OPTIONS/FORCE_COLOR；空输出、stderr 诊断、超时/非零退出失败。按 Commands: 遍历嵌套与 alias，同文帮助去重并列出全部 invocation；启动器、plugin、每个 profile 的短名与 --profile 形式都覆盖；--check 同时检查英文/中文/sidecar。",
+        "Session 格式目录：从 SESSION_FORMAT_VERSION 读当前版本；0 到 current 每个版本恰一条相邻迁移，from/to 为非负安全整数且 to=from+1，包名/目录匹配、metadata 无未知字段；source codec 延续前驱 target 且依赖前驱包，catalog 以 peer+dev 依赖 Session；生成目录用直接 import，独立于已挂载插件；--check 检查 stale。",
+        "Persistence 目录：SessionEventMap 顶层接口必须只在本包导出且唯一；成员必须是显式 payload 的 string-literal property，禁止 plugin: 命名空间、继承和重复；envelope 类型必须单家、导出、有文档、无 @mode；SurfaceEventType 必须恰有一个字面量联合，成员不得指向未声明事件，且不能与 messageProjection 同时声明。另生成 current-source 插件记录、运行时 known-types 与 schema JSON；--check 对缺失/不可读/内容不同都按 stale 失败。专用测试 packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306 覆盖所有权/成员/envelope/SurfaceEventType/render 边界；测试未执行。",
+        "生成器的空扫描/未知输入失败不是统一的：配置/CLI/Session/Persistence 有专用 spec；doc-graphs spec 覆盖收集器；tool 的专用 spec 尚未在本轮确认，不能声称所有生成器都有空扫描失败。",
+        "per-platform 原生包跳过和 Client 事件豁免是精确例外；未知类型路径和只影响存在性检查的不可解析情况记为 unknown，不能改写成失败或反之。",
+        "SessionEventMap 的 owning 顶层接口必须位于 `@deepseek-ai/dsh-session` 包且导出唯一；同时收集 `declare module '@deepseek-ai/dsh-session/types'` 内的合并声明，两者成员按同一 catalog 规则处理。",
+        "同名顶层接口出现在非 owning 包时是另一个类型，必须改名或改用 module merge；包名从 `packages/<group>/<pkg>/package.json` 读取，manifest 缺失或不可解析时所有权不可验证，调用方必须报告而不能静默收录。",
+        "payload 文本用 TypeScript printer 单行化并折叠空白，去掉 `}` 前的尾分号以匹配仓库 inline-literal 风格；declaration 从 leading JSDoc 到右花括号整体复制，只去掉容器缩进，保留声明内相对缩进。",
+        "envelope 类型名固定为 SessionEventType、SurfaceEventType、SurfaceOp、SessionEvent；catalog 的声明文本/JSDoc 直接来自这些声明。",
+        "catalog 源发现使用 `packages/*/*/src/**/*.{ts,tsx}` 的排序 glob；所有权检查与 top-level/merged 区分是准入的一部分，不能只靠 JSDoc 渲染。",
+        "（测试证据补充，2026-10-24）Persistence 专用 spec 覆盖：SessionEventMap 非 owning/未导出/两处导出/extends/重复/非字面量/方法式/无显式 payload/无描述/@mode（含额外缩进）/plugin: 命名空间都聚合为一条硬错误；envelope 四类型需存在/单家/导出/描述/无 @mode/规范顺序；SurfaceEventType 必须恰一闭合 string-literal union、成员不得指向未声明事件、@messageProjection 与 surface 互斥；render 输出 generated header/declaration fence/surface-log-only 标记。"
+      ],
+      "actors": [
+        "owner: 生成器所有者/领域所有者",
+        "contributors: 领域作者; 工具维护者",
+        "reviewers: 评审者",
+        "automation: 各 gen-* 的 --check 在 test:docs/doc-sync 中运行。"
+      ],
+      "steps": [
+        "定位事实源并改源。",
+        "运行非 --check 生成器。",
+        "审查 diff 只含预期变化。",
+        "两侧语言与记录按生成器规则更新。",
+        "运行 --check 并核对计数。"
+      ],
+      "enforcement": {
+        "mode": "automatic-generation-check-gate",
+        "implementation": [
+          "gen-config-catalog/gen-tool-catalog/gen-module-graph/gen-doc-graphs/gen-cordis-catalog 等从源生成；各自 --check 比较已提交输出。",
+          "sessionEventMapDecls 同时返回顶层与 module-merge 形式并标记 topLevel；packageNameFor 从 package.json 解析 owner（null 表示不可验证）；payloadText/declarationText 生成 catalog 的单行 payload 与去缩进声明。"
+        ],
+        "trust": "输出与源的一致性自动；源数据自身是否正确、生成结果是否可读靠评审。",
+        "failure": [
+          "--check 差异、未知输入、缺失 schema 或清单不一致时失败；只有存在对应 guard 的族才会对扫描为空/变窄失败，不能把某一族的 guard 推及全部。",
+          "非 owning 顶层接口、未导出顶层接口、重复顶层接口、非 property signature/无显式 payload、非 string-literal 事件名、plugin: 命名空间、重复事件、@mode、无 JSDoc、manifest 缺失/不可解析（ownership 不可验证）都会报告。"
+        ],
+        "exceptions": [
+          "配置跳过 per-platform 原生包；文档图对 Client 声明事件豁免 dispatcher 检查，未声明 event string 另表列出；生成器可在明确历史/异常输入上有精确例外，但不得对手改生成页放行。",
+          "module-merge 形式本来就属于 owning package 的同一接口，不要求它是该文件的顶层接口；manifest-less fixture 树可触发 ownership 不可验证报告，而不是被当作合法。"
+        ]
+      },
+      "applicability": [
+        "when: 任何生成参考的源变化、生成器变化或发布前。",
+        "preconditions: 生成器可运行; 源 schema/清单完整; 输出路径稳定",
+        "inapplicable: 纯手写参考、归档页、网站生成物。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-generated-region-grammar; documentation-generated-source-pairing",
+        "related: documentation-cordis-catalog-partition",
+        "crossDomain: config; tools; module-graph; cordis; persistence"
+      ],
+      "migration": {
+        "strategy": "先确定事实源，再写生成器；对未知输入要能失败，但按族记录是否存在空扫描/扫描变窄 guard。",
+        "implementation": "每个事实族一个生成器+--check；输出带稳定路径/标记；逐族记录空扫描、未知输入和清单完整性行为，不能用其他族的 guard 推断；对适用族加计数/扫描下限断言。",
+        "requiredSupport": [
+          "源 schema/清单",
+          "生成器",
+          "--check 门禁",
+          "稳定输出路径"
+        ]
+      },
+      "reference": "references/documentation.md#generated-references",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "生成器 --check 对已提交文件无差异，计数符合预期范围。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "源变化后生成输出只含预期事实。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "手改生成页、未知配置/缺失 schema 或清单不一致时，在有对应 guard 的生成器上失败；空扫描并不统一。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "回源修正后重新生成；不要直接接受差异或手补生成页。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "gen-config-catalog.ts:1-1074；gen-tool-catalog.ts:1-898；gen-doc-graphs.ts:1-1861；gen-cli-help.ts:1-298；gen-session-format-catalog.ts:1-261；gen-persistence-catalog.ts:1-267；persistence-catalog-source.ts:134-310 已行读。",
+          "gen-config-catalog.spec.ts、gen-cli-help.spec.ts、gen-session-format-catalog.spec.ts、gen-doc-graphs.spec.ts 已读；[2026-10-24 补读] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读，persistence 有专用 spec；tool 的专用 spec 未在本轮确认。",
+          "未执行生成器或 --check。"
+        ]
+      },
+      "limitations": "catalog 文本经过单行化与去缩进，不保证与源文件字节格式一致；manifest 缺失时无法证明 owner；未执行生成器。",
+      "notes": "六个生成器均已全文行读（含 collector 主体、render/check 与例外分支）。配置/工具/文档图/CLI/Session/Persistence 的准入面并不相同：配置对确定缺失失败但未知类型路径为 unknown；工具需 boot 且每个工具 source mapping；文档图依赖 Host 聚合程序并豁免 Client 声明；CLI 启动真实 launcher；Session 生成运行时 catalog；Persistence 同时写文档、运行时 known-types 与 schema。没有执行任何生成器或 --check。[2026-10-24 复核] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读；obligations[7]/[8] 的旧“无专用测试”说法已从 active obligations 移除并保留在 _working/audit/readme-gates-full-source-repair.json 的 correctionHistory。tool 的专用 spec 仍未在本轮确认。"
+    },
+    {
+      "id": "documentation-generated-region-grammar",
+      "title": "共享生成区域的标记语法与拼接",
+      "sources": [
+        {
+          "path": "scripts/translation-pairing.ts",
+          "start": 18,
+          "end": 101,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-config-catalog.ts",
+          "start": 930,
+          "end": 1074,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 283,
+          "end": 313,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "同一页面可能由多个生成器注入区域。没有精确标记和拼接规则，生成器会互相覆盖或手改无法检测。",
+      "triggers": [
+        "多个生成器写同一页",
+        "新增生成区域",
+        "生成区域手改/标记错位"
+      ],
+      "obligations": [
+        "区域使用整行 <!-- BEGIN GENERATED <slug> … --> 与 <!-- END GENERATED <slug> -->；BEGIN 可带生成器说明，END slug 必须匹配，不使用 generated:start/end 语法。",
+        "一个 slug 在一个文件只出现一次；标记成对、同名、不可嵌套。",
+        "区域外字节是作者内容，生成器不得改写。",
+        "共享区域按声明顺序拼接，不按当前文件猜测。",
+        "配对先归一化配对文档链接的 locale 语义目标，再逐区域按顺序比较字节；不归一化其他散文、空白、代码、标记或非 locale URL 差异。"
+      ],
+      "actors": [
+        "owner: 生成器所有者",
+        "contributors: 生成器作者; 文档作者",
+        "reviewers: 评审者",
+        "automation: 生成器注入 + 配对门禁比较区域；没有独立区域语法检查器（由生成器/配对共同约束）。"
+      ],
+      "steps": [
+        "定义唯一 slug 和输出顺序。",
+        "用共享常量写标记。",
+        "生成器只替换标记内字节。",
+        "两侧注入，检查区域外内容。",
+        "跑生成器 --check 与配对门禁。"
+      ],
+      "enforcement": {
+        "mode": "generator-convention-plus-pairing-gate",
+        "implementation": "translation-pairing 定义区域标记/拆分/拼接；生成器使用同一语法；配对门禁比较生成区域。",
+        "trust": "标记形态和区域同源由生成器/配对检查；区域外手改与语义正确靠评审。",
+        "failure": "共享 parser 拒绝未开启END、未关闭BEGIN、嵌套、畸形标记和slug不匹配；splice 要求目标slug恰好一个；配对拒绝除locale文档路径外的区域字节差异。区域外改写/语义正确性不能仅凭这些比较证明。",
+        "exceptions": "没有生成区域的纯手写页不适用；历史页可保留旧格式但不再生成。"
+      },
+      "applicability": [
+        "when: 多个生成器共享页面，或新增/修改生成区域。",
+        "preconditions: 有稳定 slug 与拼接顺序; 生成器使用共享标记常量",
+        "inapplicable: 单生成器独占整页且无共享区域；归档页。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-generated-reference-freshness",
+        "related: documentation-generated-source-pairing"
+      ],
+      "migration": {
+        "strategy": "把区域当接口：slug、顺序、边界都显式。",
+        "implementation": "生成器只写标记内；共享区域按声明顺序拼接；配对门禁比较两侧同源。",
+        "requiredSupport": [
+          "共享标记常量",
+          "生成器拼接器",
+          "配对门禁"
+        ]
+      },
+      "reference": "references/documentation.md#generated-regions",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个 slug 唯一、标记成对，区域外内容未被生成器改写。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "两侧生成区域同源。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "嵌套/未闭合/错slug/畸形标记由parser拒绝，重复目标slug由splice拒绝；区域字节非locale差异由配对门拒绝。区域外语义变动另需确认与评审。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修标记/生成器后重新生成；不要手工移动区域边界。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "区域语法没有单一独立检查器，依赖生成器和配对共同约束。",
+        "区域仅归一化配对文档链接的locale目标；一般空白和行尾不同不属于允许豁免。"
+      ]
+    },
+    {
+      "id": "documentation-generated-source-pairing",
+      "title": "生成英文源无切换行、中文渲染与记录更新",
+      "sources": [
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 99,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 49,
+          "end": 56,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/translation-pairing.ts",
+          "start": 80,
+          "end": 139,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "生成英文源不能手工加切换行导致stale；混合页只生成双语区域，区域外正文才进入翻译记录。整页生成器另可生成配对散文与记录；不能把两类生成器的writer能力混为一谈。",
+      "triggers": [
+        "新增生成页",
+        "生成器输出语言切换行/记录",
+        "翻译生成页"
+      ],
+      "obligations": [
+        "生成的英文源不写语言切换行；生成器负责。",
+        "混合页的生成区由生成器写入两侧；仅区域内再生成不需要人工翻译或新sidecar记录。整页生成器可另由同一结构数据渲染配对散文并重录。",
+        "区域外散文发生变化时，必须先同步和确认译文，再显式重录；不能借生成或批量--write认可未确认的正文。",
+        "生成源清单是硬编码的；新增生成页必须同步加入。",
+        "中文侧不得在生成区域内改写事实。"
+      ],
+      "actors": [
+        "owner: 生成器所有者",
+        "contributors: 生成器作者; 翻译者",
+        "reviewers: 评审者",
+        "automation: verify-translation-pairing识别生成源并处理切换行/区域比较；是否写配对散文及记录取决于具体生成器，Cordis混合页CLI没有sidecar writer。"
+      ],
+      "steps": [
+        "在生成器中声明输出语言与记录。",
+        "生成英文/中文页。",
+        "只在区域外做翻译调整。",
+        "仅生成区更新不重录；区域外正文或记录确需更新时，确认两侧后运行配对--write。",
+        "跑配对门禁。"
+      ],
+      "enforcement": {
+        "mode": "generator-plus-pairing-gate",
+        "implementation": "配对门对生成源豁免英文切换行并逐区域比较locale链接归一化后的字节。混合页仅区域再生成不刷新记录；整页生成器可生成配对散文与sidecar。不能从Cordis头部注释推导当前CLI有sidecar writer。",
+        "trust": "切换行豁免/区域同源自动；生成页内容是否完整靠生成器/评审。",
+        "failure": "生成源缺记录、区域不同源、生成器漏写中文时配对门禁失败；新增生成页未入清单会被要求切换行。",
+        "exceptions": "只有清单内的生成源免切换行；手写页必须切换行。"
+      },
+      "applicability": [
+        "when: 新增/修改生成页或生成器输出。",
+        "preconditions: 生成器能输出两侧; 记录格式已定义; 生成源清单可更新",
+        "inapplicable: 纯手写页必须走普通双语合同。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-generated-region-grammar; documentation-i18n-pair-contract",
+        "related: documentation-i18n-consistency-record",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "生成页的双语由生成器拥有，人只改区域外翻译。",
+        "implementation": "分别实现混合页的双语区域输出与整页生成器的配对散文/记录输出；前者仅区域变化不重录，正文变动确认后显式--write。生成源清单集中维护，由配对门自动验证，不能因目标缺API投影而降级源自动保证。",
+        "requiredSupport": [
+          "生成器双语输出",
+          "记录写入",
+          "生成源清单"
+        ]
+      },
+      "reference": "references/documentation.md#generated-regions",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "生成英文源无手工切换行；混合页仅区域更新不产生新记录，整页配对散文按其生成器实际契约更新记录。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "生成区域两侧同源。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "生成源缺记录、区域不同源或手写页缺切换行时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "两侧重新生成；仅生成区更新无需新记录，区域外正文或记录需更新时确认后显式--write，不手补切换行或生成内容。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "生成源清单是硬编码的，新增页易漏。",
+        "生成器可能生成不可翻译的片段。"
+      ]
+    },
+    {
+      "id": "documentation-cordis-catalog-partition",
+      "title": "Cordis 服务/事件 key 到页面的 fail-closed 分区",
+      "sources": [
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog-partition.spec.ts",
+          "start": 1,
+          "end": 211,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 84,
+          "end": 1118,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1171,
+          "end": 1187,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1260,
+          "end": 1279,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1292,
+          "end": 1307,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1198,
+          "end": 1260,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Cordis 服务/事件目录若按页面手抄，会漏 key 或把同一 key 放两页。源仓库要求 key→页面双向完整、未知 key/页面失败。",
+      "triggers": [
+        "新增 Cordis 服务/事件",
+        "新增/重命名子系统页",
+        "生成 Cordis API 区域"
+      ],
+      "obligations": [
+        "每个 key 恰好属于一个页面。",
+        "每个页面只接收自己的 key。",
+        "未知 key 或未声明页面失败关闭。",
+        "中英文两侧都注入生成区域。",
+        "仅生成区变化不需要重录sidecar；区域外正文变化确认两侧后显式重录。源头部声明条件化重录，但当前computeOutputs/main无sidecar writer。",
+        "服务/事件的 page 归属来自生成器配置，不靠相邻文档推断。",
+        "分区表是生成器内的人工策展数据：SERVICE_PAGE 把渲染出的 ctx 服务键映射到唯一子系统页，EVENT_SCOPE_PAGE 把事件 scope（首个 `/` 之前的部分）映射到唯一页。渲染出的键/scope 无映射、或映射项已不再渲染，生成器都必须失败并要求删除 stale 项。",
+        "SERVICE_WALK_EXEMPTIONS / EVENT_WALK_EXEMPTIONS 必须为每个投影不可见的声明写明原因和文档 owner；事件豁免键使用完整事件名而不是 scope，避免 scope 级豁免掩盖同一 scope 的其他声明。",
+        "独立 AST 扫描读取 `packages/*/*/src/**/*.ts` 与 `*.tsx` 中每个 `declare module '@deepseek-ai/cordis'` 的 Context/Events merge；声明的键/事件要么可渲染并映射，要么具名豁免。已渲染却仍豁免、豁免却无声明、渲染却未被扫描到分别报 stale exemption 或 scan blind spot；最后一种必须修扫描（glob/prefilter/module-block walk），不能改映射掩盖。",
+        "豁免只允许两类无法由扫描规则关闭的投影盲区：launcher/boot 在树挂载前安装的 optional 键（analyzer 按规则跳过、inject 不可达），以及 host 面程序看不到的 client-face 键/事件（由 `scripts/gen-client-catalog.ts` 生成、以 `cordis_runtime_inspect what:\"client\"` 提供）。两类都必须在豁免项写明文档 owner。",
+        "生成区域以本生成器导入的 `REGION_BEGIN`/`REGION_END` 标记（错误信息称 cordis-surface region）为边界：页面必须恰好一行 BEGIN 和一行 END，END 不得早于 BEGIN；只替换两标记之间的内容，标记外的字节保留。其他生成器的 region 标记不算数；缺标记、多标记或顺序错误必须按页报错，不能静默覆盖。",
+        "每个映射页面及.zh.md必须已存在；缺页由生成器报错、配对完整性另由配对门检查。中文区域注入前按配对manifest本地化文档链接，非中文不重写。头部7-8说条件化sidecar重录，但1198-1260/1267-1303实际输出循环没有writer；仅区域再生成本来也不需新记录，不能把头部声明扩张成运行保证。",
+        "`main()` 默认写入所有生成产物，但只写内容变化的文件并创建缺失目录；导入模块不得触发生成或 process.exit。`--check` 逐产物与提交内容做字节比较，任何读取失败按 stale 处理（预期只有 ENOENT），stale 列表非空时打印重生成命令并以 1 退出，全部一致时打印数量并以 0 退出。",
+        "类型链接也走同一策展失败关闭面：LINK_MAP 为生成的签名类型指定唯一主页面；FOUNDATION_TYPE_NAMES 列出没有仓库页面的 TS lib/pinned framework 类型；TYPE_LINK_EXEMPTIONS 为文档在别处的项目类型指定 owner。新增类型必须落入三者之一；这些表是数据，不靠相邻文档推断。",
+        "CORDIS_CATALOG_POLICY 的继承层/运行时层是显式数据：runtimeServiceExclusions 排除 cordisInspect 与 dynamicCordisRunner；runtimeServices 记录 timer 的方法签名/JSDoc/source pointer；inheritedEvents/inheritedServices 记录 vendor Cordis/loader 事件与服务的 source pointer。改这些数据必须重生成并审查字节 diff。"
+      ],
+      "actors": [
+        "owner: Cordis API 维护者",
+        "contributors: 服务作者; 子系统页作者",
+        "reviewers: 评审者",
+        "automation: gen-cordis-catalog 生成；partition spec 测试双向完整性。"
+      ],
+      "steps": [
+        "在生成器配置声明页面/key 映射。",
+        "生成两侧区域。",
+        "检查每个 key 只出现一次。",
+        "仅生成区变化不重录；区域外正文或实际记录漂移，确认两侧后显式运行配对--write。",
+        "跑生成器/分区测试。"
+      ],
+      "enforcement": {
+        "mode": "automatic-partition-generation-and-test",
+        "implementation": [
+          "gen-cordis-catalog 从 Typert catalog 生成服务/事件区域；partition spec 验证 key→页面双向、fail-closed。",
+          "walkPartitionProblems 是纯函数，做 rendered→mapped、mapped→rendered 以及 declared→rendered|exempt 的双向/回退检查；computeOutputs 先聚合 partition violations，再逐页读取、本地化和 splice，聚合 page violations 后一次性抛出；main 的 --check 做全产物字节比较。"
+        ],
+        "trust": "分区完整性自动；页面内容/语义靠评审。",
+        "failure": [
+          "未知 key、未声明页面、重复归属或区域不同源时生成/测试失败。",
+          "缺映射、stale 映射、declared-but-invisible、rendered-but-exempt、exempt-but-undeclared、rendered-but-undeclared（scan blind spot）、缺页面、缺/重/乱序 region 标记、--check 字节不一致或读取失败都会失败。"
+        ],
+        "exceptions": [
+          "没有 Cordis 服务/事件的页面不生成该区域；历史页可冻结。",
+          "optional launcher/boot 键与 client-face 键/事件可以具名豁免；非 `.zh.md` 页面不做链接本地化；入口点保护使测试导入不产生副作用。"
+        ]
+      },
+      "applicability": [
+        "when: 新增/修改 Cordis 服务或事件，或子系统页拆分/合并。",
+        "preconditions: Typert catalog 可读取; 页面/key 映射维护在生成器",
+        "inapplicable: 非 Cordis 文档；纯客户端/工具目录。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-generated-region-grammar",
+        "related: documentation-generated-reference-freshness",
+        "crossDomain: cordis; subsystems"
+      ],
+      "migration": {
+        "strategy": "key→页面的映射是生成器配置，不是文档注释。",
+        "implementation": "生成器双向校验；新增 key 必须指定页面；重复/未知失败。",
+        "requiredSupport": [
+          "Typert catalog",
+          "页面映射",
+          "分区测试"
+        ]
+      },
+      "reference": "references/documentation.md#generated-regions",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个 Cordis key 恰好出现在一个页面区域。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "每个页面只含自己的 key，两侧区域同源。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "未知 key、未声明页面、重复归属时生成器/测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补页面映射或修正 key 后重新生成；不要手改区域。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "策展映射/豁免可能滞后；--check只证明实际输出与投影字节一致，不证明散文或映射语义。client-face由另一个生成器承载；声明扫描盲区需修扫描。页内Source链接剥离行号，runtime等其他输出仍可含位置并因插行stale。Cordis CLI不写sidecar，区域内再生成无需新记录；目标等价API投影/自动检查/CI及独立语义和效果证据仍缺。"
+    },
+    {
+      "id": "documentation-i18n-pair-contract",
+      "title": "三文件双语配对合同与切换行",
+      "sources": [
+        {
+          "path": "docs/i18n/README.md",
+          "start": 3,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 45,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 99,
+          "end": 170,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "双语最容易退化成“英文更新、中文滞后”。源仓库把英文、中文和 sidecar 作为同一合同的三件套，两侧权威相等，切换行/结构必须一致。",
+      "triggers": [
+        "任何双语文档改动",
+        "新增人类文档",
+        "发现只有一侧更新"
+      ],
+      "obligations": [
+        "每篇文档同目录有 X.md、X.zh.md、X.i18n.yaml。",
+        "两侧权威相等；任一侧可先写，另一侧必须跟上。",
+        "英文切换行 English | [中文](X.zh.md)；中文 [English](X.md) | 中文。",
+        "结构同标题层级/顺序、列表种类/项数、表格行列、链接语义、代码块。",
+        "中文不是英文从属译文，而是同一合同的目标语言表达。",
+        "不得用手写目录/本地化子目录绕过。"
+      ],
+      "actors": [
+        "owner: 文档所有者",
+        "contributors: 英文作者; 中文作者/翻译者",
+        "reviewers: 双语评审者",
+        "automation: verify-translation-pairing 检查三件套、切换行、结构签名、记录。"
+      ],
+      "steps": [
+        "写/改英文侧。",
+        "同改中文侧（或先中文后英文）。",
+        "保持结构单元一致。",
+        "重录 sidecar。",
+        "跑配对门禁。"
+      ],
+      "enforcement": {
+        "mode": "automatic-pairing-gate-plus-review",
+        "implementation": "verify-translation-pairing 发现三件套、检查切换行/结构签名/记录；README 定义范围与权威。",
+        "trust": "文件存在、切换行、结构自动；语义忠实/术语靠评审。",
+        "failure": "缺一侧、切换行错误、结构签名差异、记录过期时失败。",
+        "exceptions": "vendor/生成物/归档/部分历史记录排除；生成源免切换行；纯单语项目需显式声明。"
+      },
+      "applicability": [
+        "when: 任何范围内人类文档的新增或修改。",
+        "preconditions: 已确定双语范围; 有结构比较器/记录格式",
+        "inapplicable: 纯代码、生成物、归档、单语项目（需声明）。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-page-skeleton",
+        "related: documentation-i18n-consistency-record; documentation-i18n-pair-gate",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "先定三件套和结构签名，再翻译；不要先写英文全稿再批量补中文。",
+        "implementation": "模板生成两侧骨架；配对门禁检查；翻译按结构单元进行。",
+        "requiredSupport": [
+          "三文件约定",
+          "结构比较器",
+          "切换行模板"
+        ]
+      },
+      "reference": "references/documentation.md#i18n-pairing",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每篇范围内文档三件套齐全，切换行方向正确。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "两侧标题/列表/表格/链接/代码块结构一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺文件、切换行错误或结构签名不同时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补另一侧/修结构/重录后重跑；不要用空文件占位。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "结构一致不等于语义忠实。",
+        "范围排除可能漏掉实际应双语的页面。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-consistency-record",
+      "title": "节键哈希一致性记录与重录",
+      "sources": [
+        {
+          "path": "scripts/translation-pairing-record.ts",
+          "start": 1,
+          "end": 299,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 21,
+          "end": 43,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "两侧文件内容会变，需要一条记录证明“这对文档在这些内容上被确认一致”。源仓库用按标题/结构块键的哈希记录，合并两侧并重录。",
+      "triggers": [
+        "任一侧内容变化",
+        "结构变化",
+        "准备声称“已确认一致”"
+      ],
+      "obligations": [
+        "每个双语对有一个 .i18n.yaml sidecar；路径由英文源 X.md 推导为 X.zh.md 与 X.i18n.yaml。",
+        "记录按英文标题 slug 路径分节；每节三行：/key、  en: 16位hex、  zh: 16位hex；键唯一、en/zh 顺序固定。",
+        "节哈希覆盖该节顶层块（frontmatter 视为首块），排除 fenced code 与生成区域；两侧代码块/生成区域必须同源。",
+        "渲染必须给出 canonical 头注释、恢复命令 pnpm run verify-translation-pairing --write <source>、稳定排序和一个尾换行。",
+        "diff 区分当前新增节（unconfirmed）、任一侧变更、记录中已被删除的节；只有两侧当前哈希与记录一致才算确认。",
+        "内容变化后重录；不能沿用旧记录。"
+      ],
+      "actors": [
+        "owner: 文档作者/翻译者",
+        "contributors: 改动作者",
+        "reviewers: 双语评审者",
+        "automation: translation-pairing-record 解析/合并/渲染 sidecar；verify-translation-pairing 比较当前内容。"
+      ],
+      "steps": [
+        "改内容。",
+        "按结构块重算哈希。",
+        "合并记录，只更新变化块。",
+        "写 sidecar。",
+        "跑配对门禁确认记录与当前内容一致。"
+      ],
+      "enforcement": {
+        "mode": "automatic-record-gate",
+        "implementation": "translation-pairing-record 解析 Markdown 结构块、规范化、哈希、合并；verify-translation-pairing 比较记录签名与当前文件。",
+        "trust": "记录与当前内容一致自动；记录是否代表“人工确认”靠流程/评审。",
+        "failure": "记录缺失、格式错、哈希不匹配或块缺失时失败。",
+        "exceptions": "代码块/生成区域等不翻译块排除；归档使用 blob 哈希的独立格式。"
+      },
+      "applicability": [
+        "when: 任何双语内容变化或结构变化。",
+        "preconditions: 两侧文件存在; 结构解析器稳定",
+        "inapplicable: 生成页由生成器写记录；归档用归档序列化；单语项目无 sidecar。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-pair-contract",
+        "related: documentation-i18n-pair-gate; documentation-i18n-briefing",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "记录绑定内容而不是时间戳；重录只更新变化块。",
+        "implementation": "按结构块哈希；合并保留未变块；门禁比较当前签名。",
+        "requiredSupport": [
+          "Markdown 结构解析",
+          "哈希/合并器",
+          "sidecar 格式"
+        ]
+      },
+      "reference": "references/documentation.md#i18n-pairing",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "sidecar 覆盖当前两侧内容，所有块哈希匹配。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "内容变化后记录已重录。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "记录缺失/过期/格式错或块不匹配时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "重录并跑门禁；不要手改哈希或复制旧记录。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "translation-pairing-record.ts:1-78 路径/类型/键与哈希行格式。",
+          "translation-pairing-record.ts:79-243 节切分/哈希/解析/渲染/diff。",
+          "translation-pairing-record.ts:244-299 解析失败、canonical 渲染与差异消息。",
+          "未执行门禁。"
+        ]
+      },
+      "limitations": [
+        "记录只证明两侧内容在确认时相同，不证明译文忠实。",
+        "记录键按英文标题 slug；标题改名会产生新增/删除节，需要重录。",
+        "生成区域与代码块不参与哈希，但配对门禁另行要求同源。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-pair-gate",
+      "title": "配对门禁的模式、发现、签名比较与 --write",
+      "sources": [
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 1,
+          "end": 368,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 21,
+          "end": 43,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "双语规则若只靠人记，无法防止漏文件/结构漂移/记录过期。源仓库用一个 CLI 统一发现、比较、重录和报告。",
+      "triggers": [
+        "任何双语文档改动",
+        "新增/移动/删除双语页",
+        "CI 文档检查"
+      ],
+      "obligations": [
+        "CLI 支持发现/校验/写记录/全量/缓存等模式。",
+        "发现范围覆盖仓库内人类文档并拒绝被排除路径混入。",
+        "检查三件套完整、切换行、结构签名、记录、生成区域同源。",
+        "结构比较按标题/列表/表格/代码块/链接语义，不比较行数。",
+        "--write 只能重录记录，不修内容/结构。",
+        "缓存/全量模式不能缩小实际检查范围。"
+      ],
+      "actors": [
+        "owner: 文档维护者",
+        "contributors: 改动作者; 翻译者",
+        "reviewers: 评审者",
+        "automation: verify-translation-pairing CLI 在 test:docs/doc-sync 中运行。"
+      ],
+      "steps": [
+        "运行发现模式确认范围。",
+        "跑校验模式看失败对。",
+        "修结构/补另一侧/重录。",
+        "再跑校验。",
+        "CI 用全量/缓存模式覆盖改动。"
+      ],
+      "enforcement": {
+        "mode": "automatic-cli-gate",
+        "implementation": "verify-translation-pairing 解析参数/仓库文件，发现配对，比较签名/记录/切换行/区域，支持 --write 等模式。",
+        "trust": "结构和记录自动；翻译语义/术语靠评审；缓存模式可能只覆盖变更集。",
+        "failure": "缺侧、切换行、结构差异、记录过期、排除路径混入时退出 1。",
+        "exceptions": "显式排除（vendor/归档/生成物/历史记录）；生成源免切换行；归档单独校验。"
+      },
+      "applicability": [
+        "when: 双语仓库的任何文档改动，或 CI。",
+        "preconditions: 仓库文件可枚举; 配对记录格式稳定",
+        "inapplicable: 单语项目；纯生成物；归档（独立校验）。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-pair-contract; documentation-i18n-consistency-record",
+        "related: documentation-i18n-briefing",
+        "crossDomain: translation; ci"
+      ],
+      "migration": {
+        "strategy": "一个门禁统一发现和比较；--write 只写记录，不代替内容修改。",
+        "implementation": "CI 跑全量或受信缓存；本地用发现/校验；排除项显式配置。",
+        "requiredSupport": [
+          "CLI",
+          "结构签名",
+          "记录读写",
+          "排除清单"
+        ]
+      },
+      "reference": "references/documentation.md#i18n-pairing",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有范围内配对三件套齐全，结构签名/记录/切换行通过。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "--write 后记录与当前内容一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺侧、结构差异、记录过期或排除路径混入时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修内容/结构后重录；不要用 --write 掩盖结构差异。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "结构签名不比较行数/语义。",
+        "缓存模式可能漏掉未变更但已漂移的页面。",
+        "排除清单可能过宽。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-translation-rules",
+      "title": "翻译忠实、语气、结构与标点规则",
+      "sources": [
+        {
+          "path": "docs/i18n/translation-rules.md",
+          "start": 1,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/translation-prompt.md",
+          "start": 63,
+          "end": 127,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "翻译若只追求通顺，会削弱合同、漏掉例外或把条件合并。源仓库把忠实（命题/强度）置于自然表达之前，并给出结构/语气/标点规则。",
+      "triggers": [
+        "翻译任何文档",
+        "审阅译文",
+        "调整术语/风格"
+      ],
+      "obligations": [
+        "保留每个命题，不增不减；每个句子/列表项/注释/FIXME/警告/示例/前提/保证都要有对应。",
+        "保留行为者、对象、条件、例外、否定、模态、因果、概念区分。",
+        "合同强度不得削弱/加强/反转/合并；完成/生命周期条件、失败行为、数据流、所有权、数量边界必须保持。",
+        "目标语言原生技术写作，正式、精确，不口语化；不为避免被动而虚构责任者。",
+        "结构保持：标题层级/顺序、列表种类/项数、表格行列、链接语义、代码块。",
+        "代码块注释逐字节保留；中文标点全角（代码/数字/完整英文内半角）。"
+      ],
+      "actors": [
+        "owner: 翻译者",
+        "contributors: 中文作者; 领域专家",
+        "reviewers: 双语评审者",
+        "automation: 配对门禁检查结构；忠实/语气靠人工或模型审阅，无自动语义等价。"
+      ],
+      "steps": [
+        "逐句对照源，标出条件/例外/否定/数量。",
+        "按目标语言重组句法，但保持逻辑范围。",
+        "保留代码/路径/术语/标点规则。",
+        "自审：先只读译文，再逐句对照源。",
+        "修所有漏译/增译/弱化。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-prompt-plus-review",
+        "implementation": "translation-rules.md 的规则与 RFC 级别；translation-prompt.md 的忠实/结构/语气/标点要求；配对门禁只覆盖结构。",
+        "trust": "结构可自动；忠实/语气/术语正确无法自动证明。",
+        "failure": "结构差异被门禁拒绝；语义弱化可能通过门禁但被评审拒绝。",
+        "exceptions": "代码块注释不翻译；专有名词/API/路径保留；目标语言标点规则按语言。"
+      },
+      "applicability": [
+        "when: 任何翻译或译文审阅。",
+        "preconditions: 有源文与术语表; 评审者懂两侧语言/领域",
+        "inapplicable: 纯代码/生成区域；机器可读记录；单语项目。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-complete-proposition",
+        "related: documentation-i18n-terminology; documentation-i18n-style-samples",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "忠实优先，自然第二；结构是硬约束，语气是校准。",
+        "implementation": "按句标合同要素；双读自审；配对门禁+人工/模型审阅。",
+        "requiredSupport": [
+          "术语表",
+          "风格样例",
+          "双语评审"
+        ]
+      },
+      "reference": "references/documentation.md#terminology",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "译文保留所有命题/条件/例外/否定/数量，结构一致。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "代码/路径/专有名词按规则保留。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "漏译、增译、弱化合同、合并列表/表格或翻译代码注释时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "发现弱化后对照源恢复强度；不要用“更自然”解释合同变化。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "语义忠实无法机械验证。",
+        "评审者语言能力影响结果。",
+        "风格样例不是规则源。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-terminology",
+      "title": "术语绑定表、首次出现与同 PR 更新",
+      "sources": [
+        {
+          "path": "docs/i18n/terminology.md",
+          "start": 1,
+          "end": 215,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/translation-rules.md",
+          "start": 39,
+          "end": 44,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一英文术语在不同页面被译成不同中文，会让读者以为是不同概念。源仓库维护绑定表，规定保留英文/中文/首次注释/禁用译法。",
+      "triggers": [
+        "翻译含领域术语的文档",
+        "新增术语",
+        "发现同一概念多种译法"
+      ],
+      "obligations": [
+        "术语表给英文、中文、处理方式、约束。",
+        "首次出现按表处理；要求保留英文的术语不得意译。",
+        "缩写首次出现给全称/缩写；已通用 API/CLI 名不多余翻译。",
+        "表未收录的新术语按最小规则处理，并在同一 PR 补表。",
+        "禁止的译法明确写出。",
+        "同一术语在标题/正文中保持一致（代码注释不翻译）。"
+      ],
+      "actors": [
+        "owner: 术语维护者/翻译者",
+        "contributors: 领域专家; 中文作者",
+        "reviewers: 双语评审者",
+        "automation: 没有自动术语检查；配对/结构门禁不验证用词。"
+      ],
+      "steps": [
+        "查术语表。",
+        "首次出现按表加注释/保留英文。",
+        "新术语先定处理方式并在同 PR 更新表。",
+        "全文搜索禁用译法。",
+        "评审抽查关键术语。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-table-plus-review",
+        "implementation": "terminology.md 的绑定表；translation-rules 的术语段；style-samples 给示例。",
+        "trust": "完全靠作者/评审；没有脚本强制术语。",
+        "failure": "不一致不会被自动拒绝，但会造成概念混淆；评审应要求改表/改译文。",
+        "exceptions": "代码标识符/API/路径/产品名按表保留；首次注释只加一次。"
+      },
+      "applicability": [
+        "when: 翻译/重写含领域术语的文档，或引入新术语。",
+        "preconditions: 有可维护的术语表; 领域专家可裁决",
+        "inapplicable: 纯代码/生成区域；普通非领域词。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-translation-rules",
+        "related: documentation-i18n-style-samples",
+        "crossDomain: domain-modeling"
+      ],
+      "migration": {
+        "strategy": "术语表只收高频/易分歧/影响合同的词，每条给处理方式和反例。",
+        "implementation": "把表接入翻译提示词；同 PR 更新；搜索禁用译法。",
+        "requiredSupport": [
+          "术语表",
+          "领域专家",
+          "翻译提示词集成"
+        ]
+      },
+      "reference": "references/documentation.md#terminology",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "关键术语按表处理，首次出现注释正确。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "同一概念全文译法一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "自造译法、该保留英文却意译、首次注释重复/缺失时，评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按表统一并搜索替换；新词补表后重译相关段落。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "没有自动术语检查。",
+        "表可能滞后于新概念。",
+        "“首次出现”在长文/多页中边界模糊。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-style-samples",
+      "title": "风格样例的校准优先级与维护",
+      "sources": [
+        {
+          "path": "docs/i18n/style-samples.md",
+          "start": 1,
+          "end": 87,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/translation-rules.md",
+          "start": 13,
+          "end": 19,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "翻译规则抽象，样例能把“忠实但自然”具体化；但样例若被当成额外规则，会覆盖具体上下文。",
+      "triggers": [
+        "翻译者需要校准语气",
+        "新增规则/典型错误",
+        "评审对“自然”有分歧"
+      ],
+      "obligations": [
+        "样例是校准材料，不是额外规则源。",
+        "先准确后自然；样例只示范其对应规则，不覆盖具体文档上下文或更高优先级。",
+        "样例按“源→差→好”或对照形式给出，保持双语。",
+        "样例由人工评审，随规则 PR 更新。",
+        "不要从样例反推出与规则冲突的硬规则。"
+      ],
+      "actors": [
+        "owner: 翻译维护者",
+        "contributors: 中文作者; 领域专家",
+        "reviewers: 双语评审者",
+        "automation: 无自动检查；样例由评审维护。"
+      ],
+      "steps": [
+        "读规则。",
+        "读对应样例校准语气。",
+        "按样例的模式改写，但不改事实/结构。",
+        "发现新典型错误时补样例并评审。",
+        "保持样例本身双语。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-calibration",
+        "implementation": "style-samples.md 的对照样例；translation-rules 明确样例的从属地位。",
+        "trust": "完全靠评审；没有脚本验证样例质量。",
+        "failure": "样例过时/含旧机制会误导；评审应更新而非照抄。",
+        "exceptions": "样例不覆盖代码/术语表/具体文档上下文；冲突时以规则和源文为准。"
+      },
+      "applicability": [
+        "when: 翻译者需要语气校准，或新增典型错误样例。",
+        "preconditions: 已有规则文本; 有双语评审",
+        "inapplicable: 纯机械替换；代码块；生成区域。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-translation-rules",
+        "related: documentation-i18n-terminology",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "样例服务于规则，不另立规则；每个样例标注它示范哪条规则。",
+        "implementation": "按“差→好”对照；保持双语；定期清理过时机制描述。",
+        "requiredSupport": [
+          "规则文本",
+          "双语样例",
+          "评审"
+        ]
+      },
+      "reference": "references/documentation.md#terminology",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "样例与其示范的规则一致，双语对照清晰。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "翻译者能据此校准语气而不改变事实。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "样例引入与规则冲突的硬规则，或含过时机制描述时，评审应拒绝/更新。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "样例过时后替换并检查引用；不要照抄旧机制。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "样例不是规则源，覆盖有限。",
+        "源仓库样例含旧哈希描述，直接照抄会误导（见参考限制）。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-routine-extended",
+      "title": "常规单次翻译与显式扩展工作流",
+      "sources": [
+        {
+          "path": "docs/i18n/README.md",
+          "start": 57,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "每次双语改动都启动重型多代理流程会浪费；但新页/整篇重译需要更完整的发现、简报和审阅。源仓库区分常规与扩展。",
+      "triggers": [
+        "日常双语更新",
+        "新页/整篇重译/术语迁移",
+        "用户显式要求翻译工作流"
+      ],
+      "obligations": [
+        "常规双语更新由单次翻译工作在同一改动内完成。",
+        "只有用户显式调用 dsh-translate-docs 才运行扩展工作流。",
+        "扩展流程包含范围确认、读标准/术语/样例、分块、简报、翻译、自审、结构校验、重录、门禁。",
+        "不要从普通任务推断“运行扩展翻译”。",
+        "常规流程仍需两侧同改、术语表和重录。"
+      ],
+      "actors": [
+        "owner: 文档作者/翻译者",
+        "contributors: 改动作者",
+        "reviewers: 双语评审者",
+        "automation: 常规靠配对门禁；扩展工作流由 Skill 指导，非自动触发。"
+      ],
+      "steps": [
+        "判断改动规模/是否新页/是否术语迁移。",
+        "常规：单次翻译+重录+门禁。",
+        "扩展：显式确认后按 Skill 步骤执行。",
+        "完成后跑配对/结构门禁。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-workflow-selection",
+        "implementation": "docs/i18n/README 的常规/扩展区分；dsh-translate-docs Skill 的扩展步骤。",
+        "trust": "选择靠作者/用户；没有脚本判断该用哪种。",
+        "failure": "把扩展流程用于小改动会浪费；把新页当常规会漏简报/审阅。",
+        "exceptions": "用户显式要求扩展；新页/整篇重译/术语迁移应走扩展。"
+      },
+      "applicability": [
+        "when: 任何双语改动。",
+        "preconditions: 知道改动规模与是否新页; 用户是否显式要求",
+        "inapplicable: 单语项目；纯生成页由生成器处理。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-pair-contract",
+        "related: documentation-i18n-briefing",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "按改动规模选流程，不按“文档很重要”选。",
+        "implementation": "常规单次；扩展显式；两者共用术语/结构/记录门禁。",
+        "requiredSupport": [
+          "流程选择标准",
+          "扩展 Skill",
+          "配对门禁"
+        ]
+      },
+      "reference": "references/documentation.md#translation-workflow",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "小改动走常规且两侧/记录通过；新页/重译走扩展并有简报。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "扩展流程有范围、分块、自审、门禁证据。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "把新页当常规导致漏结构/记录时，评审应拒绝；未经用户调用运行扩展流程应避免。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "误选流程后停止并切到正确流程，不重复写入。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "流程选择无自动强制。",
+        "扩展流程成本高，可能被跳过。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-briefing",
+      "title": "翻译简报的范围、双侧与 --apply 结构校验",
+      "sources": [
+        {
+          "path": "scripts/gen-translation-brief.ts",
+          "start": 1,
+          "end": 331,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-translate-docs/SKILL.md",
+          "start": 26,
+          "end": 34,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "整篇重译或长文更新时，翻译者需要知道哪些内容变了、哪些未变、结构哪里变了。只给英文 diff 会让中文侧盲目重写。",
+      "triggers": [
+        "扩展翻译/整篇重译",
+        "结构变化",
+        "需要限定翻译范围"
+      ],
+      "obligations": [
+        "gen-translation-brief 读取记录中最后确认的两侧 blob，计算变更区间。",
+        "按 mechanical/units/sections/document 范围输出。",
+        "简报覆盖双侧，不只英文 diff。",
+        "--apply 只校验结构，不写译文；结构错误要修。",
+        "简报范围必须与实际改动一致；不相关块不重译。",
+        "完成后重录记录。"
+      ],
+      "actors": [
+        "owner: 翻译者",
+        "contributors: 改动作者",
+        "reviewers: 双语评审者",
+        "automation: gen-translation-brief 生成简报；--apply 校验结构；配对门禁验证最终记录。"
+      ],
+      "steps": [
+        "确认两侧最后确认内容。",
+        "生成简报。",
+        "按范围翻译变化块。",
+        "用 --apply 校验结构。",
+        "重录并跑配对门禁。"
+      ],
+      "enforcement": {
+        "mode": "automatic-brief-generation-plus-structural-validation",
+        "implementation": "gen-translation-brief 解析记录/当前文件，计算区间，输出范围；--apply 校验结构不写译文。",
+        "trust": "变更区间/结构校验自动；翻译内容/术语靠评审。",
+        "failure": "记录缺失/结构错误/范围不一致时简报或 --apply 失败。",
+        "exceptions": "纯 mechanical 变更可简单处理；新页没有历史记录时按整篇。"
+      },
+      "applicability": [
+        "when: 扩展翻译、整篇重译、结构变化。",
+        "preconditions: 两侧有最后确认记录; 当前文件可解析",
+        "inapplicable: 常规小改动可不用简报；单语项目。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-consistency-record",
+        "related: documentation-i18n-routine-extended; documentation-i18n-prompt-pipeline",
+        "crossDomain: translation"
+      ],
+      "migration": {
+        "strategy": "用记录算变更区间，用双侧简报防止只改英文。",
+        "implementation": "生成 mechanical/units/sections/document 范围；--apply 只验结构；完成后重录。",
+        "requiredSupport": [
+          "记录/最后确认 blob",
+          "简报生成器",
+          "结构校验"
+        ]
+      },
+      "reference": "references/documentation.md#translation-workflow",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "简报覆盖实际变更范围且包含双侧；结构校验通过。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "翻译只改范围内块，未变块保留。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "记录缺失、范围不一致或结构错误时简报/--apply 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修记录/结构后重新生成简报；不要跳过结构校验。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "变更区间依赖记录准确；记录过期会误导。",
+        "--apply 不验证语义。"
+      ]
+    },
+    {
+      "id": "documentation-i18n-prompt-pipeline",
+      "title": "机器消费的翻译提示词、XML 输出与后处理",
+      "sources": [
+        {
+          "path": "scripts/translation-prompt.ts",
+          "start": 1,
+          "end": 259,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-translation-prompt.ts",
+          "start": 1,
+          "end": 98,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/translation-prompt.expected.spec.ts",
+          "start": 1,
+          "end": 32,
+          "kind": "test"
+        },
+        {
+          "path": "docs/i18n/translation-prompt.md",
+          "start": 1,
+          "end": 263,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "直接把文档丢给模型翻译，输出格式/占位符/切换行会不稳定。源仓库用固定提示词、占位符、few-shot 和三段 XML 协议，由流水线后处理。",
+      "triggers": [
+        "运行翻译流水线",
+        "修改翻译提示词",
+        "模型输出格式不稳定"
+      ],
+      "obligations": [
+        "提示词只支持三个占位符 {{source_lang}}、{{target_lang}}、{{terminology}}；模板正文位于 `## 模板正文` 的四反引号 text 围栏内。",
+        "渲染不得留下未解析占位符；源/目标文件名必须是 basename 且方向匹配（.md→.zh.md，.zh.md→.md）。",
+        "请求消息顺序固定为 system、每组 few-shot 的 user/assistant、最后 user 源文档；示例按整篇对照提供。",
+        "模型只返回三个裸 XML 段 <translation>、<review>、<final>，各出现一次且按序；容忍整体 ```xml 围栏包裹。",
+        "段体内恰为框架标签的行必须多一个反斜杠转义；解析时只去掉一个框架转义。",
+        "消费响应时保留 frontmatter、要求 H1、把语言切换行替换为目标 canonical 行；缺 H1/未闭合 frontmatter 失败。",
+        "验证器检查占位符表、双向渲染、示例组装、响应 round-trip、录制响应前缀；expected.spec 与快照比对。"
+      ],
+      "actors": [
+        "owner: 翻译流水线维护者",
+        "contributors: 提示词作者; 翻译者",
+        "reviewers: 评审者",
+        "automation: translation-prompt.ts 渲染/解析/清理；verify-translation-prompt.ts 检查模板、双向请求、示例和录制响应；translation-prompt.expected.spec.ts 运行 keyless snapshot。"
+      ],
+      "steps": [
+        "改提示词/模板时保持占位符与 XML 协议。",
+        "更新 few-shot（整篇对照）。",
+        "运行 verify-translation-prompt。",
+        "用流水线翻译并后处理。",
+        "跑配对/结构门禁。"
+      ],
+      "enforcement": {
+        "mode": "template-and-response-contract",
+        "implementation": "占位符白名单与模板围栏提取；translationFiles 校验方向/basename；parseTranslationResponse 逐段计数/顺序/转义；correctLanguageSwitcher 重建目标切换行。",
+        "trust": "模板形态、请求顺序、XML 段结构、转义和目标切换行自动；不证明模型译文忠实、术语正确或输出自然。",
+        "failure": "缺模板/围栏、未知/缺失/畸形占位符、错误方向、重复/缺失/乱序 XML 段、正文外内容、未闭合 frontmatter、缺 H1、示例/snapshot 不匹配时失败。",
+        "exceptions": "整体 xml 围栏可被容忍；无修正用 `- 无修正`；pending terminology 可只出现在 review。"
+      },
+      "applicability": [
+        "when: 运行自动翻译，或修改提示词/模板。",
+        "preconditions: 有流水线替换器; 有术语表/文档内容; 有结构后处理",
+        "inapplicable: 纯人工翻译；代码块；单语项目。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-translation-rules; documentation-i18n-terminology",
+        "related: documentation-i18n-briefing",
+        "crossDomain: automation; translation"
+      ],
+      "migration": {
+        "strategy": "把提示词当代码：固定协议、可验证模板、确定性后处理。",
+        "implementation": "三段 XML；占位符白名单；few-shot 整篇对照；后处理切换行；结构门禁兜底。",
+        "requiredSupport": [
+          "模板引擎",
+          "提示词验证",
+          "后处理",
+          "配对门禁"
+        ]
+      },
+      "reference": "references/documentation.md#translation-prompt",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "提示词占位符/区段/few-shot 通过验证。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "流水线输出三段 XML，后处理切换行正确，配对结构通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "占位符缺失、XML 段缺失/重复/乱序、段外正文、切换行未翻转时拒绝；整体 ```xml 围栏由解析器容忍，但提示词不要求。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修模板/后处理并重跑；不要手工改模型输出掩盖协议错误。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "translation-prompt.ts:1-120 占位符/方向/模板提取/渲染。",
+          "translation-prompt.ts:120-259 请求组装/响应转义/解析/切换行修正。",
+          "verify-translation-prompt.ts:1-98 双向、示例、录制响应检查。",
+          "translation-prompt.expected.spec.ts:1-32 快照比对；fixtures 已核对。",
+          "未执行脚本/快照。"
+        ]
+      },
+      "limitations": [
+        "验证器只检查模板/结构/快照，不调用模型，不证明译文质量。",
+        "快照是人工校准样例，不是实时语料。",
+        "录制响应只覆盖一个英文→中文样本。"
+      ]
+    },
+    {
+      "id": "documentation-agent-note-lifecycle",
+      "title": "Agent Note 的路径、生命周期与合并/删除",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 5,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/agent-note-tree.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "设计理由若散落在 PR/聊天，未来会反复重提。Agent Note 记录决策、被放弃项和验证；生命周期目录表达状态，路径编码分类与日期。",
+      "triggers": [
+        "做持久架构/流程决策",
+        "提议重大未来工作",
+        "拒绝一个提案",
+        "完全取代旧决策"
+      ],
+      "obligations": [
+        "只在代码/测试/现有文档无法解释理由时写；机械/局部改动豁免。",
+        "路径 {lifecycle}/{class}/yyyy-mm-dd-topic-title.md；class 为 feature/bug-fix/simplification/architecture/process/testing。",
+        "proposed 未建；implemented 已交付；rejected 被拒绝且只在能阻止可信错误时保留。",
+        "已有 owning note 时更新，不建重复。",
+        "implemented note 随代码事实更新，但不得改成另一个决策。",
+        "完全取代可合并删除；删除前三件套一起、保留独有理由/替代/后果/验证、修复入站链接。"
+      ],
+      "actors": [
+        "owner: 决策所有者",
+        "contributors: 提案者; 实现者",
+        "reviewers: 架构/流程评审者",
+        "automation: agent-note-tree/classification 检查路径与类；格式门禁检查内容。"
+      ],
+      "steps": [
+        "判定是否满足写笔记条件。",
+        "选 lifecycle/class 和日期文件名。",
+        "写 Problem/Decision/Alternatives/Consequences。",
+        "实现后更新事实；被取代时合并/删除三件套。",
+        "跑分类/格式/配对门禁。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-tree-classification-gate",
+        "implementation": "notes/README 定义生命周期/分类/写入门槛；agent-note-tree 枚举并校验路径/类；格式门禁校验骨架。",
+        "trust": "路径/分类自动；是否值得写、合并是否完整靠评审。",
+        "failure": "未知类/路径、缺三件套、错误状态时门禁失败；错误决策记录可能通过格式但误导。",
+        "exceptions": "机械/局部改动不写；proposed 永不归档；rejected 可删除。"
+      },
+      "applicability": [
+        "when: 持久决策、重大提案、拒绝、完全取代。",
+        "preconditions: 决策有替代方案和非显然理由; 有明确生命周期",
+        "inapplicable: 机械/局部修改、局部 UI、纯实现细节。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-tier-placement",
+        "related: documentation-agent-note-format-gates; documentation-agent-note-archive",
+        "crossDomain: architecture; process"
+      ],
+      "migration": {
+        "strategy": "用问题清单判断是否写；路径即状态；合并前保留独有理由。",
+        "implementation": "模板化骨架；分类目录；同 PR 更新；删除前三件套与链接。",
+        "requiredSupport": [
+          "生命周期目录",
+          "分类清单",
+          "模板",
+          "评审"
+        ]
+      },
+      "reference": "references/documentation.md#agent-notes",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "决策笔记路径/类/状态正确，Problem/Decision/Alternatives/Consequences 完整。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "已实现笔记与当前代码事实一致；删除/合并保留独有理由。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "未知类、路径错、缺状态/骨架或把已实现笔记改成另一决策时，门禁/评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "移动生命周期时改状态并满足目标骨架；误删后从历史/三件套恢复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "写入门槛是判断性的，可能过度/不足记录。",
+        "分类边界（architecture/process）可能争议。"
+      ]
+    },
+    {
+      "id": "documentation-agent-note-format-gates",
+      "title": "Agent Note 头部、骨架、替代方案与禁用标题门禁",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 77,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-agent-note-format.ts",
+          "start": 1,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-agent-note-classification.ts",
+          "start": 1,
+          "end": 27,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Agent Note 若格式自由，读者找不到状态/问题/决策/替代方案，评审也无法机械检查。源仓库固定头部、生命周期骨架和替代方案要求。",
+      "triggers": [
+        "新增/移动/修改 Agent Note",
+        "已实现笔记出现提案语",
+        "旧笔记缺替代方案"
+      ],
+      "obligations": [
+        "第 1 行 # Agent Note: <title>；第 2 行空；第 3 行状态；第 4 行空。",
+        "首节 ## Problem；proposed 还需 Proposal/Alternatives considered/Acceptance criteria/Risks。",
+        "implemented 需 Decision/Alternatives considered/Consequences；禁止 Proposal/Plan/Migration plan/Acceptance criteria。",
+        "rejected 需 Proposal，保留提案骨架，状态行写拒绝理由。",
+        "每个笔记有 Alternatives considered；2026-07-05 前不可重建的用精确祖父注释。",
+        "状态行唯一；归档格式另加 Archived 行。"
+      ],
+      "actors": [
+        "owner: 笔记作者",
+        "contributors: 提案者; 实现者",
+        "reviewers: 评审者",
+        "automation: verify-agent-note-format 检查头部/骨架/状态/禁用标题/祖父注释；分类门禁检查路径。"
+      ],
+      "steps": [
+        "选模板写头部。",
+        "写 Problem。",
+        "按生命周期写必需节。",
+        "写 Alternatives considered（真实替代，不编造）。",
+        "跑格式门禁；旧笔记用祖父注释需满足日期。"
+      ],
+      "enforcement": {
+        "mode": "automatic-format-gate",
+        "implementation": "verify-agent-note-format 解析非围栏行，校验首行/状态/必需 H2/禁用 H2/替代方案/祖父注释/遗留标记；分类门禁校验路径。",
+        "trust": "格式/状态/标题自动；替代方案是否真实、决策质量靠评审。",
+        "failure": "头部/状态/必需节/替代方案/禁用标题不符时退出 1。",
+        "exceptions": "2026-07-05 前不可重建替代方案的旧笔记用精确注释；归档保留封印格式；中文侧跳过格式门禁由配对检查。"
+      },
+      "applicability": [
+        "when: 任何活跃 Agent Note 的新增/移动/修改。",
+        "preconditions: 有生命周期模板; 知道格式采纳日期",
+        "inapplicable: 归档笔记（保留封印格式）；中文侧（配对结构）。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-agent-note-lifecycle",
+        "related: documentation-agent-note-archive",
+        "crossDomain: process"
+      ],
+      "migration": {
+        "strategy": "头部和必需节机械化；替代方案内容留给作者/评审。",
+        "implementation": "格式门禁+分类门禁；模板；旧笔记祖父注释。",
+        "requiredSupport": [
+          "格式解析器",
+          "生命周期模板",
+          "分类清单"
+        ]
+      },
+      "reference": "references/documentation.md#agent-notes",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个活跃笔记头部/状态/必需节/替代方案符合生命周期。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "implemented 无提案语标题。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 Problem/Decision/Alternatives、状态不符、implemented 出现 Proposal/Plan 时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按错误补节/改状态；旧笔记用祖父注释需满足日期。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "中文侧不跑格式门禁。",
+        "替代方案可以形式化填写，质量无法自动验证。"
+      ]
+    },
+    {
+      "id": "documentation-agent-note-archive",
+      "title": "归档三件套、Archived 行、冻结清单与封印例外",
+      "sources": [
+        {
+          "path": "scripts/archived-agent-notes.ts",
+          "start": 1,
+          "end": 204,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-archived-agent-notes.ts",
+          "start": 1,
+          "end": 115,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "历史决策需要保留，但不能继续作为当前权威或反复修改。源仓库用冻结归档、三件套、Archived 行和追加封印清单实现不可变历史。",
+      "triggers": [
+        "已实现笔记不再指导未来但仍有历史价值",
+        "删除/归档/合并决策",
+        "归档清单变更"
+      ],
+      "obligations": [
+        "只归档已实现、决策完成、理由不太可能指导未来、仍有历史价值的笔记。",
+        "移动完整英文/中文/sidecar 三件套到 archived/{class}/；class 必须是已知 Agent Note 类。",
+        "保留 Status: implemented；两侧状态行下插入相同 Archived: YYYY-MM-DD；两侧日期必须一致且不早于源文件名日期。",
+        "sidecar 每个归档文件一行 `<filename>.md: <40-hex Git blob>`；英文/中文两侧都必须是当前 blob 哈希，不能沿用活动记录的节哈希。",
+        "归档只允许这些内容变更；之后永久冻结，不编辑/翻译/重排/修复/移动/删除。",
+        "manifest 记录 sha256 内容哈希；普通校验拒绝未封印新增/变更/缺失/不完整三件套/未知类/无效元数据。",
+        "写入用 --write；CI 用受信变更前基线；精确旧→新例外只允许清单列出的文件。"
+      ],
+      "actors": [
+        "owner: 归档所有者",
+        "contributors: 笔记所有者; 维护者",
+        "reviewers: 评审者",
+        "automation: verify-archived-agent-notes 校验目录/三件套/元数据/manifest；archived-agent-notes 提供哈希/清单函数。"
+      ],
+      "steps": [
+        "判定是否满足归档条件。",
+        "移动三件套并插入 Archived 行。",
+        "重录 sidecar（归档格式）。",
+        "跑 --write 追加哈希。",
+        "普通校验确认冻结；修复入站链接。"
+      ],
+      "enforcement": {
+        "mode": "automatic-frozen-archive-gate",
+        "implementation": "verify-archived-agent-notes 读取归档目录/manifest，校验三件套、类目录、Archived 行、哈希、append-only；archived-agent-notes 管理序列化/扩展。",
+        "trust": "结构/哈希/append-only 自动；归档条件是否满足靠评审。",
+        "failure": "未封印新增、变更/缺失、三件套不全、未知类、元数据错时失败。",
+        "exceptions": "精确 Figma 链接移除例外；归档变更只允许三件套迁移+Archived 行+重录+链接修复。"
+      },
+      "applicability": [
+        "when: 归档已实现笔记，或修改归档清单。",
+        "preconditions: 三件套齐全; 归档格式 sidecar; 受信基线",
+        "inapplicable: proposed 笔记（应拒绝/删除）；仍需指导未来的笔记（保持活跃）。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-agent-note-format-gates",
+        "related: documentation-i18n-consistency-record",
+        "crossDomain: history; release"
+      ],
+      "migration": {
+        "strategy": "先判定历史价值，再做一次性迁移；归档后只读。",
+        "implementation": "三件套一起移动；Archived 行；归档侧哈希；--write 封印；CI 基线校验。",
+        "requiredSupport": [
+          "归档目录/类",
+          "归档 sidecar 格式",
+          "manifest/哈希",
+          "受信基线"
+        ]
+      },
+      "reference": "references/documentation.md#archive",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "归档三件套完整，两侧 Archived 行一致，manifest 哈希匹配。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "普通校验拒绝未封印新增/变更。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺三件套、未知类、元数据错、哈希不匹配或未封印新增时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按封印流程 --write 补哈希；不要手改 manifest 或归档内容。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "archived-agent-notes.ts:1-140 清单/哈希/路径格式。",
+          "archived-agent-notes.ts:141-204 三件套完整性、元数据日期、blob sidecar、manifest 追加冻结。",
+          "verify-archived-agent-notes.ts:1-115 变更前基线/CLI。",
+          "未执行门禁。"
+        ]
+      },
+      "limitations": [
+        "归档条件/历史价值是判断性的。",
+        "活动 sidecar 与归档哈希格式不同，误用活动 --write 会失败。"
+      ]
+    },
+    {
+      "id": "documentation-upgrade-guide",
+      "title": "升级指南的触发、路径、双语结构与长度",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "发布说明常写“改了什么”，但用户需要知道“我必须改什么、怎么确认”。升级指南把破坏面变成可执行迁移。",
+      "triggers": [
+        "现有用户必须改配置/代码/数据",
+        "发布破坏性变更",
+        "升级指南过时"
+      ],
+      "obligations": [
+        "只在用户必须动作时写；普通发布说明/内部重构不写。",
+        "路径 docs/upgrade-guide/v<semver>/<kebab-item>/guide.md 与 guide.zh.md；无目录索引。",
+        "frontmatter 恰为 kind: upgrade-guide 与非空 description。",
+        "英文 ## Change/## Migration，上限 500 词；中文 ## 变更/## 迁移，无词数上限。",
+        "版本目录不重写历史；修正用新版本/条目。",
+        "跑 verify-upgrade-guides。"
+      ],
+      "actors": [
+        "owner: 发布/升级指南作者",
+        "contributors: 变更作者; 支持者",
+        "reviewers: 评审者",
+        "automation: verify-upgrade-guides 检查路径/节/长度/双语结构。"
+      ],
+      "steps": [
+        "确认用户是否必须动作。",
+        "选版本/item 路径。",
+        "写 Change/变更。",
+        "写 Migration/迁移步骤与验证。",
+        "跑门禁并配对。"
+      ],
+      "enforcement": {
+        "mode": "automatic-guide-shape-gate-plus-review",
+        "implementation": "dsh-create-upgrade-guide 定义触发/维护；模板给骨架；verify-upgrade-guides 检查路径/节/长度。",
+        "trust": "形态/长度自动；是否真的需要动作、步骤是否可执行靠评审。",
+        "failure": "缺节、错误路径/版本、超长或双语结构不符时失败。",
+        "exceptions": "无用户动作的发布不写；纯内部变更不写。"
+      },
+      "applicability": [
+        "when: 发布需要现有用户修改的破坏性变更。",
+        "preconditions: 有版本/item 命名; 知道旧/新行为与迁移步骤",
+        "inapplicable: 普通发布说明、内部重构、无用户动作的变更。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-pair-contract",
+        "related: documentation-current-state",
+        "crossDomain: release; migration"
+      ],
+      "migration": {
+        "strategy": "一个破坏面一个条目；先给动作再给背景。",
+        "implementation": "固定路径/frontmatter/节；英文正文上限 500 词，中文无词数上限；迁移步骤含验证；历史不重写。",
+        "requiredSupport": [
+          "版本目录",
+          "升级指南模板",
+          "门禁"
+        ]
+      },
+      "reference": "references/documentation.md#upgrade-guide",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "需要动作的破坏面有对应版本/item 指南，含 Change/Migration 或中文对应节。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "迁移步骤可执行且有验证。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺节、错误路径、超长或无需动作却写指南时，门禁/评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按版本补指南/修节；发布后不重写历史，追加新条目。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "是否“需要用户动作”是判断性的。",
+        "500 词限制可能压掉必要步骤。"
+      ]
+    },
+    {
+      "id": "documentation-skill-invocation-metadata",
+      "title": "Skill frontmatter 与 openai.yaml 调用策略一致性",
+      "sources": [
+        {
+          "path": "scripts/verify-skill-invocation-metadata.ts",
+          "start": 1,
+          "end": 122,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Skill 的调用策略若在 frontmatter 和 openai.yaml 中不一致，模型/用户会得到相反行为：以为不能自动调用却实际可，或手动专用却用户不可见。",
+      "triggers": [
+        "新增/修改 Skill",
+        "改变自动/手动调用策略",
+        "发布 Skill 包"
+      ],
+      "obligations": [
+        "frontmatter disable-model-invocation 与 agents/openai.yaml policy.allow_implicit_invocation 表达同一策略。",
+        "手动专用 Skill 必须 user-invocable: true（用户可调用）。",
+        "frontmatter 形态、目录名/名称、描述非空。",
+        "检查器同时验证策略配对，不只验证字段存在。",
+        "策略改变时两处同改。"
+      ],
+      "actors": [
+        "owner: Skill 所有者",
+        "contributors: Skill 作者",
+        "reviewers: 评审者",
+        "automation: verify-skill-invocation-metadata 解析 frontmatter/openai.yaml 并比较策略。"
+      ],
+      "steps": [
+        "确定自动/手动策略。",
+        "同改 frontmatter 与 openai.yaml。",
+        "确保手动专用仍用户可调用。",
+        "跑元数据门禁。"
+      ],
+      "enforcement": {
+        "mode": "automatic-metadata-parity-gate",
+        "implementation": "verify-skill-invocation-metadata 解析两处元数据，检查字段/目录名/描述/策略配对。",
+        "trust": "元数据一致自动；Skill 内容质量/发现顺序不检查。",
+        "failure": "策略不一致、手动专用不可用户调用、字段/名称错误时失败。",
+        "exceptions": "没有 openai.yaml 的项目需自定义等价清单；纯提示型 Skill 仍受策略约束。"
+      },
+      "applicability": [
+        "when: 新增/修改 Skill 或调用策略。",
+        "preconditions: 有 frontmatter 与 openai.yaml; 知道是否允许隐式调用",
+        "inapplicable: 非 Skill 文档；普通脚本。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-page-skeleton",
+        "crossDomain: agent-workflows"
+      ],
+      "migration": {
+        "strategy": "把调用策略集中声明并让检查器比较两处。",
+        "implementation": "frontmatter + openai.yaml 同改；手动专用 user-invocable true；CI 门禁。",
+        "requiredSupport": [
+          "元数据清单",
+          "检查器"
+        ]
+      },
+      "reference": "references/documentation.md#skills",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "两处策略一致，手动专用 Skill 用户可调用。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "名称/目录/描述有效。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "策略不一致或手动专用不可调用时门禁拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "同改两处并重跑；不要只改一处。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "只验证元数据，不验证 Skill 行为。",
+        "不同客户端可能忽略字段。"
+      ]
+    },
+    {
+      "id": "documentation-website-publication-manifest",
+      "title": "网站发布清单、DocsPage 字段与原子发布",
+      "sources": [
+        {
+          "path": "website/AGENTS.md",
+          "start": 1,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "website/docs.ts",
+          "start": 1,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/project-doc-site.ts",
+          "start": 1,
+          "end": 263,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档站的发布面若从文件系统自动推断，草稿/归档/内部页会泄露，路由和翻译对侧会失控。源仓库用显式清单声明每个发布页及关系。",
+      "triggers": [
+        "新增/移动/删除发布页",
+        "改路由/翻译对侧",
+        "发布网站"
+      ],
+      "obligations": [
+        "发布由显式清单控制，不从文件系统 glob 推断。",
+        "每个 DocsPage 声明源、路由、语言、对侧、镜像、图片、别名等字段。",
+        "docsPages 只列人工源；生成页由生成器登记，不手加。",
+        "移动/改路由同改清单，保持原子性。",
+        "路由树/locale 映射/源别名必须一致。",
+        "不得在生成站手改来补缺失页。"
+      ],
+      "actors": [
+        "owner: 网站/文档维护者",
+        "contributors: 文档作者; 网站作者",
+        "reviewers: 评审者",
+        "automation: project-doc-site 测试校验清单/路由/别名/对侧；构建生成站点。"
+      ],
+      "steps": [
+        "在清单声明页面与字段。",
+        "确认源文件与路由/语言/对侧。",
+        "移动时原子更新清单与源。",
+        "跑 project-doc-site 测试与构建。"
+      ],
+      "enforcement": {
+        "mode": "manifest-plus-projection-tests",
+        "implementation": "website/docs.ts 的 DocsPage 清单/字段；project-doc-site 解析/校验路由树、源别名、对侧；构建生成。",
+        "trust": "清单结构/路由/对侧自动；是否应发布、内容质量靠评审。",
+        "failure": "缺字段、路由冲突、源别名错、对侧不一致、清单外链接时测试/构建失败。",
+        "exceptions": "内部页可不发布，但不能被发布页链接；生成页由生成器登记。"
+      },
+      "applicability": [
+        "when: 新增/移动/删除发布页，或改路由/语言。",
+        "preconditions: 有显式清单; 路由/语言约定",
+        "inapplicable: 纯内部文档、归档、生成物不发布。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-markdown-links",
+        "related: documentation-website-link-projection; documentation-website-raw-llms",
+        "crossDomain: website"
+      ],
+      "migration": {
+        "strategy": "清单是唯一发布入口；源文件与路由分开。",
+        "implementation": "DocsPage 字段完整；原子移动；测试校验；生成页登记。",
+        "requiredSupport": [
+          "发布清单",
+          "路由树校验",
+          "构建流程"
+        ]
+      },
+      "reference": "references/documentation.md#reference-policy",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "每个发布页在清单中有完整字段，路由/语言/对侧一致。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "移动/删除后清单与源同步。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺字段、路由冲突、对侧不一致或清单外发布时测试/构建失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补清单/修路由/恢复源后重建；不要手改生成站。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "清单可能漏页；测试只覆盖已声明关系。",
+        "发布清单不保证内容正确。"
+      ]
+    },
+    {
+      "id": "documentation-website-link-projection",
+      "title": "源相对链接到网站路由的投影与失败",
+      "sources": [
+        {
+          "path": "scripts/project-doc-site.ts",
+          "start": 263,
+          "end": 577,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-doc-site-fragments.ts",
+          "start": 1,
+          "end": 181,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "源 Markdown 链接相对于文件，网站路由是另一套地址；若手写网站路由，GitHub 和站点会二选一坏掉。源仓库用投影器单向转换并拒绝死链。",
+      "triggers": [
+        "新增/修改发布页链接",
+        "改路由/标题锚点",
+        "图片引用"
+      ],
+      "obligations": [
+        "源文档只写相对链接/图片；投影器转换为站点路由/资源。",
+        "每类目标（文档/目录/图片/外部）有明确重写规则。",
+        "片段按 canonical 锚点转换；缺目标失败，不生成死链。",
+        "源映射用于编辑链接；不手写网站路由。",
+        "片段检查覆盖合成/生成的锚点。",
+        "投影失败应阻止构建，不静默跳过。"
+      ],
+      "actors": [
+        "owner: 网站/文档维护者",
+        "contributors: 文档作者; 网站作者",
+        "reviewers: 评审者",
+        "automation: project-doc-site 投影/校验；verify-doc-site-fragments 检查片段；构建测试。"
+      ],
+      "steps": [
+        "在源文件写相对链接。",
+        "确保目标在清单中。",
+        "标题/锚点变化时同改引用。",
+        "跑 docs:check/构建。",
+        "按失败修源/清单。"
+      ],
+      "enforcement": {
+        "mode": "automatic-projection-and-fragment-gate",
+        "implementation": "project-doc-site 解析源链接并按类型重写；verify-doc-site-fragments 检查目标片段；测试覆盖投影规则。",
+        "trust": "链接/片段转换自动；语义目标是否正确靠评审。",
+        "failure": "缺目标、片段不存在、图片路径错、源写网站路由时失败。",
+        "exceptions": "外部链接不改写；未发布内部页不可被发布页链接；生成区域锚点由生成器保证。"
+      },
+      "applicability": [
+        "when: 发布页的链接/标题/图片变化，或改路由。",
+        "preconditions: 发布清单完整; 投影规则覆盖链接类型",
+        "inapplicable: 未发布内部文档；纯外部链接。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-website-publication-manifest; documentation-markdown-links",
+        "related: documentation-website-raw-llms",
+        "crossDomain: website"
+      ],
+      "migration": {
+        "strategy": "源链接保持相对；网站转换集中；死链阻止构建。",
+        "implementation": "投影器按目标类型重写；片段检查；源映射；测试。",
+        "requiredSupport": [
+          "发布清单",
+          "投影器",
+          "片段检查",
+          "构建"
+        ]
+      },
+      "reference": "references/documentation.md#reference-policy",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有发布页链接/图片被重写为有效站点路由/资源，片段可达。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "源文档没有手写网站路由。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺目标、片段不存在、图片路径错或手写路由时测试/构建失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "改源链接/清单/锚点后重建；不要手补生成站。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "外部链接存在性不检查。",
+        "投影规则可能不覆盖新链接类型。"
+      ]
+    },
+    {
+      "id": "documentation-website-raw-llms",
+      "title": "raw Markdown 孪生、llms.txt 与开发中间件",
+      "sources": [
+        {
+          "path": "website/docs.ts",
+          "start": 123,
+          "end": 591,
+          "kind": "instruction"
+        },
+        {
+          "path": "website/build.ts",
+          "start": 1,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/project-doc-site.ts",
+          "start": 473,
+          "end": 577,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "agent 需要读取原始 Markdown，而人类需要渲染页；只提供 HTML 会迫使抓取/解析。源仓库为白名单页面生成 raw 孪生和 llms.txt，并在开发/构建中保持同源。",
+      "triggers": [
+        "新增发布页/raw 页",
+        "生成 llms.txt",
+        "开发服务器/预构建"
+      ],
+      "obligations": [
+        "rawDocsPages 白名单页面生成 .md 原始孪生；根路由提供 canonical raw。",
+        "llms.txt 从同一发布清单生成。",
+        "raw 文件带正确 BOM/编码；父路由别名指向 raw。",
+        "开发中间件在重写前提供 raw；预构建不得覆盖手写页。",
+        "合成片段也过链接/片段门禁。",
+        "raw 内容来自源文档，不单独维护。"
+      ],
+      "actors": [
+        "owner: 网站/文档维护者",
+        "contributors: 网站作者; 文档作者",
+        "reviewers: 评审者",
+        "automation: 项目站构建/测试生成 raw/llms 并校验；开发中间件服务 raw。"
+      ],
+      "steps": [
+        "在清单标记 raw 白名单。",
+        "构建生成 raw 与 llms.txt。",
+        "确认根路由/父别名指向 raw。",
+        "开发服务器验证 raw 优先。",
+        "跑站测试/片段门禁。"
+      ],
+      "enforcement": {
+        "mode": "generated-raw-plus-build-gate",
+        "implementation": "website/docs.ts 的 rawDocsPages/路由；build.ts 预构建；project-doc-site 的 raw 路由/别名/生成；测试覆盖。",
+        "trust": "raw/llms 生成与路由自动；内容正确性来自源文档。",
+        "failure": "缺 raw、llms 不含页、预构建覆盖手写页、片段无效时构建/测试失败。",
+        "exceptions": "非白名单页不生成 raw；私有/草稿不发布；生成页由生成器登记。"
+      },
+      "applicability": [
+        "when: 发布页新增/修改，或改 raw/llms 行为。",
+        "preconditions: 有发布清单; 有 raw 白名单/路由",
+        "inapplicable: 未发布页；纯内部文档。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-website-publication-manifest",
+        "related: documentation-website-link-projection",
+        "crossDomain: website; agent-consumption"
+      ],
+      "migration": {
+        "strategy": "raw 是发布页的派生物，不单独写；llms.txt 从清单生成。",
+        "implementation": "白名单生成 .md；根/父别名；开发中间件；预构建保护手写页；片段门禁。",
+        "requiredSupport": [
+          "raw 路由",
+          "llms 生成器",
+          "开发中间件",
+          "构建顺序"
+        ]
+      },
+      "reference": "references/documentation.md#reference-policy",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "白名单页面有 raw 孪生，llms.txt 覆盖发布页，开发服务器返回 raw。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "预构建不覆盖手写页，片段有效。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 raw/llms、路由错、预构建覆盖手写页或片段无效时构建/测试失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "重新生成 raw/llms；不要手写 raw 或覆盖生成文件。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "raw 内容正确性依赖源文档。",
+        "BOM/编码问题可能影响消费端。"
+      ]
+    },
+    {
+      "id": "documentation-gate-composition",
+      "title": "快速/完整/网站专用门禁的组合与执行顺序",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 104,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 805,
+          "end": 883,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档门禁很多，编辑时全跑太慢，提交前漏跑又会把问题留给 CI。源仓库把门禁分成 quick/full/site 三层，并明确各自覆盖。",
+      "triggers": [
+        "编辑文档",
+        "提交前",
+        "CI/发布前",
+        "新增门禁"
+      ],
+      "obligations": [
+        "test:docs 跑 doc-quick：标记 quick 的文档门禁，包括 package-readme-summaries、package-readme-model-experience、package-readme-limitations 与 vitest scripts/doc-standard.spec.ts；不含 doc-typecheck/网站构建。",
+        "doc-sync 跑完整文档门禁：类型检查、网站构建、生成器、链接、配对、Agent Note、预算、README 三类与 doc-standard 测试等。",
+        "docs:check 是网站投影/构建/片段专用，不替代 doc-sync。",
+        "编辑循环跑受影响单门禁；提交前跑 doc-sync；CI 跑同一组或更广。",
+        "门禁不可用时报告不可用，不用人工检查冒充自动保证。",
+        "新增门禁要说明 quick 与否、依赖/产物和失败修复。"
+      ],
+      "actors": [
+        "owner: 文档维护者/CI 维护者",
+        "contributors: 改动作者; CI 维护者",
+        "reviewers: 评审者",
+        "automation: package.json scripts 与 run-gates 模式选择；CI 工作流调用。"
+      ],
+      "steps": [
+        "编辑时跑目标单门禁。",
+        "提交前跑 doc-sync。",
+        "网站改动加 docs:check。",
+        "CI 用同一组/更广 check-all。",
+        "按失败修复并复跑。"
+      ],
+      "enforcement": {
+        "mode": "script-composition-plus-ci",
+        "implementation": "package.json 的 test:docs/doc-sync/docs:check（119-120,130,140）；run-gates 的 docQuickLeafGates/docSyncLeafGates 与 quick 标记：README Summaries 850、Model Experience 851、doc-standard vitest 859-862、limitations 872 均 quick；doc-quick 过滤 quick 门禁 881-883。",
+        "trust": "脚本组合确定本地/CI 跑什么；远程分支保护是否强制不在本域证据。静态阅读只证明装配存在，不证明这些命令已在本机或 CI 成功。",
+        "failure": "漏跑会在 CI 失败；quick 集不含类型检查/网站构建，不能当完整证据；README 结构门禁通过也不证明语义真实或译文等价。",
+        "exceptions": "诊断/紧急发布可跑子集，但必须补完整 CI；网站专用检查不能替代文档检查。"
+      },
+      "applicability": [
+        "when: 任何文档改动、提交前、CI、发布前。",
+        "preconditions: 脚本可运行; 依赖/生成物就绪",
+        "inapplicable: 纯代码改动（但仍可能触发 JSDoc/类型检查）。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-doc-typecheck; documentation-i18n-pair-gate",
+        "related: documentation-generated-reference-freshness",
+        "crossDomain: ci; release"
+      ],
+      "migration": {
+        "strategy": "按反馈速度分层，但规则来源同一；quick 是子集不是替代。",
+        "implementation": "test:docs=quick；doc-sync=full；docs:check=site；CI 跑 full/更广。",
+        "requiredSupport": [
+          "脚本组合",
+          "CI 工作流",
+          "失败诊断"
+        ]
+      },
+      "reference": "references/documentation.md#gate-composition",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "编辑循环/提交前/CI 分别运行正确层级，完整层级覆盖文档类型/配对/生成/网站。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "CI 实际运行并阻塞合并（需远程证据）。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "只跑 quick 就声称完整、或 docs:check 替代 doc-sync 时，评审/CI 应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "漏跑后补跑完整门禁；不可用时明确报告，不伪造绿色。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本地脚本可绕过；远程强制需单独证据。",
+        "quick 集覆盖有限，容易误判。"
+      ],
+      "notes": "2026-10-24 复核 run-gates.ts:487-505（ciStaticGates 包含 docSyncLeafGates）、805-885（完整 doc-sync/doc-quick 叶集）与 package.json:87-88,119-120,130,140。PR ci.yml 调 check:ci:static，master ci-master.yml 调 check:ci；docs-pages.yml 仅 workflow_dispatch，不是 PR 阻塞证据。远程 required-check/分支保护未查询。静态读取见 _working/audit/readme-gates-full-source-repair.json；未执行任何门禁。"
+    },
+    {
+      "id": "documentation-session-format-status",
+      "title": "Session 格式状态记录、发布证据与双语一致性",
+      "sources": [
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 162,
+          "end": 299,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 1,
+          "end": 56,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Session 格式的写入版本、已接受兼容基线、最新发布版本是三个不同事实。混在一起会让读者把“代码支持”当成“已发布”。",
+      "triggers": [
+        "Session 格式升级",
+        "产品发布携带新格式",
+        "更新状态页"
+      ],
+      "obligations": [
+        "状态页区分检查点写入版本、最终确定基线、发布记录。",
+        "写入版本由代码常量拥有；发布记录只声明已发布事实。",
+        "latestReleasedVersion 非负安全整数且不超过当前写入版本。",
+        "evidenceTag 匹配 dsh-v<semver> 且不含 URL 定界符；正文同时出现 tag 和 tagged writer 路径。",
+        "英文/中文各恰好一个 session-format-release 记录，字段恰为两项且两侧相等。",
+        "升级先改代码/目录，不提前推进发布记录；发布后同改两侧与证据；开发主干不降低版本。"
+      ],
+      "actors": [
+        "owner: Session 格式所有者/发布者",
+        "contributors: 格式作者; 发布工程师",
+        "reviewers: 评审者",
+        "automation: doc-standard.spec 校验记录结构/双语/证据/写入边界；无网络。"
+      ],
+      "steps": [
+        "确认当前写入常量。",
+        "更新格式目录/兼容基线。",
+        "发布后确认 tag/tagged writer。",
+        "同改两侧 record 与证据行。",
+        "跑 doc-standard 测试。"
+      ],
+      "enforcement": {
+        "mode": "automatic-record-structure-and-bilingual-test",
+        "implementation": "doc-standard.spec 解析 YAML record，校验字段/类型/边界/tag/证据/双侧相等；session-format-status.md 提供权威叙述。",
+        "trust": "结构/双语/写入边界自动；发布是否真实、记录是否最新不查询远端。",
+        "failure": "重复/未闭合/多文档/额外字段/类型错/超前写入/双侧不等/证据缺失时失败。",
+        "exceptions": "无持久化格式的项目不适用；历史/发布记录另有持久化域规则。"
+      },
+      "applicability": [
+        "when: Session 格式或发布状态变化。",
+        "preconditions: 有写入版本常量; 有发布 tag/writer 路径; 双语状态页",
+        "inapplicable: 无持久化格式的项目；纯内部格式变更未发布时可只改代码/目录，不推进发布记录。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-i18n-pair-contract",
+        "related: documentation-current-state",
+        "crossDomain: persistence; release"
+      ],
+      "migration": {
+        "strategy": "把写入/基线/发布拆成三个事实，各自有权威。",
+        "implementation": "代码常量+最终确定记录+发布 record；证据 tag+路径；双语测试。",
+        "requiredSupport": [
+          "格式目录",
+          "发布 tag",
+          "双语状态页",
+          "无网络测试"
+        ]
+      },
+      "reference": "references/documentation.md#session-status",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "状态页三分事实清楚，record 字段/边界/tag/证据通过，双侧相等。",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "发布记录不超过写入版本。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "重复/未闭合/额外字段/类型错/超前写入/双侧不等时测试拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按测试修 record/证据；发布未确认前不推进记录。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "无网络检查不证明记录最新或发布真实。",
+        "证据 tag/path 可能被伪造/过期。"
+      ]
+    },
+    {
+      "id": "documentation-markdown-corpus-model",
+      "title": "受检 Markdown 语料、行模型与仓库文件发现合同",
+      "sources": [
+        {
+          "path": "scripts/markdown.ts",
+          "start": 1,
+          "end": 277,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/repo-files.ts",
+          "start": 1,
+          "end": 295,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "文档门禁共享一套 Markdown 解析/行提取和仓库文件发现规则；若各门禁自行解释围栏、注释、符号链接或 glob，语料会悄悄缩小或同一文档被重复计数。",
+      "triggers": [
+        "新增/修改文档门禁",
+        "新增受检路径模式",
+        "Markdown 含围栏/HTML 注释/Setext 标题",
+        "仓库含符号链接"
+      ],
+      "obligations": [
+        "用 GFM 解析（含表格/删除线等扩展）；标题深度支持 ATX 与 Setext，标题文本用渲染后文本（原始 HTML 注释不进入 slug）。",
+        "散文行排除围栏/缩进代码块和 HTML 注释；保留原始 1-based 行号与原文本，供换行/预算/注释检查共用。",
+        "代码围栏保留 info string 首词与完整 info；显式记录 closed，mdast 在 EOF 静默闭合的围栏不得当成已闭合。",
+        "链接目标用作者源偏移定位，兼容 `<...>`、转义、嵌套括号和引用定义；定位失败抛错而不是静默跳过。",
+        "仓库 glob 只模型化 `*`、`?`、`**`；字符类、brace/extglob、反斜杠、`..`、空段、尾随 `**` 等不支持语法必须显式抛错，不能静默返回空集。",
+        "`**` 只展开真实目录；通配段按 dirent 类型，不进入符号链接目录；最终段可匹配文件/符号链接；最终段的断链/环链在 realpath 处显式失败，非最终 literal 断链匹配为空。",
+        "多个 pattern 共享目录列表；按 canonical realpath 去重符号链接；归档 Agent Note 不作为源扫描，但指向它们的链接仍作为目标检查。"
+      ],
+      "actors": [
+        "owner: 文档基础设施维护者",
+        "contributors: 门禁作者",
+        "reviewers: 文档评审者",
+        "automation: markdown.ts 提供解析/围栏/标题/散文/目标偏移；repo-files.ts 提供受限 glob、跳过目录、符号链接去重与逐行引用扫描。"
+      ],
+      "steps": [
+        "选择受检 pattern 并确认 walker 支持其语法。",
+        "用共享 markdownFences/markdownProseLines/markdownHeadingLines，不另写解析器。",
+        "处理 closed=false 与 HTML 注释边界。",
+        "对 canonical realpath 去重并显式处理断链。",
+        "测试空语料、括号/转义目标、未闭合围栏、符号链接和不支持 glob。"
+      ],
+      "enforcement": {
+        "mode": "shared-parser-and-corpus-contract",
+        "implementation": "mdast + micromark GFM；repo-files 自定义 walker 用 dirent/stat 避免 Node glob 在 symlink 下的 ENOTDIR，并对未模型化语法抛 TypeError。",
+        "trust": "解析形态、行号、围栏闭合、glob 语法拒绝和符号链接去重自动；不证明文档内容正确，也不保证所有调用者使用同一 pattern。",
+        "failure": "不支持 glob/`..`/空段/尾随 `**`、目标偏移缺失、断链/环链 realpath 失败时抛错；未闭合围栏以 closed=false 交给调用者判定。",
+        "exceptions": "归档笔记不作为链接/类型检查源；生成页由生成器负责；纯页内/外部/根绝对链接由链接门禁跳过。"
+      },
+      "applicability": [
+        "when: 任何 Markdown 门禁、生成器或文档发现脚本。",
+        "preconditions: GFM 解析器; 受限 glob walker; 符号链接策略",
+        "inapplicable: 二进制/非 Markdown 文件；纯网站生成物不按源文档语料处理。"
+      ],
+      "relationships": [
+        "related: documentation-markdown-links; documentation-translation-pairing; documentation-doc-typecheck; documentation-generated-reference-freshness",
+        "crossDomain: automation"
+      ],
+      "migration": {
+        "strategy": "先固定共享解析/发现合同，再让所有门禁复用；不要为每个门禁复制正则或 glob。",
+        "implementation": "将 parser、fence/prose/heading 提取、受限 glob、canonical 去重做成共享模块，并为未支持语法写拒绝测试。",
+        "requiredSupport": [
+          "mdast/GFM",
+          "受限 glob walker",
+          "符号链接 realpath 策略",
+          "共享行号模型"
+        ]
+      },
+      "reference": "references/documentation.md#markdown-gates",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有门禁对围栏、注释、标题、链接目标和仓库文件得出同一行/路径集合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "不支持 glob、坏目标偏移、断链/环链时显式失败，而不是缩小语料。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "扩展 walker 语法或修正 pattern；不要通过吞掉异常/加排除来变绿。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": [
+          "markdown.ts:1-277 解析/围栏/散文/标题/目标偏移。",
+          "repo-files.ts:1-295 受限 glob、符号链接 realpath 去重、逐行引用扫描。",
+          "未执行门禁。"
+        ]
+      },
+      "limitations": [
+        "共享解析器只保证语法/行号一致，不保证文档语义。",
+        "不同门禁仍可各自选择 pattern；空 pattern 可能被调用者当成空语料。",
+        "未闭合围栏需调用者检查 closed；解析器不自动报错。",
+        "glob walker 刻意不支持 Node 全部 glob 语法。"
+      ]
+    }
+  ]
+}

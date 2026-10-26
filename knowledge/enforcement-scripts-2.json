@@ -1,0 +1,844 @@
+{
+  "schema": "governance-domain/v1",
+  "domain": "enforcement-scripts-2",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "bounds": {
+    "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "sourceRoot": "deepseek-harness",
+    "sourceInventorySha256": "4485c550c067b7c13cdec7a6b3036093fa76897c35bacca0fabdbca6fde02a32",
+    "scope": "Residual reading partition enforcement-scripts-2: 61 assigned paths under deepseek-harness/scripts/ covering build, generation, verification, release, packaging, snapshot fixtures and workflow contracts."
+  },
+  "mechanisms": [
+    {
+      "id": "enforcement-scripts-2.locale-dictionary-key-parity",
+      "title": "已发布语言字典的 zh/en 键集必须对称",
+      "sources": [
+        {
+          "path": "scripts/locale-dictionary-parity.spec.ts",
+          "start": 1,
+          "end": 308,
+          "kind": "test"
+        }
+      ],
+      "problem": "语言运行时先按 active locale 查键，再查唯一的 fallback locale（en），最后把 key 本身显示出来。若一份字典只在 zh 或 en 增加 key，另一语言的读者会看到裸 key（例如 `list.aria`），而不是文本；这种缺口通常直到 UI 才暴露，且只看代码评审很难发现。",
+      "triggers": [
+        "新增或修改任何带 locales.ts、locales/ 目录或插件内联 register() 字典的包",
+        "新增语言或把一份字典拆成 zh.ts / en.ts",
+        "修改 fallback locale 或字典解析顺序"
+      ],
+      "obligations": [
+        "每个随产品发布的字典必须同时声明 zh 与 en，且键集相同；同文件内配对优先，否则必须在同一目录找到兄弟文件。",
+        "发现阶段必须覆盖所有 workspace 包的 src 下 .ts（排除 .d.ts），不得只扫 packages/client；locales.ts、locales/ 目录和插件体内联声明都要被发现。",
+        "缺失对侧文件是错误而不是跳过；同一 pair 被两个文件声明也是错误，不能静默取其一。",
+        "register(ns, tag, dict) 的字典参数必须是可静态解析的对象字面量/模块常量；解析失败要报错，不能当作“没有字典”而缩小扫描面。",
+        "扫描必须用文件数下限（>500）和已配对字典数下限（>25）守卫发现范围；数量骤降视为门禁自身失效。",
+        "失败时补齐缺失键，而不是删除另一侧或把缺口留给 fallback。"
+      ],
+      "actors": [
+        "客户端/插件作者",
+        "UI 文案维护者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "确认包内字典的声明形状（locals 文件、locales 目录或 register() 内联）。",
+        "按现有形状同时添加 zh 与 en 键，保持键名和嵌套结构一致。",
+        "运行该 spec（随单元/覆盖率门禁执行），查看 problems 输出中缺失/多余的具体键。",
+        "修复后重跑；若发现对侧文件缺失，新增文件而不是在运行时兜底。",
+        "若字典是变量，改为字面量或可被静态解析的导出常量。"
+      ],
+      "enforcement": {
+        "mode": "unit test over the repository AST",
+        "implementation": "scripts/locale-dictionary-parity.spec.ts 遍历 packages/*/*/src 的 .ts，AST 解析导出的对象字面量（名称含 zh/en、zhX/enX、XZh/XEn）、三参数 register(ns, 'zh'|'en', dict) 调用，以及 [['zh',{...}],['en',{...}]] 内联对；先在文件内配对，再在同目录兄弟文件中配对，最后汇总 missing/extra 键。",
+        "trust": "只证明当前提交里可被静态发现的字典键集对称；不证明值非空、翻译正确，也不覆盖运行时动态生成的字典。扫描广度由文件数与配对数的下限守卫。",
+        "failure": "不对称或重复声明时测试失败并阻断单元/覆盖率门禁；对侧文件缺失也被判为错误。",
+        "exceptions": [
+          "非字典对象、.d.ts、名称不含 zh/en 的字面量不参与。",
+          "无法静态解析的 register() 字典不是跳过，而是直接失败。"
+        ]
+      },
+      "applicability": "任何运行时只有单一 fallback locale、且字典随包发布的 UI/插件项目。",
+      "relationships": [
+        "documentation-i18n-pair-contract",
+        "engineering-client-component-contract"
+      ],
+      "migration": {
+        "strategy": "把“同键集”变成可执行不变量，而不是评审习惯。",
+        "implementation": "保留 AST 级发现与 fail-closed 解析；要求每个包以可被发现的形状声明双语字典；在单元/覆盖率命令中执行该 spec，并保留扫描下限。",
+        "requiredSupport": [
+          "TypeScript AST 解析",
+          "能枚举 workspace 包 src 的测试 runner",
+          "双语字典的声明约定"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.locale-dictionary-key-parity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同键集的 zh/en 字典与 >500 文件、>25 对的仓库扫描通过。",
+            "check": "运行 locale-dictionary-parity.spec.ts，断言 problems 为空。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "仅在一侧新增键、删除对侧文件、或在 register() 中传入不可解析变量。",
+            "check": "测试必须报告缺失键/缺失对侧/解析失败，而不是跳过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "误删一侧键后门禁变红。",
+            "check": "补齐键并重跑 spec，problems 清空。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不检查字符串语义、空值、占位符一致性或翻译质量；不覆盖仓库外第三方插件；静态发现可能漏掉运行时拼装的字典，届时应扩展发现规则而不是放宽断言。"
+    },
+    {
+      "id": "enforcement-scripts-2.coverage-location-equivalence",
+      "title": "跨编译面的覆盖率位置必须先归一化再合并",
+      "sources": [
+        {
+          "path": "scripts/coverage-partitions.spec.ts",
+          "start": 1,
+          "end": 777,
+          "kind": "test"
+        }
+      ],
+      "problem": "同一源码语句在 ssr 与 client/jsdom 两个 Vite 环境中可能得到不同的列：一个停在标识符，另一个停在嵌套调用；行尾列是 Infinity。覆盖率 blob 经 JSON 序列化后 Infinity 变成 null，istanbul 合并时失去区间包含关系，留下一个永不命中的“幻影”语句，使每文件 100% 门禁假失败，或反过来掩盖真实缺口。",
+      "triggers": [
+        "一个源文件被多个 Vitest project/编译面同时覆盖",
+        "启用覆盖率 blob 合并或修改 partition reporter",
+        "升级 istanbul-lib-coverage、Vitest 或合并实现"
+      ],
+      "obligations": [
+        "每个分区在写 blob 之前，对 CoverageMap.data 的 statementMap、fnMap 的 decl/loc、branchMap 的 loc 以及每个 locations 做行尾列归一化。",
+        "只归一化 Infinity 列（改为统一的 END_OF_LINE_COLUMN）；其他列、行号与命中计数保持原样。",
+        "归一化 reporter 必须在 blob 写出之前运行，且每个分区命令都显式接线；不能依赖默认 reporter 顺序。",
+        "收到不含 istanbul data 的 payload 必须抛错，不能静默跳过，否则所有位置都未归一化。",
+        "归一化后仍由统一的 merge 执行每文件 100% 阈值；归一化不能替代阈值检查。",
+        "不得为通过门禁而删除语句、改写源码或放宽 per-file 阈值。"
+      ],
+      "actors": [
+        "覆盖率门禁维护者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "确认目标文件由哪些 Vitest project/编译面覆盖，以及 blob 合并命令如何拼装。",
+        "在 reporter 中对每类位置执行行尾列归一化，并保留其他列。",
+        "让每个分区命令显式传入该 reporter，确认它在 blob 写出前执行。",
+        "用同一语句的两种拼写构造 fixture，断言合并后只剩一个身份且不再有 0 命中的幻影。",
+        "保留统一 merge 的 per-file 100% 检查，并用真实覆盖率命令验证。"
+      ],
+      "enforcement": {
+        "mode": "unit test plus reporter wiring test",
+        "implementation": "scripts/coverage-canonical-locations.ts 导出 canonicalizeEndOfLineColumns 与 END_OF_LINE_COLUMN，遍历 statementMap、fnMap(decl,loc)、branchMap(loc,locations) 修改 Infinity 列；coverage-partitions.spec.ts 通过 istanbul-lib-coverage 的 createCoverageMap/merge 复现 JSON 化后的 null 列，断言幻影语句消失、所有位置被归一化、无 istanbul data 时抛错，并断言每个分区命令都带 --reporter=./scripts/coverage-canonical-locations.ts。",
+        "trust": "只覆盖报告管线；不证明合并后的每个命中都真实，也不替代统一 merge 的 per-file 100% 阈值。reporter 的实际执行顺序仍依赖 Vitest。",
+        "failure": "未归一化时同一语句出现两个身份，其中一个 0 命中；reporter 未接线或 payload 不含 data 而静默通过时，门禁会在错误的位置变红或变绿。",
+        "exceptions": [
+          "同一位置但语义不同的语句不能只靠列归一化合并，需要报告管线以外的 owner 修正。"
+        ]
+      },
+      "applicability": "任何把多个编译面/worker 的 istanbul 覆盖率 blob 合并后再执行每文件阈值的仓库。",
+      "relationships": [
+        "testing-coverage-partitioning",
+        "testing-coverage-fork-diagnostics"
+      ],
+      "migration": {
+        "strategy": "先规范位置身份，再合并命中。",
+        "implementation": "提供独立的 canonicalizing reporter；在协调器生成的每个分区命令中显式接线；用包含 statement/function/branch 的 fixture 验证；保留统一 merge 阈值。",
+        "requiredSupport": [
+          "istanbul-lib-coverage 或等价覆盖率库",
+          "能在 blob 写出前运行的 reporter 钩子",
+          "分区协调器"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.coverage-location-equivalence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "两个分区对同一语句给出不同列，归一化后合并只保留一个已命中身份。",
+            "check": "运行 coverage-partitions.spec.ts 的 canonicalization/merge 用例。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "去掉归一化、传入无 data 的 payload、或让某个分区不接 reporter。",
+            "check": "对应断言失败：幻影语句出现、抛错缺失或命令缺少 --reporter。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "reporter 未接线导致门禁假绿后修复。",
+            "check": "重新接线并重跑 spec；确认每个分区命令都带 reporter。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "依赖 istanbul-lib-coverage 的合并语义；不同版本的列/区间处理可能变化。归一化只处理行尾 Infinity，不处理其他位置漂移。"
+    },
+    {
+      "id": "enforcement-scripts-2.bilingual-link-locale",
+      "title": "双语对内的相对链接必须指向同语言兄弟",
+      "sources": [
+        {
+          "path": "scripts/translation-links.ts",
+          "start": 1,
+          "end": 384,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "中文页若从英文页复制链接，读者会被带到英文页；而严格按字节比较的双语配对门禁/合并驱动又会把两侧不同的链接目标判成结构漂移。链接需要在“读者语言正确”和“结构可比较”之间同时成立。",
+      "triggers": [
+        "新增或修改 .md / .zh.md 中的仓库内相对链接",
+        "拆分、合并或移动双语对",
+        "运行双语配对门禁、合并驱动或链接归一化"
+      ],
+      "obligations": [
+        "只处理仓库内相对路径，且目标必须存在；外部 URL、协议相对、根绝对路径、空路径与纯 # 跳过。",
+        "目标属于活动双语语料时：.zh.md 页面链接 .zh.md，.md 页面链接 .md；非配对目标保持原样。",
+        "H1 之后唯一的规范语言切换器豁免，避免把切换器本身改成本页。",
+        "保留 query/fragment 与百分号编码，只替换 destination 的字节，不重排 Markdown、不改代码围栏内容。",
+        "未解析、缺失文件或不存在配对的目标不做猜测；引用式定义只在被引用时检查。",
+        "合并驱动把两侧 destination 归一化为 `dsh-translation-target:<source><suffix>` 语义 token，使同语言链接差异不被误判为结构漂移。"
+      ],
+      "actors": [
+        "文档本地化维护者",
+        "合并驱动维护者",
+        "评审者"
+      ],
+      "steps": [
+        "解析 Markdown 并定位 link/definition 节点；跳过外部、绝对和空目标。",
+        "把相对路径解析到仓库目标，确认目标存在并找到其双语 pair。",
+        "按当前页面后缀计算期望语言路径，保留原 query/fragment 与编码。",
+        "只替换 destination 区间，应用后重新解析校验，不重新序列化整篇文档。",
+        "在配对门禁中报告越界链接；在合并驱动中使用语义 token 归一化。"
+      ],
+      "enforcement": {
+        "mode": "library plus markdown gates consumed by pairing/merge commands",
+        "implementation": "scripts/translation-links.ts 提供 languageSwitcherLinkOffset、resolveTranslationLink、visitResolvedDocumentLinks、rewriteTranslationLinkLocales、normalizeTranslationMarkdownLinkEdits；以 mdast 偏移做字节级替换，区分 H1 后切换器与被引用定义。",
+        "trust": "只证明链接 destination 的语言正确与字节保持；不证明目标页面内容、锚点存在或文章语义正确。",
+        "failure": "中文页链接到英文页、切换器被改写、或 Markdown 被重新序列化导致无关字节变化；配对门禁会报告越界链接，合并驱动会产生虚假结构差异。",
+        "exceptions": [
+          "外部 URL、协议相对与根绝对链接不处理。",
+          "未形成双语对的目标保持原样。"
+        ]
+      },
+      "applicability": "任何英文原稿 + 中文镜像、且链接需要按语言重定向的文档仓库。",
+      "relationships": [
+        "documentation-markdown-links",
+        "documentation-i18n-pair-gate",
+        "rationale-process-2/translation-pairing-merge-driver"
+      ],
+      "migration": {
+        "strategy": "用同一次 Markdown 解析同时服务读者正确性与结构比较。",
+        "implementation": "保留“相对路径 + 存在目标 + 活动 pair”三重门槛；只改 destination 字节；切换器豁免；合并驱动改用语义 token 而不是原始 URL 比较。",
+        "requiredSupport": [
+          "mdast/GFM 解析器与位置信息",
+          "仓库内路径解析与 pair 发现",
+          "配对门禁和合并驱动"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.bilingual-link-locale",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "中文页中的英文相对链接被改写为 .zh.md，query/fragment 与编码保持不变。",
+            "check": "对 translation-links 的 rewrite/normalize 用例断言目标与字节区间。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "外部链接、根绝对路径、切换器、未配对目标被误改。",
+            "check": "断言这些 destination 不在 edits/violations 中。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "合并驱动误报结构漂移。",
+            "check": "启用 semantic token 归一化后重新比较两侧。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不检查锚点是否存在、不检查目标语言页面是否真的有对应章节；不处理 HTML 内联链接或非 Markdown 链接语法。"
+    },
+    {
+      "id": "enforcement-scripts-2.pinned-v3-vocabulary",
+      "title": "历史迁移词汇必须绑定不可变提交并核对写入器版本",
+      "sources": [
+        {
+          "path": "scripts/verify-v3-event-vocabulary.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-v3-event-vocabulary.spec.ts",
+          "start": 1,
+          "end": 146,
+          "kind": "test"
+        }
+      ],
+      "problem": "V3→V4 迁移必须知道“V3 写入器到底写过哪些事件”。若从当前工作树、分支或远端读取，V4 新增的事件会被误当成 V3，迁移就会接受它无法转换的输入；而一次不可复现的读取又会让检查结果随环境漂移。",
+      "triggers": [
+        "修改 RELEASED_V3_EVENT_TYPES",
+        "升级 V4 写入器或迁移包",
+        "准备历史迁移发布、复核 V3 词汇"
+      ],
+      "obligations": [
+        "--source-ref 只接受 40 或 64 位小写十六进制完整 commit；分支、tag、缩写都拒绝。",
+        "源对象必须在本地已存在；使用 GIT_NO_LAZY_FETCH=1 禁止隐式拉取，缺失时提示先准备验证过的 source pin。",
+        "对象必须是 commit，不能是 tree；从该提交读取 writer 的 SESSION_FORMAT_VERSION，必须是数字字面量 3，否则拒绝。",
+        "KNOWN_SESSION_EVENT_TYPES 必须恰好有一个初始化导出（允许括号或 as const 包裹），值是 new Set([...]) 且全部元素为字符串字面量；重复名、动态表达式、空构造都拒绝。",
+        "源词汇与迁移侧 RELEASED_V3_EVENT_TYPES 双向比较，分别报告 missing 与 extra；V4-only 事件不得进入 V3 集合。",
+        "测试 fixture 必须剥离 GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE 等环境、禁用 hooks/gpg，避免宿主 Git 配置改变结果。"
+      ],
+      "actors": [
+        "迁移包维护者",
+        "发布工程师",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "为 V3 writer 固定一个完整 commit id，并确认该对象已在本地。",
+        "运行 verify-v3-event-vocabulary --source-ref <commit>。",
+        "检查输出的事件数与 missing/extra；有差异时先审查源 payload 转换，再更新迁移集合。",
+        "只在确认 V3 写入器确实产生该事件后更新 RELEASED_V3_EVENT_TYPES；V4-only 名称保持在 V4 侧。",
+        "在发布检查中保留该命令，禁止用当前 writer 代替 pinned writer。"
+      ],
+      "enforcement": {
+        "mode": "CLI verifier plus hermetic git fixture tests",
+        "implementation": "scripts/verify-v3-event-vocabulary.ts 用 git show/cat-file 读固定提交，剥离括号/as 表达式后 AST 解析 SESSION_FORMAT_VERSION 与事件 Set；verify-v3-event-vocabulary.spec.ts 创建隔离 Git 仓库，覆盖可变 ref、缺失对象、tree 对象、非 V3 writer、非字面量/重复事件名与 Git 环境变量串扰。",
+        "trust": "证明本地 pinned 提交的词汇与迁移集合一致；不证明该提交是远端最新，也不证明事件 payload 可转换。",
+        "failure": "接受可变 ref、V4 事件混入 V3 集合、或测试受宿主 Git 污染时，迁移会在错误词汇上运行，可能丢失或误转历史事件。",
+        "exceptions": [
+          "远端新鲜度不在本检查范围；需要另行记录发布时的远端核对。"
+        ]
+      },
+      "applicability": "任何需要从旧格式迁移、且旧写入器会被新版本取代的持久化格式项目。",
+      "relationships": [
+        "release-session-migrations",
+        "package-contracts-2.session-persistence-format-chain"
+      ],
+      "migration": {
+        "strategy": "先钉死写入器身份，再比较词汇。",
+        "implementation": "使用完整 commit + 本地对象检查 + writer 版本断言 + 双向词汇比较；测试用隔离 Git 环境覆盖每条拒绝边。",
+        "requiredSupport": [
+          "本地可访问的 V3 writer commit",
+          "Git 二进制",
+          "TypeScript AST 解析",
+          "迁移侧事件集合"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.pinned-v3-vocabulary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "完整 V3 commit 的事件集合与迁移集合一致。",
+            "check": "运行 verify-v3-event-vocabulary.ts 并断言 eventCount 与输出。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "传入分支/缩写、缺失对象、tree 对象、V4 writer、动态事件集合。",
+            "check": "每种情况必须抛出对应错误；spec 覆盖这些分支。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "错误地把 V4 事件加入 V3 集合。",
+            "check": "命令报告 extra，移除后重跑通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不检查远端是否存在更新提交；不验证事件 payload 的字段级转换；依赖 Git 与 TypeScript。"
+    },
+    {
+      "id": "enforcement-scripts-2.workflow-guest-single-module",
+      "title": "Workflow guest 必须打成只依赖 Node 内建的单模块",
+      "sources": [
+        {
+          "path": "scripts/gen-workflow-guest.ts",
+          "start": 1,
+          "end": 72,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "workflow guest 被序列化为源码字符串，送进挂载的 PTC runtime 执行。若它仍 import workspace 文件，或被打成多个 chunk，运行时没有对应模块可解析；这类错误会推迟到用户会话才暴露。",
+      "triggers": [
+        "修改 workflow-ptc/src/guest.ts 或其依赖",
+        "升级打包器、tsconfig 或 Node 版本",
+        "提交生成的 guest-source.ts"
+      ],
+      "obligations": [
+        "以仓库 tsconfig.base.json 打包固定 guest 入口，platform 为 node。",
+        "external 只能是 Node 内建模块；出现 UNRESOLVED_IMPORT 立即失败，不能降级为警告。",
+        "输出必须恰好一个 ESM 模块，禁用 code splitting 与 sourcemap。",
+        "模块的静态 imports 与 dynamicImports 过滤内建后必须为空；不得引入 workspace 或第三方文件。",
+        "在代码末尾追加 sourceURL，便于运行时定位。",
+        "生成文件必须带“Generated ... Do not edit directly”横幅，并以 JSON 字符串化源码。",
+        "--check 只验证不写文件；生成物与当前源码不一致时失败并提示重新生成。"
+      ],
+      "actors": [
+        "workflow/PTC 运行时维护者",
+        "构建脚本维护者",
+        "评审者"
+      ],
+      "steps": [
+        "确认 guest 入口与 tsconfig 路径。",
+        "用固定入口打包，external 仅 Node 内建，禁用 splitting/sourcemap。",
+        "断言输出长度为一、外部 import 为空，并追加 sourceURL。",
+        "生成带横幅的模块；在 CI 中用 --check 检查提交副本是否最新。",
+        "若需要新的 guest 依赖，优先内联纯函数或改用运行时可用的 Node 内建。"
+      ],
+      "enforcement": {
+        "mode": "generator with --check freshness gate",
+        "implementation": "scripts/gen-workflow-guest.ts 的 bundleWorkflowGuest 调 Rolldown，捕获 UNRESOLVED_IMPORT，断言单 chunk 与无外部 import；generateWorkflowGuest 负责横幅、JSON 字符串化和 --check 比较。",
+        "trust": "证明当前 guest 源可打成符合形状的单模块；不证明 guest 在 PTC 运行时中的行为正确。",
+        "failure": "多 chunk、workspace import、未解析 import 或提交副本过期时构建/检查失败；若绕过检查，运行时会因缺少模块而失败。",
+        "exceptions": [
+          "Node 内建 import 允许保留；treeshake 关闭 moduleSideEffects 以移除未挂载服务的副作用。"
+        ]
+      },
+      "applicability": "把脚本作为源码字符串注入隔离运行时、且运行时不提供 workspace 模块解析的项目。",
+      "relationships": [
+        "documentation-generated-reference-freshness",
+        "package-contracts-2.workflow-ptc-runtime-boundary"
+      ],
+      "migration": {
+        "strategy": "用打包期约束保证运行期没有缺失模块。",
+        "implementation": "单一入口 + 内建 external + 单模块断言 + 提交物 --check；生成物不手改。",
+        "requiredSupport": [
+          "Rolldown 或等价打包器",
+          "tsconfig.base.json",
+          "CI 中的 --check 步骤"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.workflow-guest-single-module",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "当前 guest 源打包为一个 ESM 模块，--check 通过。",
+            "check": "运行 gen-workflow-guest --check。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "引入 workspace import、拆分 chunk、或修改源码后不重新生成。",
+            "check": "打包报 unresolved/多 chunk，或 --check 报 stale。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "误改生成文件后提交。",
+            "check": "重新运行生成命令，确认 --check 通过。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不验证 guest 逻辑、运行时 API 或 PTC 沙箱安全；只保证交付形状。"
+    },
+    {
+      "id": "enforcement-scripts-2.windows-packaging-dispatch",
+      "title": "Windows 桌面打包只走手动专用 runner 且只上传被选中的安装包",
+      "sources": [
+        {
+          "path": "scripts/windows-package-workflow.spec.ts",
+          "start": 1,
+          "end": 109,
+          "kind": "test"
+        }
+      ],
+      "problem": "PR 或 push 触发桌面打包会把未审阅的安装包变成发布候选；在共享 runner 上清理 checkout 时跟随依赖 junction 会删除工作区外文件；把多个签名模式/版本的产物一起上传会让下游选错安装包。",
+      "triggers": [
+        "修改 .github/workflows/windows-package.yml",
+        "修改桌面打包命令、签名/通道输入或 checkout 清理逻辑",
+        "新增 Windows 打包 preset 或 runner 标签"
+      ],
+      "obligations": [
+        "workflow 只允许 workflow_dispatch；runs-on 固定专用标签 dsh-win-package-trial；permissions 仅 contents: read。",
+        "concurrency 使用固定组且 cancel-in-progress: false，避免打包被并发取消。",
+        "输入提供 signing（默认 signed）、version_mode（默认 default）、source_ref（默认 master）、update_channel（默认 nightly）、preset 等；命令不得直接插值 ${{ inputs.* }}，一律经 env。",
+        "checkout 使用 clean、persist-credentials: false，并检出指定 source_ref；pnpm setup 的 dest 包含 run_id/run_attempt，避免共享缓存串用。",
+        "先运行 settings 校验，再 build；打包先 --check 再正式执行，两步使用相同 version 与 mode，并传播退出码。",
+        "不得读取 .env.windows 等本地文件作为打包输入。",
+        "在 checkout 成功后用 always() 上传诊断目录并包含隐藏文件；每个签名模式只上传选中的成功目录，if-no-files-found: error。",
+        "清理 checkout 时只重置 RUNNER_WORKSPACE 下分配的目录，拒绝工作区外路径以及符号链接/junction 根。"
+      ],
+      "actors": [
+        "发布工程师",
+        "CI 维护者",
+        "Windows 打包维护者",
+        "评审者"
+      ],
+      "steps": [
+        "修改 workflow 后先跑 windows-package-workflow.spec.ts。",
+        "确认触发方式、runner、权限、并发与输入默认值。",
+        "确认所有命令通过 env 读取输入，checkout 固定 ref 且禁用凭据持久化。",
+        "确认 settings → build → package --check → package 的顺序与退出码传播。",
+        "确认诊断与选中安装包的上传条件，以及清理脚本的路径边界。"
+      ],
+      "enforcement": {
+        "mode": "workflow contract test over parsed YAML plus PowerShell execution on Windows",
+        "implementation": "scripts/windows-package-workflow.spec.ts 解析 workflow YAML，断言触发/runner/权限/并发/输入/env/checkout/命令顺序/上传；在 win32 上把清理步骤写成临时 .ps1，用 junction 和 RUNNER_WORKSPACE 环境执行，验证不跟随链接、拒绝越界路径。",
+        "trust": "证明 workflow 形状与清理脚本的路径边界；不证明真实签名、安装包内容或 runner 镜像可用。仅在 Windows 上执行清理脚本行为测试。",
+        "failure": "触发方式变为 push/PR、runner 标签漂移、命令直接插值输入、上传多个模式或清理越界时测试失败；若绕过，可能发布错误产物或删除 runner 外部文件。",
+        "exceptions": [
+          "非 Windows 环境跳过清理脚本执行，但 workflow 形状断言仍运行。"
+        ]
+      },
+      "applicability": "任何在共享 runner 上产出平台安装包、且需要手动选择签名/通道的桌面项目。",
+      "relationships": [
+        "automation-ci-workflow-contract-tests",
+        "release-desktop-package-selection",
+        "automation-cache-posture"
+      ],
+      "migration": {
+        "strategy": "把发布入口、产物选择和清理边界都固化成可测试的 workflow 契约。",
+        "implementation": "专用 runner + 手动触发 + 输入经 env + 先校验后构建 + 选择性上传 + 受限清理；测试同时覆盖 YAML 形状和 Windows 路径行为。",
+        "requiredSupport": [
+          "GitHub Actions",
+          "Windows runner（清理行为测试）",
+          "PowerShell 7",
+          "workflow YAML 解析"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.windows-packaging-dispatch",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "手动触发、专用 runner、固定并发、输入默认值与顺序正确。",
+            "check": "运行 windows-package-workflow.spec.ts 的 workflow 断言。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "加入 push 触发、直接插值输入、上传所有模式、或清理越界/junction。",
+            "check": "对应断言或 PowerShell 执行必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "清理逻辑误删外部文件后恢复边界。",
+            "check": "修正路径检查并重跑 Windows 用例，外部 keep.txt 仍在。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不验证签名证书、安装包可安装性或真实发布；YAML 断言依赖 workflow 结构，重命名 step id 需同步测试。"
+    },
+    {
+      "id": "enforcement-scripts-2.ssh-helper-container-acceptance",
+      "title": "SSH helper 发布前必须在无 Node 的隔离容器里跑真实 OpenSSH",
+      "sources": [
+        {
+          "path": "scripts/verify-ssh-helper-ssh.ts",
+          "start": 1,
+          "end": 108,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/ssh-helper/worker-probe.ts",
+          "start": 1,
+          "end": 67,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "只验证 archive 解包或在本机构建树里运行，无法证明交付的 helper 在没有 Node、没有 checkout、只有 glibc 2.28 的目标环境可用；容器 readiness、host key 和清理处理不当还会制造假绿或残留资源。",
+      "triggers": [
+        "构建或发布 ssh-helper archive",
+        "修改 verify-ssh-helper-ssh / ssh-helper-runtime / PTC worker",
+        "变更 sandbox profile、目标 glibc 或容器镜像"
+      ],
+      "obligations": [
+        "archive 必须匹配同名 .sha256；manifest.target 必须包含 -linux-，镜像平台按 arm64/amd64 选择。",
+        "只从已验证 archive 安装 helper，不把构建树当运行时；在容器内以密钥登录、绑定 127.0.0.1 临时端口，并用固定容器 host key 写 known_hosts。",
+        "readiness 只从容器日志的 'Server listening on' 判定，30 秒超时；sshd 提前退出必须失败。",
+        "driver 使用空 HOME、DSH_HOME、DSH_VERIFY_NO_NODE=1、telemetry 关闭；report 必须通过 runtimeReportSchema。",
+        "断言容器 glibc 为 2.28；失败时附容器日志。",
+        "macOS restricted worker 用 sandbox-exec 拒绝读取/执行 checkout 与宿主 Node，并断言进程环境为空、两个受保护路径都以 EPERM/EACCES 被拒。",
+        "无论成功失败都删除 container、image 与临时目录；删除失败不得掩盖主错误。"
+      ],
+      "actors": [
+        "SSH helper 维护者",
+        "发布工程师",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "准备 Linux helper archive 与 .sha256。",
+        "校验 checksum、解包并验证 payload/manifest。",
+        "按 manifest 平台构建 sshd 容器，生成临时密钥并启动。",
+        "等待日志 readiness，运行 driver 并校验 report 与 glibc。",
+        "在 macOS 上运行 sandbox-exec 受限 worker 探针。",
+        "清理容器/镜像/临时目录；失败时保留日志用于诊断。"
+      ],
+      "enforcement": {
+        "mode": "integration acceptance script plus sandbox probe",
+        "implementation": "scripts/verify-ssh-helper-ssh.ts 校验 archive、构建容器、等待 readiness、运行 driver 并清理；scripts/ssh-helper/worker-probe.ts 生成 Seatbelt profile，拒绝 checkout 与 hostNode，断言 executable、空 env 和两条拒绝码。",
+        "trust": "证明交付 archive 在指定容器/glibc 下可完成真实 SSH 传输，且受限 worker 无法读源码/宿主 Node；不证明生产网络、认证策略或所有 SSH 功能。",
+        "failure": "checksum/manifest 不符、容器未就绪、report schema 不符、glibc 漂移或受限 worker 读到受保护路径时失败；清理遗漏会污染后续运行。",
+        "exceptions": [
+          "macOS 受限探针依赖 sandbox-exec，非 macOS 环境不可执行。",
+          "容器需要 Docker 与网络/本地镜像可用。"
+        ]
+      },
+      "applicability": "发布可在无 Node、旧 glibc 或受限权限环境运行的 SSH helper/二进制交付物。",
+      "relationships": [
+        "engineering-untrusted-subprocess",
+        "release-other-delivery"
+      ],
+      "migration": {
+        "strategy": "以交付 archive 为唯一被测对象，在目标 ABI 的隔离容器中验证。",
+        "implementation": "checksum + manifest + 平台镜像 + 日志 readiness + driver report schema + glibc 断言 + always 清理；macOS 用 Seatbelt 证明源码/宿主运行时不可达。",
+        "requiredSupport": [
+          "Docker",
+          "ssh-keygen/ssh 客户端",
+          "Linux archive 与 .sha256",
+          "macOS sandbox-exec（受限探针）"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.ssh-helper-container-acceptance",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "已验证 archive 在 glibc 2.28 容器中完成真实 SSH 传输，report 通过 schema。",
+            "check": "运行 verify-ssh-helper-ssh.ts --archive <path> --report <path>。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "checksum 错误、非 Linux artifact、容器无 sshd readiness、或受限 worker 读到 checkout。",
+            "check": "对应断言/超时/拒绝码检查必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "容器或临时目录残留。",
+            "check": "检查 docker ps/images 与临时目录，确认 finally 已清理。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不覆盖生产 SSH 配置、网络故障注入或非 Linux 平台；容器平台映射只处理 arm64/amd64。"
+    },
+    {
+      "id": "enforcement-scripts-2.office-render-content-oracle",
+      "title": "Office 渲染证据必须检查内容而不是只看命令成功",
+      "sources": [
+        {
+          "path": "scripts/fixtures/office-render.py",
+          "start": 1,
+          "end": 118,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "渲染器可能返回成功但输出空白、透明、颜色块顺序颠倒，或 manifest 声称的 backend/rasterEngine/source 与实际不符。只看退出码或“图片能打开”会把坏预览当成证据。",
+      "triggers": [
+        "变更 Office 渲染路径或升级 LibreOffice/渲染库",
+        "为 Python runtime 或打包 skill 增加 Office 冒烟",
+        "修改 color-blocks fixture 或 manifest 字段"
+      ],
+      "obligations": [
+        "把 color-blocks.docx/pptx/xlsx 复制到私有测试目录，一次只渲一页/一张表；输出目录按引擎隔离。",
+        "固定 dpi=72、timeout-ms=120000，并为每类文档选择正确范围（docx/pptx 第一页，xlsx Render!A1:B2）。",
+        "manifest 必须 backend==expected、rasterEngine=='libreoffice'、source=='saved'，且 images 恰好一个。",
+        "对唯一图片先合成到白底，再统计红/蓝/黑/非白像素：红、蓝各 ≥1%，黑 ≥0.02%，非白 ≥4%。",
+        "红块质心必须位于蓝块左侧（允许 10% 宽度），防止颜色块顺序颠倒或重叠。",
+        "任一引擎失败要聚合全部错误后统一抛出；成功后只保留文档输入、PNG 批次、manifest 与 error.txt。"
+      ],
+      "actors": [
+        "Python runtime 维护者",
+        "Office 渲染路径维护者",
+        "打包 skill 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "准备一份私有目录，复制三种 color-blocks 文档。",
+        "分别调用真实 CLI 渲染，输出到按引擎隔离的目录。",
+        "解析每个 manifest 并检查 backend/rasterEngine/source/images。",
+        "对每个 PNG 合成白底并计算颜色/非白像素比例与质心顺序。",
+        "聚合所有引擎错误后失败；保留 artifacts 供诊断并清理临时根。"
+      ],
+      "enforcement": {
+        "mode": "content oracle invoked by installed-runtime tests",
+        "implementation": "scripts/fixtures/office-render.py 的 workspace/copy_documents 管理隔离与保留，check_image 做像素统计，check_render_manifest/check_render 校验 manifest，render_cli 逐引擎运行并聚合错误。",
+        "trust": "证明给定 fixture 在真实 LibreOffice 路径下产生了可见、顺序正确的颜色块与文本；不证明任意用户文档的渲染质量。",
+        "failure": "退出码非 0、manifest 字段不符、图片空白/透明、颜色比例不足或红蓝顺序颠倒时失败；错误信息包含 counts。",
+        "exceptions": [
+          "check_content=False 时只校验 manifest，适用于不渲染内容的引擎检查。",
+          "像素阈值针对 color-blocks fixture，换 fixture 需重新标定。"
+        ]
+      },
+      "applicability": "任何通过外部 Office 引擎生成预览/缩略图并以像素或 manifest 作为验收证据的项目。",
+      "relationships": [
+        "packaged-skill-contracts.office-render-escalation",
+        "supply-chain-python-runtime"
+      ],
+      "migration": {
+        "strategy": "用可解释的内容 oracle 替代“命令成功即通过”。",
+        "implementation": "固定 fixture + 隔离输出 + manifest 字段断言 + 白底合成像素统计 + 质心顺序 + 错误聚合与 artifacts 保留。",
+        "requiredSupport": [
+          "LibreOffice 或兼容渲染器",
+          "Pillow",
+          "color-blocks 三格式 fixture",
+          "真实 CLI"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.office-render-content-oracle",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "真实 CLI 渲染三种 fixture，manifest 通过且颜色/文本可见。",
+            "check": "运行调用 office-render.py 的 installed-runtime 用例。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "返回成功但输出空白/透明、manifest backend 错误、images 多于一个、颜色顺序颠倒。",
+            "check": "check_image/check_render_manifest 必须抛出带 counts 的错误。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "某个引擎失败导致聚合错误。",
+            "check": "修正引擎后重跑，错误列表清空。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "像素阈值依赖 fixture、dpi 与字体；不检查文本内容是否正确，只检查存在可见非白像素。"
+    },
+    {
+      "id": "enforcement-scripts-2.lifecycle-entrypoint-resolution",
+      "title": "pnpm 生命周期入口按类型解析而不是拼 shell 字符串",
+      "sources": [
+        {
+          "path": "scripts/pnpm-invocation.spec.ts",
+          "start": 1,
+          "end": 33,
+          "kind": "test"
+        }
+      ],
+      "problem": "脚本在 pnpm run 下通过 npm_execpath 找 pnpm。Windows 路径可能包含空格、$、分号或非 ASCII 字符；把命令拼成 shell 字符串会被截断或执行错误命令，而直接 spawn JS 入口又缺少 Node 解释器。",
+      "triggers": [
+        "新增通过 pnpm run 调用的脚本或 gate",
+        "支持 Windows/带空格路径",
+        "替换 pnpm 安装方式或 npm_execpath 形态"
+      ],
+      "obligations": [
+        "npm_execpath 以 .js/.cjs/.mjs（大小写不敏感）结尾时，command=process.execPath，args=[entrypoint, ...args]。",
+        "其他入口（无扩展名、.exe 等）直接执行 entrypoint，args 原样传递。",
+        "空格、$、分号、非 ASCII 字符必须作为独立 argv 元素原样传递，不能经 shell 拼接。",
+        "npm_execpath 为 undefined 或空字符串时抛出可操作错误，提示通过 pnpm run 调用。",
+        "调用方必须使用该解析结果，不得自行拼接 pnpm 命令字符串。"
+      ],
+      "actors": [
+        "脚本/gate 维护者",
+        "CI 维护者",
+        "跨平台支持者"
+      ],
+      "steps": [
+        "从 process.env.npm_execpath 读取入口。",
+        "按扩展名判断是否需要 Node 解释器。",
+        "返回 {command, args} 并交给 spawn/execFile。",
+        "用含空格、$、非 ASCII 的路径和大小写扩展名测试。",
+        "缺失入口时给出明确错误。"
+      ],
+      "enforcement": {
+        "mode": "unit test over invocation resolution",
+        "implementation": "scripts/pnpm-invocation.ts 导出 pnpmInvocation；pnpm-invocation.spec.ts 覆盖 .js/.cjs/.mjs/大写扩展名、带空格/元字符/非 ASCII 路径、无扩展名与 .exe 直接执行、undefined/空值报错。",
+        "trust": "证明入口分类与 argv 保持；不证明 pnpm 本身可用或脚本在目标 shell 中的行为。",
+        "failure": "字符串拼接导致路径截断、错误解释器或命令注入；缺失入口时静默失败。",
+        "exceptions": [
+          "非 JS 入口的 .exe/.cmd 等直接执行，由操作系统解析。"
+        ]
+      },
+      "applicability": "任何从 pnpm lifecycle 调用子进程、且需要跨 Windows/Unix 的仓库。",
+      "relationships": [
+        "automation-gate-scheduler",
+        "engineering-cross-platform-paths"
+      ],
+      "migration": {
+        "strategy": "把入口解析集中到一个纯函数，禁止调用方拼 shell。",
+        "implementation": "按扩展名选择 process.execPath 或直接执行；argv 原样传递；缺失入口显式报错；用参数化测试锁定路径字符。",
+        "requiredSupport": [
+          "Node child_process",
+          "pnpm run 提供的 npm_execpath"
+        ]
+      },
+      "reference": "references/enforcement-scripts-2.md#enforcement-scripts-2.lifecycle-entrypoint-resolution",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "JS 入口经 Node 执行，非 JS 入口直接执行，特殊字符保持完整。",
+            "check": "运行 pnpm-invocation.spec.ts。",
+            "evidence": "planned",
+            "note": "源仓只读检查；未在目标仓库执行。"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把带空格/分号的路径拼成字符串，或对 undefined 入口不报错。",
+            "check": "测试必须失败。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "入口缺失导致误用当前 Node 脚本。",
+            "check": "恢复显式错误并重跑。",
+            "evidence": "planned",
+            "note": ""
+          }
+        ]
+      },
+      "limitations": "不验证 pnpm 版本、脚本本身或 shell 重定向；只覆盖 npm_execpath 的入口分类。"
+    }
+  ]
+}

@@ -1,0 +1,5467 @@
+{
+  "domain": "testing",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "sourceRepository": "deepseek-harness",
+  "mechanisms": [
+    {
+      "id": "testing-tiered-evidence-selection",
+      "title": "按风险面选择测试层级，而不是默认全量",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 158,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 25,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 5,
+          "end": 13,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "全量测试慢且噪声大；只跑单测又会漏掉模型/用户可见输出、真实入口、构建产物和 provider 行为。层级必须由改动触及的风险面决定。",
+      "triggers": [
+        "任何行为改动",
+        "PR 评审",
+        "CI 失败诊断",
+        "发布前检查",
+        "新增能力缝/生命周期/transcript 变体"
+      ],
+      "obligations": [
+        "先选能覆盖该回归的最低层级：聚焦单测、聚焦覆盖率、owner-local expected、recorded-session snapshot、Web 浏览器、真实 API e2e。",
+        "按表面匹配证据：模型/用户输出用 keyless snapshot；文档用 doc-sync；发布/构建路径用 built smoke；provider 用真实 e2e。",
+        "不要默认全量套件；CI 拥有 exhaustive coverage 和平台矩阵，本地只跑相关证据。",
+        "报告实际运行的命令和观察结果；跳过、待定、重试不能写成通过。",
+        "agent-loop、session-lifecycle、SessionEventMap 改动同时更新 TypeScript 和 Python SDK 期望输出。",
+        "计划阶段就列出 unit/e2e/snapshot 覆盖，缺 snapshot harness 支持在同一改动补齐。"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "确认改动的风险面：模型/用户可见输出、真实入口、构建产物、provider、平台语义、公共契约。",
+        "按风险面选层级，并写下该层能证明和不能证明的结论。",
+        "把测试放在所有者旁边：包 tests、apps/cli/tests/profiles、tests/expected、snapshots 顶层。",
+        "运行聚焦证据；新增守卫时用负对照证明它会变红。",
+        "报告命令、用例、实际观察；未运行项标为 pending/unknown。"
+      ],
+      "enforcement": {
+        "mode": "人工选择 + 评审 + CI 分层",
+        "implementation": "docs/testing.md 的 Tiers 表；AGENTS.md 的 Run relevant checks 与 Testing policy；pre-push Skill 的 Select relevant evidence。",
+        "trust": "源仓能证明分层规则和命令存在；不能证明每个 PR 都按此执行，也不能证明远端 required check 已开启。",
+        "failure": "层级不足时升级证据；聚焦失败先修行为/假设；CI 与本地不一致时记录平台/命令/差异。",
+        "exceptions": [
+          "仓库级不可分割改动",
+          "用户明确要求完整本地演练",
+          "诊断 CI 失败",
+          "有 key 的真实 provider 测试"
+        ]
+      },
+      "applicability": [
+        "when: 多包/多入口仓库; 有模型或用户可见输出; 有真实 provider 与 keyless CI 双路径",
+        "whenNot: 单文件脚本且无运行时门禁；至少仍保留单测、覆盖率、真实入口和推送前检查"
+      ],
+      "relationships": [
+        "M02 执行拓扑",
+        "M06 覆盖率",
+        "M12 世界验证",
+        "M14 真入口",
+        "M16 快照必需",
+        "M36 推送前检查"
+      ],
+      "migration": {
+        "strategy": "先建立触发→层级→命令→所有者→证据表，再逐层落地命令和所有者目录。",
+        "implementation": [
+          "列出测试表面和入口",
+          "为每个表面指定最低足够层级",
+          "把命令写进项目文档",
+          "用负对照验证守卫",
+          "在 PR 模板加入证据声明"
+        ],
+        "requiredSupport": [
+          "可运行的聚焦测试命令",
+          "CI 分层",
+          "所有者目录约定",
+          "失败/跳过记录格式"
+        ]
+      },
+      "reference": "references/testing.md#m01-tiered-evidence",
+      "verification": {
+        "positive": [
+          {
+            "check": "对每类改动运行所选层级，记录命令和实际通过结果。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "故意引入一个该层应捕获的回归，观察聚焦测试/快照/覆盖率变红。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复回归后重跑同一证据，记录从失败到通过的命令和输出。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "分层规则是判断，不是自动选择器。",
+        "证据充分性依赖评审者的风险判断。",
+        "远端 required check 未验证。"
+      ]
+    },
+    {
+      "id": "testing-execution-topology",
+      "title": "按四层并发拓扑建模测试执行",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 17,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "config"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 166,
+          "end": 230,
+          "kind": "config"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 148,
+          "end": 156,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 210,
+          "end": 260,
+          "kind": "implementation"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 189,
+          "end": 228,
+          "kind": "config"
+        }
+      ],
+      "problem": "测试文件不是一个孤立进程；Vitest 文件、worker、同一 job 的其他 gate、共享宿主上的其他 job 都可能重叠。进程隔离并不隔离端口、可预测路径、外部命名空间或继承的子进程。",
+      "triggers": [
+        "新增/修改异步测试",
+        "使用端口、临时目录、数据库、socket、子进程",
+        "调整 worker/分区/并发",
+        "诊断只在并发时出现的失败"
+      ],
+      "obligations": [
+        "按四层建模：同文件用例、不同文件/worker、同 job 的独立进程/gate、共享宿主的不同 job。",
+        "对每个资源写出所有者、原子分配、可观察就绪、注册清理、静止完成信号。",
+        "不要因为一个夹具缺隔离就把整个套件串行；缩小独占范围或改分配方式。",
+        "配置层显式设置 worker/分区：coverage instrumented/exempt、snapshot 并发、Web snapshot worker、gate 并发。",
+        "进程全局测试使用 process-bound 项目/独立 fork，不与 thread-safe 用例混跑。",
+        "thread-safe 与 process-bound 两个项目都使用 `pool: 'forks'`；Node 24 在 worker thread 的 CJS lexer 会崩溃（macOS/Linux/Windows 均出现 `v8::ToLocalChecked Empty MaybeLocal` in `cjs_lexer::Parse`），不能为省资源回退 threads。",
+        "thread-safe 用 `exclude` 移除 processBoundTests 与 coverageExemptExcludes；process-bound 以显式 `include` 清单运行；两项目共享 execArgv 与 setupFiles。",
+        "process-bound 与 thread-safe 的分离目的是 inventory control；两个项目仍由同一次 coverage 调用聚合。"
+      ],
+      "actors": [
+        "测试作者",
+        "测试基础设施维护者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "读当前 Vitest 配置和 workflow，按四层画出并发。",
+        "为每个资源列出所有权和生命周期。",
+        "优先用原子分配/唯一命名空间，而不是全局串行。",
+        "用并发/压力运行验证跨进程隔离。",
+        "只在真正全局资源上使用最小范围的串行。"
+      ],
+      "enforcement": {
+        "mode": "配置 + 评审 + 并发证据",
+        "implementation": "vitest.config.ts 的 forks 与 process-bound 项目；run-gates.ts 的 worker 环境；docs/testing.md 的 How specs execute。",
+        "trust": "源仓能证明配置和共享 runner 说明；不能证明具体宿主 CPU/内存竞争和容器配额。",
+        "failure": "只在单独运行通过是测试缺陷；先定位共享资源，再缩小独占范围。",
+        "exceptions": [
+          "真正全局且无法命名空间的资源可以最小范围串行",
+          "确定性 CPU-bound 测试可用 process-bound"
+        ]
+      },
+      "applicability": [
+        "when: 多文件/多 worker 测试; 共享 CI runner; 有子进程/端口/临时目录",
+        "whenNot: 完全隔离的纯函数单测；仍要避免全局状态"
+      ],
+      "relationships": [
+        "M03 资源分配",
+        "M04 全局状态",
+        "M05 同步",
+        "M08 覆盖率分区",
+        "M37 CI 编排"
+      ],
+      "migration": {
+        "strategy": "先测量真实并发层，再按资源所有权重写测试，不要先加串行/重试。",
+        "implementation": [
+          "画四层拓扑",
+          "列资源清单",
+          "配置 worker/分区",
+          "加并发负对照",
+          "记录宿主限制"
+        ],
+        "requiredSupport": [
+          "Vitest 配置",
+          "CI runner 规格",
+          "并发诊断日志",
+          "资源助手"
+        ]
+      },
+      "reference": "references/testing.md#m02-topology",
+      "verification": {
+        "positive": [
+          {
+            "check": "在目标 worker 数/并发下运行，记录通过结果和资源使用。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让两个独立进程同时争用同一端口/路径，观察旧夹具失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改用原子分配/唯一命名空间后重跑并发，记录失败到通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "配置快照不等于运行时所有 job 的实际重叠。",
+        "共享宿主的外部负载无法完全复现。",
+        "Node 24 崩溃是该源快照的观测；升级 Node 后可以重新评估 fork 策略，但必须重新记录证据。"
+      ]
+    },
+    {
+      "id": "testing-resource-isolation",
+      "title": "资源原子分配、清理并等待静止",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 29,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 90,
+          "end": 99,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/test-proxy-environment.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/test-dom-environment.ts",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 50,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/packed-installation.ts",
+          "start": 1,
+          "end": 129,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 462,
+          "end": 475,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 620,
+          "end": 700,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 967,
+          "end": 990,
+          "kind": "test"
+        }
+      ],
+      "problem": "先检查空闲再占用会产生 TOCTOU 竞争；可预测路径会被并行用例踩踏；只调用 close/kill 而不等待完成会留下晚到回调和残留。",
+      "triggers": [
+        "端口、临时目录、数据库、socket、session、输出目录、子进程、浏览器、文件监听"
+      ],
+      "obligations": [
+        "用所有者分配器：listen(0) 并在 listening 后读地址；mkdtemp；每测试唯一命名空间；必须不存在时独占创建。",
+        "稳定记录标识与临时传输地址分离；在夹具内部翻译，不改录制值。",
+        "获取后立刻注册清理，覆盖断言失败/重试/超时。",
+        "清理顺序：停止新回调/请求、解绑监听、恢复全局钩子、终止自有工作、await child exit/server close/worker terminate。",
+        "固定路径清理：.tmp/spill/owned tree 在断言前删除，不留孤儿目录。",
+        "Register per-test temporary roots and cleanup immediately after allocation, resolve realpath before use, and have cleanup aggregate independent failures into an AggregateError instead of stopping at the first.",
+        "Packing or installing under test must capture workspace dependency links without following their targets and assert they are unchanged afterward, so the fixture cannot mutate the source checkout.",
+        "Installed-tree validation must resolve every symlink and dangling .bin shim and require the resolved target to stay under the installation root; long-running install commands need explicit timeout, signal and exit-code assertions."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "测试基础设施维护者"
+      ],
+      "steps": [
+        "列出每个资源的获取点和所有权。",
+        "改用所有者分配器/唯一命名空间。",
+        "把清理注册放在获取之后立即执行。",
+        "await 完成信号，而不是只发 abort/close/kill。",
+        "在失败/超时/并发路径验证无残留。"
+      ],
+      "enforcement": {
+        "mode": "代码评审 + 并发/泄漏证据",
+        "implementation": "reliability Skill 的 Allocate resources atomically 与 Dispose to quiescence；proxy/DOM setup；snapshot 清理规则。",
+        "trust": "源仓能证明规则和辅助代码；不能证明每个夹具在任意宿主无泄漏。",
+        "failure": "清理失败区分产品没退出和测试没等待；前者修产品，后者补完成信号。",
+        "exceptions": [
+          "纯解析用字面路径/URL 不是获取的资源",
+          "进程级共享资源可用最小范围串行"
+        ]
+      },
+      "applicability": [
+        "when: 并行测试; 子进程/服务/端口/临时目录; 失败/重试/超时路径",
+        "whenNot: 纯内存、无全局状态的单元测试"
+      ],
+      "relationships": [
+        "M02 拓扑",
+        "M04 全局状态",
+        "M05 同步",
+        "M24 workspace oracle"
+      ],
+      "migration": {
+        "strategy": "先建资源助手和清理约定，再迁移高风险夹具。",
+        "implementation": [
+          "资源清单",
+          "listen(0)/mkdtemp 助手",
+          "清理注册器",
+          "失败路径测试",
+          "残留检查"
+        ],
+        "requiredSupport": [
+          "临时目录 API",
+          "服务就绪探测",
+          "子进程退出等待",
+          "并发测试 lane"
+        ]
+      },
+      "reference": "references/testing.md#m03-resources",
+      "verification": {
+        "positive": [
+          {
+            "check": "并发运行使用独立端口/目录的测试，记录通过和清理后无残留。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用固定端口/可预测路径制造冲突，观察旧夹具失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改原子分配并 await 清理后重跑，记录冲突消失。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "资源清理证据依赖宿主观测；某些外部服务无法确认完全释放。"
+      ]
+    },
+    {
+      "id": "testing-global-state-and-platform-semantics",
+      "title": "隔离进程全局状态并尊重平台语义",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 43,
+          "end": 51,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 53,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-plugin-manager-git-child-environment.md",
+          "start": 5,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md",
+          "start": 5,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/test-proxy-environment.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/test-dom-environment.ts",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "process.env、cwd、fake timers、locale/timezone、module mocks、registry、console hook、globalThis、全局 fetch 都是独占可变资源；Windows 与 POSIX 对环境变量大小写、文件句柄释放、mtime 精度、权限和信号语义不同。",
+      "triggers": [
+        "修改环境变量/cwd/时钟/locale",
+        "替换全局对象/fetch/console",
+        "修改模块注册表",
+        "编写跨平台断言"
+      ],
+      "obligations": [
+        "优先注入依赖或实例级 adapter；必须改全局时捕获原值是否存在。",
+        "恢复完全相同的状态；try/finally 包最小范围；获取后立刻注册；失败早于局部 finally 时用 afterEach 兜底。",
+        "只拦截夹具拥有的最窄请求/调用。",
+        "平台断言取新鲜值：恢复 mtime 后重读，不假设写入值无损往返。",
+        "Windows 环境变量名大小写不敏感；句柄异步释放需有界重试；POSIX 权限/信号不能靠弱化断言跨平台。",
+        "代理基线：setup 删除 ambient proxy；NODE_USE_ENV_PROXY 必须在 shell 中 unset。"
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "平台 lane 维护者"
+      ],
+      "steps": [
+        "列出会被修改的全局状态和原值是否存在。",
+        "尽量改成注入/实例级 adapter。",
+        "写最小范围的 try/finally + afterEach 恢复。",
+        "跨平台断言取新鲜值/显式平台分支。",
+        "在失败/异常路径验证恢复。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 平台 CI + 恢复测试",
+        "implementation": "reliability Skill 的 Contain process-global state 与 Respect platform-owned semantics；proxy/DOM setup；Git 配置隔离注记。",
+        "trust": "源仓能证明规则和示例；不能证明所有平台组合都被覆盖。",
+        "failure": "跨平台失败先判断产品语义还是测试假设；产品语义修产品，测试假设修测试。",
+        "exceptions": [
+          "确有平台专属能力时按 M38 显式跳过",
+          "纯解析输入不重写"
+        ]
+      },
+      "applicability": [
+        "when: 任何全局状态修改; Windows/macOS/Linux 多平台; 代理/时钟/locale 敏感测试",
+        "whenNot: 完全注入、无全局访问的纯函数测试"
+      ],
+      "relationships": [
+        "M03 资源",
+        "M05 同步",
+        "M38 平台跳过",
+        "M39 秘密"
+      ],
+      "migration": {
+        "strategy": "先建全局状态恢复助手和平台矩阵，再迁移高风险用例。",
+        "implementation": [
+          "全局状态清单",
+          "恢复助手",
+          "平台断言规范",
+          "Windows/macOS/Linux lane",
+          "失败路径测试"
+        ],
+        "requiredSupport": [
+          "vitest setup",
+          "平台 CI",
+          "fake timer/clock 支持",
+          "代理清理"
+        ]
+      },
+      "reference": "references/testing.md#m04-global-state",
+      "verification": {
+        "positive": [
+          {
+            "check": "在测试前后比较全局状态，记录完全一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "故意泄漏一个 env/global，观察后续测试或恢复断言失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 try/finally/afterEach 后重跑，记录恢复一致。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "平台语义差异无法在一台机器上穷举。",
+        "恢复测试本身也可能遗漏全局对象。"
+      ]
+    },
+    {
+      "id": "testing-deterministic-synchronization",
+      "title": "等待状态、预算超时、处置到静止",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 72,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 90,
+          "end": 99,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-observation-waits-on-observed-state.md",
+          "start": 5,
+          "end": 12,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md",
+          "start": 5,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/lane-test-budget.spec.ts",
+          "start": 56,
+          "end": 122,
+          "kind": "test"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 360,
+          "end": 406,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 126,
+          "end": 140,
+          "kind": "config"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 964,
+          "end": 1000,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1516,
+          "end": 1709,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1376,
+          "end": 1880,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/lane-test-budget.spec.ts",
+          "start": 1,
+          "end": 55,
+          "kind": "test"
+        }
+      ],
+      "problem": "固定 sleep 不能证明 setup 完成或 teardown 静止；过小的 case timeout 会覆盖 runner 已给的 lane 预算；只发取消信号不等待完成会把失败转移成下一个测试的污染。",
+      "triggers": [
+        "异步等待",
+        "race 测试",
+        "超时断言",
+        "子进程/服务关闭",
+        "expect.poll",
+        "布局/reflow 断言"
+      ],
+      "obligations": [
+        "等待显式就绪事件、握手、状态转移、拥有的 promise 或外部可观察条件；超时只限制等待，不使断言正确。",
+        "case/describe timeout 不得低于 lane 预算；需要收窄时写原因；hook 预算与 test 一起抬。",
+        "超时本身是被测对象时，外层等待远大于被测超时。",
+        "用 barrier/deferred 把 race 放在确定点；不断言调度顺序，除非它是产品行为；fake clock 必须恢复。",
+        "观测不能先于被观测状态：不要用开始时启动的 wall-clock 窗口读一个前面有长前缀的状态。",
+        "最终态轮询要能区分初值与目标值；不要用点击后立即 reflow 让断言落在旧值。",
+        "处置要 await child exit/server close/worker terminate；abort/close/kill 只是请求。",
+        "A Web turn barrier is the in-process turn/end followed by the host persistence flush and agent idle flip; a browser settled poll comes after host completion, never before, and bare event or file polling is not completion.",
+        "An aria capture waits for running-job controls to detach, then polls until two consecutive normalized captures are equal; expanded controls must be restored in finally even when an assertion fails.",
+        "A derived index forwards one abort signal to both snapshot listing and persisted inspection; pre-aborted work starts no observation, cooperative cancellation is awaited before settlement, abort-ignoring work may delay settlement but must serialize a following operation and must not commit, and close awaits accepted work then rejects queued and future work with the same promise."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "写出要等待的状态和完成信号。",
+        "用 readiness/barrier 替代 sleep。",
+        "按 lane 预算设置 test/hook/poll；需要收窄时写理由。",
+        "在失败路径 await 清理；证明晚到完成不会污染下一个测试。",
+        "用重复运行/负载验证收敛。"
+      ],
+      "enforcement": {
+        "mode": "机械预算 guard + 评审 + 压力证据",
+        "implementation": "lane-test-budget.spec.ts 验证 per-test/hook/poll；vitest.config.ts 读取 DSH_COVERAGE_TEST_TIMEOUT_MS；CI 给共享宿主 90s；reliability Skill 的 Synchronize/Dispose。",
+        "trust": "源仓能证明预算代码和 lane 值；不能证明任意负载下都不 flake。",
+        "failure": "超时先定位没到达的状态；竞态用 barrier 证明重叠；清理未静止补 await。",
+        "exceptions": [
+          "真实 provider 瞬态重试",
+          "lane 预算恢复",
+          "诊断已知 Windows 失败的 wine"
+        ]
+      },
+      "applicability": [
+        "when: 异步/并发测试; 子进程/服务生命周期; 布局/reflow/轮询",
+        "whenNot: 纯同步、无外部状态的单元测试"
+      ],
+      "relationships": [
+        "M03 资源",
+        "M04 全局状态",
+        "M05",
+        "M29 Web 布局",
+        "M35 可靠性 Skill"
+      ],
+      "migration": {
+        "strategy": "先建 readiness/barrier 助手和 lane 预算 guard，再迁移 sleep/轮询用例。",
+        "implementation": [
+          "等待助手",
+          "lane 预算配置",
+          "失败诊断输出",
+          "并发负对照",
+          "清理 await 规范"
+        ],
+        "requiredSupport": [
+          "Vitest 版本支持 expect.poll",
+          "CI 预算变量",
+          "子进程退出等待",
+          "压力 lane"
+        ]
+      },
+      "reference": "references/testing.md#m05-synchronization",
+      "verification": {
+        "positive": [
+          {
+            "check": "在目标并发/负载下运行，记录稳定通过和等待的状态。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "恢复固定 sleep/错误初值观察 flake 或错误通过；或让被等待状态永不发生，观察有界超时。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 readiness/barrier 后重跑，记录失败到通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "源仓的 90s 是特定共享宿主参数，不可直接移植。",
+        "调度/负载无法完全复现。"
+      ]
+    },
+    {
+      "id": "testing-coverage-per-file-100",
+      "title": "运行时源码 per-file 100% 覆盖率门禁",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 57,
+          "end": 100,
+          "kind": "config"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 101,
+          "end": 166,
+          "kind": "config"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 230,
+          "end": 260,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 60,
+          "end": 70,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 696,
+          "end": 730,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 61,
+          "end": 83,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/coverage-uncovered-locations.cjs",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-uncovered-locations.cjs",
+          "start": 121,
+          "end": 121,
+          "kind": "implementation"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 386,
+          "end": 398,
+          "kind": "config"
+        }
+      ],
+      "problem": "聚合覆盖率会让一个文件的高覆盖掩盖另一个文件的死代码。覆盖率门禁的目标是删除死代码和证明运行时路径，而不是补数字。",
+      "triggers": [
+        "合入运行时代码",
+        "修改 packages/*/*/src",
+        "调整覆盖率配置/排除",
+        "CI coverage 失败"
+      ],
+      "obligations": [
+        "CI 覆盖率命令是 test:coverage（先 build:native-system，再 vitest run --coverage），不是 test。",
+        "只对运行时源码设 per-file 100% statements/branches/functions/lines，perFile: true。",
+        "include 之外的测试/脚本/应用/生成物/vendor/配置/平台二进制/类型-only/进程 bootstrap 必须有理由。",
+        "未覆盖行先判断死代码；是死代码就删除，不补无意义测试。",
+        "覆盖率运行输出未覆盖位置的 file:line:column，失败可定位。",
+        "聚焦覆盖率同时指定测试文件和源码 include；不用 passWithNoTests、降阈值、缩窄 include 隐藏未覆盖。",
+        "覆盖率只证明行跑过，不证明产品按发布形态工作。",
+        "uncovered-locations reporter 必须保持 CommonJS，并以绝对路径接入 vitest.config（istanbul 在 ESM 管线外用 require 加载 reporter，相对 specifier 会相对 istanbul-reports 自己的目录解析）；输出 1-based line:column，Infinity 或整行 end 退化为行级，implicit branch 用 branch.loc，记录按 line/column 排序，100% 时无输出，阈值失败前先打印计数与记录。",
+        "per-file 100%（statements/branches/functions/lines）是合入条件；注释明确 `100% or it doesn't merge`，且 `excessive tests are welcome`，测试数量不是拒绝理由。",
+        "分区模式下不设置 thresholds；最终合并运行才执行 per-file 100%，避免分区运行用局部分母误判。"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "确认改动是否触及运行时源码。",
+        "运行 test:coverage 或聚焦覆盖率。",
+        "看未覆盖位置，判断死代码/不可达/子进程/平台专属。",
+        "删除死代码、补真实测试或按 M07 记入豁免。",
+        "在合并后的覆盖率结果上确认 per-file 100%。"
+      ],
+      "enforcement": {
+        "mode": "Vitest thresholds + CI gate + 评审",
+        "implementation": "vitest.config.ts 的 coverage.include/exclude/thresholds 与 uncoveredLocations reporter；run-gates 的 ci-coverage；docs/testing.md 的 Coverage gate。",
+        "trust": "源仓能证明阈值和 include/exclude；不能证明每个文件的行为都被有效断言。",
+        "failure": "未覆盖：判断死代码/不可达/子进程/平台，再删除、补测试或豁免；不要直接 v8 ignore。",
+        "exceptions": [
+          "平台专属源码在能力缺失时条件排除，CI 恢复完整门槛",
+          "重套件按 M07 不在 instrumented 分母"
+        ]
+      },
+      "applicability": [
+        "when: 有运行时源码和气门禁; 多包仓库",
+        "whenNot: 纯文档/配置仓库；仍可用静态检查"
+      ],
+      "relationships": [
+        "M07 排除台账",
+        "M08 分区",
+        "M12 世界验证",
+        "M15 源/构建平面"
+      ],
+      "migration": {
+        "strategy": "先界定运行时源码根，设 per-file 100%，再逐项清理排除和死代码。",
+        "implementation": [
+          "运行时源码根",
+          "coverage include/exclude",
+          "per-file thresholds",
+          "未覆盖位置报告",
+          "聚焦覆盖率命令"
+        ],
+        "requiredSupport": [
+          "Vitest coverage",
+          "源码映射",
+          "CI 时间预算",
+          "死代码删除流程"
+        ]
+      },
+      "reference": "references/testing.md#m06-coverage",
+      "verification": {
+        "positive": [
+          {
+            "check": "运行 test:coverage，记录合并后 per-file 100% 和无未覆盖位置。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在运行时源码加一个未覆盖分支/死函数，观察覆盖率门禁失败并给出位置。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除死代码或补真实测试后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "行覆盖不等于行为正确。",
+        "未覆盖位置报告依赖 source map/coverage provider。",
+        "平台专属代码需要对应平台证据。",
+        "本读取未运行 coverage；阈值配置存在不等于实际分支保护或合并门禁已启用。"
+      ]
+    },
+    {
+      "id": "testing-coverage-exclusion-ledger",
+      "title": "覆盖率排除与重套件的可审计台账",
+      "sources": [
+        {
+          "path": "vitest.config.ts",
+          "start": 101,
+          "end": 166,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/coverage-exempt.ts",
+          "start": 1,
+          "end": 59,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-exempt.spec.ts",
+          "start": 1,
+          "end": 62,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/coverage-uncovered-locations.cjs",
+          "start": 1,
+          "end": 121,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1410,
+          "end": 1430,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-uncovered-locations.cjs",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-uncovered-locations.cjs",
+          "start": 121,
+          "end": 121,
+          "kind": "implementation"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 229,
+          "end": 403,
+          "kind": "config"
+        }
+      ],
+      "problem": "宽泛 exclude、无理由 v8 ignore、以及重套件不跑覆盖率都会让死代码/回归消失。豁免必须可审计、可机械核对、仍然被执行。",
+      "triggers": [
+        "新增覆盖率排除",
+        "新增 v8 ignore",
+        "把套件移出 instrumented 运行",
+        "平台条件豁免"
+      ],
+      "obligations": [
+        "每个 exclude 写理由：测试/脚本/应用/生成物/vendor/配置/平台二进制/类型-only/进程 bootstrap。",
+        "v8 ignore next 只包最小表达式，并写不可达/平台/注册保证的原因。",
+        "重套件用 filter + exclude 清单单独跑但不消失，CI 标为 coverage-exempt-heavy。",
+        "机械核对 filter 与 exclude 选出同一非空文件集；entry 不重叠；所有 Typert 套件覆盖。",
+        "普通覆盖率运行排除重套件；重套件运行不设排除变量，避免双跑/污染分母。",
+        "重套件失败仍是失败，只是不计入覆盖率分母。",
+        "覆盖率 include 只含 `packages/*/*/src/**/*.{ts,tsx}`；vendor、apps、tests、scripts、config、生成物、平台二进制与类型-only 文件不在分母。",
+        "`types.ts` 无运行时代码；`bin.ts` / `worker.ts` 自执行入口由真实子进程/Worker 测试覆盖，因此按模式排除，而不是留在分母里补无意义单元测试。",
+        "self-modification 的动态组合由聚焦生命周期测试与 assembled application checks 覆盖，可以整体排除；被 kill 的可执行 lint-contract 测试可能留下 `oxlint-contract-*.ts` 非产品 probe，必须按模式排除并说明。",
+        "GUI/浏览器缺口必须以 `TODO(gui)` 债务注释逐条列出排除路径，并注明随 client lane 成熟后覆盖并删除。",
+        "分区模式下 `thresholds=undefined` 且 `reporter=[]`，由合并后的统一 coverage 运行执行 per-file 100% 与 uncovered 位置报告；非分区 CI reporter 为 text + uncoveredLocationsReporter，本地再加 html。"
+      ],
+      "actors": [
+        "测试基础设施维护者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "为每个排除写类别和理由。",
+        "能行为测试的就不要排除。",
+        "v8 ignore 最小范围 + 理由。",
+        "维护 exempt entry 的 filter/exclude。",
+        "运行 guard 测试和 exempt-heavy lane。"
+      ],
+      "enforcement": {
+        "mode": "guard 测试 + CI 两条 coverage lane + 评审",
+        "implementation": "coverage-exempt.ts 的 entry；coverage-exempt.spec.ts 的一致性/非空/不重叠 guard；run-gates 的 coverage 与 coverage-exempt-heavy；vitest.config.ts 的 DSH_COVERAGE_EXEMPT。",
+        "trust": "guard 能证明 filter/exclude 选到同一批文件，不能证明这些套件本身有意义。",
+        "failure": "filter/exclude 不一致：修 entry，不放宽 guard；套件改名：guard 会变红；平台缺失：条件豁免 + 探测。",
+        "exceptions": [
+          "平台缺少 pwsh",
+          "重套件无法在 instrumented 进程运行",
+          "类型-only/生成物"
+        ]
+      },
+      "applicability": [
+        "when: 有覆盖率排除; 有重套件需要单独跑; 平台条件豁免",
+        "whenNot: 没有覆盖率门禁；仍应避免无理由 skip"
+      ],
+      "relationships": [
+        "M06 覆盖率",
+        "M08 分区",
+        "M31 benchmark",
+        "M38 平台跳过"
+      ],
+      "migration": {
+        "strategy": "先建排除类别和 guard，再迁移重套件，最后让 CI 跑两条 lane。",
+        "implementation": [
+          "排除台账",
+          "filter/exclude 清单",
+          "一致性 guard",
+          "coverage-exempt-heavy 命令",
+          "失败报告"
+        ],
+        "requiredSupport": [
+          "spec 清单",
+          "glob 能力",
+          "CI 变量",
+          "重套件清单"
+        ]
+      },
+      "reference": "references/testing.md#m07-exclusions",
+      "verification": {
+        "positive": [
+          {
+            "check": "guard 测试通过；coverage-exempt-heavy 实际执行并记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "改一个 entry 的 exclude/filter 使其不一致或为空，观察 guard 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复 entry 后重跑 guard 和 heavy lane，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "guard 只验证文件集合关系，不验证套件质量。",
+        "排除理由仍需人工审查。",
+        "排除清单是人工维护的债务；TODO 条目没有自动过期检查，只能评审。",
+        "本读取只证明配置条目，不证明每条排除在运行时确实生效。"
+      ]
+    },
+    {
+      "id": "testing-coverage-partitioning",
+      "title": "覆盖率分区、合并与计时完整性",
+      "sources": [
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 1,
+          "end": 16,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 200,
+          "end": 300,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 300,
+          "end": 400,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 430,
+          "end": 520,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 560,
+          "end": 700,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 210,
+          "end": 260,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 109,
+          "end": 205,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 684,
+          "end": 689,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "大型仓库的覆盖率单进程会超时；简单哈希分片会堆重文件；分区后只合并数字不校验文件清单会静默漏跑。",
+      "triggers": [
+        "coverage 文件数/时长超过单 lane",
+        "CI 需要并行分区",
+        "调整 worker/分区数"
+      ],
+      "obligations": [
+        "从 vitest list --filesOnly 取真实清单；位置过滤放在 -- 之后；在这里移除 exempt heavy。",
+        "按记录时长做 LPT 分配，重文件先入最轻分区；同权重按路径稳定排序；未知权重按 1。",
+        "拒绝空分区；Vitest 对无匹配文件会跑全部。",
+        "每分区独立 config，按项目拆 include；process-bound 保持专用 pool；用短 config 路径避免 Windows argv 限制。",
+        "每分区单 worker 跑 coverage，输出 blob/file-times/canonical locations；reportOnFailure 保留证据。",
+        "合并后用 vitest --merge-reports --coverage 统一执行 per-file 100%。",
+        "校验 blob 集合一一对应；timing report 恰好覆盖分配文件一次。",
+        "计时历史跨 run 保存；新测量覆盖旧值，删除文件被剔除。",
+        "失败保留 coverage/.partitioned 诊断；成功才删除。"
+      ],
+      "actors": [
+        "测试基础设施维护者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "建立 inventory 命令和 project 映射。",
+        "实现 LPT 分配和非空校验。",
+        "生成分区 config 和 coverage blob。",
+        "合并并校验 blob/timing 完整性。",
+        "CI 缓存 timing、设置 worker/分区、上传诊断。"
+      ],
+      "enforcement": {
+        "mode": "coordinator 代码 + CI gate + 完整性断言",
+        "implementation": "coverage-partitions.ts 的 collect/assign/config/run/merge；run-gates 的 coverageGates/ciWorkerEnvironment；ci.yml 的 coverage job 缓存和 90s 预算。",
+        "trust": "源仓能证明算法、校验和 CI 变量；不能证明任意机器时长分布。",
+        "failure": "空分区看清单/过滤；blob 缺失看分区输出；文件重复/缺失看 timing/project；分片慢调 worker/分区。",
+        "exceptions": [
+          "小仓库 partitions<2 走普通 coverage",
+          "注入文件列表用于 scheduler 测试"
+        ]
+      },
+      "applicability": [
+        "when: 大型覆盖率套件; CI 时限压力; 共享 runner",
+        "whenNot: 小型仓库；普通 coverage 足够"
+      ],
+      "relationships": [
+        "M06 覆盖率",
+        "M07 排除",
+        "M09 worker 退出",
+        "M37 CI"
+      ],
+      "migration": {
+        "strategy": "先测量单进程时长和文件权重，再引入分区，最后加完整性 guard。",
+        "implementation": [
+          "inventory",
+          "LPT 分配",
+          "分区 config",
+          "coverage blob 合并",
+          "timing 缓存",
+          "失败诊断"
+        ],
+        "requiredSupport": [
+          "Vitest blob/merge",
+          "coverage provider",
+          "CI cache",
+          "临时目录"
+        ]
+      },
+      "reference": "references/testing.md#m08-partitioning",
+      "verification": {
+        "positive": [
+          {
+            "check": "分区运行通过，blob/timing 完整，合并后 per-file 100%。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "制造空分区、缺失 blob、重复/遗漏文件，观察 coordinator 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复分配/配置后重跑，记录完整性和覆盖率通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "分区数/worker 依赖 runner；源仓 6/4 不是通用值。",
+        "timing 历史会随 checkout 变化，需要重新校准。"
+      ]
+    },
+    {
+      "id": "testing-coverage-fork-diagnostics",
+      "title": "为覆盖率 worker 意外退出增加可定位诊断",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 19,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/coverage-fork-diagnostics.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/coverage-partitions.ts",
+          "start": 430,
+          "end": 450,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "coverage 分区 worker 被杀/崩溃时，Vitest 可能只给模糊失败；没有 PID、文件、退出码和信号，无法区分 OOM、超时、产品崩溃和测试崩溃。",
+      "triggers": [
+        "coverage 分区出现无法解释的 worker 退出",
+        "需要判断资源压力还是具体测试"
+      ],
+      "obligations": [
+        "用 coverageForkPool 包装 ForksPoolWorker；只在有未完成 run/collect 请求时报告。",
+        "日志包含 pid、project、workerId、files、exitCode、signalCode。",
+        "正常 stop 的退出静默；stop 前已 error 的退出仍报告；cancel 不误报。",
+        "诊断层不改调度、不改失败处理，只增加可观察性。"
+      ],
+      "actors": [
+        "测试基础设施维护者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "包装 fork pool。",
+        "在 start/send/deserialize/stop 维护 expectedExit 和当前 request。",
+        "意外退出输出结构化日志。",
+        "在 coverage 分区使用该 pool。"
+      ],
+      "enforcement": {
+        "mode": "运行时日志 + 人工诊断",
+        "implementation": "coverage-fork-diagnostics.ts；coverage-partitions 的 partitionConfigSource 使用 coverageForkPool。",
+        "trust": "诊断能提供退出上下文，不证明根因。",
+        "failure": "看到 coverage-worker-exit：先看文件列表和 signal，区分 OOM/外部 kill/断言失败，不要重试掩盖。",
+        "exceptions": [
+          "非 coverage fork pool 不需要该包装"
+        ]
+      },
+      "applicability": [
+        "when: coverage 分区使用 fork pool; 需要诊断 worker 退出",
+        "whenNot: threads pool 或不需要诊断的 lane"
+      ],
+      "relationships": [
+        "M08 分区",
+        "M02 拓扑",
+        "M03 资源"
+      ],
+      "migration": {
+        "strategy": "先复制诊断包装到项目 fork pool，再在 coverage 分区启用。",
+        "implementation": [
+          "包装类",
+          "结构化日志字段",
+          "正常 stop 静默逻辑",
+          "分区接入"
+        ],
+        "requiredSupport": [
+          "Vitest ForksPoolWorker API",
+          "结构化日志",
+          "coverage 分区"
+        ]
+      },
+      "reference": "references/testing.md#m09-fork-diagnostics",
+      "verification": {
+        "positive": [
+          {
+            "check": "正常 coverage 运行无额外日志噪声。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "故意 kill 一个 worker，观察日志带 pid/文件/signal。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复资源/测试后重跑，记录无意外退出。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "诊断字段依赖 Vitest 内部 API。",
+        "日志本身不能定位根因。"
+      ]
+    },
+    {
+      "id": "testing-e2e-real-api-key-policy",
+      "title": "真实 API e2e 的 key 策略与假绿防护",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 23,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 1,
+          "end": 25,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 52,
+          "end": 99,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 100,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 123,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 1139,
+          "end": 1300,
+          "kind": "test"
+        }
+      ],
+      "problem": "无 key 的 e2e 只证明管线可跑；有 key 才证明 agent 对真实模型工作。把 key 暴露给 fork PR 会泄露，把全部跳过当绿色会假绿。",
+      "triggers": [
+        "修改 provider/agent/工具/文件写入/多轮/取消",
+        "发布前",
+        "真实 API 回归"
+      ],
+      "obligations": [
+        "test:e2e 在无 key 时自跳过；这是 secretless CI/keyless contributor 的解锁，不是成本信号或产品证明。",
+        "有 key 时覆盖高价值 smoke：启动 shipped profile、发 prompt、检查世界（文件/多轮/工具/取消）。",
+        "CI e2e 只在可信事件运行；fork 和 Dependabot PR 被 job-level if 跳过。",
+        "preflight 必须硬失败：job 运行时 secret 为空则退出非零，否则自跳过会假绿。",
+        "secret 只映射到 preflight 和 e2e step；端点固定；telemetry 关闭。",
+        "真实 provider 的瞬态重试只允许在外部边界（源仓 retry 2）。",
+        "keyed smoke 的 live turn 必须断言至少一次真实 tool call 和一个独立 sentinel；文件挑战要求真实 read+copy 产生预期字节；sdk-live 在缺少 DEEPSEEK_API_KEY 或显式 DEEPSEEK_BASE_URL 时必须硬失败。"
+      ],
+      "actors": [
+        "测试作者",
+        "发布负责人",
+        "CI 维护者"
+      ],
+      "steps": [
+        "本地无 key 运行，确认自跳过并记录为未证明。",
+        "有 key 时运行真实 smoke，断言世界。",
+        "CI 配 preflight、secret 映射、fork/Dependabot 排除。",
+        "失败时报告命令/目标/provider 响应，不打印 key。"
+      ],
+      "enforcement": {
+        "mode": "workflow preflight + job 条件 + 自跳过",
+        "implementation": "e2e.yml 的 trusted event if、preflight、secret 作用域、pinned base URL、telemetry 关闭；docs/testing.md 的 with-key policy。",
+        "trust": "源仓能证明 workflow/preflight；不能证明远端 secret、分支保护或 required check 已配置。",
+        "failure": "无 key 只能声明管线/跳过；preflight 空修 secret，不放宽；provider 失败区分瞬态/回归。",
+        "exceptions": [
+          "fork/Dependabot job-level skip 报告成功但表示未验证",
+          "本地无 key 自跳过",
+          "真实 provider 的 retry 2"
+        ]
+      },
+      "applicability": [
+        "when: 有真实 provider; 需要 keyless CI 和 with-key 证据双路径",
+        "whenNot: 没有 provider；只能做 keyless 管线，不声称产品通过"
+      ],
+      "relationships": [
+        "M11 凭据隔离",
+        "M12 世界验证",
+        "M37 CI",
+        "M39 秘密"
+      ],
+      "migration": {
+        "strategy": "先建 keyless 自跳过，再加受信 workflow/preflight，最后加真实 smoke 世界断言。",
+        "implementation": [
+          "test:e2e 配置",
+          "preflight",
+          "secret 映射",
+          "fork/Dependabot 排除",
+          "telemetry 关闭",
+          "world assertions"
+        ],
+        "requiredSupport": [
+          "provider key",
+          "CI secret",
+          "真实 provider 端点",
+          "费用/配额预算"
+        ]
+      },
+      "reference": "references/testing.md#m10-e2e-key",
+      "verification": {
+        "positive": [
+          {
+            "check": "有 key 运行真实 smoke，记录 provider 响应和世界断言。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 trusted job 清空 key，观察 preflight 失败；或在 fork PR 观察 job 跳过且标记未验证。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "配置 secret 后重跑，记录 preflight 和 e2e 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "源仓未证明远端 required check/secret 配置。",
+        "真实 provider 结果受网络/限流影响。",
+        "retry 2 可能掩盖间歇产品问题，只应作为外部瞬态例外。"
+      ]
+    },
+    {
+      "id": "testing-e2e-credential-and-egress-isolation",
+      "title": "e2e 凭据、网络与副作用隔离",
+      "sources": [
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 1,
+          "end": 32,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 82,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/test-proxy-environment.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 123,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 457,
+          "end": 620,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 380,
+          "end": 475,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 849,
+          "end": 949,
+          "kind": "test"
+        }
+      ],
+      "problem": "真实 API 测试同时带来 key 泄露、外部网络依赖、生产遥测、代理干扰和不可控副作用。",
+      "triggers": [
+        "新增/修改真实 API 测试",
+        "provider 配置",
+        "CI secret",
+        "网络夹具"
+      ],
+      "obligations": [
+        "最小权限：e2e workflow contents: read；不要写权限。",
+        "禁止 pull_request_target：它会在 base 上下文带 secret 运行不可信 fork 代码。",
+        "secret 只放在 preflight 和 e2e step；checkout/setup/install 看不到。",
+        "固定端点，避免 root .env/环境重定向；关闭生产 telemetry。",
+        "清 ambient proxy；spawn 真实 dsh 的子进程也自己清环境。",
+        "限制 e2e 并发（源仓 4 workers），避免完整 dsh 子进程树/PTY 争用。",
+        "A keyless lane masks only the selected real adapter's credential for the scaffold lifetime and restores the exact prior value, including absence, in close or finally.",
+        "Pin every model-visible host root (harness home, agents home, bundled skill directory) inside the owned temporary world for the entire boot, because presets may mount after boot; restore the process environment afterward.",
+        "Keep telemetry disabled or collect it locally under the shipped semantics; only explicitly named trusted hosts may be added to the request surface."
+      ],
+      "actors": [
+        "workflow 维护者",
+        "测试作者",
+        "安全/发布负责人"
+      ],
+      "steps": [
+        "列出外部端点、本地/远端写入、继承环境。",
+        "配最小权限和 secret 作用域。",
+        "固定端点、关闭 telemetry、清代理。",
+        "限制并发并测副作用。",
+        "泄露时轮换并清理日志/缓存。"
+      ],
+      "enforcement": {
+        "mode": "workflow 权限/secret 作用域 + 代理 setup + 评审",
+        "implementation": "e2e.yml 的 permissions/if/preflight/step env；test-proxy-environment.ts；AGENTS.md 的 Secrets/.env。",
+        "trust": "源仓能证明 workflow 隔离和代理清理；不能证明远端 secret 权限、fork 策略或历史无旧 key。",
+        "failure": "key 进日志：立即轮换、删日志/缓存、修 redaction；代理干扰：setup 和子进程两侧清；端点不可达：区分网络/凭据/产品。",
+        "exceptions": [
+          "本地 root .env 可读但必须 gitignore",
+          "本地无 key 自跳过"
+        ]
+      },
+      "applicability": [
+        "when: 真实 provider/外部网络; CI secret; 子进程/PTY",
+        "whenNot: 纯本地 keyless 测试"
+      ],
+      "relationships": [
+        "M10 e2e key",
+        "M11",
+        "M39 秘密",
+        "M37 CI"
+      ],
+      "migration": {
+        "strategy": "先分离 workflow/secret，再加 preflight/端点固定/代理清理，最后加副作用审计。",
+        "implementation": [
+          "独立 e2e workflow",
+          "最小权限",
+          "secret 作用域",
+          "pinned endpoint",
+          "telemetry off",
+          "proxy setup"
+        ],
+        "requiredSupport": [
+          "CI secrets",
+          "独立 workflow",
+          "网络策略",
+          "secret 轮换流程"
+        ]
+      },
+      "reference": "references/testing.md#m11-e2e-isolation",
+      "verification": {
+        "positive": [
+          {
+            "check": "有 key 运行，日志/夹具无 key，端点/telemetry 符合声明。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 fork PR 或 pull_request_target 场景检查 secret 不可见；清空 secret 观察 preflight 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复作用域/轮换后重跑，记录无泄露和通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "远端 secret/分支保护未验证。",
+        "历史提交/第三方日志未扫描。"
+      ]
+    },
+    {
+      "id": "testing-world-verification",
+      "title": "断言外部世界，而不是被测对象的自述",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 33,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 101,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 644,
+          "end": 672,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 817,
+          "end": 898,
+          "kind": "test"
+        }
+      ],
+      "problem": "对 agent 自己输出的关键词探针可能被作弊 agent 满足；mock 只证明桥接层移动了字节，不证明发布工具行为。",
+      "triggers": [
+        "e2e、真实入口、工具调用、文件写入、多轮、取消、持久化"
+      ],
+      "obligations": [
+        "e2e 重新运行命令或外部重读文件；不要只检查 agent 文本。",
+        "未触碰文件必须字节相同。",
+        "e2e 自己拥有资源，afterEach 处置；共享夹具放普通 tests/harness.ts，不 import 另一个 *.e2e.ts。",
+        "bridge 测试保留真实 tool registry/pipeline，只把模型 adapter 换掉。",
+        "recovery 按 step 区分 pre/post-chunk 失败，证明失败 chunk 无 message/tool 副作用。",
+        "覆盖耗尽、取消、策略组合、持久化、状态、wire 计数、transport idle timeout、shipping Loader composition。",
+        "missing config 断言非零退出，不只断言错误文本。",
+        "Verify a spill by reading the referenced file and comparing its canonical payload to the in-log request header; verify a worktree by reading Git config/attributes/branches/HEAD/ignore output, not by trusting log claims.",
+        "Verify confinement by reading the audit counters and job status; a refused background action must leave zero spawns and the expected failed status.",
+        "A provider-cwd mismatch must exit before any write and leave the persisted Session byte-identical; a matching resume must preserve the header and append a second turn in the same log."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者"
+      ],
+      "steps": [
+        "列出要证明的外部事实和未触碰文件。",
+        "写外部读取/重跑断言。",
+        "让 e2e 自己创建/清理资源。",
+        "抽共享 harness，避免重复注册。",
+        "用负对照证明断言会变红。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 真实入口/世界断言",
+        "implementation": "docs/testing.md 的 Verify the world not the self-report 与 Test the real entry path；e2e harness 约定。",
+        "trust": "世界断言能证明被观察事实；不能证明未观察副作用。",
+        "failure": "只读自述：改外部读取/重跑；共享夹具被 import：抽 harness；未触碰文件被改：判断产品副作用。",
+        "exceptions": [
+          "纯协议解析测试只验证字节/帧，需标明边界"
+        ]
+      },
+      "applicability": [
+        "when: agent/tool/文件/多轮/取消/持久化; 真实入口",
+        "whenNot: 纯函数/解析单测；仍可用输入输出断言"
+      ],
+      "relationships": [
+        "M10 e2e",
+        "M12",
+        "M13 mock",
+        "M14 真入口",
+        "M24 workspace"
+      ],
+      "migration": {
+        "strategy": "先把自述断言改成外部事实，再补共享 harness 和失败路径。",
+        "implementation": [
+          "世界事实清单",
+          "外部读取助手",
+          "afterEach 清理",
+          "共享 harness",
+          "副作用断言"
+        ],
+        "requiredSupport": [
+          "可重跑命令",
+          "文件系统断言",
+          "进程退出码",
+          "测试资源所有权"
+        ]
+      },
+      "reference": "references/testing.md#m12-world-verification",
+      "verification": {
+        "positive": [
+          {
+            "check": "真实运行后外部文件/状态与期望一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让产品只输出声称文本但不写文件，观察世界断言失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修产品/测试后重跑，记录外部事实通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "只证明被观察事实；未观察副作用仍可能漏。",
+        "真实 provider 仍需 M10。"
+      ]
+    },
+    {
+      "id": "testing-real-implementation-mock-boundary",
+      "title": "只 mock 昂贵/非确定的边界",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/remote-mock/README.md",
+          "start": 1,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 10,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 33,
+          "end": 35,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "过度 mock 会让测试证明 mock 和 mock 一致；mock 不足又依赖外部网络/模型/时钟。",
+      "triggers": [
+        "新增 mock",
+        "替换 adapter",
+        "引入 test harness",
+        "修改真实入口测试"
+      ],
+      "obligations": [
+        "只 mock LLM adapter、网络、时钟等昂贵/非确定边界；下游 loop/session/tool registry/persistence 尽量真实。",
+        "手写 stand-in 只能证明桥接层移动字节；断言 shipping tool 行为时必须保留真实工具/管线。",
+        "选择 harness 时写清替换/保留/不能证明什么。",
+        "Remote mock 只用于 HTTP Remote 表面；测试专用 any 是本地 fallback，交付前 typecheck。",
+        "llm-mock-server 只作为无凭据远端协议替身，不证明真实 provider wire/限流/认证。"
+      ],
+      "actors": [
+        "测试作者",
+        "评审者"
+      ],
+      "steps": [
+        "列出真实下游和外部边界。",
+        "只替换外部/非确定边界。",
+        "保留真实 loop/tool/persistence。",
+        "记录 harness 边界。",
+        "用真实入口/世界断言补足。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 类型检查 + harness 文档",
+        "implementation": "docs/testing.md 的 Prefer the real implementation；test-support 包 README；pre-push 的 Remote mock typing 规则。",
+        "trust": "任何 mock 都不能证明被替换边界之外；文档能证明设计意图，不能证明实现完全保真。",
+        "failure": "mock 绿真实入口坏：升级 M14/M10；类型不严格：跑 typecheck 修类型，不加 any。",
+        "exceptions": [
+          "纯单元测试可用 fake 替代协作者，但不声称集成"
+        ]
+      },
+      "applicability": [
+        "when: 有外部 provider/网络/时钟; 使用 test harness",
+        "whenNot: 纯内存逻辑；不需要 mock"
+      ],
+      "relationships": [
+        "M12 世界验证",
+        "M14 真入口",
+        "M26 replay",
+        "M33 支持包",
+        "M34 mock server"
+      ],
+      "migration": {
+        "strategy": "先画真实/替换边界，再选 harness，最后用真入口补证。",
+        "implementation": [
+          "边界清单",
+          "harness 选择表",
+          "typecheck",
+          "世界断言",
+          "mock 文档"
+        ],
+        "requiredSupport": [
+          "可替换 adapter",
+          "真实下游",
+          "类型检查",
+          "harness 包"
+        ]
+      },
+      "reference": "references/testing.md#m13-mock-boundary",
+      "verification": {
+        "positive": [
+          {
+            "check": "mock 边界测试通过，且真实下游被断言。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让真实下游坏掉但 mock 仍绿，观察测试无法发现，证明边界不足。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "升级到真入口/世界断言后重跑，记录失败被捕获。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "mock 边界判断是设计判断。",
+        "harness 保真度无法自动证明。"
+      ]
+    },
+    {
+      "id": "testing-real-entry-composition",
+      "title": "通过 Loader 和真实进程测试组合入口",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 37,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/loader-smoke/README.md",
+          "start": 1,
+          "end": 130,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/workspace-context-resume.expected.e2e.ts",
+          "start": 1,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 300,
+          "end": 1211,
+          "kind": "test"
+        }
+      ],
+      "problem": "手工 ctx.plugin 组合能证明服务能拼起来，但不能证明 shipped profile、Loader 配置、默认导出、进程启动和持久化在真实入口下工作。",
+      "triggers": [
+        "产品可见插件",
+        "Loader 组合",
+        "profile/CLI/headless/SDK/ACP 入口",
+        "默认导出/命名导出变更"
+      ],
+      "obligations": [
+        "产品可见插件需要非单元的真实组合测试：通过 Loader 和 app/process 启动 test-only cordis.yml，只 mock 外部服务/非确定输入。",
+        "断言模型可见请求/日志、持久状态或用户可见输出；opt-in 不进 shipped defaults。",
+        "Loader smoke 防默认导出替换：expect('default' in mod).toBe(false) + unwrapExports 往返，并实际引入回归观察变红。",
+        "真实入口指发布产物：bin 在 plain node 下运行 built lib/bin.js；非 index runtime entry 和跨 bundle 单例同样要 built smoke。",
+        "子进程模式：有 build 的 lane 用 shared dual-mode launcher 从 lib 启动；协议/OS 夹具用 Node 跑 erasable ts；只有主题是 source-path resolution 才选 src 并声明契约。",
+        "missing config 断言非零退出。",
+        "A shipped-entry lane must make its source/built plane explicit and execute the real bin from a temporary cwd; it must not hand-compose the runtime context.",
+        "A one-shot CLI resume must span two process wakes: the second wake receives --session-id and must append to the same durable log rather than creating a second Session.",
+        "Assert the first and last stream records (session and final) plus the exit code; merely finding a final record anywhere in the stream is insufficient."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "列出真实入口和 shipped profile。",
+        "建 test-only Loader 配置和启动路径。",
+        "只 mock 外部边界，断言世界。",
+        "加默认导出/命名导出守卫并负对照。",
+        "在 built 模式跑 bin/runtime entry。"
+      ],
+      "enforcement": {
+        "mode": "Loader smoke + 真实进程 + built smoke",
+        "implementation": "docs/testing.md 的 Test the real entry path/Test subprocess launch modes；loader-smoke 包；apps/cli/tests/profiles。",
+        "trust": "真入口测试仍可能 mock 外部 provider；不能替代 M10。",
+        "failure": "手工组合绿 Loader 红：修默认导出/配置；built 红 source 绿：查构建/导出/模块解析。",
+        "exceptions": [
+          "纯逻辑单测不需真入口",
+          "协议/OS 夹具不需 Cordis"
+        ]
+      },
+      "applicability": [
+        "when: 产品可见插件; 多 profile/多入口; 发布产物",
+        "whenNot: 纯本地库逻辑；单元测试即可"
+      ],
+      "relationships": [
+        "M14",
+        "M15 源/构建",
+        "M33 loader-smoke",
+        "M12 世界验证"
+      ],
+      "migration": {
+        "strategy": "先建 Loader smoke，再覆盖默认导出/进程/built 入口。",
+        "implementation": [
+          "test-only cordis.yml",
+          "loader-smoke 驱动",
+          "默认导出守卫",
+          "built smoke",
+          "非零退出断言"
+        ],
+        "requiredSupport": [
+          "Loader",
+          "shipped profile",
+          "built bin",
+          "子进程 launcher"
+        ]
+      },
+      "reference": "references/testing.md#m14-real-entry",
+      "verification": {
+        "positive": [
+          {
+            "check": "Loader 启动真实进程，世界断言通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用默认导出替换命名导出，观察守卫变红。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复导出/配置后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "真入口可能仍 mock provider。",
+        "Loader 配置覆盖有限。"
+      ]
+    },
+    {
+      "id": "testing-source-built-entry-modes",
+      "title": "源平面与构建平面分离，构建产物显式使用",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 37,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 65,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "tsdown.config.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 885,
+          "end": 914,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 76,
+          "end": 80,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 117,
+          "end": 121,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "源码测试通过不等于发布产物可用；构建产物过期会让测试加载第二份单例；所有测试都走构建又会慢且掩盖源码问题。",
+      "triggers": [
+        "package exports/bin/worker 入口",
+        "构建配置",
+        "公共类型",
+        "发布路径",
+        "built smoke",
+        "CI artifact lane"
+      ],
+      "obligations": [
+        "源平面默认：每个 Vitest config 指向 tsconfig.base.json，bare workspace import 解析 src，绝不通过 exports 到 lib；过期 lib 会加载第二份 singleton。",
+        "构建平面显式：lib-mode 子进程、built smokes、DSH_EXAMPLE_MODE=lib；built-bin-smoke 只在 ci-consumers、依赖 build 后运行。",
+        "build:check 只对现有 artifacts 跑 tsc，不编译 reference/不重建；缺失/过期以编译器错误出现。",
+        "正确顺序：build:artifacts（或 build）→ build:check；只改测试/脚本类型时在最新 artifacts 上 build:check。",
+        "构建记录绑定版本/commit/dirty；release/built Web 拒绝缺失或被 partial build 改动的记录。",
+        "built Web snapshot 用 DSH_SNAPSHOT=replay test:web:built，在 build 后跑。",
+        "built smoke 在未构建 e2e lane 自跳过；跳过不是证明。"
+      ],
+      "actors": [
+        "测试作者",
+        "CI 维护者",
+        "发布负责人"
+      ],
+      "steps": [
+        "确认证明源码行为还是发布产物行为。",
+        "源码测试走 base paths；构建测试显式 lib 模式。",
+        "按 build→consumer 顺序运行。",
+        "用 build:check 检查 tests/scripts 类型。",
+        "在 CI 记录 build record 和 built smoke 实际运行。"
+      ],
+      "enforcement": {
+        "mode": "路径配置 + build gate + built smoke + 评审",
+        "implementation": "docs/testing.md 的 Test resolution/launch modes；docs/development.md 的 TypeScript layout；run-gates 的 builtBinSmokeGate；tsdown config。",
+        "trust": "源仓能证明配置/依赖；不能证明发布 tarball 或所有入口。",
+        "failure": "source 绿 build 红：查 exports/bin/模块解析/单例；build:check 缺产物：先 build；built smoke skip：确认 lane 是否构建。",
+        "exceptions": [
+          "benchmark 准备可用 --noCheck 生成一次性 lib，依赖 required build 诊断",
+          "generated Remote declarations 例外"
+        ]
+      },
+      "applicability": [
+        "when: 有构建产物/bin/worker/发布路径; 多入口仓库",
+        "whenNot: 纯源码库无构建；仍应区分测试与发布证据"
+      ],
+      "relationships": [
+        "M14 真入口",
+        "M15",
+        "M37 CI",
+        "M16 snapshot built"
+      ],
+      "migration": {
+        "strategy": "先固定 source paths，再建 build:artifacts/build:check/built smoke，最后接入 consumers。",
+        "implementation": [
+          "base paths",
+          "build 命令",
+          "build:check",
+          "built smoke 清单",
+          "build record",
+          "CI needs"
+        ],
+        "requiredSupport": [
+          "构建工具",
+          "tsconfig paths",
+          "built artifacts",
+          "CI artifact lane"
+        ]
+      },
+      "reference": "references/testing.md#m15-source-built",
+      "verification": {
+        "positive": [
+          {
+            "check": "源测试在干净树通过；built smoke 在 build 后实际运行并通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让一个 built smoke 依赖过期 lib 或缺失导出，观察 build/build:check/smoke 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重建/修导出后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "源测试不能证明发布 tarball。",
+        "built smoke 只覆盖选中入口。",
+        "源仓未证明远端安装/发布。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-required-and-placement",
+      "title": "模型/协议/用户可见改动必须更新 keyless 快照并放对位置",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 53,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 158,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 1,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 35,
+          "end": 39,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "单元测试、mock 和 e2e 都可能绿，但组装后的模型可见转录、工具 schema、系统提示和持久化结果已经变了；反过来，把非会话输出塞进顶层 snapshots 会让所有权失效。",
+      "triggers": [
+        "非平凡模型/协议/人可见改动",
+        "SessionEventMap/agent-loop/session-lifecycle",
+        "能力缝/生命周期/transcript 变体"
+      ],
+      "obligations": [
+        "同一 PR 增加/更新 keyless recorded-session 场景；package/e2e/mock-only/rationale 不能替代组装 transcript。",
+        "按入口放目录：headless → snapshots/session、SDK → snapshots/sdk、ACP → snapshots/acp、Web → snapshots/web；Web 可显式借用 canonical session。",
+        "非会话驱动的期望输出留所有者 tests/expected/，不放 snapshots，不用 *.snapshot.ts。",
+        "agent-loop/session-lifecycle/SessionEventMap 改动同时更新 TypeScript 和 Python SDK 期望输出；pnpm run test 不覆盖这两套期望输出，须选择各自 owning lane。",
+        "计划阶段列出 unit/e2e/snapshot 覆盖；缺 harness 支持在同一改动补齐。",
+        "固定源夹具在macOS/Linux回放，修夹具而非改变normalizer迎合夹具；实际环境噪声仍只按testing-snapshot-normalization定义处理，不掩盖行为差异。"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者"
+      ],
+      "steps": [
+        "判断改动是否改变组装 transcript/模型请求/持久化/用户可见输出。",
+        "选择 session/sdk/acp/web 目录并更新场景。",
+        "非会话输出放 tests/expected 并选 test:expected/test:web/test。",
+        "两个 SDK/消费者同 PR 更新。",
+        "审查 replay diff。"
+      ],
+      "enforcement": {
+        "mode": "评审 + 快照守卫 + 所有者目录约定",
+        "implementation": "docs/testing.md 的 When a snapshot test is required；snapshots/AGENTS；AGENTS Testing policy；pre-push placement 规则。",
+        "trust": "源仓能证明规则和目录；不能证明每个 PR 都判断正确。",
+        "failure": "不确定是否必需：看是否改变模型请求/持久化/用户可见输出；放错目录：移动并更新配置。",
+        "exceptions": [
+          "机械/局部编辑、无模型或用户可见输出；PR 说明理由"
+        ]
+      },
+      "applicability": [
+        "when: 有模型/用户可见输出; 多入口对话产品; 多语言 SDK",
+        "whenNot: 纯内部重构无可见输出；仍可用单测/覆盖率"
+      ],
+      "relationships": [
+        "M01 层级",
+        "M17 manifest",
+        "M20 模式",
+        "M28 expected",
+        "M29 Web"
+      ],
+      "migration": {
+        "strategy": "先定义哪些输出属于 recorded session，再建目录/manifest，最后接 replay。",
+        "implementation": [
+          "输出分类",
+          "目录约定",
+          "场景模板",
+          "双 SDK 更新流程",
+          "PR 检查"
+        ],
+        "requiredSupport": [
+          "session replay harness",
+          "目录/manifest",
+          "keyless CI",
+          "审查流程"
+        ]
+      },
+      "reference": "references/testing.md#m16-snapshot-required",
+      "verification": {
+        "positive": [
+          {
+            "check": "改动用户可见输出，观察新增/更新场景在 keyless replay 中通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删掉该场景或把它改成 mock 测试，观察评审/守卫拒绝或覆盖缺失。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复/补场景后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "快照不证明真实 provider 或发布产物。",
+        "必要性判断依赖评审。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-manifest-and-guards",
+      "title": "Snapshot manifest、sidecar 与 fixture 的机械守卫",
+      "sources": [
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 7,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/manifest.ts",
+          "start": 1,
+          "end": 432,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1604,
+          "end": 1745,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/expected-filenames.yml",
+          "start": 1,
+          "end": 28,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 220,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-expected-filenames.sh",
+          "start": 1,
+          "end": 26,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 61,
+          "end": 219,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 276,
+          "end": 294,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1728,
+          "end": 1788,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1200,
+          "end": 1225,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 1135,
+          "end": 1192,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/tests/manifest.spec.ts",
+          "start": 1,
+          "end": 207,
+          "kind": "test"
+        }
+      ],
+      "problem": "目录重命名会留下旧快照；sidecar 会悄悄漂移；header pin 可以为零或重复；committed JSONL 可以不是 canonical；仅靠人工审查无法保证。",
+      "triggers": [
+        "新增/重命名/删除场景",
+        "修改 snapshot.yml",
+        "修改 sidecar",
+        "修改 fixture 存储格式"
+      ],
+      "obligations": [
+        "snapshot.yml 只写声明字段：profile、composition/header、recording、workspace facts 等；session 是只读借用者引用（目录自己拥有 selected parent 时省略），不是 ACP 专用；解析器用 exactKeys 拒绝未知/不一致字段。",
+        "manifest 使用 JSON_SCHEMA 解析 YAML 并拒绝自定义 tag；replay.override 只能 true；platform 只能 posix|pwsh；permission 只能 read-only|workspace-write|danger-full-access；environment 键匹配 ^[A-Z][A-Z0-9_]*$ 且值为 string；workspace 不得为空，final 只能 true、parent 只能 outside-temp",
+        "input 必须声明非空 task 或非空 attachments；attachment 使用精确字段 id/mediaType/data，id 以 sha256: 开头且不重复，mediaType 含 /，data 是非空 string；这些检查不证明摘要正确、完整 MIME 语法或 base64 编码有效",
+        "session.source 必须为非空 string，拒绝绝对路径、反斜杠与 NUL；sessionFormat.version 为非负 safe integer 且拒绝 -0，coverage 为非空、不重复的 supported 名称；sessionFormat 不得与借用 session 并存",
+        "snapshots/<dir> 必须与场景表一一对应；孤儿目录失败。",
+        "每场景要有 snapshot.yml/input.json/stdout.expected.jsonl/主 session fixture；profile 必须等于 agent profile 或 acp；ACP 场景的 manifest.session 必须为 undefined（自己拥有 session）。",
+        "child sidecar 索引与磁盘文件一致；native Windows stdout/replay override/prompt/schema owner 与声明一致。",
+        "每 header class 恰好一个 pin；pin fixture 的 header/prompt/schema 序列、变化计数、canonical JSON 互相匹配；不同 prompt/schema 只存一份。",
+        "child pin 指向真实 child；committed JSONL 存储规则通过固定点检查。",
+        "expected-filenames workflow 禁止 tracked non-vendor 文件名包含 golden，要求使用 expected 等准确术语；它不是 .jsonl 语法守卫。",
+        "session-fixture-layout 对当前格式重排并保持历史版本字节不变；payload 等价、幂等、错误带行号。",
+        "Physical fixture 判定是精确前缀加文件名正则：WebWorker 仅在 `packages/experimental/webworker-runtime/tests/fixtures/vfs-example/home/sessions/` 下匹配 `session[.vN].jsonl`；Python 仅在 `scripts/snapshots/python-sdk-single-exe/` 下匹配 `session[.<ordinal>][.vN].jsonl`。命中的文件不参与 canonical 投影，永不重写。",
+        "JSONL 发现通过 `git ls-files --cached --others --exclude-standard -- '*.jsonl'`，只保留实际存在的文件并排序；tracked 与未忽略的 untracked 都进入检查。",
+        "Session header 是首个非空行中 `type: 'session'` 的 JSON 对象；非 session 或非 JSON 返回 undefined。历史 codec 用 header.version 选中的 released codec 严格解码；不支持版本、decodeRow/finish 失败都带行号报错。",
+        "历史 header 验证副本会为 version 0 补 `delegationDepth: 0`，并把以 `{{cwd}}` 开头的 cwd 替换为 `/dsh-snapshot-cwd`；这些只用于 codec 验证，不表示重写源 header。",
+        "Packed 行投影：按 `text-chunks`/`reasoning-chunks`/`tool-call-chunks` 识别累积行，缺省 `seq0`/`time0` 或 `seq`/`time` 时补 0/递增 seq；每行按 `data.args`（tool-call-chunks）或 `data.texts` 数组长度决定 event 基数；event 行号映射用于错误定位。",
+        "当前/projected 格式只允许 scalar event rows：legacy packed rows 直接失败；`sourceEventSeqs` 用 decodeSeqRanges 解码；`seq`/`time` 等 envelope 在 canonical 输出中删除。无 version 的协议 fixture 也走 scalar 分支。",
+        "canonical 重写后必须重新解析，payload 流与源事件 deepStrictEqual，且再次 render 与 canonical 字节相同（幂等）；失败分别报 payload stream changed / not idempotent。",
+        "历史版本（storedVersion < currentVersion）在验证后原样返回源字节，不做当前格式转换；只有当前或无版本 fixture 才生成 canonical 文本。",
+        "错误行号映射识别 `released Session row N`、`Session event N`、`at seq N`、`inherited Session cut N`，否则报第 1 行。",
+        "The scenario directory is an exact role-deduplicated inventory; its manifest must declare the matching profile, a session owner without session.source must carry the canonical parent fixture, and a borrowed source must exist.",
+        "Every committed JSONL must already be a prompt/tool-schema scrub and identity-redaction fixed point; only the current Session generation is audited, while released generations retain their bytes.",
+        "Before writing a sidecar or oracle, verify its precondition (canonical spill payload equality, tool-result parity, request-header presence); never write from an unverified run."
+      ],
+      "actors": [
+        "测试基础设施维护者",
+        "场景作者",
+        "评审者"
+      ],
+      "steps": [
+        "注册场景并写 manifest。",
+        "生成/更新 sidecar 和 pin。",
+        "运行 fixture 布局/命名/存储守卫。",
+        "对孤儿/缺失/不一致逐个修复。",
+        "在 CI 跑 expected-filenames 和 snapshot 守卫。"
+      ],
+      "enforcement": {
+        "mode": "manifest 解析 + suite 守卫 + 文件名 workflow + 布局脚本",
+        "implementation": [
+          "manifest.ts；suite.ts 的 fixture/sidecar/pin/storage 测试；expected-filenames.yml + check-expected-filenames.sh；session-fixture-layout.ts。",
+          "isPhysicalSessionFixture 排除物理 fixture；parseFixtureRows 做行补全、released-codec 解码与行号映射；canonicalSessionFixture 做 payload 等价/幂等检查；discoverJsonlFiles 用 git 发现 tracked+untracked-unignored JSONL。"
+        ],
+        "trust": "机械守卫证明结构和声明一致，不证明场景语义覆盖风险。",
+        "failure": [
+          "孤儿目录注册/删除；sidecar 不匹配改声明/文件；canonical 失败看行号；不支持版本报错。",
+          "不支持版本、非法 JSON/非对象行、current fixture 中的 legacy packed row、decode/finish 错误、payload 不等、非幂等都会失败；错误带映射行号。"
+        ],
+        "exceptions": [
+          "ACP 拥有自己的 session",
+          "Web 借用 canonical session",
+          "physical fixture 不参与 canonical 投影",
+          "released predecessor generations 保持字节不变；physical fixture 不参与；无 version 的协议 fixture 按 scalar rows 处理。"
+        ]
+      },
+      "applicability": [
+        "when: 使用 recorded-session 快照; 多场景/多 sidecar; 格式迁移",
+        "whenNot: 无快照/仅普通 golden；仍可用文件名检查"
+      ],
+      "relationships": [
+        "M16 必需",
+        "M18 选择",
+        "M23 header pins",
+        "M24 workspace"
+      ],
+      "migration": {
+        "strategy": "先定 manifest schema 和目录注册，再加 sidecar/pin/storage 守卫，最后接文件名 CI。",
+        "implementation": [
+          "manifest schema",
+          "场景注册表",
+          "sidecar 约定",
+          "pin 守卫",
+          "布局脚本",
+          "文件名 CI"
+        ],
+        "requiredSupport": [
+          "schema 解析",
+          "fixture 目录",
+          "glob/registry",
+          "CI workflow"
+        ]
+      },
+      "reference": "references/testing.md#m17-manifest-guards",
+      "verification": {
+        "positive": [
+          {
+            "check": "所有 fixture 守卫通过，sidecar/pin 一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "制造孤儿目录、缺失 sidecar、重复 pin 或非 canonical JSONL，观察守卫失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复声明/文件后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": "行号映射基于错误文本正则；git 发现包含未忽略的 untracked 文件；physical 判定是前缀匹配；codec 行为依赖外部包；attachment 的 sha256:、MIME 与 base64 诊断只对应前缀/包含斜杠/非空 string 检查，不证明摘要或编码语义；manifest parser 单测不证明 suite/disk 守卫或场景语义；未执行测试或脚本。"
+    },
+    {
+      "id": "testing-snapshot-selection-and-generations",
+      "title": "场景选择、命名与代际选择",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 53,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 7,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1613,
+          "end": 1650,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 20,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 130,
+          "end": 270,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/session-files.ts",
+          "start": 84,
+          "end": 253,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 145,
+          "end": 199,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 1131,
+          "end": 1172,
+          "kind": "test"
+        }
+      ],
+      "problem": "同一角色有多个父/子 session 时，选错代际会让 replay 输入和期望输出不匹配；命名不一致会让发现逻辑漏文件。",
+      "triggers": [
+        "新增/迁移 session fixture",
+        "格式版本升级",
+        "子代理场景"
+      ],
+      "obligations": [
+        "父角色 session[.vN].jsonl；子角色 session.<ordinal>[.vN].jsonl；v0 省略；正版本小写 .vN；文件名与 header version 一致。",
+        "replay/record/refresh 都按角色选最高 vN；重复 generation 失败；只发现 manifest 声明文件。",
+        "每场景至少一个 primary session；child 索引从 1 开始并指向真实 child。",
+        "当前 writer 格式 one row per event + compact Assistant streams；历史保留 released representation；sessionFormat owner 保留迁移覆盖。",
+        "physical fixture（WebWorker/installed runtime）保留物理编码，不参与 canonical 投影。",
+        "Fixture role selection is exact: reject duplicate index/version pairs, require a parent role, require contiguous roles, and choose the highest generation per role; a role's generation is independent, so do not infer or copy another role's generation.",
+        "Validate a Session header version as a non-negative safe integer excluding -0; a versionless projected header is v0; a fixture or persisted filename's declared generation must equal its header generation.",
+        "Persisted discovery filters by the selected compression and chooses the highest generation per Session directory; older siblings are not extra Sessions.",
+        "Sibling logs bind by the parent's catalog publication order before timestamps; concurrent provider startup can publish an older child Session after a newer one."
+      ],
+      "actors": [
+        "场景作者",
+        "测试基础设施维护者",
+        "评审者"
+      ],
+      "steps": [
+        "按角色/序号/版本命名。",
+        "确认 header version 与文件名一致。",
+        "选择最高代际并检查重复。",
+        "把历史 fixture 标记为 retained/sessionFormat owner。",
+        "运行发现/布局守卫。"
+      ],
+      "enforcement": {
+        "mode": "命名/发现守卫 + 布局脚本",
+        "implementation": "docs/testing.md 的 Snapshot 命名规则；suite 的 fixture inventory；session-fixture-layout 的 canonical/历史跳过。",
+        "trust": "命名/代际守卫不证明内容语义。",
+        "failure": "文件名不一致改名/改 header；重复 generation 删除/合并；历史被重写从源恢复并修脚本。",
+        "exceptions": [
+          "无版本号协议 fixture/当前 projected snapshot 使用 scalar rows",
+          "physical fixture"
+        ]
+      },
+      "applicability": [
+        "when: 多代际 fixture; 子代理; 格式迁移",
+        "whenNot: 单一代际/无子角色；仍应统一命名"
+      ],
+      "relationships": [
+        "M16 必需",
+        "M17 manifest",
+        "M19 corpus",
+        "M20 模式"
+      ],
+      "migration": {
+        "strategy": "先定命名/发现规则，再迁移 fixture，最后接最高代际选择。",
+        "implementation": [
+          "命名规则",
+          "发现逻辑",
+          "代际选择",
+          "历史标记",
+          "布局脚本"
+        ],
+        "requiredSupport": [
+          "header version",
+          "manifest",
+          "glob/registry",
+          "迁移 codec"
+        ]
+      },
+      "reference": "references/testing.md#m18-selection",
+      "verification": {
+        "positive": [
+          {
+            "check": "发现逻辑只读到声明文件，最高代际被使用。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "制造重复 generation、文件名/header 不一致或孤儿 child，观察守卫失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复命名/声明后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "不证明内容语义；见 M19/M20。",
+        "历史格式/物理 fixture 有例外。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-corpus-policy",
+      "title": "录制会话语料的代际覆盖政策",
+      "sources": [
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 9,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/session-snapshot-corpus.corpus.ts",
+          "start": 1,
+          "end": 216,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/session-snapshot-corpus-policy.spec.ts",
+          "start": 1,
+          "end": 146,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1200,
+          "end": 1225,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1746,
+          "end": 1760,
+          "kind": "test"
+        }
+      ],
+      "problem": "只保留最新会话会让格式迁移、旧工具、旧 profile 的兼容性失去输入；把所有历史都塞进 replay 又会让语料无限膨胀。corpus 政策定义保留哪些代际、每个代际覆盖什么。",
+      "triggers": [
+        "修改 session 格式/持久化/模型可见输出",
+        "新增/重录 corpus 场景",
+        "升级默认格式版本"
+      ],
+      "obligations": [
+        "corpus: true 场景在 snapshot.yml 声明 retained 代际和 coverage；不是所有快照都是 corpus。",
+        "parent/child 的 current/baseline 角色分别计数，不把一个角色的覆盖算到另一个。",
+        "保留 V3 多数作为 migration input，不要求每个 V3 都有 current successor；current writer owner 可并存。",
+        "每个 adjacent version 由该代际 fixture 直接覆盖，不能借用另一代际的 coverage 标签。",
+        "V0 retained 必须声明 multi-hop/packed-row/retry-failure/shipped-profile。",
+        "retired tools 可保留在 current format，但不能声称 migration coverage；retained version 必须早于 current。",
+        "重录/刷新不能洗掉最后的 V3/V0/相邻边输入。",
+        "Corpus storage checks apply prompt/schema and identity-redaction fixed points only to current-format generations; released generations keep their bytes, and a retained writer oracle is separate from the replay input."
+      ],
+      "actors": [
+        "场景作者",
+        "格式 owner",
+        "评审者"
+      ],
+      "steps": [
+        "标记 corpus 并声明 retained 代际。",
+        "为每个代际填 coverage 标签。",
+        "运行 corpus policy 测试。",
+        "补缺失代际/边。",
+        "在格式/持久化改动时跑完整 corpus suite。"
+      ],
+      "enforcement": {
+        "mode": "corpus policy 测试 + 完整 snapshot suite",
+        "implementation": "session-snapshot-corpus-policy.spec.ts 的 assertSnapshotCorpusPolicy；corpus.ts 的场景清单。",
+        "trust": "政策验证标签/代际/角色，不验证 fixture 语义质量。",
+        "failure": "缺 v3/v0/相邻边补 fixture；retained 版本晚于 current 修正声明；重录丢失覆盖恢复/补替代。",
+        "exceptions": [
+          "新生成未进 corpus 的场景",
+          "retired tools 的 current retained"
+        ]
+      },
+      "applicability": [
+        "when: 长期维护会话格式; 多代际 replay; 旧工具/profile 兼容",
+        "whenNot: 只有当前格式、无需迁移；可缩减为单代际 golden"
+      ],
+      "relationships": [
+        "M18 代际",
+        "M20 模式",
+        "M17 manifest",
+        "会话格式域"
+      ],
+      "migration": {
+        "strategy": "先定义版本矩阵/覆盖标签，再建 corpus 清单和 policy 测试。",
+        "implementation": [
+          "corpus 标记",
+          "代际/coverage 清单",
+          "policy 测试",
+          "完整 suite",
+          "重录审查"
+        ],
+        "requiredSupport": [
+          "格式版本",
+          "migration codec",
+          "fixture 清单",
+          "CI snapshot lane"
+        ]
+      },
+      "reference": "references/testing.md#m19-corpus",
+      "verification": {
+        "positive": [
+          {
+            "check": "corpus policy 测试和完整 snapshot suite 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除最后的 V3/V0 或相邻边，观察 policy 测试失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复/补 fixture 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "coverage 标签是人工声明。",
+        "不证明 fixture 真的覆盖标签行为。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-modes",
+      "title": "Replay、record、refresh 三种模式与差异审查",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 53,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "package.json",
+          "start": 69,
+          "end": 76,
+          "kind": "config"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1226,
+          "end": 1234,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1300,
+          "end": 1405,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 747,
+          "end": 754,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 132,
+          "end": 140,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/sdk/sdk.snapshot.ts",
+          "start": 1097,
+          "end": 1145,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 1135,
+          "end": 1192,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 1252,
+          "end": 1262,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/sdk/sdk.snapshot.ts",
+          "start": 551,
+          "end": 562,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/launcher.ts",
+          "start": 343,
+          "end": 369,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/boot/app-boot/src/index.ts",
+          "start": 95,
+          "end": 112,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "录制模式会写入真实 provider 输出；刷新模式可能在看起来只是更新 fixture 时把回归一起批准；回放模式必须 keyless 且能发现不一致。",
+      "triggers": [
+        "模型转录变化",
+        "行为修复后 replay 输入仍有效",
+        "新增场景",
+        "格式迁移"
+      ],
+      "obligations": [
+        "默认 replay：keyless，通过 shipped profile 回放；CI 用 DSH_EXAMPLE_MODE=lib 启动 built lib。",
+        "record：DSH_SNAPSHOT=record + --update，需要真实 provider，只用于新增/模型转录变化。",
+        "refresh：DSH_SNAPSHOT=refresh，在 replay 输入仍有效时刷新期望；不掩盖行为变化。",
+        "replay 用 describe.concurrent；record/refresh 串行，避免共享 provider/端口/输出竞争。",
+        "record 不依赖旧输出；refresh 读取旧 fixture 保留 volatile 值；record/refresh 写版本化输出。",
+        "authored-only 场景在 record 跳过；retained sessionFormat 不被 refresh 改写。",
+        "record/refresh 不重写 workspace.expected；replay 比较所有输出。",
+        "每个 fork 的退出必须断言；审查每个 diff。",
+        "Snapshot mode is a closed three-value vocabulary; unset or empty selects replay and any other value throws before boot.",
+        "Refresh is the only writer for goldens and current-generation fixtures; replay must never self-bootstrap a missing artifact.",
+        "For a retained Session scenario, refresh writes an independent native-writer snapshot and current header sidecars while the historical replay input and its filename stay byte-identical."
+      ],
+      "actors": [
+        "场景作者",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "选 replay/record/refresh。",
+        "按命令运行并保留 diff。",
+        "审查 session/stdout/sidecar/workspace 变化。",
+        "必要时重录/刷新，解释每个变化。",
+        "在 CI 用 keyless replay。"
+      ],
+      "enforcement": {
+        "mode": "suite 模式逻辑 + CI replay + 人工 diff 审查",
+        "implementation": "suite.ts 的 RECORDING/REFRESHING 分支和并发选择；package scripts；run-gates 的 snapshotGate。",
+        "trust": "record 捕获当时 provider 输出；refresh 只证明新输出与旧输入一致，不证明产品正确。",
+        "failure": "replay 失败判断行为/fixture；record 失败看 provider/凭据/场景；workspace 差异判断副作用。",
+        "exceptions": [
+          "真实 provider 不可用时只提交已有 replay fixture并说明",
+          "retained 历史格式不重写"
+        ]
+      },
+      "applicability": [
+        "when: recorded-session replay; 真实 provider 录制; 格式/行为变化",
+        "whenNot: 无 replay harness；用普通 golden"
+      ],
+      "relationships": [
+        "M16 必需",
+        "M19 corpus",
+        "M21 归一化",
+        "M24 workspace",
+        "M26 replay"
+      ],
+      "migration": {
+        "strategy": "先实现 keyless replay，再加 record/refresh 和 diff 审查，最后接 CI。",
+        "implementation": [
+          "replay 模式",
+          "record 模式",
+          "refresh 模式",
+          "并发/串行",
+          "diff 审查",
+          "CI 命令"
+        ],
+        "requiredSupport": [
+          "provider key",
+          "fixture 写入",
+          "normalizer",
+          "CI snapshot lane"
+        ]
+      },
+      "reference": "references/testing.md#m20-modes",
+      "verification": {
+        "positive": [
+          {
+            "check": "replay keyless 通过；record/refresh 产生的 diff 被审查。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用 refresh 批准一个行为回归，观察评审拒绝；或 record 缺少 key，观察明确失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复正确行为/重录后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "record 依赖当时 provider 输出。",
+        "refresh 可能掩盖回归。",
+        "replay 不证明真实 wire。",
+        "补丁组合依适配器分支而定：SDK 的 sdk-* composition 保留 owner/cordis.yml，replay 再追加 owner/cordis.snapshot.yml，不追加默认 model；SDK 的 transport-neutral 分支和 headless 则按默认基础、选中 live/replay overlay、默认 model 组合（默认 owner 的 live 不重复追加）。通用 launcher 的 replay 替换只约束它自己的 selected patch，不能覆盖 SDK 专用分支。最初范围核对发现223个 overlay 无 inspected 记录（104 cordis.yml、104 cordis.snapshot.yml、11 runtime.cordis.yml，child/model/profile/paging 各1）；本批只读 paging.patch.yml:1-7，其余222份仍无逐文件阅读记录，组合代码不证明全部 overlay 语义或 manifest 一致性。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-normalization",
+      "title": "只归一化环境噪声，保留行为差异",
+      "sources": [
+        {
+          "path": "packages/test-support/session-snapshot/src/normalize.ts",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/normalize.ts",
+          "start": 100,
+          "end": 220,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 30,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/session-fixture-layout.ts",
+          "start": 230,
+          "end": 270,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 60,
+          "end": 75,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1010,
+          "end": 1198,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/normalize.ts",
+          "start": 301,
+          "end": 665,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "不归一化会让 cwd、session id、时间戳、spill 路径在不同机器上产生 diff；归一化过头会把真实行为差异一起抹掉。",
+      "triggers": [
+        "新增/修改 fixture",
+        "跨平台 replay 失败",
+        "spill/temp 路径变化",
+        "身份 token 调整"
+      ],
+      "obligations": [
+        "cwd 替换所有已知拼写（含 macOS /private），最长优先、边界匹配；只对 cwd-rooted path 规范化分隔符，不全局重写反斜杠。",
+        "spill 路径只用 {{spillLocator:<name>}} 替换 harness 拥有的本地/snapshot spill 路径。",
+        "event-read 时间只替换 fenced target 区域；邻居/模型/bash 文本保持可见。",
+        "identity 按 identityMode 处理 session/child id、UUID、messageId；preserve 保留已 redact typed id。",
+        "actual 和 expected 用同一 NormalizeContext；不要只归一化 actual。",
+        "保留模型文本、工具参数、错误、未触碰文件内容。",
+        "fixture 重写要幂等、payload 等价；历史版本不重写。",
+        "native writer output 用 nativeWriterOutput: true，不套 source-vs-migrated 默认比较。",
+        "Normalize the complete run context across spellings (native and forward-slash paths, JSON-escaped backslashes) and roots (harness home, source checkout, Web origin, client timezone, anonymous user id, search endpoint), preserving JSON structure and row framing.",
+        "Tokenize volatile clocks and durations at every nesting level: JSONL job ids, packed time0/dt even when the projected anchor is absent, embedded Assistant stream times, hook/job/goal/subagent-catalog/feedback clocks, decoded sourceEventSeq ranges, and aria durations/throughput/estimates/timestamps; make literal relative-age collapse opt-in.",
+        "Normalize format markers only for the declared source generation: omit sessionFormatVersion for comparison, tokenize delivery markers, and keep the Session header byte-identical while scrubbing the body.",
+        "Retain developer-message tool names when replacing tool-schema bulk so historical tool additions and removals remain distinguishable."
+      ],
+      "actors": [
+        "场景作者",
+        "评审者",
+        "平台维护者"
+      ],
+      "steps": [
+        "列环境字段 vs 行为字段。",
+        "加最小 token/边界。",
+        "两边同 context 比较。",
+        "用 fixed-point/payload 等价测试。",
+        "跨平台 replay 验证。"
+      ],
+      "enforcement": {
+        "mode": "normalizer 代码 + 测试 + 评审",
+        "implementation": "normalize.ts 的 cwd/spill/event/identity 处理；suite 的 scrubSmoke；fixtureContext。",
+        "trust": "归一化测试证明 token 局部行为，不能证明所有环境噪声覆盖。",
+        "failure": "新环境噪声加最小 token 并写测试；行为差异修代码；token 误伤收窄边界。",
+        "exceptions": [
+          "平台专属 golden 用 native 分隔符",
+          "native writer output 模式"
+        ]
+      },
+      "applicability": [
+        "when: 跨平台 fixture; 录制会话; spill/temp 路径",
+        "whenNot: 平台固定且路径稳定；仍应保留身份 token"
+      ],
+      "relationships": [
+        "M20 模式",
+        "M22 身份",
+        "M23 header pins",
+        "M24 workspace"
+      ],
+      "migration": {
+        "strategy": "先列环境 token 清单，再实现最小替换和两边同 context 比较。",
+        "implementation": [
+          "token 清单",
+          "cwd/spill/identity 处理",
+          "fixed-point 测试",
+          "跨平台 lane"
+        ],
+        "requiredSupport": [
+          "normalizer",
+          "fixture context",
+          "跨平台 CI"
+        ]
+      },
+      "reference": "references/testing.md#m21-normalization",
+      "verification": {
+        "positive": [
+          {
+            "check": "跨平台 replay 稳定，环境噪声被 token 化。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "引入一个真实行为差异，观察 token 化没有抹掉它。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "收窄/修正 token 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "token 列表可能漏新噪声。",
+        "归一化本身可能掩盖差异。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-identity-and-credentials",
+      "title": "身份 typed token 与凭据不落盘",
+      "sources": [
+        {
+          "path": "packages/test-support/session-snapshot/src/identity.ts",
+          "start": 1,
+          "end": 135,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 30,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1678,
+          "end": 1735,
+          "kind": "test"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 123,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 40,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 611,
+          "end": 786,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1280,
+          "end": 1373,
+          "kind": "test"
+        }
+      ],
+      "problem": "录制 transcript 会包含 session/child id、工具名、schema、凭据引用；直接提交会泄露秘密或让父子关系失真。",
+      "triggers": [
+        "新增 fixture",
+        "修改工具/schema/身份",
+        "auth recovery 场景",
+        "凭据相关测试"
+      ],
+      "obligations": [
+        "typed token 只用于稳定身份：session/child id、工具名、tool schema、认证恢复标记；token 必须保留父子关系。",
+        "只有 header pin 拥有 prompt/schema sidecar；其他场景引用 owner，不复制。",
+        "fixture 不出现真实 key/token/密码；mock key 只用于本地 mock server。",
+        "auth recovery 断言恢复后的 header/请求形状，不只断言重试。",
+        "提交前扫描 expected/fixture 中的 sk-/Authorization/apiKey/环境变量值。",
+        "Stabilize fixture message ids only across structurally complete messages whose id-to-fingerprint and fingerprint-to-id mappings are each unique in both fresh and existing logs; rewrite only the validated message-id field, never arbitrary matching text.",
+        "Realize typed identity tokens deterministically and idempotently with a stable version/variant; bind `{{session:N}}` to the Nth live Session and fail on an unbound or absent session token instead of passing it through.",
+        "Refresh must tokenize the harness home and root Session id before redaction; fixture inventory must prove the prompt/tool-schema scrub and identity redaction are fixed points."
+      ],
+      "actors": [
+        "场景作者",
+        "评审者",
+        "安全负责人"
+      ],
+      "steps": [
+        "列身份关系和需要 token 的字段。",
+        "用 typed token 替换值。",
+        "把 prompt/schema sidecar 交给 owner。",
+        "扫描秘密。",
+        "用 replay 验证关系可还原。"
+      ],
+      "enforcement": {
+        "mode": "token 还原 + sidecar 守卫 + 人工/秘密扫描",
+        "implementation": "identity.ts；suite 的 pin/sidecar 测试；normalize 的 identityMode；AGENTS Secrets。",
+        "trust": "token 化降低泄露面，不能证明历史提交/日志没有秘密。",
+        "failure": "发现秘密轮换、删除/重写历史、修 token 化；父子关系错修 token/owner。",
+        "exceptions": [
+          "测试专用假 key 可存在，但必须明显且只指向本地 mock"
+        ]
+      },
+      "applicability": [
+        "when: 录制身份/凭据; 父子会话; auth recovery",
+        "whenNot: 无身份/无凭据的纯文本 golden；仍应避免真实秘密"
+      ],
+      "relationships": [
+        "M21 归一化",
+        "M23 header pins",
+        "M39 秘密",
+        "M26 replay"
+      ],
+      "migration": {
+        "strategy": "先定义身份 token 和 owner，再迁移 fixture，最后加秘密扫描。",
+        "implementation": [
+          "身份 token 表",
+          "sidecar owner",
+          "secret scan",
+          "replay 还原测试"
+        ],
+        "requiredSupport": [
+          "token 还原",
+          "sidecar",
+          "secret scanner",
+          "安全流程"
+        ]
+      },
+      "reference": "references/testing.md#m22-identity",
+      "verification": {
+        "positive": [
+          {
+            "check": "fixture 无真实凭据，父子关系可还原，sidecar 唯一。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "插入一个真实格式的 key 或错误 child token，观察扫描/还原失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "轮换/修正后重跑，记录无秘密且关系正确。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "token 化不覆盖历史/第三方日志。",
+        "秘密扫描可能漏新格式。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-header-pins",
+      "title": "每个 header class 一个系统提示/工具 schema pin",
+      "sources": [
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1226,
+          "end": 1255,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1660,
+          "end": 1735,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 30,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "snapshots/AGENTS.md",
+          "start": 7,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1411,
+          "end": 1584,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/sdk/sdk.snapshot.ts",
+          "start": 442,
+          "end": 443,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 279,
+          "end": 325,
+          "kind": "test"
+        }
+      ],
+      "problem": "每个场景都存一份 system prompt/tool schema 会漂移；没有 pin 又会丢掉某类请求的结构表面；多个 pin 会拆分同一表面。",
+      "triggers": [
+        "修改系统提示/工具 schema/header class/请求组装",
+        "新增 profile"
+      ],
+      "obligations": [
+        "每个 header class 恰好一个 pinsHeader 场景；零个失败，两个失败。",
+        "pin 场景声明 systemPromptSource/toolSchemasSource/expectedHeaderChanges/expectedPromptChanges；这些字段只允许 pin 场景。",
+        "sidecar 存完整但 token 化的 prompt/schema：初始 + 每次变化；schema canonical JSON；prompt 非空且 newline 结尾；不同 class 内容唯一。",
+        "pin fixture header 数 = 1 + expectedHeaderChanges；prompt 数 = 1 + expectedPromptChanges；schema 序列与 header 数一致；tools 用 sidecar token。",
+        "child pin 索引指向真实 child，prompt 与 class pin 初始 prompt 一致。",
+        "修改 header 时同时更新 sidecar、计数和 fixture。",
+        "A pin reconstructs the complete request header from tokenized JSONL plus the structured schema sidecar; prompt sidecars are compared directly and the declared header class pin is required.",
+        "Header/system/tool change counts must equal the fixture's request/header and system-message counts; shared sidecars must be content-identical and child pins must reference real child logs.",
+        "A wire-golden's Session roles must all share one native writer generation; mixed generations are an invalid comparison, not a tolerable diff.",
+        "Sidecar refresh is independent of Session-generation retention: current prompt/schema sidecars may be updated while the retained Session file remains byte-identical."
+      ],
+      "actors": [
+        "场景作者",
+        "header owner",
+        "评审者"
+      ],
+      "steps": [
+        "枚举 header class 和 owner。",
+        "为每类建一个 pin。",
+        "生成/更新 sidecar 和计数。",
+        "运行 pin/sidecar 守卫。",
+        "修改 header 时审查 diff。"
+      ],
+      "enforcement": {
+        "mode": "suite pin 守卫 + sidecar 唯一性 + 评审",
+        "implementation": "suite.ts 的 pinsHeader/sidecar/prompt/schema/child 测试；manifest；snapshots/AGENTS。",
+        "trust": "pin 证明组装后的 header 形状，不证明 provider 接受。",
+        "failure": "零 pin 加 owner；两个 pin 合并/删除；sidecar 漂移改 owner/引用；计数不匹配修 fixture/声明。",
+        "exceptions": [
+          "header class 继承",
+          "pinning 场景是 class 唯一场景时直接断言 committed pin"
+        ]
+      },
+      "applicability": [
+        "when: 请求 header 组装; 多 profile/子代理; 系统提示/工具 schema",
+        "whenNot: 无 header 结构的纯文本测试"
+      ],
+      "relationships": [
+        "M17 manifest",
+        "M21 归一化",
+        "M22 身份",
+        "M16 快照"
+      ],
+      "migration": {
+        "strategy": "先枚举 header class，再建每类一个 pin，最后加 sidecar 守卫。",
+        "implementation": [
+          "class 清单",
+          "pin 场景",
+          "sidecar 格式",
+          "计数",
+          "child pin",
+          "守卫"
+        ],
+        "requiredSupport": [
+          "header 组装",
+          "token 化",
+          "canonical JSON",
+          "snapshot suite"
+        ]
+      },
+      "reference": "references/testing.md#m23-header-pins",
+      "verification": {
+        "positive": [
+          {
+            "check": "每类一个 pin，sidecar/计数/header 序列一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除 pin、增加第二个 pin 或改计数，观察守卫失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复/合并 pin 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "pin 不证明 provider 接受。",
+        "class 枚举可能漏新变体。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-workspace-oracle",
+      "title": "完整最终 workspace 树作为独立 oracle",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 53,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1585,
+          "end": 1605,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/workspace.ts",
+          "start": 1,
+          "end": 113,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 50,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 146,
+          "end": 158,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1199,
+          "end": 1220,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 817,
+          "end": 835,
+          "kind": "test"
+        }
+      ],
+      "problem": "只断言某个文件存在会漏掉额外文件、残留临时目录、错误内容；record/refresh 又可能顺手把产品副作用写进期望。",
+      "triggers": [
+        "场景会改 workspace",
+        "工具写文件",
+        "子代理/持久化",
+        "新增 .tmp/spill 行为"
+      ],
+      "obligations": [
+        "默认最终 workspace = 初始；任何额外/修改文件失败。",
+        "mutating 场景显式 workspace.final: true，并提交完整 workspace.expected/ 树。",
+        "record/refresh 不重写 workspace.expected；oracle 是独立人工审查产物。",
+        "等待子进程/工具/持久化静止后捕获树，不用固定 sleep。",
+        "清理 .tmp/spill/owned tree 后才断言。",
+        "捕获完整树（含隐藏文件），排除明确不属于 workspace 的外部路径。",
+        "A mutating Web scenario must declare workspace.final; a missing declaration fails before comparison, and the complete actual tree must equal an independent expected tree.",
+        "Workspace-oracle comparison is read-only: record/refresh must never rewrite the expected workspace; only scenario generation owns it. Ignore only explicitly named runtime-owned entries.",
+        "For Git/worktree scenarios, assert actual Git state (refs, HEAD, attributes, filter config, ignore behavior and worktree listing), not only log text."
+      ],
+      "actors": [
+        "场景作者",
+        "评审者"
+      ],
+      "steps": [
+        "声明最终 workspace 是否改变。",
+        "非 mutating 断言 final=initial。",
+        "mutating 提交完整 expected 树。",
+        "等待静止并清理临时目录。",
+        "审查每个差异路径。"
+      ],
+      "enforcement": {
+        "mode": "suite 断言 + workspace capture + 人工 oracle 审查",
+        "implementation": "suite.ts 的 finalWorkspace 比较；workspace.ts 的 captureExpectedWorkspaceSnapshot；manifest workspace.final。",
+        "trust": "oracle 证明该 workspace 内文件树，不证明外部文件系统/网络副作用。",
+        "failure": "额外 .tmp 先修清理；真实新输出更新 oracle 并审查；非 mutating 改文件判断副作用。",
+        "exceptions": [
+          "只读场景不需要 workspace.final",
+          "无 workspace 场景不适用"
+        ]
+      },
+      "applicability": [
+        "when: 工具写文件/持久化/子代理; workspace 行为",
+        "whenNot: 只读、无文件副作用"
+      ],
+      "relationships": [
+        "M03 资源清理",
+        "M16 快照",
+        "M17 manifest",
+        "M20 模式"
+      ],
+      "migration": {
+        "strategy": "先建完整树 capture，再声明 mutating 场景，最后把 oracle 纳入审查。",
+        "implementation": [
+          "workspace capture",
+          "final=initial 断言",
+          "workspace.final",
+          "完整 expected 树",
+          "清理"
+        ],
+        "requiredSupport": [
+          "文件树 capture",
+          "临时目录清理",
+          "manifest 字段",
+          "审查流程"
+        ]
+      },
+      "reference": "references/testing.md#m24-workspace",
+      "verification": {
+        "positive": [
+          {
+            "check": "非 mutating 场景 final=initial；mutating 场景完整树匹配。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "制造额外文件/残留 .tmp，观察 oracle 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "清理/更新 oracle 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "只覆盖 workspace；外部副作用仍可能漏。",
+        "完整树可能包含平台噪声。"
+      ]
+    },
+    {
+      "id": "testing-snapshot-network-fixtures",
+      "title": "Loopback HTTP fixture 生命周期、fetch 映射与 ambient proxy 隔离",
+      "sources": [
+        {
+          "path": "snapshots/session/loopback-fixture-server.mjs",
+          "start": 1,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/snapshot-http-fixtures.spec.ts",
+          "start": 1,
+          "end": 203,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/test-proxy-environment.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Snapshot fixtures 需要 loopback HTTP，但 ambient proxy 会把请求送错、启动/销毁竞争会留下 listener/连接、fetch 映射会丢失 method/headers、后来的 wrapper 会被覆盖。",
+      "triggers": [
+        "场景触达外部 HTTP",
+        "search/loopback fixture",
+        "auth recovery/download",
+        "Vitest proxy 环境"
+      ],
+      "obligations": [
+        "loopback server 绑定 127.0.0.1:0，由 Cordis effect 拥有 cleanup；unref() 防止 fixture 持有进程；cleanup 先跑 owner callback，再 close()+closeAllConnections()，错误合并为 AggregateError；setup 失败也 cleanup。",
+        "dispose 在 listen 完成前获胜时，await started barrier / listener 完成，再关闭 server/连接/unref；不能提前完成或留下 listener。",
+        "fetch 映射支持 string/URL/Request；Request 的 method/headers 必须保留；无关 URL 原样传递；同一 recorded authority 的意外 path 必须 reject。",
+        "fixture 安装 fetch 后又被后来的 wrapper 替换时，dispose 保留 later wrapper，并报告 ownership error；不能静默覆盖。",
+        "Vitest setup 清除 proxy names 和 NODE_USE_ENV_PROXY；需要代理的测试显式设置；NODE_USE_ENV_PROXY 必须在 shell 启动前 unset（Node 启动时采样），real-API e2e 也清。",
+        "本地 loopback fixture 交互不录；真实 provider/网络只走 M10/M11，不用 fixture 冒充 live 证据。"
+      ],
+      "actors": [
+        "场景作者",
+        "网络/provider owner",
+        "评审者"
+      ],
+      "steps": [
+        "把 fixture server 作为 Cordis effect 启动并绑定 127.0.0.1:0。",
+        "在 effect cleanup 中关闭 server/连接并 unref；覆盖启动失败/竞争。",
+        "安装 fetch 映射并保留 Request 语义；只改写 recorded authority。",
+        "验证 later wrapper 的所有权冲突会报告。",
+        "在 Vitest setup 清 ambient proxy；真实网络另走 e2e。"
+      ],
+      "enforcement": {
+        "mode": "loopback effect + lifecycle spec + proxy setup",
+        "implementation": "loopback-fixture-server.mjs；snapshot-http-fixtures.spec.ts；test-proxy-environment.ts；docs/testing 的 mock 边界。",
+        "trust": "证明本地 loopback 生命周期、fetch 映射和 proxy 隔离，不证明 live 网络/CDN/限流或 provider 保真。",
+        "failure": "listener 挂住查 effect cleanup/closeAllConnections；proxy 干扰清 ambient 并显式设置；映射错查 recorded authority/path；ownership 冲突保留 later wrapper 并报告。",
+        "exceptions": [
+          "真实 e2e 走真实网络",
+          "本地 fixture server 的 loopback 交互不录"
+        ]
+      },
+      "applicability": [
+        "when: 外部 HTTP fixture; auth recovery/download; Vitest proxy 环境",
+        "whenNot: 纯本地逻辑；不需要网络夹具; 需要 live provider 证据；用 M10"
+      ],
+      "relationships": [
+        "M11 网络隔离",
+        "M12 世界验证",
+        "M20 模式",
+        "M26 replay",
+        "M34 mock server"
+      ],
+      "migration": {
+        "strategy": "先建 loopback effect 和 proxy setup，再写 fetch 映射/所有权守卫，最后把真实网络留在 e2e。",
+        "implementation": [
+          "loopback server",
+          "effect cleanup",
+          "fetch 映射",
+          "ownership error",
+          "proxy setup",
+          "lifecycle spec"
+        ],
+        "requiredSupport": [
+          "Cordis effect",
+          "Node HTTP",
+          "fetch wrapper",
+          "Vitest setup",
+          "e2e lane"
+        ]
+      },
+      "reference": "references/testing.md#m25-network",
+      "verification": {
+        "positive": [
+          {
+            "check": "loopback lifecycle spec 通过，proxy 环境已知，真实网络证据单独运行。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让 dispose 提前完成或覆盖 later wrapper，观察 lifecycle spec 失败；保留 ambient proxy，观察 fixture 请求走错。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修 cleanup/映射/proxy 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "不证明 live 网络/CDN/限流/provider 保真。",
+        "fixture 只覆盖本地 loopback 交互。"
+      ]
+    },
+    {
+      "id": "testing-llm-replay-scripts",
+      "title": "LLM replay 脚本、覆盖补丁与消费校验",
+      "sources": [
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 1,
+          "end": 100,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 456,
+          "end": 540,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 1031,
+          "end": 1209,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/llm-replay/src/index.ts",
+          "start": 1,
+          "end": 1030,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 849,
+          "end": 949,
+          "kind": "test"
+        }
+      ],
+      "problem": "回放脚本与真实会话调用顺序不一致时，测试可能读错脚本、少跑调用，或者用没抛错掩盖未消费的 fixture。",
+      "triggers": [
+        "新增 recorded session",
+        "模型流变化",
+        "工具调用重试",
+        "子代理"
+      ],
+      "obligations": [
+        "从 assistant/message、assistant/attempt 的 stream 展开 chunks；compaction/summary 的 llmStreamCall 用 rawOutput 重建。",
+        "每个调用以 finish 结束；没有 finish 说明流抛出，需要 replay.override.json。",
+        "override 可以是整脚本数组或 {patches}；at 是 0-based 调用索引，等于长度时追加。",
+        "每个 live session 绑定一个脚本；匿名调用单独 key；多出未录制 session/脚本耗尽都抛错。",
+        "assertConsumed 要求所有脚本绑定且调用被消费；未消费列出 session/数量。",
+        "provider catalog 校验 modalities/imageRequestTokens/systemPromptUpdate/toolUpdate。",
+        "DeepSeek official replay 仍调用 extensions prepare/accept 重现 2xx 后副作用，但不重现 wire body。",
+        "paceMs 只控制节奏；child files 用 path delimiter 分隔。",
+        "A fixture parser must reject mixed projected/complete body rows, require both or neither of seq/time per row, expand packed rows by payload cardinality, assign deterministic dense seq/time when completing projected rows, report errors with the physical line number, and preserve the unsupported-migration classification rather than downgrading it.",
+        "Override documents are closed unions (bare entries or a single `patches` key): unknown keys, unknown chunk types, non-safe or out-of-range indexes, duplicate patch indexes and values past the derived chunk length must be rejected; an index equal to the derived length appends.",
+        "`{{fromRequest:...}}` resolves against every string leaf of the live request messages; the last match supplies the first capture group (or whole match); invalid, unterminated or unmatched placeholders fail loudly, while trailing brace quantifiers in the regex are supported.",
+        "Child scripts are derived from events at or after the recorded inheritedEventCount; primary and child scripts order by createdAt with a primary tie-break and the recorded id; a live Session with no bound script fails.",
+        "Replay throw emits its prefix chunks and then a typed LlmError; hang emits its fixed prefix, optionally writes a ready file, and rejects only on abort; pacing must cancel on abort.",
+        "The provider catalog must validate declared models, reasoning efforts/default and image pricing only for image-capable models, resolve retry policy at registration, and require every bound cursor to be fully consumed at teardown."
+      ],
+      "actors": [
+        "场景作者",
+        "LLM replay 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "生成/检查 replay 脚本。",
+        "缺 finish/重试用 override 补丁。",
+        "绑定 child/匿名 session。",
+        "在 teardown 调 assertConsumed。",
+        "校验 provider catalog。"
+      ],
+      "enforcement": {
+        "mode": "replay adapter 抛错 + assertConsumed + provider 校验",
+        "implementation": "llm-replay 的 deriveReplayScript/installLlmReplay/assertConsumed/validateConfiguredModels；README。",
+        "trust": "replay 证明脚本消费和下游行为，不证明真实 provider wire/认证/限流。",
+        "failure": "脚本耗尽/未录制 session 重录/补 override；finish 缺失补 override；provider 校验失败修 catalog。",
+        "exceptions": [
+          "单 session 匿名调用",
+          "非流式/trace replay 不适用"
+        ]
+      },
+      "applicability": [
+        "when: recorded LLM 回放; 多 session/子代理; 工具调用重试",
+        "whenNot: 真实 provider e2e；用 M10"
+      ],
+      "relationships": [
+        "M20 模式",
+        "M22 身份",
+        "M27 token 还原",
+        "M33 llm-replay"
+      ],
+      "migration": {
+        "strategy": "先实现脚本派生和绑定，再加 override/消费校验/provider 校验。",
+        "implementation": [
+          "脚本派生",
+          "override 格式",
+          "session 绑定",
+          "assertConsumed",
+          "catalog 校验"
+        ],
+        "requiredSupport": [
+          "session JSONL",
+          "stream chunks",
+          "replay adapter",
+          "teardown hook"
+        ]
+      },
+      "reference": "references/testing.md#m26-replay",
+      "verification": {
+        "positive": [
+          {
+            "check": "replay 通过且 assertConsumed 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "少调用/多调用/缺 finish，观察明确抛错。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重录/补 override 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "不证明真实 provider。",
+        "依赖 session 调用顺序。"
+      ]
+    },
+    {
+      "id": "testing-replay-corpus-token-restoration",
+      "title": "回放语料 token 还原且不改 fixture",
+      "sources": [
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 850,
+          "end": 950,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 30,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1615,
+          "end": 1650,
+          "kind": "test"
+        }
+      ],
+      "problem": "提交的 replay JSONL 为了脱敏用了 token；回放时必须还原成当前 live 值，但不能改 fixture 或猜错关系。",
+      "triggers": [
+        "replay fixture 含 token",
+        "子代理/身份关系",
+        "新增 scrub token"
+      ],
+      "obligations": [
+        "用共享 materializeSessionTokens/restoreReplayCorpus 还原 token；每个 token 映射到当前 live session/child/tool/schema。",
+        "child token 必须映射到同一 child live id，不合并相似文本。",
+        "还原后允许长度不同，但结构/关系一致；不匹配抛出并指出 token/位置。",
+        "replay.override.json 是行为补丁，不是身份 token；presence 与 overridden 一致。",
+        "replay corpus 文件是只读输入；还原只在内存/进程内。"
+      ],
+      "actors": [
+        "场景作者",
+        "replay 维护者"
+      ],
+      "steps": [
+        "登记 token 语义/owner。",
+        "还原到 live 值。",
+        "验证父子关系/结构。",
+        "保持 fixture 不变。",
+        "失败时报告 token/位置。"
+      ],
+      "enforcement": {
+        "mode": "还原函数 + replay 断言 + 评审",
+        "implementation": "suite.ts 的 token materialization/restore；README 的 typed token；replay override presence 守卫。",
+        "trust": "token 还原证明关系映射，不证明真实 provider 接受。",
+        "failure": "token 不识别加映射/报错；父子错修 token/录制；需要改 fixture 回 record/refresh。",
+        "exceptions": [
+          "无身份关系的本地 fixture 可不用 token"
+        ]
+      },
+      "applicability": [
+        "when: 脱敏 replay fixture; 父子身份; 多 session",
+        "whenNot: 无 token 的纯文本 golden"
+      ],
+      "relationships": [
+        "M22 身份",
+        "M26 replay",
+        "M21 归一化"
+      ],
+      "migration": {
+        "strategy": "先登记 token 和 owner，再实现还原/关系校验。",
+        "implementation": [
+          "token 表",
+          "还原函数",
+          "关系断言",
+          "override 分离",
+          "失败诊断"
+        ],
+        "requiredSupport": [
+          "token 格式",
+          "session/child 映射",
+          "replay harness"
+        ]
+      },
+      "reference": "references/testing.md#m27-replay-corpus",
+      "verification": {
+        "positive": [
+          {
+            "check": "replay 通过，父子关系/结构一致。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "插入未知/错误 child token，观察还原失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修 token/录制后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "token 映射有限；不证明 provider。",
+        "fixture 不能覆盖所有身份组合。"
+      ]
+    },
+    {
+      "id": "testing-expected-output-placement",
+      "title": "Owner-local expected output 与非会话进程断言",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.expected.config.ts",
+          "start": 1,
+          "end": 19,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 757,
+          "end": 766,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 60,
+          "end": 75,
+          "kind": "test"
+        },
+        {
+          "path": "package.json",
+          "start": 73,
+          "end": 76,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 35,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 84,
+          "end": 1211,
+          "kind": "test"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1697,
+          "end": 1720,
+          "kind": "test"
+        }
+      ],
+      "problem": "不是所有组装行为都需要 recorded session。CLI 进程、配置转储、启动失败、插件兼容性这类有真实进程但没有模型回放的输出，放 snapshots 会污染会话语料；放普通单测又缺完整进程。",
+      "triggers": [
+        "CLI/进程装配",
+        "启动/退出",
+        "配置 schema",
+        "插件兼容性",
+        "Web 非 session 输出"
+      ],
+      "obligations": [
+        "用 *.expected.e2e.ts 命名，放 owning app/package/script 的 tests/expected 旁；不放顶层 snapshots，不用 *.snapshot.ts。",
+        "vitest.expected.config.ts 只包含 apps/cli/tests/**/*.expected.e2e.ts；proxy 清理 setup；120s test/30s hook；最多 5 worker。",
+        "通过真实 Loader/profile 启动，断言 stdout/stderr、退出码、持久化文件；CI 用 built exports/DSH_EXAMPLE_MODE=lib。",
+        "两边用同一归一化 context；比较解析后的 JSONL/文本，除非协议要求字节。",
+        "刷新用 test:expected:refresh，人工审查 diff。",
+        "进程被信号/超时结束时先断言不是信号/超时，再断言退出码。",
+        "A golden lane must separate comparison from refresh: replay compares and fails on a missing golden with the exact regeneration command; only the explicit refresh mode writes.",
+        "When a CLI/process lane streams failures as JSON or NDJSON, assert the actionable failure on stdout with stderr empty; the text must name both credential sources (credential service and launching environment) and must not echo the rejected key or a transport-level parser symptom such as ByteString.",
+        "Assert recorded transient retries field-by-field (policyKey, retry/maxRetries, delayMs and failure code/status); do not assert only a retry count.",
+        "An unrelated startup activation error must stay a warning on stderr while the task still succeeds; tokenize the fixture URL in the stderr golden before comparison.",
+        "A two-wake one-shot resume must assert the same Session id in both JSON session headers, exactly one persisted log containing both prompts, and the final completed response; an unknown --session-id must fail with a typed error and nonzero exit before creating a Session."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "确认输出不是 recorded-session 驱动。",
+        "放 tests/expected 并命名 *.expected.e2e.ts。",
+        "启动真实 profile/进程。",
+        "归一化双方并断言外部输出。",
+        "在 built 模式/CI 运行。"
+      ],
+      "enforcement": {
+        "mode": "独立 config + run-gates expectedOutputGate + 评审",
+        "implementation": "vitest.expected.config.ts；run-gates 的 test:expected + DSH_EXAMPLE_MODE=lib；pre-push placement 规则。",
+        "trust": "expected 证明该进程输出，不证明真实 provider；keyless 仍是 mock/脚本模型。",
+        "failure": "输出差异判断环境/行为；放错目录移动并更新配置；进程被杀先修超时/资源。",
+        "exceptions": [
+          "需要 recorded session 模型输入/持久化时改用 snapshots",
+          "纯包/脚本期望用 test，浏览器用 test:web"
+        ]
+      },
+      "applicability": [
+        "when: CLI/进程/配置/插件输出; 无模型回放",
+        "whenNot: 模型转录/持久化回放；用 M16/M20"
+      ],
+      "relationships": [
+        "M01 层级",
+        "M14 真入口",
+        "M16 快照",
+        "M29 Web"
+      ],
+      "migration": {
+        "strategy": "先建 owner-local expected 目录和 config，再把非会话进程测试迁入。",
+        "implementation": [
+          "expected 目录",
+          "*.expected.e2e.ts",
+          "config",
+          "归一化",
+          "refresh 命令",
+          "CI gate"
+        ],
+        "requiredSupport": [
+          "真实进程启动",
+          "归一化",
+          "built exports",
+          "CI lane"
+        ]
+      },
+      "reference": "references/testing.md#m28-expected",
+      "verification": {
+        "positive": [
+          {
+            "check": "test:expected 通过，输出/退出码/文件符合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "改一个输出或目录位置，观察 expected/placement 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修正输出/位置后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": "Expected-output comparison proves process stdout/stderr plus selected persisted bytes; it does not prove provider wire behavior or the semantic correctness of a refreshed golden."
+    },
+    {
+      "id": "testing-web-browser-lane",
+      "title": "真实浏览器语义/ARIA 断言，不做像素门禁",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 15,
+          "end": 15,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.web.config.ts",
+          "start": 1,
+          "end": 37,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 76,
+          "end": 80,
+          "kind": "config"
+        },
+        {
+          "path": "apps/web/tests/scaffold.ts",
+          "start": 1,
+          "end": 90,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md",
+          "start": 1,
+          "end": 20,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md",
+          "start": 5,
+          "end": 14,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/run-web-snapshots.ts",
+          "start": 1,
+          "end": 44,
+          "kind": "config"
+        }
+      ],
+      "problem": "DOM 单测不能证明真实浏览器、布局、ARIA、网络和插件 CSS 的组合；截图 diff 又会因字体/像素而不稳。",
+      "triggers": [
+        "Web UI/客户端插件",
+        "ARIA/键盘/布局",
+        "session-driven Web 渲染"
+      ],
+      "obligations": [
+        "test:web 先构建（CSS/插件/client），再跑 vitest.web.config.ts；headless Chromium 为主，model/reasoning picker 额外 WebKit。",
+        "真实 Chromium 页面和 app bootstrap；不用 CDP 注入/mock 替换产品路径。",
+        "等待字体/布局/动画可观察就绪，不用 sleep；用可访问角色/名称/label 定位，断言 ARIA/可见状态/焦点。",
+        "session-driven Web 输出放 snapshots/web；UI-only 放 apps/web/tests/expected；Web 可借用 canonical session。",
+        "CI 用 DSH_SNAPSHOT=replay 只读；refresh 只在本地并审查。",
+        "built Web snapshot 用 test:web:built，在 build 后跑；跳过不是证明。",
+        "键盘选择在 reflow 前建立，避免点击后立即 reflow 让断言落在旧值。"
+      ],
+      "actors": [
+        "Web 测试作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "构建并启动真实浏览器。",
+        "用可访问 locator/状态断言。",
+        "等待显式就绪。",
+        "在 CI replay 只读。",
+        "审查/刷新 diff。"
+      ],
+      "enforcement": {
+        "mode": "真实浏览器 config + CI replay + 语义断言",
+        "implementation": "vitest.web.config.ts；package scripts test:web/test:web:built；scaffold；web snapshot lane。",
+        "trust": "浏览器 lane 证明选定浏览器/视口行为，不证明所有设备/浏览器或真实 provider。",
+        "failure": "布局 flake 等显式状态；跨浏览器差异判断产品语义/显式 skip；快照差异审查不盲刷。",
+        "exceptions": [
+          "视觉截图可另存但不做 CI 门禁",
+          "WebKit 只覆盖需要的 picker"
+        ]
+      },
+      "applicability": [
+        "when: Web UI/ARIA/布局; 客户端插件; session-driven Web",
+        "whenNot: 无浏览器 UI；用 DOM 单测/服务测试"
+      ],
+      "relationships": [
+        "M16 快照",
+        "M20 模式",
+        "M28 expected",
+        "M30 perf",
+        "UI/UX 域"
+      ],
+      "migration": {
+        "strategy": "先建真实浏览器 lane 和语义断言，再迁入 session/UI-only 输出。",
+        "implementation": [
+          "Playwright 安装",
+          "web config",
+          "scaffold",
+          "ARIA locator",
+          "replay CI",
+          "built lane"
+        ],
+        "requiredSupport": [
+          "Playwright browsers",
+          "构建 CSS/client",
+          "web snapshot harness",
+          "CI runner"
+        ]
+      },
+      "reference": "references/testing.md#m29-web",
+      "verification": {
+        "positive": [
+          {
+            "check": "Chromium（及需要 WebKit）通过，ARIA/状态断言稳定。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让布局/焦点断言依赖旧值或 sleep，观察 flake/错误通过；或改 UI 观察语义断言失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改就绪/键盘顺序后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "浏览器/视口覆盖有限。",
+        "不做像素 diff；视觉回归需另行设计。",
+        "不证明真实 provider。",
+        "CI 的 Web 执行器先串行跑两个 browser-owner 文件再跑一个有界 worker 池；这一拓扑来自源码阅读，未实际运行。"
+      ]
+    },
+    {
+      "id": "testing-web-performance-and-stress",
+      "title": "Web 性能/压力 lane 与默认 UI 套件分离",
+      "sources": [
+        {
+          "path": "vitest.web.perf.config.ts",
+          "start": 1,
+          "end": 21,
+          "kind": "config"
+        },
+        {
+          "path": "vitest.web-stress.config.ts",
+          "start": 1,
+          "end": 15,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 80,
+          "end": 85,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 109,
+          "end": 115,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "性能/压力测试会放大机器噪声和资源竞争；混进默认 Web 套件会让日常反馈不稳定。",
+      "triggers": [
+        "前端渲染/滚动/长会话性能",
+        "并发浏览器压力",
+        "性能预算变更"
+      ],
+      "obligations": [
+        "test:web:perf 先 build，再跑 vitest.web.perf.config.ts（DSH_SNAPSHOT=replay），与普通 Web lane 分开。",
+        "test:web:stress 先 build，再跑 vitest.web-stress.config.ts，用于并发/浏览器进程压力；opt-in。",
+        "性能断言用预算/分位数，不用无基线比较；预算变更要校准记录。",
+        "压力结论只补充确定性回归，不替代它。"
+      ],
+      "actors": [
+        "Web 性能作者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "选 perf/stress lane。",
+        "构建并记录机器/浏览器。",
+        "按预算运行和分析。",
+        "把压力结果与确定性测试分开报告。"
+      ],
+      "enforcement": {
+        "mode": "独立 config + opt-in 命令 + 预算报告",
+        "implementation": "vitest.web.perf.config.ts；vitest.web-stress.config.ts；package scripts；reliability Skill 的 stress 规则。",
+        "trust": "源仓能证明 lane/配置；不能证明任意机器绝对性能。",
+        "failure": "超预算先看机器/负载再判断回归；压力失败定位竞争，不串行掩盖。",
+        "exceptions": [
+          "本机数字不当发布容量",
+          "stress 不作为默认门禁"
+        ]
+      },
+      "applicability": [
+        "when: 前端性能敏感; 并发浏览器; 长会话/滚动",
+        "whenNot: 无 Web/性能预算；不需要"
+      ],
+      "relationships": [
+        "M29 Web lane",
+        "M31 benchmark",
+        "M32 bench hygiene"
+      ],
+      "migration": {
+        "strategy": "先建独立 perf/stress config 和预算，再接 CI 单独 runner。",
+        "implementation": [
+          "perf config",
+          "stress config",
+          "预算",
+          "机器记录",
+          "CI lane"
+        ],
+        "requiredSupport": [
+          "Playwright",
+          "构建",
+          "性能测量",
+          "独立 runner"
+        ]
+      },
+      "reference": "references/testing.md#m30-web-perf",
+      "verification": {
+        "positive": [
+          {
+            "check": "perf 在预算内，stress 标注 opt-in 并记录结果。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "引入明显回归或资源竞争，观察预算/压力失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "绝对性能依赖机器。",
+        "压力通过不证明无 race。"
+      ]
+    },
+    {
+      "id": "testing-benchmark-gate",
+      "title": "独立的预算型 benchmark 门禁",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.bench.config.ts",
+          "start": 1,
+          "end": 29,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 206,
+          "end": 265,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 65,
+          "end": 68,
+          "kind": "config"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.bench.ts",
+          "start": 120,
+          "end": 180,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.bench.ts",
+          "start": 311,
+          "end": 495,
+          "kind": "test"
+        }
+      ],
+      "problem": "性能回归不会让功能测试变红；把 benchmark 混进包测试又会让计时受框架/并发影响。",
+      "triggers": [
+        "修改热路径/持久化/会话打开/工具管线/前端预算",
+        "发布前"
+      ],
+      "obligations": [
+        "预算型 benchmark 放 benchmarks/*.bench.ts；不要放包 tests，不混 .bench.ts。",
+        "单个用 pnpm run bench <path>；完整用 pnpm run test:bench（先 build bench/web，再 vitest.bench.config.ts）；CI 用 check:ci:bench。",
+        "vitest.bench.config.ts 只含 benchmarks/**/*.bench.ts；process-bound/plain Node；不在 TSX 下计时。",
+        "CI 的 node 24 / benchmarks 单独跑、timeout 20m、无并发 gate；失败也上传 benchmarks/.dsh-report。",
+        "预算用未四舍五入中位数；保存原始 min/median/max。",
+        "失败是门禁失败；不改成 skip/删预算。",
+        "A budget gate must carry calibration and negative-control tests proving an accepted recorded median and a material regression are evaluated by the same predicate; do not raise a budget merely to admit CI noise.",
+        "Constrained-heap runs are diagnostic (report emitted, no budget assertion) and must be distinguishable from budgeted normal-heap cases; failure diagnostics retain the exception headline plus a bounded stderr tail.",
+        "Budget reports must include sample counts/medians and the exact budget values, record per-phase timings with IO share, and still render when the budget fails."
+      ],
+      "actors": [
+        "性能作者",
+        "CI 维护者",
+        "评审者"
+      ],
+      "steps": [
+        "把 benchmark 放 benchmarks。",
+        "校准预算并记录机器。",
+        "本地/CI 运行。",
+        "失败时看原始样本和机器。",
+        "保留报告 artifact。"
+      ],
+      "enforcement": {
+        "mode": "bench config + CI idle job + 预算断言",
+        "implementation": "vitest.bench.config.ts；package scripts；ci.yml 的 node-24-bench；benchmarks/AGENTS。",
+        "trust": "benchmark 证明该机器/负载时间/内存，不证明生产容量。",
+        "failure": "超预算先复跑/看机器再定位；报告缺失查 teardown/上传。",
+        "exceptions": [
+          "内存案例走 test:bench:memory 单独进程",
+          "benchmark 准备可用 --noCheck 生成一次性 lib"
+        ]
+      },
+      "applicability": [
+        "when: 性能敏感路径; 有独立 CI runner; 预算可校准",
+        "whenNot: 无稳定 runner；先做本地诊断，不做阻断门禁"
+      ],
+      "relationships": [
+        "M32 bench hygiene",
+        "M37 CI",
+        "M08 coverage exempt",
+        "M15 built"
+      ],
+      "migration": {
+        "strategy": "先建 benchmark 目录/config/报告，再校准预算和独立 runner。",
+        "implementation": [
+          "bench 目录",
+          "vitest bench config",
+          "预算",
+          "报告 artifact",
+          "CI job"
+        ],
+        "requiredSupport": [
+          "plain Node worker",
+          "构建",
+          "机器信息",
+          "artifact 上传"
+        ]
+      },
+      "reference": "references/testing.md#m31-benchmark-gate",
+      "verification": {
+        "positive": [
+          {
+            "check": "CI benchmark job 在预算内，报告含机器/样本。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "人为拖慢热路径或降低预算，观察 job 失败并生成报告。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "优化/校准后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "数字受机器/容器配额影响。",
+        "不证明生产 SLA。"
+      ]
+    },
+    {
+      "id": "testing-benchmark-workload-hygiene",
+      "title": "Benchmark 隔离、合成输入、原始样本与内存预算",
+      "sources": [
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.bench.ts",
+          "start": 120,
+          "end": 260,
+          "kind": "test"
+        },
+        {
+          "path": "benchmarks/support/machine-profiles.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-memory-pressure-bench.ts",
+          "start": 1,
+          "end": 147,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/support/calibration.ts",
+          "start": 1,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.bench.ts",
+          "start": 261,
+          "end": 495,
+          "kind": "test"
+        }
+      ],
+      "problem": "计时区间混入构建/fixture 生成/冷启动/GC 或 ambient repo/network，会把准备成本算成产品成本，且结果不可复现。",
+      "triggers": [
+        "新增/修改 benchmark",
+        "预算校准",
+        "内存/扩展性案例"
+      ],
+      "obligations": [
+        "每 benchmark 自有树/身份/哨兵；不读 ambient repo、不共享私有 home、不依赖网络；需要 built 模块自己 build。",
+        "准备在计时外：合成 session、迁移模板、冷 resume 放 unmeasured setup。",
+        "每样本 fresh worker；worker 报告退出码/信号/超时，失败给 stderr 尾部。",
+        "报告原始 min/median/max、总 wall、CPU user/system、peak RSS、retained heap/external/arrayBuffers/RSS；预算用中位数。",
+        "记录 CPU 型号、可用并行度、平台、架构、Node/V8 版本。",
+        "内存压力：旧空间上限、独立进程、显式 GC、retained heap vs fresh host、peak RSS。",
+        "失败后仍渲染报告；若未记录 timing 则上传 warn。",
+        "校准用固定机器/多次采样。",
+        "A benchmark that exercises migration must generate its released fixture outside the timed path with exact event/row/frame expectations, and prove the released bytes are unchanged after migration and reopen.",
+        "Worker failures must expose the exception headline and a bounded tail, including a constrained-heap hint; a silent exit 0 or undefined report is a failure.",
+        "Each access kind has its own budgets and recordTimings entry; first-open retains adjacent generations while post-upgrade reopen uses both the released and current generations."
+      ],
+      "actors": [
+        "性能作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "隔离 benchmark 输入/树。",
+        "把准备移出计时。",
+        "每样本 fresh worker。",
+        "记录原始/聚合/机器信息。",
+        "内存案例单独进程。"
+      ],
+      "enforcement": {
+        "mode": "benchmark harness + 报告 + CI",
+        "implementation": "session-open bench；machine-profiles/calibration；run-memory-pressure-bench；scaling-report。",
+        "trust": "合成输入/声明端点不等于公共工作负载；报告不能外推生产 SLA。",
+        "failure": "计时含准备移端点；报告缺失修 harness/teardown；样本噪声加样本/校准，不删异常值。",
+        "exceptions": [
+          "shipped SDK workflow 变体需要 built dsh，只计声明端点"
+        ]
+      },
+      "applicability": [
+        "when: 性能/内存预算; 会话/工具/前端热路径",
+        "whenNot: 无预算/无稳定机器；先诊断"
+      ],
+      "relationships": [
+        "M31 gate",
+        "M15 built",
+        "M32"
+      ],
+      "migration": {
+        "strategy": "先建隔离 harness/报告，再校准预算和内存案例。",
+        "implementation": [
+          "owned tree",
+          "synthetic input",
+          "fresh worker",
+          "report schema",
+          "memory harness",
+          "calibration"
+        ],
+        "requiredSupport": [
+          "临时目录",
+          "worker runner",
+          "GC/内存指标",
+          "机器信息"
+        ]
+      },
+      "reference": "references/testing.md#m32-benchmark-hygiene",
+      "verification": {
+        "positive": [
+          {
+            "check": "报告可复现、预算可解释、准备不在计时内。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 fixture 生成放进计时或读 ambient repo，观察结果不可复现/失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "移出准备/隔离输入后重跑，记录稳定。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "合成输入不代表真实工作负载。",
+        "容器内存/CPU 配额影响结果。"
+      ]
+    },
+    {
+      "id": "testing-support-harness-roster",
+      "title": "测试支持包按边界选择，只保留一个 mock 边界",
+      "sources": [
+        {
+          "path": "packages/test-support/README.md",
+          "start": 1,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/loader-smoke/README.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/agent-loop-testkit/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/client-runtime/README.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/remote-mock/README.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试支持包互相嵌套或各自造 mock，会让哪一层是真实不可追踪；一个包也不能解决所有边界。",
+      "triggers": [
+        "需要录制会话/回放 LLM/启动 Loader/真实 loop/客户端 runtime/Remote HTTP/无凭据 provider"
+      ],
+      "obligations": [
+        "session-snapshot 负责 recorded session 存储/归一化/adapter，不是通用断言库。",
+        "llm-replay 按调用顺序回放 recorded chunks，不是真实 provider。",
+        "loader-smoke 启动真实 Loader + app/process，不是 UI/browser。",
+        "agent-loop-testkit 保留真实 loop/session/tool registry/JSONL，fake model/tools，不是 fake loop。",
+        "client-runtime 保留真实 client 组装 + fake remote；REPL/heads 是示例，不是 Web 浏览器 lane。",
+        "remote-mock 只用于 HTTP Remote 表面；测试专用 any 是本地 fallback，不是 production 类型。",
+        "llm-mock-server 是无凭据远端 provider 替身，不是 provider 保真。",
+        "只保留一个 mock 边界；写清替换/保留/不能证明什么。"
+      ],
+      "actors": [
+        "测试作者",
+        "测试基础设施维护者",
+        "评审者"
+      ],
+      "steps": [
+        "按边界选包。",
+        "只替换一个外部边界。",
+        "保留真实下游。",
+        "记录替换/保留/限制。",
+        "用真入口/世界断言补足。"
+      ],
+      "enforcement": {
+        "mode": "包边界 + README + 评审 + 类型检查",
+        "implementation": "packages/test-support 七个 README；docs/testing 的 real implementation；pre-push Remote mock typing。",
+        "trust": "每个包只证明其边界；组合不自动变端到端。",
+        "failure": "两个 harness 冲突保留一个边界；mock 证明不了产品升级 M14/M10。",
+        "exceptions": [
+          "纯单元测试可用简单 fake，不声称集成"
+        ]
+      },
+      "applicability": [
+        "when: 需要多种测试边界; 多入口/多协议",
+        "whenNot: 小项目；一个简单 fake 足够"
+      ],
+      "relationships": [
+        "M13 mock",
+        "M14 真入口",
+        "M26 replay",
+        "M34 mock server"
+      ],
+      "migration": {
+        "strategy": "先画边界和包选择表，再引入一个 harness，最后用真入口补证。",
+        "implementation": [
+          "边界清单",
+          "包选择表",
+          "README 限制",
+          "typecheck",
+          "真入口测试"
+        ],
+        "requiredSupport": [
+          "支持包",
+          "类型检查",
+          "真实下游",
+          "评审流程"
+        ]
+      },
+      "reference": "references/testing.md#m33-support-roster",
+      "verification": {
+        "positive": [
+          {
+            "check": "所选 harness 的边界测试通过，真实下游被断言。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "嵌套两个 harness 或让 mock 替代断言对象，观察测试无法发现真实回归。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "降为一个边界/升级真入口后重跑，记录失败被捕获。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "包边界组合仍需设计。",
+        "harness 保真度不能自动证明。"
+      ]
+    },
+    {
+      "id": "testing-llm-mock-server-contract",
+      "title": "无凭据 LLM mock server 的协议替身边界",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 1,
+          "end": 169,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts",
+          "start": 97,
+          "end": 217,
+          "kind": "test"
+        }
+      ],
+      "problem": "真实 provider 的凭据/网络/限流让恢复和流式测试难以稳定；但 mock server 如果被当成 provider 保真，会掩盖 wire/认证差异。",
+      "triggers": [
+        "provider 恢复/流式 chunk/工具调用/认证错误",
+        "无 key 客户端服务端联调"
+      ],
+      "obligations": [
+        "本地启动，DEEPSEEK_BASE_URL 指向 loopback，DEEPSEEK_API_KEY 用 mock-key；不传真实 key。",
+        "用故障注入/恢复模式验证错误、重试、流中断；断言外部请求次数/顺序/最终状态。",
+        "它是外部边界替身：保留真实 loop/tool/persistence，不再嵌套另一个 mock。",
+        "不把它当 provider 兼容性/限流/真实 wire 证据。",
+        "A deterministic loopback provider fixture must capture request bodies and paths, distinguish the auxiliary title request from the main request by a stable marker, and keep the SSE response open with heartbeats until the auxiliary request arrives.",
+        "Assert the request body fields (max output, reasoning effort, provider defaults) and the resulting adapter-default flags, not only the final text; the compatibility path returns Chat Completions chunks without unsupported fields."
+      ],
+      "actors": [
+        "测试作者",
+        "评审者"
+      ],
+      "steps": [
+        "启动 mock server。",
+        "配置 loopback/假 key。",
+        "注入故障并断言下游。",
+        "需要真实 provider 时改用 M10。"
+      ],
+      "enforcement": {
+        "mode": "本地 server + 假 key + 评审",
+        "implementation": "llm-mock-server README 的启动/配置；docs/testing 的 mock 边界。",
+        "trust": "只证明被 mock 的协议子集和客户端行为，不证明 provider 实现。",
+        "failure": "连接失败查端口/路径/假 key；行为差异判断客户端/mock 协议，不直接改 mock 让测试绿。",
+        "exceptions": [
+          "真实 provider 测试用 M10"
+        ]
+      },
+      "applicability": [
+        "when: provider 恢复/流式/工具调用; 无 key 联调",
+        "whenNot: 需要真实 provider 兼容/限流；用 M10"
+      ],
+      "relationships": [
+        "M10 e2e",
+        "M13 mock",
+        "M33 roster"
+      ],
+      "migration": {
+        "strategy": "先建本地 mock server/假 key，再加故障注入和外部断言。",
+        "implementation": [
+          "server",
+          "loopback 配置",
+          "假 key",
+          "故障注入",
+          "外部断言"
+        ],
+        "requiredSupport": [
+          "本地 HTTP server",
+          "provider 客户端",
+          "故障注入",
+          "CI 无 key lane"
+        ]
+      },
+      "reference": "references/testing.md#m34-llm-mock-server",
+      "verification": {
+        "positive": [
+          {
+            "check": "恢复/流式场景稳定通过，外部请求符合预期。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "让客户端错误地重试/不恢复，观察外部断言失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修客户端/mock 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "只覆盖协议子集。",
+        "不证明真实 provider。"
+      ]
+    },
+    {
+      "id": "testing-reliability-skill",
+      "title": "测试可靠性 Skill：设计、诊断、拒绝 flake 掩盖",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 1,
+          "end": 131,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "异步/并发/全局状态/子进程/平台问题反复以 flake 出现；没有统一设计和诊断流程，修复会退化成加超时/重试/串行。",
+      "triggers": [
+        "新增/修改高风险测试",
+        "调查 flaky CI",
+        "评审测试隔离"
+      ],
+      "obligations": [
+        "用 Skill 顺序：读 owning rules → 四层拓扑 → 原子分配 → 全局状态 → 平台语义 → 预算 → 同步 → 静止处置 → 证明回归 → 拒绝掩盖 → 诊断 → 验证报告。",
+        "先预测失败路径，再写测试。",
+        "拒绝 flake 掩盖：加超时但不命名等待状态、加重试、全文件串行、吞错误、弱化断言、归一化不稳定行为、清理/断言前 sleep。",
+        "诊断只读请求保持只读。",
+        "证据按风险补：全局恢复、静止 teardown、并发独立进程、负对照；stress 只补充确定性回归。"
+      ],
+      "actors": [
+        "测试作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "读策略/配置/workflow。",
+        "建模风险和失败路径。",
+        "写确定性回归 + 必要压力证据。",
+        "诊断 flake 并记录原因。",
+        "报告实际命令/结果。"
+      ],
+      "enforcement": {
+        "mode": "Skill 指导 + 评审 + 诊断流程",
+        "implementation": "dsh-ci-test-reliability SKILL 与 ci-flake-diagnosis reference。",
+        "trust": "Skill 是指导和审查框架，不是自动检查器。",
+        "failure": "无法解释的 flake 按诊断流程分类，保留失败样本，不反复重跑碰运气。",
+        "exceptions": [
+          "文档化外部 provider 瞬态重试",
+          "lane 预算恢复"
+        ]
+      },
+      "applicability": [
+        "when: 异步/并发/全局/子进程/平台测试; flaky CI",
+        "whenNot: 纯同步单测；仍可用基本隔离原则"
+      ],
+      "relationships": [
+        "M02-M05",
+        "M29 Web",
+        "M35",
+        "M36 pre-push"
+      ],
+      "migration": {
+        "strategy": "先安装/改写 Skill，再按四层拓扑迁移高风险测试。",
+        "implementation": [
+          "Skill",
+          "诊断 reference",
+          "审查清单",
+          "失败样本库"
+        ],
+        "requiredSupport": [
+          "测试策略",
+          "配置/workflow",
+          "失败日志",
+          "评审流程"
+        ]
+      },
+      "reference": "references/testing.md#m35-reliability-skill",
+      "verification": {
+        "positive": [
+          {
+            "check": "高风险测试在并发/失败路径稳定，报告含证据。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用一次 sleep/retry 掩盖已知失败，观察评审拒绝或诊断无法解释。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按流程定位并修复后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "不是自动检查器。",
+        "依赖评审者执行。"
+      ]
+    },
+    {
+      "id": "testing-pre-push-evidence-selection",
+      "title": "推送前选择最小证据并保护历史重写",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 1,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 133,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 1,
+          "end": 49,
+          "kind": "config"
+        }
+      ],
+      "problem": "每次推送都跑全量既慢又浪费；只跑不相关的测试又会漏回归；历史重写会让旧哈希/旧审查锚点失效。",
+      "triggers": [
+        "push/force-push/mark ready/gh stack sync 后/声称 checks 通过"
+      ],
+      "obligations": [
+        "检查 checkout/branch；change-scope --base <verified-base-ref> 得到完整出站范围；不猜 base。",
+        "按表面选最小证据：包/脚本 owning Vitest；文档 doc-sync；模型/CLI/终端 keyless snapshot/真实运行；manifest/exports/build/bin 跑 build+hygiene+built smoke；测试/脚本类型 build:check；provider e2e。",
+        "不重复已通过检查，尤其不在 push 前重复 pre-push typecheck。",
+        "聚焦覆盖率同时指定 tests + source include；不用 passWithNoTests/降阈值/缩窄 include。",
+        "完整本地演练只在用户要求/诊断 CI/不可分割跨仓库时。",
+        "历史重写用 --force-with-lease=<branch>:<observed-oid>，禁止 raw --force；重写后重审 heads/threads/approvals/checks。",
+        "失败：普通 push 前停止修复；post-sync 失败阻止 merge；不 push 了看 CI 是否不同。",
+        "报告 pending 为 pending，不把跳过写成通过。"
+      ],
+      "actors": [
+        "推送作者",
+        "评审者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "确认 base/stack parent。",
+        "跑 change-scope。",
+        "按表面选最小证据。",
+        "运行并记录结果。",
+        "lease 推送并重审远端。"
+      ],
+      "enforcement": {
+        "mode": "Skill + 窄 Git hooks + CI",
+        "implementation": "dsh-pre-push-checks SKILL；lefthook 的 pre-commit/pre-push 窄检查；CI exhaustive lanes。",
+        "trust": "change-scope 依赖正确 base；本地环境不等于 CI；Skill 不替代平台矩阵。",
+        "failure": "环境相关失败记录命令/用例/平台差异；hook 绕过只在用户同意时并报告。",
+        "exceptions": [
+          "gh stack sync 先发布后验证，必须立即补验证且不 merge"
+        ]
+      },
+      "applicability": [
+        "when: 推送/重写/ready/stack sync; 需要最小本地证据",
+        "whenNot: 不推送的本地探索；仍可跑聚焦测试"
+      ],
+      "relationships": [
+        "M01 层级",
+        "M15 built",
+        "M35 reliability",
+        "M37 CI"
+      ],
+      "migration": {
+        "strategy": "先建 change-scope 和证据选择表，再接窄 hooks/lease 流程。",
+        "implementation": [
+          "change-scope",
+          "证据表",
+          "窄 hooks",
+          "lease 规则",
+          "post-sync 审计"
+        ],
+        "requiredSupport": [
+          "Git/gh",
+          "测试命令",
+          "CI",
+          "评审流程"
+        ]
+      },
+      "reference": "references/testing.md#m36-pre-push",
+      "verification": {
+        "positive": [
+          {
+            "check": "出站 diff 的每个风险面有最小证据，推送后 checks 符合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只跑不相关测试或跳过变更面，观察评审/CI 发现回归；raw --force 被拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补证据/lease 推送后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "依赖 base 正确。",
+        "本地与 CI 平台不同。",
+        "不能替代远端保护。",
+        "lefthook.yml:5-32 的 pre-commit 包含 staged 双语配对、归档笔记、staged oxlint --fix/stage_fixed、whitespace、pi-ai provider-data 和 vendor-manifest 检查；34-44 的 pre-merge-commit 只有配对与归档笔记；46-49 的 pre-push 仅 typecheck。仅阅读配置，未安装或运行 hook；该文件未提供绕过开关。"
+      ]
+    },
+    {
+      "id": "testing-ci-orchestration-and-trust",
+      "title": "CI lane 编排、构建依赖与证据信任边界",
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 109,
+          "end": 391,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 737,
+          "end": 763,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 280,
+          "end": 391,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 392,
+          "end": 556,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 696,
+          "end": 730,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 148,
+          "end": 160,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试门禁都串行会慢；不等待构建会读半成品；失败不互相中止会浪费；观测 lane 与阻断 lane 混淆会把诊断当成阻断。",
+      "triggers": [
+        "新增/调整 lane/gate/worker/cache/build 依赖/平台矩阵"
+      ],
+      "obligations": [
+        "分组 lane：coverage/consumers/bench/unit/windows blocking/complete/observational；artifact consumers 等同一 build；snapshot/expected/web built 在 build 后。",
+        "coverage 分区 + exempt heavy；PR coverage job 缓存 .coverage-times.json，共享宿主 90s 预算。",
+        "bench 单独 idle runner，20m 上限，失败也上传报告。",
+        "DSH_GATE_FAIL_FAST=1 让失败中止兄弟；否则失败只跳过依赖 gate，独立错误都报告。",
+        "worker 环境由 scheduler 设：GATE_CONCURRENCY/COVERAGE_MAX_WORKERS/SNAPSHOT_MAX_CONCURRENCY/WEB_SNAPSHOT_WORKERS/OXLINT_THREADS；shared host 不用无界 availableParallelism。",
+        "runner-owned 临时存储；PR 恢复 cache，master 不保存这些 key；self-hosted 复用持久 store。",
+        "check:all 是本地 opt-in；CI 拥有 exhaustive coverage/platform matrix。",
+        "区分 checker 失败与 forge 阻断；job-level if 跳过的 check 报告成功但表示未验证。"
+      ],
+      "actors": [
+        "CI 维护者",
+        "测试作者",
+        "评审者"
+      ],
+      "steps": [
+        "画 lane 依赖图。",
+        "设 worker/分区/cache/runner temp。",
+        "配置 fail-fast 和 artifact。",
+        "区分 required/observational。",
+        "用远端证据验证 required check。"
+      ],
+      "enforcement": {
+        "mode": "workflow + run-gates scheduler + 分支保护（未验证）",
+        "implementation": "ci.yml 的 coverage/consumers/bench jobs；run-gates 的 gatesForMode/ciPrimaryGates/ciConsumerGates/coverageGates；docs/development 的 CI gates。",
+        "trust": "源仓能证明 job/gate 定义；不能证明远端 required check/分支保护/secret 权限已开启。",
+        "failure": "依赖错乱修 needs/after；缓存污染清 key/临时目录；平台失败按 M38 显式 skip/修。",
+        "exceptions": [
+          "Dependabot/fork 的 keyless skip",
+          "self-hosted failover 的并发/缓存差异"
+        ]
+      },
+      "applicability": [
+        "when: 多 lane CI; 构建产物消费者; 平台矩阵; 共享 runner",
+        "whenNot: 单 job 小项目；仍需 build→test 依赖"
+      ],
+      "relationships": [
+        "M06-M09 coverage",
+        "M15 built",
+        "M31 bench",
+        "M10 e2e",
+        "M38 skips"
+      ],
+      "migration": {
+        "strategy": "先画 lane 依赖和 build artifact，再配 worker/cache/fail-fast，最后验证 required/observational。",
+        "implementation": [
+          "lane 图",
+          "build artifact",
+          "worker/分区",
+          "cache/temp",
+          "fail-fast",
+          "artifact 上传",
+          "required check 证据"
+        ],
+        "requiredSupport": [
+          "CI runner",
+          "artifact store",
+          "cache",
+          "分支保护配置"
+        ]
+      },
+      "reference": "references/testing.md#m37-ci",
+      "verification": {
+        "positive": [
+          {
+            "check": "required lanes 全绿，observational 诊断可查，失败定位到 gate/文件。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "制造 build 依赖错乱/失败 gate，观察 needs/fail-fast 行为；或跳过 required check，观察 forge 是否阻断。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修依赖/配置后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "远端 branch protection/required check 未验证。",
+        "源仓 workflow 可能随平台变化。"
+      ]
+    },
+    {
+      "id": "testing-platform-skips-and-conditional-exemptions",
+      "title": "平台显式跳过与条件豁免",
+      "sources": [
+        {
+          "path": "vitest.config.ts",
+          "start": 100,
+          "end": 160,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/coverage-exempt.ts",
+          "start": 1,
+          "end": 59,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1300,
+          "end": 1340,
+          "kind": "implementation"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 121,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 15,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 77,
+          "end": 79,
+          "kind": "config"
+        },
+        {
+          "path": "vitest.config.ts",
+          "start": 381,
+          "end": 384,
+          "kind": "config"
+        }
+      ],
+      "problem": "平台能力差异（Windows ACL、pwsh、ConPTY、POSIX 权限/信号）会让同一断言在不同平台失败；弱化所有平台断言会降低证据；静默跳过会让门槛消失。",
+      "triggers": [
+        "Windows/macOS/Linux 差异",
+        "pwsh 缺失",
+        "平台专属 bin/PTY/ACL",
+        "CI 平台矩阵"
+      ],
+      "obligations": [
+        "显式跳过并命名原因：平台排除列表或 posixOnly/pwshOnly；不用 if(platform) return 静默返回。",
+        "平台专属守卫仍要跑；不要跳过整个 suite。",
+        "条件覆盖率豁免与探测耦合：缺 pwsh 才排除，CI 有 pwsh 恢复完整门槛。",
+        "Windows lane 分级 blocking/complete/observational；观测绿不是阻断证据。",
+        "wine 只用于诊断已知 Windows 失败；CI 拥有该信号。",
+        "测试结果只适用于运行环境；不跨 WSL/原生/Linux 推断。",
+        "平台专属覆盖率排除由命名集合生成：Windows 不支持包映射为 `<pkg>/src/**/*.ts`，再拼接 windowsOnly / windowsRunner / pwsh 数组；非 Windows 平台不添加这些条目，保持完整门槛。"
+      ],
+      "actors": [
+        "测试作者",
+        "CI 维护者",
+        "平台 owner"
+      ],
+      "steps": [
+        "确认是平台语义还是产品缺陷。",
+        "用显式列表/条件跳过并写原因。",
+        "保留平台守卫。",
+        "在对应平台 lane 验证。",
+        "能力恢复时自动取消豁免。"
+      ],
+      "enforcement": {
+        "mode": "配置排除 + 条件探测 + 平台 lane",
+        "implementation": "vitest.config 的 platformUnsupportedTests/pwsh probe；coverage-exempt；suite posix/pwsh；AGENTS wine；docs/development 环境说明。",
+        "trust": "源仓能证明列表/条件；不能证明每个平台 CI 都实际运行。",
+        "failure": "平台失败先定位差异再修/显式跳过；列表过期由 guard/CI 发现。",
+        "exceptions": [
+          "无 pwsh 本地",
+          "无 Windows ACL 的 POSIX",
+          "仅诊断 wine"
+        ]
+      },
+      "applicability": [
+        "when: 跨平台测试; 平台专属能力; CI 平台矩阵",
+        "whenNot: 单平台项目；仍需避免静默 skip"
+      ],
+      "relationships": [
+        "M04 平台语义",
+        "M07 覆盖率豁免",
+        "M37 CI",
+        "M38"
+      ],
+      "migration": {
+        "strategy": "先列平台能力和对应 lane，再建显式跳过/条件豁免。",
+        "implementation": [
+          "平台矩阵",
+          "跳过列表/条件",
+          "能力探测",
+          "lane 分级",
+          "wine 诊断"
+        ],
+        "requiredSupport": [
+          "多平台 CI",
+          "能力探测",
+          "测试配置",
+          "运行记录"
+        ]
+      },
+      "reference": "references/testing.md#m38-skips",
+      "verification": {
+        "positive": [
+          {
+            "check": "各平台按显式规则运行/跳过，能力存在时恢复。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在能力存在的平台保留跳过，观察门槛缺失；或静默 return 让失败消失。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复运行/条件后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "跳过列表可能过期。",
+        "平台矩阵未穷举。",
+        "集合名称与内容需要随平台矩阵维护；本读取未运行任何平台，不能证明条目与当前能力探测一致。"
+      ]
+    },
+    {
+      "id": "testing-secret-and-credential-hygiene",
+      "title": "测试秘密与凭据卫生",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 123,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/e2e.yml",
+          "start": 1,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 47,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/README.md",
+          "start": 30,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 40,
+          "end": 50,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试需要真实 key/凭据，但 key 进入日志、fixture、模型输出或历史提交就会泄露；mock key 与真实 key 混用会让隔离失效。",
+      "triggers": [
+        "新增 e2e/凭据测试",
+        "录制 fixture",
+        "CI secret 配置",
+        "日志/错误输出"
+      ],
+      "obligations": [
+        "永不提交真实凭据；root .env 只本地且 gitignore；CI 用 secret。",
+        "最小暴露：secret 只映射到需要的 step；checkout/setup/install 不拿 key。",
+        "不打印：日志/错误/模型输出都可能带 key；只报 env 名称/缺失。",
+        "fixture token 化：身份/请求头/schema 用 typed token；真实 key 不进 JSONL/expected。",
+        "mock key 明确且只指向 loopback。",
+        "CI 关闭生产副作用：telemetry 禁用、端点固定、只读权限。",
+        "泄露：立即轮换、清理日志/缓存、检查历史。"
+      ],
+      "actors": [
+        "测试作者",
+        "CI 维护者",
+        "安全负责人"
+      ],
+      "steps": [
+        "列接触秘密的进程/文件/日志。",
+        "最小作用域/non-print。",
+        "fixture token 化。",
+        "关 telemetry/固定端点。",
+        "泄露时轮换/审计。"
+      ],
+      "enforcement": {
+        "mode": "secret 作用域 + token 化 + preflight + 审计",
+        "implementation": "AGENTS Secrets；e2e.yml；normalize/identity；llm-mock-server 假 key；pre-push 不打印规则。",
+        "trust": "源仓能证明策略/隔离代码；不能证明历史提交/第三方日志/远端 secret 未泄露。",
+        "failure": "发现泄露先轮换再修；误报确认假 key 后记录。",
+        "exceptions": [
+          "本地 .env、CI secret、mock key，均需与生产隔离"
+        ]
+      },
+      "applicability": [
+        "when: 真实/假 provider key; 录制 fixture; CI 日志",
+        "whenNot: 无秘密的纯本地测试；仍避免把环境值写入快照"
+      ],
+      "relationships": [
+        "M10/M11 e2e",
+        "M22 身份",
+        "M39"
+      ],
+      "migration": {
+        "strategy": "先建 secret 作用域/non-print，再 token 化 fixture，最后加扫描/轮换。",
+        "implementation": [
+          "secret inventory",
+          "step 作用域",
+          "token 化",
+          "telemetry off",
+          "scan/rotation"
+        ],
+        "requiredSupport": [
+          "secret manager",
+          "CI",
+          "scanner",
+          "轮换流程"
+        ]
+      },
+      "reference": "references/testing.md#m39-secrets",
+      "verification": {
+        "positive": [
+          {
+            "check": "secret 只在需要的 step，日志/fixture 无真实值。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 key 写入日志/fixture，观察扫描/评审拒绝；清空 secret 观察 preflight 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "轮换/清理/修 token 化后重跑，记录无泄露。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "不能证明历史/第三方日志无泄露。",
+        "扫描可能漏新格式。"
+      ]
+    },
+    {
+      "id": "testing-python-sdk-keyless-blackbox",
+      "title": "Python SDK 三层验证：pytest fake-runtime、installed-wheel keyless、trusted real API",
+      "sources": [
+        {
+          "path": "pytest.ini",
+          "start": 1,
+          "end": 5,
+          "kind": "config"
+        },
+        {
+          "path": "python/sdk/pyproject.toml",
+          "start": 24,
+          "end": 29,
+          "kind": "config"
+        },
+        {
+          "path": "python/development.md",
+          "start": 18,
+          "end": 58,
+          "kind": "instruction"
+        },
+        {
+          "path": "python/development.md",
+          "start": 59,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "python/sdk/tests/test_bundled_runtime.py",
+          "start": 1,
+          "end": 40,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 486,
+          "end": 521,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci-master.yml",
+          "start": 42,
+          "end": 50,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 971,
+          "end": 977,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/fixtures/office-render.py",
+          "start": 14,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-python-sdk.yml",
+          "start": 323,
+          "end": 380,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-python-sdk.yml",
+          "start": 381,
+          "end": 453,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 158,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "python/sdk/tests/test_bundled_runtime.py",
+          "start": 84,
+          "end": 106,
+          "kind": "test"
+        }
+      ],
+      "problem": "Python SDK 的 fake runtime peer 测试不能证明 wheel 安装、入口选择、干净解释器和真实 provider；而真实 API 需要 key，不能对 fork/Dependabot 暴露。",
+      "triggers": [
+        "Python SDK/runtime 变更",
+        "wheel/发行物",
+        "SDK 真入口/provider 场景",
+        "Office sidecar"
+      ],
+      "obligations": [
+        "根 pytest 只收集 python/sdk/tests；虚拟环境放 python/ 外；用 uv sync --project python/sdk --group test 和 uv run pytest。",
+        "pytest 层用 fake runtime peers 验证 SDK 逻辑；test_bundled_runtime 对缺失 carrier 独立 skip，dummy key 只为 adapter 加载，不调用模型。",
+        "installed-wheel keyless：新 venv 安装本地 SDK+runtime wheel，在 checkout 外运行，清空 PYTHONPATH 和 DSH_RUNTIME_MODE，证明模块与可执行文件来自发行物，再跑全部 keyless 场景。",
+        "场景比较 scripts/snapshots/python-sdk-single-exe/ 下 committed expected：prompt/tool schema/model-visible messages、advanced 父子日志、scheduler-recovery；比较不重写录制。",
+        "真实 API 只对 trusted PR/master 跑；缺 secret 必须失败而不是自跳过；两次工具轮 + sentinel + 外部字节比较；fork/Dependabot 只跑 keyless。",
+        "CI：python-sdk 在 PR 跑 Python 3.10 keyless；python-runtime 依赖 python-sdk，PR 覆盖 Linux/Windows x64，master 覆盖 ARM64/macOS；最终 all-needed 必须成功。",
+        "Office 诊断保留分两层：`scripts/smoke-python-runtime.py` 在 `DSH_OFFICE_TEST_ARTIFACTS` 指向的目录写入输入、PNG 批次、manifest 与 error.txt（`scripts/fixtures/office-render.py` 的 workspace 助手，排除临时运行时文件）；源仓只有 `python/development.md:32` 声明 CI 在成功/失败都上传这些 artifact，固定提交的工作流没有任何 step 设置该变量或调用 upload-artifact，因此该 CI 上传义务在源仓未实现，不能当作已具备的自动保证。",
+        "bundled runtime 必须把 patch 中未打包的插件作为初始化错误暴露：错误消息包含缺失插件名（如 `@deepseek-ai/dsh-does-not-exist`），不能静默忽略或只记录日志；该断言对每种 runtime mode 参数化运行。"
+      ],
+      "actors": [
+        "Python SDK 作者",
+        "CI 维护者",
+        "发布/安全负责人"
+      ],
+      "steps": [
+        "本地建 venv、uv sync test group、跑 pytest。",
+        "构建 wheel/可执行文件。",
+        "干净 venv 安装并跑 keyless black-box。",
+        "trusted 环境跑 real API。",
+        "审查 expected snapshot 和 artifact。"
+      ],
+      "enforcement": {
+        "mode": "pytest + 干净 venv black-box + trusted real API + CI",
+        "implementation": "pytest.ini；python/sdk pyproject；python/development.md；build-exe-for-python-sdk.yml；ci.yml python-sdk/python-runtime；ci-master.yml 的 master python-runtime。Office 诊断只到 smoke 脚本的本地保留：`DSH_OFFICE_TEST_ARTIFACTS` 被 smoke-python-runtime.py 读取，工作流未设置该变量也没有上传 step。",
+        "trust": "keyless 证明发行物和入口，不证明真实 provider；real API 证明该 key/网络/模型，不证明所有 provider/平台。",
+        "failure": "wheel 安装失败查本地发行物；入口选择失败查 runtime resolution；real API 失败先确认 secret/配额再判断产品。",
+        "exceptions": [
+          "fork/Dependabot 只跑 keyless",
+          "缺失 carrier 的本地 pytest skip",
+          "manual smoke 用内部 adapter"
+        ]
+      },
+      "applicability": [
+        "when: Python SDK/wheel; 打包运行时; provider 真入口",
+        "whenNot: 纯 TypeScript 包；用 M14/M15"
+      ],
+      "relationships": [
+        "M10 e2e",
+        "M14 真入口",
+        "M15 built",
+        "M16 SDK snapshot",
+        "M21 normalization",
+        "Supply 发布"
+      ],
+      "migration": {
+        "strategy": "先分 pytest/fake-runtime 与 installed-wheel 两层，再加 trusted real API 和 CI 矩阵。",
+        "implementation": [
+          "pytest 配置",
+          "fake runtime",
+          "干净 venv",
+          "wheel 安装",
+          "keyless scenarios",
+          "expected snapshots",
+          "real API gate",
+          "CI matrix"
+        ],
+        "requiredSupport": [
+          "Python 3.10",
+          "uv",
+          "wheel 构建",
+          "干净 venv",
+          "secret",
+          "平台 runner"
+        ]
+      },
+      "reference": "references/testing.md#m40-python-sdk",
+      "verification": {
+        "positive": [
+          {
+            "check": "pytest、installed-wheel keyless、trusted real API 三层按环境通过，artifact 可查。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 checkout 内用 PYTHONPATH 绕过 wheel，观察 black-box 失败；缺 secret 时观察 preflight 失败而非 skip。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修 wheel/入口/secret 后重跑，记录通过。",
+            "evidence": "planned"
+          }
+        ],
+        "evidence": "planned"
+      },
+      "limitations": [
+        "real API 依赖 trusted secret 和外部服务。",
+        "场景覆盖有限。",
+        "源仓未证明所有平台同时运行。",
+        "测试接受 JsonRpcError、TransportClosedError 或 TimeoutError，断言只要求错误文本包含插件名；它不证明存在单一确定的失败通道。",
+        "`python/development.md:32` 声明的“成功/失败都上传 Office artifact”在固定提交没有对应工作流实现：没有 step 设置 `DSH_OFFICE_TEST_ARTIFACTS`，也没有 upload-artifact。该上传是未落实的意图，不是当前 CI 保证；只有 smoke 脚本的本地保留（`scripts/fixtures/office-render.py:14-41`）可证。"
+      ]
+    }
+  ]
+}

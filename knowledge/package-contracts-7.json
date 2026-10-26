@@ -1,0 +1,2631 @@
+{
+  "domain": "package-contracts-7",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "package-contracts-7.readme-contract",
+      "title": "包 README 是采用契约：用途、配置、扩展点、模型体验与限制都要有落点",
+      "sources": [
+        {
+          "path": "packages/README.md",
+          "start": 102,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/package-manifest/README.md",
+          "start": 79,
+          "end": 93,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-session/README.md",
+          "start": 29,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "native/system/packages/linux-x64/README.md",
+          "start": 1,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "python/README.md",
+          "start": 1,
+          "end": 20,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包的采用者只读 README 就要判断它能否直接用、会不会改变模型请求、有哪些硬限制。各包自由发挥时，缺失的模型体验或限制会变成隐藏行为，采用者只能在故障后发现。",
+      "triggers": [
+        "新增包、重命名包、移动包",
+        "包的能力、配置面或模型可见行为变化",
+        "发布前检查与采用者文档审阅"
+      ],
+      "obligations": [
+        "每个包 README 覆盖 purpose、configuration、extension points 与 Model Experience；除非包的 model-agnostic omission allowlist 豁免 Model Experience。",
+        "每个包 README 带 `## Known Limitations and Deferred Work`；除非 limitations allowlist 豁免。",
+        "Model Experience 要说明模型看到什么、在哪个位置注入、对 KV cache 的影响；没有模型影响时明确写 None 并给出原因，而不是留空。",
+        "Known Limitations 写当前实现约束与已推迟工作，不写泛泛的任务清单或路线图承诺。",
+        "README 与配套中文正文、README.i18n.yaml 的描述保持成对，正文不是只有英文。"
+      ],
+      "actors": [
+        "包作者",
+        "包 owner/reviewer",
+        "发布者",
+        "采用者"
+      ],
+      "steps": [
+        "先写 frontmatter description 与 Summary，交代包的存在理由和不适用范围。",
+        "写 configuration 与 extension points，链接到配置目录和槽位声明。",
+        "写 Model Experience：模型可见文本、注入顺序、KV cache 影响；无影响时写 None。",
+        "写 Known Limitations and Deferred Work，逐条绑定到当前行为或平台约束。",
+        "补齐 README.zh.md 与 README.i18n.yaml，保持标题结构与代码块数量一致。",
+        "运行仓库的 README 检查脚本并在评审中确认允许清单条目仍然成立。"
+      ],
+      "enforcement": {
+        "mode": "README 结构检查脚本 + 允许清单 + 评审",
+        "implementation": "packages/README.md:102-105 明确引用 `scripts/verify-package-readme-model-experience.ts` 与 `scripts/verify-package-readme-limitations.ts`，并说明 omission allowlist。检查脚本本体未读，不能声称其具体判定逻辑。",
+        "trust": "源 README 证明检查入口与 allowlist 存在；不能证明 CI 实际执行，也不能证明每个包都被脚本覆盖。",
+        "failure": "缺节、空泛限制或未登记的豁免会让采用者误判能力边界；评审应拒绝没有具体行为依据的 Known Limitations。",
+        "exceptions": [
+          "model-agnostic 包经 `verify-package-readme-model-experience.ts` 的 allowlist 免除 Model Experience",
+          "确实没有限制的包经 `verify-package-readme-limitations.ts` 的 allowlist 免除限制节",
+          "非 packages/ 工作区的平台包与 Python 文档可不在该契约的适用范围内"
+        ]
+      },
+      "applicability": "适用：packages/ 下新增或修改的 npm 包 README；任何面向采用者的包级契约变更。 不适用：仓库级架构文档、子系统参考、纯内部脚本说明；这些不应被硬塞进包 README 的五节结构。 说明：观察到的例外：native/system/packages/linux-x64/README.md 与 python/README.md 没有 Model Experience/Known Limitations 节；来源正文未解释它们由哪个 allowlist 覆盖，因此只能记录为观察事实，不能推断豁免原因。",
+      "relationships": [
+        "package-contracts-7.model-experience",
+        "package-contracts-7.limitations-disclosure",
+        "package-contracts-7.generated-artifacts"
+      ],
+      "migration": {
+        "strategy": "先固定包 README 模板与检查脚本，再为每个包建立可审计的豁免条目；模板只规定必须回答的问题，不规定套话。",
+        "implementation": [
+          "在仓库脚本中加入 README 节存在性与双语配对检查，失败信息指名缺失节。",
+          "建立 model-agnostic 与 no-limitations allowlist，每条包含包路径、理由、owner、复核日期。",
+          "新增包模板包含 Summary、Configuration、Extension points、Model Experience、Known Limitations 五节。",
+          "评审清单加入“Model Experience 是否描述真实模型可见字节”“限制是否绑定当前行为”。"
+        ],
+        "requiredSupport": [
+          "可运行的 README 检查脚本",
+          "允许清单的 owner 与复核节奏",
+          "双语配对工具",
+          "包 owner 的评审职责"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.readme-contract",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "新建一个带模型的包，确认 README 五节齐全，Model Experience 写出注入位置与缓存影响。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "删除 Known Limitations 或留空，确认检查脚本/评审能拒绝该 README。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "补写具体限制并重跑检查，记录从失败到通过的输出。"
+          }
+        ]
+      },
+      "limitations": [
+        "检查脚本只被 README 引用，未读实现；不能证明它检查了内容质量而不仅是节存在。",
+        "native 与 python 的 README 没有这些节，说明契约的适用边界在来源中没有被完整写清。",
+        "中文正文已 1-EOF 全文对照（含 20 个文件、44 行宽 CJK 长行 raw 重读），未发现中文独有的额外义务；翻译措辞未做母语审校。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.group-map",
+      "title": "每个包恰好属于一个能力组，组表与组 README 共同维护依赖方向",
+      "sources": [
+        {
+          "path": "packages/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 27,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/README.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/README.md",
+          "start": 24,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/schedule/README.md",
+          "start": 25,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/README.md",
+          "start": 25,
+          "end": 31,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包数量增长后，读者找不到某目录属于哪个能力族，也不知道允许的依赖方向。分组漂移会让低层包反向依赖高层包，最终迫使整个 workspace 一起编译。",
+      "triggers": [
+        "新增包或把包移到另一个目录",
+        "组的职责变化",
+        "依赖方向变化或出现跨组循环"
+      ],
+      "obligations": [
+        "每个包恰好属于一个组；新包优先加入已有组，而不是随手新建目录。",
+        "新组必须同时更新自己的 README 与 `packages/README.md` 的组表行。",
+        "组 README 是该能力族的权威包地图，列出包、角色、ctx key 或注册点。",
+        "包 README 要能回答它暴露/消费哪个 ctx key，避免读者从源码猜服务名。",
+        "依赖图由 `pnpm run gen-module-graph` 生成并在 CI 做 freshness 检查，组表与真实依赖不能长期背离。"
+      ],
+      "actors": [
+        "包作者",
+        "架构评审者",
+        "组 owner"
+      ],
+      "steps": [
+        "确定包属于哪个能力组，并检查组内是否已有同职责包。",
+        "在组 README 的包表中增加行，写清角色与 ctx key/注册点。",
+        "若新建组，同时增加组 README 与 `packages/README.md` 的组表行。",
+        "运行模块图生成与 freshness 检查，确认依赖方向合法。",
+        "在包 README 的 Summary 中回链到组 README。"
+      ],
+      "enforcement": {
+        "mode": "组表评审 + 生成的模块图 + CI freshness",
+        "implementation": "`packages/README.md:12-12` 规定所有包使用 `@deepseek-ai/dsh-*` 作用域且恰好属于一个组；`:27-72` 是组表；`:96-96` 说明模块图由 `pnpm run gen-module-graph` 生成并在 CI freshness-gated。",
+        "trust": "组表本身没有自动“每包一行”检查；模块图只证明依赖边，不证明分组语义正确。",
+        "failure": "漏更新组表会让读者看到过期地图；错误的依赖方向由模块图 freshness 暴露，但分组本身仍靠评审。",
+        "exceptions": [
+          "SDK、build、test、declaration 基础设施有独立的分类，不必强行塞进运行时能力组",
+          "平台二进制包位于 native/ 而非 packages/，使用 support matrix 而不是组表"
+        ]
+      },
+      "applicability": "适用：packages/ 下的包增删、移动、职责变化或依赖方向调整。 不适用：仅修改包内部实现且不改变对外能力与依赖时，不需要改组表。 说明：组 README 的 ctx key 列是读者入口；没有 ctx key 的包至少写清注册点或“不注册服务”。",
+      "relationships": [
+        "package-contracts-7.capability-seam",
+        "package-contracts-7.status-classification",
+        "package-contracts-7.generated-artifacts"
+      ],
+      "migration": {
+        "strategy": "把组表作为人工维护的语义地图，把模块图作为机器维护的依赖事实；两者都进评审，但不互相冒充。",
+        "implementation": [
+          "建立组表模板：组名、角色、包列表、允许依赖、模型可见性。",
+          "在 CI 中运行模块图 freshness 检查。",
+          "新增包 PR 模板要求勾选“已更新组 README 与 packages/README”。",
+          "为每个组指定 owner，负责裁决跨组依赖。"
+        ],
+        "requiredSupport": [
+          "模块图生成脚本",
+          "组 owner 名单",
+          "PR 模板",
+          "依赖方向规则"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.group-map",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "新增一个包，确认组表、组 README 与模块图三处一致。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "故意让低层包依赖高层包，确认模块图 freshness 或评审能拒绝。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "移除反向依赖并重新生成模块图，确认 diff 收敛。"
+          }
+        ]
+      },
+      "limitations": [
+        "没有看到“每个包必须在组表中出现”的自动检查；只能靠评审。",
+        "组表 29-72 行的具体内容按 README 正文读取，未逐行对照真实 package.json。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.status-classification",
+      "title": "非实验包必须有产品用途或显式分类，实验包默认不进入 shipped profile",
+      "sources": [
+        {
+          "path": "packages/README.md",
+          "start": 86,
+          "end": 89,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-playwright-mcp/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/inspector-profile/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 28,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 30,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "实验性、可发布但不默认启用的包很容易被误当成产品默认能力。状态不清会让采用者把未验证能力放进生产 profile，或在升级后发现默认行为变了。",
+      "triggers": [
+        "新增包或把包移入/移出 experimental",
+        "修改 shipped profile 的默认挂载",
+        "发布说明与采用者文档"
+      ],
+      "obligations": [
+        "非实验运行时包必须有产品用途，或在 `scripts/product-package-policy.ts` 中有显式分类；SDK、build、test、declaration 基础设施有单独分类。",
+        "实验状态独立于是否发布、是否可安装、是否可选交付；不能把“已发布”当成“稳定”。",
+        "实验包只有在被显式挂载时才激活；shipped profile 不应默认挂载它。",
+        "Plugin Manager 把实验插件放在单独入口，不与内置稳定插件混排。",
+        "包的 README 要写明实验边界与启用方式，而不是只在目录名上暗示。"
+      ],
+      "actors": [
+        "包作者",
+        "release owner",
+        "profile 维护者",
+        "Plugin Manager 维护者"
+      ],
+      "steps": [
+        "阅读 `scripts/product-package-policy.ts` 的分类，确定包属于产品运行时、SDK、build、test 还是 declaration 基础设施。",
+        "如果是实验包，确认 shipped profile 不挂载，并写出显式启用步骤。",
+        "在 README 与 Plugin Manager 元数据中标注 experimental，不依赖目录名传达状态。",
+        "发布前检查默认 profile 的挂载列表，确认没有意外加入实验包。"
+      ],
+      "enforcement": {
+        "mode": "package policy 脚本 + profile 评审 + UI 分组",
+        "implementation": "`packages/README.md:86-89` 规定非实验运行时包必须有产品用途或显式分类，并链接 `scripts/product-package-policy.ts`；实验包 README 各自声明显式挂载；`ui-plugin-manager` 单列 Experimental plugins。",
+        "trust": "分类脚本存在但未读；shipped profile 是否真的不挂载只能从包 README 的声明与配置评审证明。",
+        "failure": "误把实验包放进默认 profile 会扩大未验证能力的暴露面；状态标注缺失会让采用者以为能力已稳定。",
+        "exceptions": [
+          "显式分类为 SDK/build/test/declaration 基础设施的包不要求产品用途",
+          "实验包可以被发布和安装，只是不默认激活"
+        ]
+      },
+      "applicability": "适用：任何新包、状态迁移、默认 profile 变更和发布检查。 不适用：纯文档包或仅用于测试的包，可按其分类免于产品用途要求。 说明：状态至少有三个轴：是否实验、是否发布、是否默认挂载；三者不能互相替代。",
+      "relationships": [
+        "package-contracts-7.group-map",
+        "package-contracts-7.composition-wiring",
+        "package-contracts-7.limitations-disclosure"
+      ],
+      "migration": {
+        "strategy": "建立一张包状态表，把实验性、发布形态、默认挂载拆成独立列；默认 profile 变更必须引用这张表。",
+        "implementation": [
+          "在 CI 中加入 package policy 检查，未分类的运行时包失败。",
+          "为每个实验包写明显式启用步骤与退出实验的条件。",
+          "把 shipped profile 的包列表纳入发布评审。",
+          "Plugin Manager 的实验分组从同一状态源生成。"
+        ],
+        "requiredSupport": [
+          "package policy 脚本",
+          "profile 清单",
+          "发布评审",
+          "Plugin Manager 元数据"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.status-classification",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "新建一个 runtime 包，确认它要么被产品引用，要么在分类文件中有条目。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "把实验包加入默认 profile，确认发布评审或 profile 测试能拒绝。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "从默认 profile 移除实验包并补上显式启用文档，确认默认启动不再包含它。"
+          }
+        ]
+      },
+      "limitations": [
+        "未读 `scripts/product-package-policy.ts`，不能声称其判定粒度。",
+        "没有执行 profile 启动，不能证明默认挂载的实际行为。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.capability-seam",
+      "title": "扩展依赖 Service Definition，提供者只注册能力，模型面只由一个包拥有",
+      "sources": [
+        {
+          "path": "packages/README.md",
+          "start": 93,
+          "end": 98,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/lsp/README.md",
+          "start": 24,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/README.md",
+          "start": 26,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/pwsh-local/README.md",
+          "start": 84,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-policy/README.md",
+          "start": 30,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 106,
+          "end": 109,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一能力有多个实现时，消费者直接依赖具体包会把替换点焊死；提供者顺手注册模型工具又会让工具名、schema 和 prompt 随实现漂移。",
+      "triggers": [
+        "新增或替换一个能力实现（LSP、skill、shell、sandbox、compaction）",
+        "消费者直接 import 具体 provider",
+        "模型可见工具/提示词需要随 provider 变化"
+      ],
+      "obligations": [
+        "扩展插件依赖 Service Definition，不依赖具体 provider；`dsh-agent-loop` 可替换，UI/hook/tool 插件使用 `dsh-agent`。",
+        "一个能力只有一个注册点：LSP provider 注册能力，`tool-lsp` 独占模型面名称、schema、prompt 与展示。",
+        "skill registry 只负责合并、胜出解析与校验，provider 负责来源；本地 provider 与模型消费者是分开的包。",
+        "shell executor 是 `ctx.shell` seam 的 Service Provider；沙箱策略只有一个 policy home。",
+        "`summarize()` 是 compaction 的唯一子类钩子，压力、保留、引用事件与计数仍由 token meter 负责。"
+      ],
+      "actors": [
+        "服务定义 owner",
+        "provider 作者",
+        "消费者作者",
+        "架构评审者"
+      ],
+      "steps": [
+        "先定义 Service Definition 与 ctx key，写清输入/输出与错误。",
+        "实现 provider，只注册能力，不注册模型工具。",
+        "由单独的 tool/consumer 包拥有模型面名称、schema、prompt 与展示。",
+        "在组合中只挂一个 provider；替换时保持 ctx key 与工具契约不变。",
+        "用接口测试或类型检查证明消费者没有 import 具体 provider。"
+      ],
+      "enforcement": {
+        "mode": "类型/包边界评审 + 运行时单注册点",
+        "implementation": "`packages/README.md:93-98` 规定扩展依赖 Service Definition；LSP 组 README 说明 provider 注册能力而 `tool-lsp` 独占模型面；skill 包把 registry 与 provider 分离；sandbox-policy 声明一个 policy home。",
+        "trust": "源文字证明角色分离规则；没有看到自动检查“禁止 import 具体 provider”的脚本。",
+        "failure": "消费者绑定具体 provider 后，替换需要改消费者；provider 注册工具会让模型契约随实现变化。",
+        "exceptions": [
+          "SDK 管理的 transport 可以绕过 `dsh-subprocess` seam（文档记录的例外）",
+          "没有消费者的组合里，sandbox policy 解析出来也没有效果"
+        ]
+      },
+      "applicability": "适用：能力需要多种实现、需要独立演进，或模型面必须保持稳定时。 不适用：只有一个实现且没有替换计划的叶子工具，可以保持简单直接依赖，不要为抽象而抽象。 说明：能力缝的判据是“定义与实现是否独立演进”，不是“是否有很多文件”。",
+      "relationships": [
+        "package-contracts-7.group-map",
+        "package-contracts-7.extension-points",
+        "package-contracts-7.composition-wiring"
+      ],
+      "migration": {
+        "strategy": "先把 ctx key 与 Service Definition 写出来，再迁移消费者；provider 与 tool 包分开评审。",
+        "implementation": [
+          "为能力定义接口包，禁止消费者依赖具体实现包。",
+          "把模型工具的 schema/prompt 移入独立 tool 包。",
+          "在组合测试中挂两个 provider，确认加载期冲突或明确报错。",
+          "在依赖图中标注 service definition 与 provider 的边。"
+        ],
+        "requiredSupport": [
+          "接口包",
+          "ctx key 命名约定",
+          "组合测试",
+          "依赖图检查"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.capability-seam",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "替换 LSP provider 后，模型仍看到同一个工具名、schema 与 prompt。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "让消费者直接 import 具体 provider，确认依赖图/评审能指出违规。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "把消费者改为依赖 Service Definition，重跑组合测试。"
+          }
+        ]
+      },
+      "limitations": [
+        "未读各包的 src，不能证明运行时真的只允许一个 provider。",
+        "“只用定义不依赖实现”主要靠评审与类型系统，来源未给出自动依赖禁令。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.composition-wiring",
+      "title": "组合装配要在加载期失败：必需服务、作用域与宿主/客户端配对都要写清",
+      "sources": [
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 34,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-stats/README.md",
+          "start": 28,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-stats/README.md",
+          "start": 118,
+          "end": 122,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/harness-dev-context/README.md",
+          "start": 28,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-settings-shell/README.md",
+          "start": 36,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/tool-pwsh/README.md",
+          "start": 69,
+          "end": 69,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包在单元测试里能跑，不代表放进真实 composition 能跑。缺必需服务、作用域错位或宿主/客户端只挂一半，常见结果是静默不注册或运行期才失败。",
+      "triggers": [
+        "新增插件或修改 inject 依赖",
+        "把包加入 profile/preset",
+        "宿主包与浏览器包成对出现",
+        "诊断“装了但没效果”"
+      ],
+      "obligations": [
+        "声明必需服务；组合永远无法满足时在加载期失败，而不是运行期静默跳过。",
+        "可选子图要有明确的降级行为，并在文档中写清“不注册”而不是假装可用。",
+        "宿主半与浏览器半成对交付；宿主半即使是空 `apply`，也要为 Loader 行提供落点。",
+        "作用域要写清：host 全局、preset 层还是 Session 绑定。",
+        "缺后端时给出可操作的错误（例如缺 jobs 或 sandbox executor 的具体提示）。"
+      ],
+      "actors": [
+        "插件作者",
+        "profile 维护者",
+        "诊断者"
+      ],
+      "steps": [
+        "列出 ctx.inject 的必需服务与可选服务。",
+        "为不可工作的组合写加载期检查，错误信息指名缺什么。",
+        "为可选能力写降级路径，并在 README 的 Composition 节说明。",
+        "宿主/浏览器包成对加入 profile；确认浏览器半能被 Loader 服务。",
+        "用最小 composition 启动一次，确认失败路径与成功路径都可观察。"
+      ],
+      "enforcement": {
+        "mode": "Loader/Cordis 注入 + 加载期报错 + 组合评审",
+        "implementation": "compaction 在缺 LLM、session storage 或 token measurement 时加载失败（README:46）；session-stats 只在 projection registry 存在时注册（README:28,122）；harness-dev-context 只在所有注入服务存在时激活（README:28）；ui-settings-shell 的 Host 半是空 apply，用于承载 Loader 行（README:38）；tool-pwsh 缺执行器时不激活并给出错误（README:69）。",
+        "trust": "加载期行为由框架与包实现保证；来源 README 可证明契约，不能替代真实组合启动。",
+        "failure": "缺依赖时静默不注册会让用户以为功能已启用；错误信息不具体会延长诊断。",
+        "exceptions": [
+          "可选服务缺失时的“安静不注册”是设计行为，但必须在 README 中写明",
+          "SDK 管理的 transport 可直接 spawn，不走 subprocess 服务"
+        ]
+      },
+      "applicability": "适用：任何插件进入真实 composition、profile、preset 或宿主/客户端配对时。 不适用：纯库包没有 ctx 注入时，只需声明包边界，不需要装配章节。 说明：“能编译”与“能被 Loader 装配”是两件事；README 的 Composition 节要给出最小可运行组合。",
+      "relationships": [
+        "package-contracts-7.capability-seam",
+        "package-contracts-7.ownership-lifecycle",
+        "package-contracts-7.platform-backends"
+      ],
+      "migration": {
+        "strategy": "为每个插件建立最小 composition 与失败矩阵，把加载期错误当作产品行为测试。",
+        "implementation": [
+          "在 README 中给出最小 YAML 组合与预期失败模式。",
+          "为每个必需服务写加载期断言，错误信息包含包名与缺失服务。",
+          "在 CI 中跑最小组合的启动 smoke。",
+          "把 host/client 包成对列入 profile 清单。"
+        ],
+        "requiredSupport": [
+          "最小 composition 模板",
+          "启动 smoke",
+          "错误信息规范",
+          "profile 清单"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.composition-wiring",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "用 README 的最小组合启动，确认插件实际注册并产生预期行为。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "移除一个必需服务，确认加载期失败且错误指名缺什么。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "补回服务后重跑同一组合，确认从加载失败到可用。"
+          }
+        ]
+      },
+      "limitations": [
+        "未执行任何组合启动；所有“会失败/会注册”的结论来自 README 文字。",
+        "session-stats 的静默不注册是来源明确写出的行为，不能推广成所有可选包都应静默。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.configuration-surface",
+      "title": "配置面要可枚举、可校验、可解释优先级；错误配置在加载期拒绝",
+      "sources": [
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 65,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-policy/README.md",
+          "start": 34,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-policy/README.md",
+          "start": 58,
+          "end": 58,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/package-manifest/README.md",
+          "start": 46,
+          "end": 57,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/pwsh-local/README.md",
+          "start": 74,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/tool-pwsh/README.md",
+          "start": 46,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-playwright-mcp/README.md",
+          "start": 40,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 39,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/http-proxy/README.md",
+          "start": 26,
+          "end": 28,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "配置项散落在 README、profile 和默认值里时，拼写错误或互斥字段会被静默忽略，行为随之漂移。读者也无法判断某个值来自 profile、patch、命令行还是表单。",
+      "triggers": [
+        "新增/删除配置字段",
+        "修改默认值或约束",
+        "profile/patch/CLI/表单的优先级变化",
+        "诊断“设了没生效”"
+      ],
+      "obligations": [
+        "每个接受的字段在配置表中列出默认值与语义；有约束的字段写出约束。",
+        "无效配置在加载期拒绝：未知字段、重复 per-model 覆盖、非法 token 数、互斥保留形式等都要失败。",
+        "区分 volatile 与持久字段；volatile 字段在每次解析时采样，表单写入前仍要做完整校验。",
+        "生成配置目录是字段的穷举来源；README 只解释常用字段，不另造一套 schema。",
+        "manifest 可选字段省略时读者不推断默认值；兼容范围是声明式的，不冒充运行时强制。",
+        "进程级只有一个答案的配置（如 HTTP 代理）不做插件配置，直接由启动器解析环境。"
+      ],
+      "actors": [
+        "包作者",
+        "配置目录维护者",
+        "profile 作者",
+        "诊断者"
+      ],
+      "steps": [
+        "把字段加入包 schema 与生成配置目录，写默认值、类型、约束。",
+        "实现加载期校验，错误信息指名字段与非法值。",
+        "在 README 表格中解释常用字段及其影响，链接穷举目录。",
+        "写清 profile/patch/CLI/表单的优先级与冲突处理。",
+        "为 volatile 字段写采样时机；为持久字段写写入校验。"
+      ],
+      "enforcement": {
+        "mode": "schema/加载期校验 + 生成配置目录 + 评审",
+        "implementation": "compaction 的 `resolveConfig` 在加载期拒绝未知设置、重复 per-model 覆盖、非法 token 数与互斥保留形式（README:78）；sandbox-policy 在加载期拒绝非法 mode（README:58）；pwsh 的 Complete Config validation 在表单写入前拒绝非法数字与 timer 上限（README:75）；package-manifest 只提供类型，读者各自解析与校验（README:12,48-57）。",
+        "trust": "校验逻辑在源码中，README 只描述；未运行加载失败用例。",
+        "failure": "未知字段被忽略会让用户以为配置生效；默认值不写会让 profile 与环境变量互相覆盖。",
+        "exceptions": [
+          "manifest 的 `dsh.manifestVersion` 与 `engines.dsh` 目前不强制，声明不等于拒绝不兼容宿主",
+          "进程级单一策略不提供插件配置，避免同一进程出现两个答案"
+        ]
+      },
+      "applicability": "适用：任何用户/宿主可设字段、profile patch、环境变量或表单写入。 不适用：纯内部常量不应暴露为配置；只有一个进程级答案的策略不应做成每插件配置。 说明：配置表不是文档装饰，它是评审与生成目录的共同来源；字段名、默认值、约束必须能被机器读取。",
+      "relationships": [
+        "package-contracts-7.readme-contract",
+        "package-contracts-7.generated-artifacts",
+        "package-contracts-7.budget-limits"
+      ],
+      "migration": {
+        "strategy": "先建立单一 schema 与生成目录，再让 README、表单和校验都从 schema 派生；禁止手写第二份字段表。",
+        "implementation": [
+          "为每个插件定义 schema，标注默认值、范围与互斥关系。",
+          "生成配置目录并在 CI 检查 freshness。",
+          "加载期校验未知字段与非法组合，错误信息含字段路径。",
+          "在 README 中只解释常用字段，链接生成目录。",
+          "为 profile/patch/CLI/表单写优先级测试。"
+        ],
+        "requiredSupport": [
+          "schema 定义",
+          "配置目录生成器",
+          "加载期校验",
+          "优先级测试"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.configuration-surface",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "给每个字段写一个合法值，确认配置目录、README 与运行时解析一致。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "输入未知字段、互斥字段或越界数值，确认加载期失败并指名字段。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "修正配置后重载，确认从失败到可用且旧值未被静默保留。"
+          }
+        ]
+      },
+      "limitations": [
+        "没有运行配置解析；所有校验行为来自 README。",
+        "未读生成配置目录，无法证明 README 表格与 schema 完全一致。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.budget-limits",
+      "title": "每个外部等待与输出面都要有默认值、上限和取消语义",
+      "sources": [
+        {
+          "path": "packages/shell/pwsh-local/README.md",
+          "start": 49,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/pwsh-local/README.md",
+          "start": 101,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ptc-runtime/ptc-runtime-node/README.md",
+          "start": 49,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ptc-runtime/ptc-runtime-node/README.md",
+          "start": 88,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 43,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/connection/README.md",
+          "start": 80,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-log-deepseek/README.md",
+          "start": 30,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-log-deepseek/README.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 72,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-playwright-mcp/README.md",
+          "start": 46,
+          "end": 46,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "没有上限的等待、输出和队列会把宿主拖死；只有默认值没有 ceiling 又会让一次配置把进程推到不可恢复的状态。超时后进程仍在跑，是最常见的“看起来取消了”的假象。",
+      "triggers": [
+        "新增外部进程、网络请求、模型调用或 UI 操作",
+        "新增输出/日志/请求体",
+        "诊断挂起、内存增长或“取消后还在跑”"
+      ],
+      "obligations": [
+        "每个超时字段同时给默认值与上限；请求值要校验并夹到 ceiling。",
+        "超时只约束调用方的等待，不等于终止工作；要写清是否杀死、降级为后台任务还是继续运行。",
+        "取消要在启动后再次检查，避免提供者在取消后仍启动进程。",
+        "输出有字符/字节上限；诊断与截断提示可以超出上限，但必须可解释。",
+        "请求体、日志字段和队列有独立上限；超限事件不能被静默丢弃，要阻塞或显式失败。",
+        "队列/预算语义要写清：round cap 不是资源预算，token/时间/配额仍各自独立。"
+      ],
+      "actors": [
+        "包作者",
+        "运行时 owner",
+        "诊断者"
+      ],
+      "steps": [
+        "列出所有外部等待与输出面，给每项写默认值与硬上限。",
+        "实现请求值校验与 ceiling 夹取。",
+        "写清超时后的行为：杀进程、转后台、保留部分输出或重置会话。",
+        "实现取消检查点，尤其是启动/获取资源之后。",
+        "为输出与请求体加 cap，并把截断/超限写进结果。",
+        "用长命令、超大输出和取消竞态做负向验证。"
+      ],
+      "enforcement": {
+        "mode": "配置默认值 + 代码校验/夹取 + 取消检查 + 评审",
+        "implementation": "PTC runtime 的 `timeoutMs` 默认 120,000、`maxTimeoutMs` 600,000、`maxOutputBytes` 64 MiB、V8 heap 512 MiB（README:49-54），并明确 deadline 覆盖 setup/执行但不度量 CPU、取消在 confinement 后再次检查（README:88-96）；pwsh 的 timeout 与输出上限见 README:49-53、101-103；cua 每个操作有独立 deadline 与输出上限（README:43-53）；connection 的 `maxRequestBodyBytes` 默认 300 MiB（README:80）；session-log 的 `maxBytes` 默认 8 MiB，超限事件会阻塞后续（README:30-31,42）。",
+        "trust": "字段与语义由 README 证明；未执行压力/取消测试，不能证明所有路径都真正终止工作。",
+        "failure": "只释放 await 不终止进程会导致资源泄漏；超限事件被跳过会造成数据缺口；无 ceiling 的配置会绕过设计预算。",
+        "exceptions": [
+          "服务调用者可显式传 `timeoutMs: null` 省略计时器；`run_code` 仍只接受正数覆盖",
+          "诊断/截断提示不受主输出 cap 约束，但需要 bounds"
+        ]
+      },
+      "applicability": "适用：任何跨进程、跨网络、模型调用、长输出或可取消操作。 不适用：纯内存同步计算没有外部等待时，不需要伪造超时字段。 说明：预算要区分“等待上限”与“工作上限”；二者不能用一个 timeout 名称混过去。",
+      "relationships": [
+        "package-contracts-7.configuration-surface",
+        "package-contracts-7.fail-closed-security",
+        "package-contracts-7.ownership-lifecycle"
+      ],
+      "migration": {
+        "strategy": "为每个外部面建立“默认值/上限/超时后行为/取消检查点/输出上限”五列表，再逐项实现与测试。",
+        "implementation": [
+          "在 schema 中同时声明 default 与 max，禁止只写 default。",
+          "在 spawn 前后各做一次取消检查。",
+          "超时后按操作类型选择杀进程、转后台或保留部分结果，并写进结果。",
+          "为输出/请求体加独立 cap，保留可见的截断标记。",
+          "用长任务与并发取消做恢复测试。"
+        ],
+        "requiredSupport": [
+          "统一 deadline 类型",
+          "取消信号",
+          "输出 cap 工具",
+          "压力测试环境"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.budget-limits",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "用接近上限的请求验证默认值、ceiling 夹取与输出截断标记。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "在启动后立即取消，确认进程不会继续启动或结果不会伪装成功。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "取消/超时后重新调用，确认资源已释放且会话可继续。"
+          }
+        ]
+      },
+      "limitations": [
+        "未执行任何超时、取消或压力测试；所有行为来自 README。",
+        "不同包对“超时后是否杀进程”的语义并不统一，迁移时不能照抄一个默认值。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.fail-closed-security",
+      "title": "安全边界失败时必须拒绝，不得回退到更宽的权限",
+      "sources": [
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/README.md",
+          "start": 57,
+          "end": 57,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/README.md",
+          "start": 70,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/README.md",
+          "start": 173,
+          "end": 192,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ptc-runtime/ptc-runtime-node/README.md",
+          "start": 96,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 37,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/hook-protocol/README.md",
+          "start": 77,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-playwright-mcp/README.md",
+          "start": 98,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/extensions/cordis-client-runner/README.md",
+          "start": 54,
+          "end": 54,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "权限、沙箱、审批和 hook 的失败路径最容易变成“为了继续而放宽”。一次 Win32 调用失败、一个未知 ACL 边界或一个 hook 异常，如果被当成可忽略错误，就会在用户不知情时扩大权限或破坏调用轮次。",
+      "triggers": [
+        "新增沙箱/权限/审批路径",
+        "新增 hook、动态包或浏览器控制",
+        "诊断权限拒绝、沙箱不可用或部分失败"
+      ],
+      "obligations": [
+        "任何 Win32/沙箱初始化失败都必须阻止 spawn；`init()` 失败时绝不启动未受限子进程。",
+        "`read-only` 就是零写授权；不能因为“没有显式 deny”而回退到可写。",
+        "运行器失败要以可分类的错误退出（如 `windows-acl-run: <detail>` + 127），不能被当成普通拒绝。",
+        "无法解释的拒绝要暴露诊断路径，而不是静默放宽；诊断自身需要未受限调用者时，没有审批就失败关闭。",
+        "锁定的 Session/不可用的沙箱要返回明确失败码（如 `sandbox-unavailable`、locked 拒绝），不能继续执行。",
+        "hook 的所有失败模式都收敛为受控结果或 non-match，绝不向调用轮次抛异常。",
+        "动态包的浏览器半只拿到白名单符号与已声明服务；守卫是白名单，不是黑名单。"
+      ],
+      "actors": [
+        "安全边界 owner",
+        "沙箱实现者",
+        "插件作者",
+        "审批者"
+      ],
+      "steps": [
+        "为每个失败分支标注“拒绝 / 降级 / 继续”并说明理由。",
+        "在 spawn 前完成所有可能失败的初始化，失败即返回。",
+        "为拒绝写可分类错误码与诊断提示。",
+        "在 hook/动态包边界做兜底捕获，返回受控结果。",
+        "为锁定/不可用状态写明确的拒绝路径。",
+        "用故意失败的负向用例验证不会回退到未受限执行。"
+      ],
+      "enforcement": {
+        "mode": "代码拒绝分支 + 错误分类 + 评审/负向测试",
+        "implementation": "Windows ACL 沙箱在 `init()` 的任何 Win32 失败时抛错、绝不无限制 spawn（README:57,76）；`read-only` 不授予写 ACE（README:70）；清理尽力而为并聚合错误（README:76）；PTC 把不可用 confinement 归为 `sandbox-unavailable`（README:96）；CUA 的锁定状态拒绝操作（README:37）；hook 明确 never throw into the loop（README:77）；浏览器启动失败拒绝 Session 创建/恢复且不自动重试（README:98-105）；动态包守卫是白名单（README:54）。",
+        "trust": "拒绝分支由源码实现；README 可证明意图与部分行为，未执行故障注入。",
+        "failure": "失败开放会静默扩大权限；错误分类不清会让调用方把“沙箱坏了”当成“命令被拒绝”。",
+        "exceptions": [
+          "清理是 best-effort，失败会聚合但不阻塞进程退出",
+          "读、网络和进程可见性不在 `WRITE_RESTRICTED` 范围内，必须另配读侧策略"
+        ]
+      },
+      "applicability": "适用：任何权限、沙箱、审批、hook、动态代码或浏览器控制边界。 不适用：纯展示逻辑没有权限后果时，不应套用安全拒绝语义。 说明：失败关闭不是“所有错误都抛给用户”，而是“默认不获得更多权限”；拒绝信息仍要可操作。",
+      "relationships": [
+        "package-contracts-7.budget-limits",
+        "package-contracts-7.credentials-channel",
+        "package-contracts-7.platform-backends"
+      ],
+      "migration": {
+        "strategy": "先把失败分支列成表，再实现拒绝与错误分类；每个安全边界至少有一个负向故障注入用例。",
+        "implementation": [
+          "为 init/spawn/审批/hook 各写失败关闭断言。",
+          "为拒绝定义稳定错误码与诊断文本。",
+          "清理失败聚合而不是吞掉。",
+          "把读/网络等未覆盖维度写进限制节。",
+          "用故障注入验证未受限 spawn 不可能发生。"
+        ],
+        "requiredSupport": [
+          "错误码表",
+          "故障注入测试",
+          "诊断工具",
+          "审批通道"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.fail-closed-security",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "在受限模式下尝试写工作区外路径，确认被拒绝且错误可分类。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "注入 init/spawn 失败，确认不会产生未受限子进程。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "修复 ACL/权限后重试，确认新的授权生效且旧拒绝未被缓存成永久失败。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行 Windows ACL 或 macOS 权限测试；行为来自 README。",
+        "读侧与网络限制明确不在该后端范围内，不能把写限制当成完整沙箱。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.credentials-channel",
+      "title": "配置只存凭据名称，值走凭据服务/环境；密钥不得进入配置、URL、日志或模型上下文",
+      "sources": [
+        {
+          "path": "packages/credentials/README.md",
+          "start": 10,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/README.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm-deepseek-api-key/README.md",
+          "start": 29,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/connection/README.md",
+          "start": 39,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/connection/README.md",
+          "start": 80,
+          "end": 83,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/ptc-runtime/ptc-runtime-node/README.md",
+          "start": 110,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/http-proxy/README.md",
+          "start": 108,
+          "end": 112,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 91,
+          "end": 91,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/account-controller/README.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把密钥写进配置文件、请求 URL 或日志，会把它扩散到备份、截图和模型上下文。多个凭据来源又没有优先级时，轮换后的旧值会继续生效，用户以为已经撤销。",
+      "triggers": [
+        "新增 provider、登录流或外部服务",
+        "新增配置字段或环境变量",
+        "诊断 401/凭据缺失/轮换未生效",
+        "编写测试替身"
+      ],
+      "obligations": [
+        "配置文件只出现凭据名称；本地秘密值只对同一 OS 用户可读。",
+        "凭据解析有明确优先级：凭据服务存在时按服务规则；只有没有该服务的组合才直接读启动环境。",
+        "provider 的 key 走专用包与 `apiKeyEnv`（默认 `DEEPSEEK_API_KEY`）；缺凭据返回 `MISSING_CREDENTIAL`，格式错误返回 `INVALID_CREDENTIAL`，其他查询失败继续传播。",
+        "登录得到的浏览器 cookie 签名秘密存放在 owner-scoped 凭据记录（`client-connection/browser-session`），不写进配置；删除/替换在下次 Connection 激活生效。",
+        "PTC 子进程只保留可执行搜索、Windows 系统与临时路径，并替换程序可见环境；代理 URL 可能含 `user:password` 时不传给模型编写程序。",
+        "测试替身使用假 key 与 loopback，不读取真实凭据。",
+        "账号控制器不把 token/PKCE 返回浏览器；只暴露稳定操作与状态。"
+      ],
+      "actors": [
+        "provider 作者",
+        "凭据服务 owner",
+        "安全评审者",
+        "测试作者"
+      ],
+      "steps": [
+        "确定凭据名称与来源（凭据服务/环境变量/登录流）。",
+        "在 schema 中只接受名称或引用，不接受明文 secret。",
+        "实现解析优先级与错误码，避免把底层错误文本当凭据泄漏。",
+        "在子进程/浏览器边界清洗环境与 URL。",
+        "为轮换写“下一次请求生效”的语义。",
+        "测试使用假 key；断言日志与模型请求不含 secret。"
+      ],
+      "enforcement": {
+        "mode": "凭据服务解析 + 配置/schema 约束 + 环境清洗 + 评审",
+        "implementation": "credentials README 说明配置只命名 secret、本地值仅同一 OS 用户可读（README:10-12,27-31）；DeepSeek key 的优先级与错误码见 README:29-38；connection 的 cookie 秘密存凭据记录（README:39-43），删除/替换下次激活生效（README:80-83）；PTC 子进程清洗环境（README:110）；http-proxy 不把含凭据的代理 URL 传给模型程序（README:108-112）；mock server 使用假 key（README:91）。",
+        "trust": "来源可证明解析与边界规则；未读凭据存储实现，未执行泄漏扫描。",
+        "failure": "明文 secret 进入配置/日志会扩大泄漏面；优先级错误会让轮换失效；子进程继承环境会把代理凭据带给模型代码。",
+        "exceptions": [
+          "没有 credentials 服务的组合允许直接读启动环境",
+          "本地凭据文件是默认 on-machine store，仍受 OS 用户权限保护"
+        ]
+      },
+      "applicability": "适用：任何 secret、token、cookie 签名密钥、代理凭据与登录流。 不适用：公开的端点、模型名、非敏感配置不需要走凭据服务。 说明：“凭据名称进配置”与“值进凭据服务”要同时成立；只做前者仍可能把值写进日志。",
+      "relationships": [
+        "package-contracts-7.configuration-surface",
+        "package-contracts-7.fail-closed-security",
+        "package-contracts-7.test-support-boundary"
+      ],
+      "migration": {
+        "strategy": "建立凭据名称表、解析优先级与错误码；在配置、子进程、URL 和日志四个出口分别做清洗。",
+        "implementation": [
+          "配置 schema 只接受凭据名称/环境变量名。",
+          "实现凭据服务与环境变量两级解析，记录生效时机。",
+          "为缺凭据/格式错误定义稳定错误码。",
+          "在 spawn 与出站请求前清洗环境/URL。",
+          "加 secret 扫描与假 key 测试。"
+        ],
+        "requiredSupport": [
+          "凭据存储",
+          "环境清洗工具",
+          "错误码表",
+          "泄漏扫描"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.credentials-channel",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "轮换凭据后发起下一次请求，确认新值生效且旧值不再使用。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "在配置中写明文 key，确认 schema/评审拒绝；在日志与模型请求中扫描不到 secret。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "删除损坏凭据并重新登录/写入，确认从 INVALID_CREDENTIAL 恢复到可用。"
+          }
+        ]
+      },
+      "limitations": [
+        "未读凭据存储与登录实现，未执行 secret 扫描。",
+        "账号控制器不返回 token/PKCE 是 README 的摘要，具体 wire 字段未逐行核对。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.ownership-lifecycle",
+      "title": "注册必须返回 disposer；卸载/关闭要取消、等待静止并让失败可见",
+      "sources": [
+        {
+          "path": "packages/client/ui-slots/README.md",
+          "start": 48,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 47,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 71,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/README.md",
+          "start": 100,
+          "end": 102,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sdk/client/README.md",
+          "start": 60,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sdk/client/README.md",
+          "start": 90,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/goal/goal-round-driver/README.md",
+          "start": 72,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 119,
+          "end": 119,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 129,
+          "end": 131,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/account-controller/README.md",
+          "start": 23,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/api/account-controller/README.md",
+          "start": 34,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 107,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 125,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 60,
+          "end": 60,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "重载、卸载和异常路径最容易留下重复注册、孤儿进程与过期缓存。没有 disposer 或没有等待静止，下一次挂载会看到上一代的副作用。",
+      "triggers": [
+        "插件/包卸载或热重载",
+        "注册服务、槽位、provider 或事件监听",
+        "关闭客户端、Session 或后台任务",
+        "诊断重复注册、泄漏、卸载后仍有输出"
+      ],
+      "obligations": [
+        "每个注册返回 disposer；注册与撤销走同一条生命周期轴。",
+        "卸载时撤销服务/槽位/贡献与 store mount；晚到的异步导入若 owner 已消失必须丢弃。",
+        "关闭是幂等的升级阶梯：请求关闭、等待、必要时强制终止，直到实际退出。",
+        "取消工作后等待 driver/agent 静止；失败关闭要保留事件栅栏并让错误可见。",
+        "缓存没有 TTL 时，失效只能由注册方调用 `invalidate()` 或注册/卸载触发；晚到的 invalidate 不能影响已替换的 provider。",
+        "控制器不维护独立状态；watch 断开只停止观察，不取消登录。",
+        "压缩事务在关闭时只做一次 `compaction/end` 尝试；失败会故意留下阻塞 orphan。"
+      ],
+      "actors": [
+        "插件作者",
+        "服务 owner",
+        "运行时维护者",
+        "诊断者"
+      ],
+      "steps": [
+        "为每个注册获取 disposer，并在 owner 的卸载路径上调用。",
+        "在注册时捕获 epoch/generation，异步回调回来先校验 owner 仍活着。",
+        "实现幂等关闭阶梯，记录每一步的结果。",
+        "取消后等待静止，再释放资源或允许下一次挂载。",
+        "对缓存失效写 revision/事件，避免 TTL 猜测。",
+        "用重复挂载/卸载测试验证没有重复行与孤儿。"
+      ],
+      "enforcement": {
+        "mode": "disposer/生命周期代码 + 幂等关闭 + 卸载测试 + 评审",
+        "implementation": "ui-slots 的 entry disposer 递归折叠声明的子槽与 store mount（README:48）；typert loader 按 entry 生命周期撤销，晚到导入被丢弃，缓存进程级且不自动过期（README:47,71-75）；skill registry 失效由注册作用域 `invalidate()` 驱动（README:100-102）；SDK `close()` 是幂等 stdin-EOF→SIGTERM→SIGKILL 阶梯（README:60,90-92）；goal driver 的 teardown 关闭 admission、取消并等待静止（README:72-74）；account watch 断开只停止观察（README:23），控制器不维护独立状态（README:34）；compaction 事务只做一次 closing 尝试（README:107,125）；CUA 的 disposal 等待完整调用与图像写入（README:60）。",
+        "trust": "disposer 与关闭阶梯由源码实现；未执行重复挂载/卸载或泄漏测试。",
+        "failure": "缺 disposer 会重复注册；关闭不等待会让旧任务写入新会话；缓存不失效会让读者看到过期目录。",
+        "exceptions": [
+          "清理可能是 best-effort，但失败要聚合/可见，不能静默",
+          "压缩关闭失败会故意留下孤儿锁，供下一次启动识别"
+        ]
+      },
+      "applicability": "适用：任何长期存在的注册、缓存、监听、子进程、后台任务与会话绑定资源。 不适用：一次性的纯函数调用不需要伪造 disposer。 说明：生命周期所有者要唯一：父级拥有子级，不能让子级自己决定何时消失而父级不知道。",
+      "relationships": [
+        "package-contracts-7.composition-wiring",
+        "package-contracts-7.extension-points",
+        "package-contracts-7.durable-watermarks"
+      ],
+      "migration": {
+        "strategy": "把每个注册改成“返回 disposer + owner epoch 校验”，再为每类资源写关闭阶梯与静止等待。",
+        "implementation": [
+          "统一注册 API 返回 disposer，禁止裸注册。",
+          "为异步回调加 owner/generation 校验。",
+          "为进程/网络资源实现幂等关闭阶梯。",
+          "为缓存加 revision 失效，不设 TTL 猜测。",
+          "写重复挂载/卸载与晚到回调测试。"
+        ],
+        "requiredSupport": [
+          "disposer 约定",
+          "epoch/generation 工具",
+          "关闭阶梯",
+          "泄漏测试"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.ownership-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "连续挂载/卸载同一插件两次，确认注册行与资源数量回到基线。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "在卸载后触发晚到的 provider 回调，确认它被丢弃且不影响新 provider。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "让清理失败一次，确认错误可见且下一次启动能识别残留。"
+          }
+        ]
+      },
+      "limitations": [
+        "未执行卸载/重载测试；生命周期行为来自 README。",
+        "不同包的清理语义不完全一致（有的 best-effort，有的故意留 orphan），迁移时需逐包确认。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.extension-points",
+      "title": "扩展点用声明式槽位与优先级，替换整项而不是局部打补丁",
+      "sources": [
+        {
+          "path": "packages/client/ui-slots/README.md",
+          "start": 32,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-slots/README.md",
+          "start": 48,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-slots/README.md",
+          "start": 62,
+          "end": 66,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-attachment/README.md",
+          "start": 52,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar/README.md",
+          "start": 30,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-sidebar/README.md",
+          "start": 68,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 73,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 87,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 105,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 119,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 129,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-directory-picker-native/README.md",
+          "start": 34,
+          "end": 34,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "没有命名座位时，第三方只能改核心组件或复制样式；有了座位但没有优先级/所有权规则，又会出现重复渲染、顺序随机和无法卸载的贡献。",
+      "triggers": [
+        "新增 UI 面板、按钮、设置项或详情区",
+        "第三方包需要贡献到宿主页面",
+        "诊断“注册了但没显示/显示两次/顺序不对”"
+      ],
+      "obligations": [
+        "扩展点必须是声明式命名槽位；声明槽位即认领 key，只有声明者能渲染该 key。",
+        "注册未声明槽位、重复声明子槽、把同一 handle 挂到两个 scope、无 `select` 的链式注册都在加载期抛错。",
+        "优先级默认 100，数字小者先；替换条目是整项替换，不是字段合并。",
+        "子槽位由父注册声明；页面存在期间槽位才存在，registrant 的 `inject` 等待声明。",
+        "宿主组件保持包内私有，公开的只有 slot 注册与契约类型。",
+        "功能预览没有第三方声明接口；图片由内部 map 与 asset test 约束。",
+        "provider 不拥有模型工具名；模型面只由 tool 包拥有。"
+      ],
+      "actors": [
+        "宿主页面 owner",
+        "扩展作者",
+        "评审者"
+      ],
+      "steps": [
+        "在宿主注册中声明槽位与子槽位，写清 required/optional 与 key。",
+        "扩展方用 `ctx.slots.inject()` 等待声明，再用 `register` 提供条目。",
+        "为竞争条目设置 priority，并说明数值含义。",
+        "需要替换时提供完整条目，不做局部字段覆盖。",
+        "把内部组件与树推导留在包内，只导出契约类型。",
+        "用重复注册/未声明槽位负向用例验证加载期抛错。"
+      ],
+      "enforcement": {
+        "mode": "槽位加载期校验 + 优先级规则 + asset test + 评审",
+        "implementation": "ui-slots 规定声明即认领、未声明/重复/跨 scope/无 select 链式注册在加载期抛错，disposer 递归折叠子槽（README:48）；优先级默认 100、低者先（README:52 附近正文，表见 32-34）；ui-sidebar 的 `sidebar.settings` 座位与声明式 inject（README:30,68-70）；ui-plugin-manager 声明 `plugins.item`、`plugins.bundle.config`、`plugins.row.config` 与详情槽位，并在页面存续期间提供（README:73,87-90,119-121,129-134）；预览图由内部 map + asset test 约束（README:105）。",
+        "trust": "加载期抛错与 asset test 由源码/测试实现；README 描述契约，未运行槽位测试。",
+        "failure": "未声明槽位或重复注册会直接抛错（好事）；整项替换规则不清会让贡献者以为可以打补丁；内部组件导出会扩大不兼容面。",
+        "exceptions": [
+          "包没有预览声明接口，预览只能走内置 map",
+          "动态包的 slot admission 没有 per-deployment 允许/拒绝载体（cordis-client-runner 限制）"
+        ]
+      },
+      "applicability": "适用：任何宿主 UI 需要第三方贡献，或需要稳定替换/排序时。 不适用：单一包内部的组件组合不需要公开槽位；不要为内部复用发明公共扩展点。 说明：槽位契约要同时约束“谁能注册”“注册什么”“何时存在”“如何卸载”，缺一项都会在真实插件组合中暴露。",
+      "relationships": [
+        "package-contracts-7.capability-seam",
+        "package-contracts-7.ownership-lifecycle",
+        "package-contracts-7.generated-artifacts"
+      ],
+      "migration": {
+        "strategy": "先列宿主需要开放的座位与替换语义，再实现声明/注册/优先级/卸载四件事；内部组件默认不导出。",
+        "implementation": [
+          "为每个槽位写名称、key 类型、优先级与子槽。",
+          "注册时校验声明与所有权，违规加载期失败。",
+          "替换语义定为整项替换。",
+          "把内部组件移出公开导出。",
+          "为预览图与资产加格式测试。"
+        ],
+        "requiredSupport": [
+          "槽位注册 API",
+          "类型契约",
+          "加载期校验",
+          "asset test"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.extension-points",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "两个扩展以不同 priority 注册同一槽位，确认低值先渲染且可各自卸载。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "向未声明槽位注册或重复声明子槽，确认加载期抛错。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "修正声明/priority 后重载，确认只渲染预期条目且无重复。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行 UI 槽位测试；优先级与抛错行为来自 README。",
+        "动态包的 slot admission 缺少部署级控制，这是来源自己列出的限制。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.model-experience",
+      "title": "模型体验要写清可见文本、注入位置与缓存影响；没影响就明确 None",
+      "sources": [
+        {
+          "path": "packages/experimental/hook-protocol/README.md",
+          "start": 113,
+          "end": 130,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/goal/goal-round-driver/README.md",
+          "start": 49,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/goal/goal-round-driver/README.md",
+          "start": 126,
+          "end": 129,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/README.md",
+          "start": 121,
+          "end": 128,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/harness-dev-context/README.md",
+          "start": 12,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/harness-dev-context/README.md",
+          "start": 79,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 168,
+          "end": 176,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/package-manifest/README.md",
+          "start": 79,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-session/README.md",
+          "start": 29,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "包把隐藏 prompt、工具描述或运行时上下文注入模型时，采用者看不到请求字节如何变化。缓存前缀被无意改写会带来成本和延迟，而“看起来只是 UI”的包也可能在改变模型行为。",
+      "triggers": [
+        "新增/修改模型可见文本、工具 schema、system prompt 或运行时上下文",
+        "诊断缓存命中率、首 token 延迟或行为漂移",
+        "发布前审阅模型体验节"
+      ],
+      "obligations": [
+        "Model Experience 要说明模型看到什么、在哪个 order/位置注入、影响哪些请求。",
+        "写 KV cache 影响：前缀是否稳定、什么变化会使缓存失效、运行时上下文是否只追加快照。",
+        "没有模型影响时写 None 并解释原因（只导出类型、只读日志、纯 UI 状态等）。",
+        "模型可见文本要稳定；隐藏字段不能被插值进 prompt，避免不可见状态改变字节。",
+        "进程相关值放运行时上下文，不写进 system prompt；旧 Session 要保留旧段落以维持字节稳定。",
+        "压缩等会替换历史的功能要写清 preamble、token 效果与不可分割单元的限制。",
+        "hook 等间接注入要说明哪个 consumer 渲染、哪些输出进入模型上下文。"
+      ],
+      "actors": [
+        "包作者",
+        "prompt owner",
+        "评审者",
+        "成本/性能诊断者"
+      ],
+      "steps": [
+        "列出模型可见文本与注入点（system prompt、tool schema、runtime context、tool result）。",
+        "写清 order/位置与前缀稳定性。",
+        "给出 KV cache 影响与失效条件。",
+        "没有影响时写 None 并给出原因。",
+        "把进程相关值移到运行时上下文，保留旧格式 Session 的稳定段落。",
+        "在测试/评审中检查模型请求字节是否与声明一致。"
+      ],
+      "enforcement": {
+        "mode": "README 模型体验节 + 请求字节评审 + 快照/缓存证据",
+        "implementation": "hook-protocol 说明消费者才渲染 hook 输出（README:113-115）并列出折叠 halt 等限制（121-130）；goal driver 规定 round prompt 的自包含 header 与 goal 消息入历史（49-53），并明确 round cap 不是资源预算（128）；skill 说明间接通过 `dsh-tool-skill` 渲染目录与指令体（121-128）；harness-dev-context 把 checkout/URL 放运行时上下文、system prompt 只保留无值指导，并声明 KV cache 影响（12-36,79-109）；compaction 给出 checkpoint preamble 与 token effect（168-176）；package-manifest 的 Model Experience 为 None，KV cache 不受影响（79-86）；ui-session 同样写 None（29-36）。",
+        "trust": "README 可证明声明内容；未抓取真实请求，不能证明字节与声明完全一致。",
+        "failure": "隐藏插值或进程值写入 system prompt 会破坏缓存；把 None 写成空泛描述会让读者无法判断影响。",
+        "exceptions": [
+          "模型无关包可用 None，但必须说明为什么（只导出类型、只读日志等）",
+          "间接注入的包可以把渲染责任交给明确的 consumer"
+        ]
+      },
+      "applicability": "适用：任何可能改变模型请求、工具目录、system prompt、运行时上下文或工具结果的包。 不适用：纯 UI/存储/类型包明确无模型影响时，只需写 None 与原因。 说明：Model Experience 是对请求字节的契约，不是营销段落；每个断言都应能指向注入点与缓存后果。",
+      "relationships": [
+        "package-contracts-7.readme-contract",
+        "package-contracts-7.composition-wiring",
+        "package-contracts-7.generated-artifacts"
+      ],
+      "migration": {
+        "strategy": "为每个包建立“模型可见字节清单 + 注入点 + 缓存影响”三列表；没有影响也要显式登记 None。",
+        "implementation": [
+          "在 README 模板中固定 Model Experience 与 KV Cache effect 两节。",
+          "为 system prompt/runtime context/tool schema 分别记录 order 与稳定性。",
+          "把进程相关值移出 system prompt。",
+          "加请求快照或缓存命中检查。",
+          "评审时对照声明检查真实请求。"
+        ],
+        "requiredSupport": [
+          "请求快照/抓包",
+          "prompt order 约定",
+          "缓存命中观测",
+          "README 检查"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.model-experience",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "抓取一次请求，确认模型可见文本、注入顺序与 README 声明一致。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "修改一个隐藏字段并观察请求字节不变；或修改声明文本并确认缓存前缀失效符合预期。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "恢复稳定前缀后重跑请求，确认缓存复用恢复。"
+          }
+        ]
+      },
+      "limitations": [
+        "未抓取真实模型请求，所有缓存与字节结论来自 README。",
+        "README 声明的 prompt 文本未与真实请求字节逐字核对；宽 CJK 长行已 raw 重读，但未抓取请求。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.generated-artifacts",
+      "title": "生成物从源生成并做 freshness 门禁；发布面必须包含生成文件",
+      "sources": [
+        {
+          "path": "packages/typert/generator/README.md",
+          "start": 28,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/generator/README.md",
+          "start": 112,
+          "end": 114,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 47,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/typert/loader/README.md",
+          "start": 71,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/open-in-app/README.md",
+          "start": 66,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 96,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/preset/agent-preset/README.md",
+          "start": 50,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 105,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 117,
+          "end": 117,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/credentials/README.i18n.yaml",
+          "start": 1,
+          "end": 3,
+          "kind": "config"
+        }
+      ],
+      "problem": "手写生成物、漏掉发布文件或在安装后才发现 export map 指向不存在的路径，都是典型的“本地能跑、发布即坏”。生成器与 freshness 门禁能把漂移提前到构建期。",
+      "triggers": [
+        "新增生成器/模板/协议",
+        "修改导出映射或 npm `files`",
+        "升级 Typert、双语 sidecar、预览图或动态包契约",
+        "诊断安装后缺文件/运行期 import 失败"
+      ],
+      "obligations": [
+        "生成物从源生成，不手工编辑；生成器失败要让构建失败。",
+        "生成器校验 `./typert`、`./client/typert`、`./remote` 指向精确生成文件，且 `files` 包含它们。",
+        "Loader 只注册有生成导出的包；缺导出的包静默跳过，显式 `packages` 条目无法解析则大声失败。",
+        "生成 cache 是进程级且不自动过期；新增导出需要重启。",
+        "模块图由 `pnpm run gen-module-graph` 生成并在 CI 做 freshness；`references/packages.md` 由 `scripts/gen-plugin-packages.ts` 生成并在 `doc-sync` 做 freshness。",
+        "功能预览图只能走内部 map 与 asset test，包没有预览声明接口。",
+        "双语 sidecar 用逐节 en/zh 哈希绑定；生成/更新后要重新生成而不是手改。",
+        "原生协议表由脚本生成，测试 lane 检查 freshness 并拒绝 Host-only 字段进入模型准入。"
+      ],
+      "actors": [
+        "生成器维护者",
+        "包作者",
+        "发布者",
+        "CI 维护者"
+      ],
+      "steps": [
+        "把 schema/协议/清单定义为唯一源。",
+        "生成代码、声明、配置目录、模块图或双语 sidecar。",
+        "在构建期校验生成物与声明/`files` 一致，失败即停止。",
+        "在 CI 中重跑生成并检查 diff 为空（freshness）。",
+        "为生成物写使用说明与“不要手改”标记。",
+        "在安装/发布 rehearsal 中执行生成物而不是只比对字节。"
+      ],
+      "enforcement": {
+        "mode": "生成器构建校验 + CI freshness + asset/协议测试",
+        "implementation": "Typert generator 在构建期检查声明缺失、指向错误文件、Remote 方法缺失与 `files` 未包含生成物（README:44,114）；Loader 对缺导出包静默跳过、对显式条目大声失败，缓存进程级（README:12,47-53,71-75）；open-in-app 的 `./shared` 是浏览器安全子路径，路由/载荷变更只改 `src/shared.ts`（README:68）；模块图与 `references/packages.md` 的 freshness 见 packages/README:96 与 agent-preset:50；预览图 asset test 见 ui-plugin-manager:105；CUA 协议生成 freshness 见 README:117。",
+        "trust": "生成器/测试行为由 README 描述，未运行生成或 freshness 命令。",
+        "failure": "漏 `files` 会发布指向缺失文件的 export map；手改生成物会在下一次生成被覆盖；缓存不刷新会让新导出不可见。",
+        "exceptions": [
+          "没有生成导出的包被 Loader 静默跳过，这是安全默认",
+          "预览图只支持内置 map，第三方不能声明"
+        ]
+      },
+      "applicability": "适用：任何由源派生的代码、声明、配置目录、文档表、双语 sidecar、协议表或资产映射。 不适用：一次性脚本输出或本地临时文件不应进入版本库，也不需要 freshness 门禁。 说明：生成物的契约包括“如何生成”“如何校验”“如何发布”三部分；只做生成不做 freshness 仍会漂移。",
+      "relationships": [
+        "package-contracts-7.readme-contract",
+        "package-contracts-7.configuration-surface",
+        "package-contracts-7.extension-points"
+      ],
+      "migration": {
+        "strategy": "先为每类生成物指定唯一源与生成命令，再把 freshness 检查放进 CI 与发布 rehearsal。",
+        "implementation": [
+          "在 package.json 中声明生成脚本与 `files`。",
+          "生成器校验 export 映射与发布文件。",
+          "CI 重跑生成并检查 diff。",
+          "在生成文件头写“不要手改”。",
+          "发布前做安装后 import smoke。"
+        ],
+        "requiredSupport": [
+          "生成器",
+          "CI freshness",
+          "发布 rehearsal",
+          "生成文件标记"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.generated-artifacts",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "从源重新生成，确认输出字节与已提交文件一致且安装后可 import。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "从 `files` 移除生成文件或手改生成物，确认构建/安装 rehearsal 失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "恢复生成并重跑 freshness，确认 diff 为空。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行 Typert/模块图/双语生成器，不能证明 freshness 命令实际通过。",
+        "sidecar 只读头部与哈希形态，未逐节核对翻译内容。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.limitations-disclosure",
+      "title": "限制披露要写当前约束，不用路线图或模糊承诺替代",
+      "sources": [
+        {
+          "path": "packages/README.md",
+          "start": 102,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/package-manifest/README.md",
+          "start": 88,
+          "end": 93,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/util/http-proxy/README.md",
+          "start": 105,
+          "end": 112,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/sandbox/sandbox-windows-acl/README.md",
+          "start": 173,
+          "end": 192,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 205,
+          "end": 213,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/browser-use-playwright-mcp/README.md",
+          "start": 98,
+          "end": 105,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/skill/skill/README.md",
+          "start": 130,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-plugin-manager/README.md",
+          "start": 162,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 244,
+          "end": 246,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "README 只写能力不写边界，采用者会把“未实现/未验证/仅某平台”当成已覆盖。限制披露如果写成待办清单，也会失去“当前行为是什么”的信息。",
+      "triggers": [
+        "新增包或能力",
+        "平台/权限/性能边界变化",
+        "发布前审阅与采用者问答"
+      ],
+      "obligations": [
+        "每个包带 Known Limitations and Deferred Work，逐条写当前约束；没有限制也要走 allowlist，而不是空节。",
+        "限制要绑定行为：哪个平台、哪个模式、哪个失败码、哪个未实现分支。",
+        "明确区分“当前不支持”和“计划支持”；不要把 roadmap 写成已交付能力。",
+        "安全/平台限制要写清后果与补救（例如读侧限制、TLS、签名/分发未完成）。",
+        "已知失败模式要写清是否自动重试、是否保留部分结果、是否会阻塞后续。"
+      ],
+      "actors": [
+        "包作者",
+        "评审者",
+        "采用者",
+        "支持/诊断者"
+      ],
+      "steps": [
+        "列出当前不支持/未验证/仅单平台的边界。",
+        "为每条写触发条件、可观察后果与补救路径。",
+        "把 deferred work 与 limitation 分开标注。",
+        "在发布评审中确认没有把路线图写成承诺。",
+        "用 allowlist 处理确实没有限制的包。"
+      ],
+      "enforcement": {
+        "mode": "限制节存在性检查 + 内容评审",
+        "implementation": "`packages/README.md:102-105` 要求 Known Limitations 节或 allowlist；package-manifest 明确静态类型、无 parser/默认值、兼容声明不强制（README:92-93）；http-proxy 列出无自定义 CA、Node 版本差异、遥测直连、模型程序不继承代理（README:108-112）；sandbox-windows-acl 列出读/网络/进程可见性、硬链接、控制台、长期 ACE 残留等边界（README:173-192）；CUA 列出仅 macOS、坐标竞态、Stage Manager、私有符号与签名/分发 deferred（README:205-213）；浏览器列出仅 Chromium、启动失败不重试、取消不回滚（README:98-105）；skill 列出 provider 驱动失效、串行查询、不保留 last-good、重复静默遮蔽（README:130-140）。",
+        "trust": "节存在可由脚本检查；内容是否真实完整仍靠评审，无法自动证明。",
+        "failure": "缺限制会让采用者在未验证平台上线；把 deferred 写成承诺会造成发布期望错位。",
+        "exceptions": [
+          "确实没有限制的包可经 allowlist 免除限制节",
+          "Dev Note 中的开放问题不等于已交付能力，必须与限制节分开"
+        ]
+      },
+      "applicability": "适用：所有包 README，尤其是平台、权限、实验性和性能敏感包。 不适用：仓库级路线图或设计讨论不属于包 README 的限制节。 说明：限制不是自我否定，而是采用者做风险决策的输入；越具体越可执行。",
+      "relationships": [
+        "package-contracts-7.readme-contract",
+        "package-contracts-7.status-classification",
+        "package-contracts-7.fail-closed-security"
+      ],
+      "migration": {
+        "strategy": "把限制节当作发布契约的一部分：每条限制有触发条件、后果、补救与 owner；路线图另放。",
+        "implementation": [
+          "在 README 模板中固定限制节与 allowlist 流程。",
+          "评审时逐条检查限制是否绑定行为。",
+          "把安全/平台限制链接到支持矩阵或故障诊断文档。",
+          "发布说明只引用限制节，不另写模糊承诺。"
+        ],
+        "requiredSupport": [
+          "README 检查",
+          "allowlist",
+          "支持矩阵",
+          "发布评审"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.limitations-disclosure",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "逐条对照限制节与实际失败行为，确认触发条件与后果一致。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "删掉一条已知平台限制，确认评审能指出文档与行为不一致。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "补回限制并更新发布说明，确认采用者文档不再暗示支持。"
+          }
+        ]
+      },
+      "limitations": [
+        "限制节存在性可自动检查，但完整性与真实性无法自动证明。",
+        "未执行各平台的限制复现；内容来自 README 自述。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.test-support-boundary",
+      "title": "测试支撑包只服务测试：假凭据、确定性回放、失败要大声",
+      "sources": [
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 68,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 84,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 102,
+          "end": 104,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 113,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 48,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 85,
+          "end": 91,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 109,
+          "end": 111,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-mock-server/README.md",
+          "start": 155,
+          "end": 158,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试替身一旦进入生产组合，或 mock 行为与真实 provider 漂移，测试会从“证明行为”变成“证明 mock”。回放如果对缺失场景静默放过，也会制造假绿。",
+      "triggers": [
+        "新增测试替身、回放场景或 mock provider",
+        "把测试包加入 profile/组合",
+        "诊断“本地过、真实调用失败”"
+      ],
+      "obligations": [
+        "测试支撑包默认不进入生产组合；mock server 只用于 scratch/loopback，不提供 provider 保真。",
+        "mock 使用假 key（如 `DEEPSEEK_API_KEY=mock-key`），不读取真实凭据。",
+        "回放按确定性顺序匹配；未录制的 Session 调用要大声失败并提示重新录制。",
+        "脚本占位符解析失败（无匹配、非法正则、未闭合）要大声失败，不静默跳过。",
+        "回放只覆盖已集成状态；一次性状态不应加回放夹具。",
+        "提交的语料测试要固定历史拒绝清单（路径、代际、错误类型、原因）；拒绝消失或变化即失败。"
+      ],
+      "actors": [
+        "测试作者",
+        "CI 维护者",
+        "provider 作者"
+      ],
+      "steps": [
+        "明确测试替身的边界（只服务测试，不发布为产品能力）。",
+        "使用假凭据与 loopback，确保不会打到真实服务。",
+        "实现确定性匹配与“未消费脚本/无匹配”失败。",
+        "为历史兼容写固定拒绝清单，禁止当前代际获得例外。",
+        "在 CI 中运行语料测试并对源字节做只读断言。"
+      ],
+      "enforcement": {
+        "mode": "测试包边界 + 确定性回放 + 语料守卫 + 评审",
+        "implementation": "llm-replay 说明未录制 Session 调用会失败并提示重录、占位符无匹配/非法模式/未闭合会大声失败（README:84-86）；提交语料测试还原各代 `session*.jsonl` 且不改变源字节，inventory 固定历史拒绝（README:102-104）；mock server 是凭据无关的本地替身，使用假 key 与 loopback（README:48-50,85-91），并明确不是 provider 保真（README:109-111,155-158）。",
+        "trust": "回放/语料测试行为由 README 描述；未运行 corpus 测试，不能证明拒绝清单完整。",
+        "failure": "mock 漂移会让测试与真实 provider 脱节；静默跳过会让缺失场景变成假绿；真实凭据进入 mock 会泄漏。",
+        "exceptions": [
+          "mock server 明确不追求 provider 保真，只验证协议面",
+          "历史拒绝是固定清单，当前代际不能获得例外"
+        ]
+      },
+      "applicability": "适用：任何 LLM/provider 测试、回放夹具、mock server 或测试专用插件。 不适用：真实 provider 的 e2e 证据不能用 mock 代替；生产组合不应挂载测试包。 说明：测试替身的价值在于确定性，不是保真；保真问题应由真实 e2e 或契约测试承担。",
+      "relationships": [
+        "package-contracts-7.credentials-channel",
+        "package-contracts-7.session-format-compat",
+        "package-contracts-7.limitations-disclosure"
+      ],
+      "migration": {
+        "strategy": "把测试替身限制在 test-support 包与测试 profile；用假凭据、loopback、确定性回放和固定拒绝清单建立边界。",
+        "implementation": [
+          "在包分类中把 test-support 标为测试专用。",
+          "mock server 强制假 key/loopback，拒绝真实端点。",
+          "回放实现确定性匹配与缺失场景失败。",
+          "语料测试固定历史拒绝与源字节只读。",
+          "在 CI 中把测试包排除出生产 profile 检查。"
+        ],
+        "requiredSupport": [
+          "测试 profile",
+          "假凭据",
+          "语料夹具",
+          "CI 分离"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.test-support-boundary",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "用假 key 启动 mock，确认请求不出 loopback 且回放脚本全部被消费。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "删除一个回放脚本或加入未录制调用，确认测试大声失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "重新录制/补脚本后重跑，确认语料与拒绝清单恢复一致。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行回放/语料测试；失败语义来自 README。",
+        "mock server 不承诺 provider 保真，不能用它证明真实 API 兼容。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.platform-backends",
+      "title": "平台差异拆成独立后端，声明支持矩阵，不用静默 fallback 掩盖",
+      "sources": [
+        {
+          "path": "native/system/packages/linux-x64/README.md",
+          "start": 9,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/directory-picker-native/README.md",
+          "start": 36,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/directory-picker-native/README.md",
+          "start": 98,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-directory-picker-native/README.md",
+          "start": 34,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/host/open-in-app/README.md",
+          "start": 54,
+          "end": 68,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/pwsh-local/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 28,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/cua-macos/README.md",
+          "start": 208,
+          "end": 208,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/shell/tool-pwsh/README.md",
+          "start": 208,
+          "end": 210,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把平台差异塞进一个实现，最常见的结果是某个平台悄悄走弱路径。平台后端、原生助手和目录选择器需要明确的支持矩阵与失败边界。",
+      "triggers": [
+        "新增平台/架构支持",
+        "新增原生依赖或子进程",
+        "诊断“Windows 上没反应/走了错误后端”"
+      ],
+      "obligations": [
+        "平台相关能力拆成独立包/后端；每个后端声明支持的 OS/架构/运行条件。",
+        "原生包不做 JS/安装构建脚本；预打包校验完整负载、ELF 架构、Node-API 导出与可执行性，安装后 rehearsal 执行真实行为。",
+        "宿主选择后端时写清 try order；不可用时明确报错或由组合层提供 browse fallback，不在原生层静默降级。",
+        "Windows 与 POSIX 的执行器语义分开；不翻译 bash/pwsh 方言。",
+        "原生二进制需要本地构建时，把签名、分发、权限 onboarding 作为 deferred 写明。",
+        "平台专属 UI 用本地化的平台词典，不把未支持平台伪装成可用。"
+      ],
+      "actors": [
+        "平台后端 owner",
+        "发布者",
+        "支持矩阵维护者",
+        "诊断者"
+      ],
+      "steps": [
+        "列出目标平台/架构与不可用条件。",
+        "为每个平台实现独立后端或原生助手。",
+        "写宿主 try order 与失败错误；组合层决定 fallback。",
+        "为原生负载写校验与安装后 rehearsal。",
+        "把未支持的平台/权限写入限制节。",
+        "在对应平台 CI 上运行真实行为测试。"
+      ],
+      "enforcement": {
+        "mode": "平台包拆分 + 原生负载校验 + 平台 CI + 评审",
+        "implementation": "native linux-x64 明确预打包校验负载/ELF/Node-API/可执行性，安装后 rehearsal 检查字节并执行原生行为（README:9-11）；directory-picker-native 说明平台 try order、Windows 无机制 fallback、浏览后端是组合层 fallback（README:36-46,98-103）；open-in-app 用固定白名单和每平台定位链，解析一次/进程（README:54-68）；pwsh-local 是 Windows 的 `ctx.shell` provider（README:12）；CUA 仅 macOS，Windows 开发中且实验状态持续到完成（README:28,208）；tool-pwsh 明确 PowerShell 方言与无持久 shell（README:208-210）。",
+        "trust": "平台行为与支持矩阵由 README 声明；未运行平台 CI，不能证明所有 OS 版本都通过。",
+        "failure": "静默 fallback 会让用户以为原生能力可用；原生负载漏文件会在安装后 import/执行失败；未声明权限会卡在 onboarding。",
+        "exceptions": [
+          "浏览后端可以作为组合层 fallback，但原生层自身不 fallback",
+          "Windows 支持未完成时包保持 experimental，而不是假装稳定"
+        ]
+      },
+      "applicability": "适用：任何 OS/架构相关能力、原生助手、目录选择器、shell 执行器或二进制包。 不适用：纯跨平台 JS 逻辑没有平台分支时，不需要拆后端。 说明：平台支持是矩阵不是布尔值：OS、架构、libc、权限、桌面环境都可能单独限制。",
+      "relationships": [
+        "package-contracts-7.composition-wiring",
+        "package-contracts-7.fail-closed-security",
+        "package-contracts-7.limitations-disclosure"
+      ],
+      "migration": {
+        "strategy": "先写支持矩阵与失败边界，再拆后端；原生负载的校验与 rehearsal 与代码同仓维护。",
+        "implementation": [
+          "为每个平台列支持/不支持条件与错误码。",
+          "把原生代码与 JS 包装分开，声明 `files`。",
+          "实现 try order 与组合层 fallback。",
+          "在对应平台 CI 跑真实行为。",
+          "把签名/分发/权限未完成写入限制。"
+        ],
+        "requiredSupport": [
+          "支持矩阵",
+          "平台 CI",
+          "原生负载校验",
+          "安装后 rehearsal"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.platform-backends",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "在目标平台触发原生能力，确认走预期后端并产出真实结果。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "移除原生助手或制造不可用条件，确认明确报错而不是静默走弱路径。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "恢复助手/权限后重试，确认不需要重启或能自行 re-resolve。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行任何平台测试；支持矩阵与 try order 来自 README。",
+        "原生包的预打包/rehearsal 脚本未读，只记录其声明的检查项。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.session-format-compat",
+      "title": "会话格式只做相邻版本的纯升级，历史字节不改写",
+      "sources": [
+        {
+          "path": "packages/session/session-format-v0-to-v1/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v0-to-v1/README.md",
+          "start": 45,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v0-to-v1/README.md",
+          "start": 104,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/test-support/llm-replay/README.md",
+          "start": 102,
+          "end": 104,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "持久化格式演进时，直接改旧记录或以旧写新会造成不可逆的数据损坏。读者需要知道每个文件按哪个代际解释，以及哪些字段可以安全透传。",
+      "triggers": [
+        "新增 Session 事件字段/版本",
+        "迁移历史记录",
+        "诊断旧会话无法读取或字段丢失"
+      ],
+      "obligations": [
+        "格式升级是纯函数：每个版本只负责把 vN upcast 到 vN+1，不跨代际合并逻辑。",
+        "读取时先固定 source generation，再按该代际的规则解释事件。",
+        "未知事件类型与未预期载荷保持 opaque，不参与结构校验或重写。",
+        "冻结的历史记录不迁移；需要迁移时只在新写入路径上转换。",
+        "历史拒绝清单固定路径、代际、错误类型与原因；拒绝消失或改变即失败。"
+      ],
+      "actors": [
+        "格式 owner",
+        "持久化实现者",
+        "兼容性测试作者"
+      ],
+      "steps": [
+        "为每个版本写独立的 upcast 函数与测试。",
+        "读取时记录 source generation，按代际分派。",
+        "对未知字段保持透传，不推断语义。",
+        "为历史拒绝建立清单与语料测试。",
+        "禁止在读取路径上原地改写旧文件。"
+      ],
+      "enforcement": {
+        "mode": "版本分派 + 纯 upcast 测试 + 历史语料守卫",
+        "implementation": "session-format v0→v1 明确只读 v0、按共享布局产出 v1、验证 headers/events，未知事件与未预期载荷保持 opaque（README:12,45-47）；闭环清单与相邻边规则见 README:104-110；llm-replay 的提交语料测试固定历史拒绝（README:102-104）。",
+        "trust": "版本分派与语料测试行为由 README 描述；未运行语料测试。",
+        "failure": "跨代际逻辑会让升级不可组合；读取时改写会破坏原始证据；未知字段被丢弃会造成静默数据损失。",
+        "exceptions": [
+          "当前代际不能获得历史拒绝例外",
+          "只覆盖相邻边，不承诺任意版本直接互转"
+        ]
+      },
+      "applicability": "适用：任何持久化格式、协议、事件 schema 或历史语料兼容。 不适用：纯内存短期结构不需要版本化 upcast。 说明：兼容性靠“版本 + 纯函数 + 语料”三件事，不靠“我们尽量兼容”的口号。",
+      "relationships": [
+        "package-contracts-7.generated-artifacts",
+        "package-contracts-7.test-support-boundary",
+        "package-contracts-7.durable-watermarks"
+      ],
+      "migration": {
+        "strategy": "先冻结现有格式与代际边界，再为每个相邻版本写 upcast 与语料测试；读取路径只读。",
+        "implementation": [
+          "为每个版本定义 schema 与 generator。",
+          "实现 vN→vN+1 纯函数。",
+          "读取时固定 source generation。",
+          "建立历史拒绝清单。",
+          "禁止读取路径原地写回。"
+        ],
+        "requiredSupport": [
+          "版本 schema",
+          "语料夹具",
+          "拒绝清单",
+          "只读读取器"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.session-format-compat",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "读取每个历史代际的语料，确认按对应代际解释且输出字节不变。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "让一个历史拒绝消失或改变错误类型，确认语料测试失败。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "恢复原始语料并重跑，确认拒绝清单重新一致。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行语料测试；只读与 opaque 行为来自 README。",
+        "只检查了 v0→v1 的说明，未覆盖所有历史版本。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.vendor-ledger",
+      "title": "vendor 代码要有上游清单、修改账本与可重放的同步流程",
+      "sources": [
+        {
+          "path": "vendor/README.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 15,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 31,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 51,
+          "end": 51,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 65,
+          "end": 73,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "vendored 代码一旦直接改，下一次上游同步就会覆盖补丁；没有账本也无法审计许可证与版本。发布时漏掉 `src` 还会让 export map 指向不存在的文件。",
+      "triggers": [
+        "新增/升级 vendored 包",
+        "修改 vendored 源码",
+        "发布前审计许可证与版本",
+        "上游同步"
+      ],
+      "obligations": [
+        "每个 vendored 包在清单中记录 upstream 名称、版本、commit、许可证与 npm 名称。",
+        "所有本地修改必须在修改账本中逐条列出；上游同步后重放，或确认上游已修复后删除并更新账本。",
+        "上游 LICENSE 必须保留；scope 重命名不能改上游运行时标识。",
+        "同步步骤固定：记录上游 HEAD、覆盖 `src`/`bin.js`/README/LICENSE、重放本地修改、更新版本与 commit、运行 install/test/build。",
+        "publish 面要包含 `src`（若 export map 指向它），否则 tarball 缺文件。",
+        "scope 重命名用 `pnpm run rescope-vendor --apply`，避免手改漏项。"
+      ],
+      "actors": [
+        "vendor 维护者",
+        "发布者",
+        "法务/合规审阅者"
+      ],
+      "steps": [
+        "在清单中登记 upstream 身份与许可证。",
+        "把本地修改写入账本，按文件/行为描述原因。",
+        "同步时记录 `git rev-parse HEAD`，覆盖源码。",
+        "逐条重放修改；上游已修复的删除并更新账本。",
+        "更新版本/commit，运行 install/test/build。",
+        "检查 publish `files` 与 export map。"
+      ],
+      "enforcement": {
+        "mode": "vendor 清单 + 修改账本 + 同步流程评审",
+        "implementation": "`vendor/README.md` 开头声明 vendored 包的上游名称/版本/commit/许可证（README:1-13），清单表见 15-29；本地修改规则与账本见 31-33；scope 重命名步骤见 51；同步步骤 1-5 见 65-73。",
+        "trust": "清单与账本是人工维护；没有看到自动 diff 上游的 gate，不能保证账本完整。",
+        "failure": "漏记修改会在同步时丢失补丁；许可证缺失会造成合规问题；漏 `src` 会发布坏包。",
+        "exceptions": [
+          "上游已包含原补丁时可以删除本地修改，但必须更新账本",
+          "只有构建输出的包可能没有可匹配的 payload 路径，发布判断需单独处理"
+        ]
+      },
+      "applicability": "适用：任何 vendored 源码、上游补丁、scope 重命名与 vendored 发布。 不适用：普通 npm 依赖不需要 vendor 账本；直接用 lockfile 管理。 说明：vendor 账本是同步流程的输入，不是事后说明；每次同步都应能按账本重放。",
+      "relationships": [
+        "package-contracts-7.generated-artifacts",
+        "package-contracts-7.limitations-disclosure"
+      ],
+      "migration": {
+        "strategy": "把 upstream 身份、修改账本、同步步骤与发布检查放在同一份文档；每次同步按账本重放并更新。",
+        "implementation": [
+          "建立 vendored 包清单表。",
+          "为每个修改写账本条目与原因。",
+          "固定同步脚本/步骤。",
+          "在发布前检查 `files` 与 export map。",
+          "保留上游 LICENSE 与运行时标识。"
+        ],
+        "requiredSupport": [
+          "上游 commit 记录",
+          "修改账本",
+          "rescope 脚本",
+          "发布检查"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.vendor-ledger",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "按账本同步一个 vendored 包，确认所有本地补丁仍存在且测试通过。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "删除一条账本修改后同步，确认测试或评审能发现补丁丢失。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "恢复补丁并更新账本，确认同步后 diff 与预期一致。"
+          }
+        ]
+      },
+      "limitations": [
+        "未运行同步/发布；账本完整性只能靠评审。",
+        "没有自动上游 diff gate，账本可能随时间过期。"
+      ]
+    },
+    {
+      "id": "package-contracts-7.durable-watermarks",
+      "title": "长任务先写意图、完成后写水位；崩溃后按水位恢复而不是猜",
+      "sources": [
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 107,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/compaction/compaction-basic/README.md",
+          "start": 125,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-log-deepseek/README.md",
+          "start": 40,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-log-deepseek/README.md",
+          "start": 47,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-log-deepseek/README.md",
+          "start": 74,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/goal/goal-round-driver/README.md",
+          "start": 73,
+          "end": 73,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "压缩、日志上传、目标轮次这类长任务横跨多个请求和崩溃窗口。只在内存记录“做到哪了”，重启后无法判断是未开始、进行中还是已完成，容易重复执行或永久卡住。",
+      "triggers": [
+        "长事务、后台任务、压缩、上传、轮次驱动",
+        "崩溃恢复与重放",
+        "诊断重复执行或卡在 busy"
+      ],
+      "obligations": [
+        "在工作前同步追加 start/intent 记录；完成后追加 summary/acceptance 与替换，并只做一次 end 尝试。",
+        "未匹配的 start 就是持久锁；只有跨越新的 `session/end-seed` 边界才判定为陈旧证据，否则报 busy。",
+        "日志上传只在 HTTP 2xx 后写 acceptance watermark；未确认的区间会在重启后重放，宁可重复不跳过。",
+        "水位按 Session 格式代际折叠；没有 live Session 时不伪造水位。",
+        "在排队工作前 flush，并在 await 后重新检查 revision/竞争输入；flush 失败要 disarm。",
+        "超限事件不能被跳过：阻塞后续并保留水位，直到容量允许。"
+      ],
+      "actors": [
+        "事务 owner",
+        "持久化实现者",
+        "恢复/诊断者"
+      ],
+      "steps": [
+        "定义 start/end/水位事件与它们的作用域。",
+        "在工作前同步写 start；失败则不开始。",
+        "完成后写结果与水位，再尝试一次 end。",
+        "恢复时读取未匹配 start 与代际边界，决定重放或 busy。",
+        "在排队前 flush，await 后复查 revision。",
+        "为超大事件/失败关闭写阻塞与可见错误。"
+      ],
+      "enforcement": {
+        "mode": "日志协议 + 持久水位 + 恢复路径 + 语料/故障测试",
+        "implementation": "compaction 的 bracket-first 事务先 append `compaction/start`，再 summary+replacement，最后恰好一次 `compaction/end`；未匹配 start 是持久锁，跨 `session/end-seed` 才判 stale（README:107,125）；session-log 在 2xx 后写 `session-log-deepseek/delivery-accepted`，崩溃窗口导致至少一次重复而非跳过（README:40-49），超大事件阻塞后续（README:74-77）；goal driver 在排队前 flush 并复查 revision（README:73）。",
+        "trust": "事务/水位行为由 README 描述；未做崩溃注入，不能证明所有窗口都恢复正确。",
+        "failure": "没有 start 就无法区分未开始与进行中；跳过未确认区间会丢数据；水位不按代际折叠会把旧格式水位套到新格式。",
+        "exceptions": [
+          "崩溃窗口允许重复（at-least-once），不允许跳过",
+          "压缩关闭失败会故意留下 orphan 锁，由下次启动识别"
+        ]
+      },
+      "applicability": "适用：任何跨请求、跨进程或可能崩溃的长事务。 不适用：单请求内可原子完成的操作不需要额外水位。 说明：水位的目标是“可判定”，不是“零重复”；重复通常比丢数据便宜。",
+      "relationships": [
+        "package-contracts-7.ownership-lifecycle",
+        "package-contracts-7.session-format-compat",
+        "package-contracts-7.test-support-boundary"
+      ],
+      "migration": {
+        "strategy": "为每个长事务定义 start/结果/水位三类记录与代际边界，再写恢复状态机与崩溃注入测试。",
+        "implementation": [
+          "定义持久事件与作用域。",
+          "先写 intent，再执行。",
+          "完成后写结果与水位，只做一次 end。",
+          "恢复时按代际与未匹配 start 判定。",
+          "加崩溃窗口故障注入。"
+        ],
+        "requiredSupport": [
+          "持久日志",
+          "代际标识",
+          "恢复状态机",
+          "故障注入"
+        ]
+      },
+      "reference": "references/package-contracts-7.md#package-contracts-7.durable-watermarks",
+      "verification": {
+        "positive": [
+          {
+            "evidence": "planned",
+            "scenario": "完成一次压缩/上传，确认 start、结果、end 与水位齐全且只出现一次。"
+          }
+        ],
+        "rejection": [
+          {
+            "evidence": "planned",
+            "scenario": "在 2xx 后、水位持久化前杀进程，确认重启后重放该区间而不是跳过。"
+          }
+        ],
+        "recovery": [
+          {
+            "evidence": "planned",
+            "scenario": "重启后读取未匹配 start，确认能判定重放或 busy，且不会永久卡死。"
+          }
+        ]
+      },
+      "limitations": [
+        "未执行崩溃注入；恢复行为来自 README。",
+        "不同事务的锁/水位语义不同，迁移时需逐项定义，不能共用一个通用“事务表”。"
+      ]
+    }
+  ]
+}

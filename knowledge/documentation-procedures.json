@@ -1,0 +1,3054 @@
+{
+  "domain": "documentation-procedures",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "documentation-procedures.translation-pairing-and-sidecar",
+      "title": "双语对与逐标题 sidecar：文档改动的配对门禁",
+      "sources": [
+        {
+          "path": "docs/development.md",
+          "start": 133,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 52,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/rescope.md",
+          "start": 42,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 99,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 1,
+          "end": 14,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 84,
+          "end": 190,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/translation-pairing.manifest.json",
+          "start": 1,
+          "end": 13,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 214,
+          "end": 219,
+          "kind": "test"
+        }
+      ],
+      "problem": "英中双语文档若各写各的会静默漂移；仅靠人工同步无法证明某一节确实被翻译过。源仓库把每一页变成由英文页、中文页和逐标题哈希 sidecar 组成的三件套，并要求两侧成对更新，以结构签名与已记录哈希判定是否同步。",
+      "triggers": [
+        "新建 docs 下的文档页",
+        "修改任一在范围页面的英文或中文",
+        "合并冲突触及双语文件",
+        "生成页/改名脚本触及双语对",
+        "评审要求补中文或发现两侧语义不一致"
+      ],
+      "obligations": [
+        "范围内每个 .md 必须有同名 .zh.md 与 .i18n.yaml；三者一起提交。",
+        "两侧都保留语言切换链接；中文页指向英文页，英文页指向中文页。",
+        "标题结构必须一致；sidecar 逐标题记录英文与中文块的哈希。",
+        "改任一侧后运行 pnpm run verify-translation-pairing --write <英文页>，再运行不带 --write 的检查。",
+        "不得手改 .i18n.yaml；它由记录命令生成（doc-sync 与 lefthook 只校验）。",
+        "合并冲突只在 Markdown 上解决，然后重新记录该对。",
+        "translation-pairing.manifest.json 只列显式排除项；排除项可以没有中文页或 sidecar，但不得把在范围页面静默漏掉。",
+        "门禁只证明结构与哈希；译文的准确性、术语与语气仍由人工评审负责。"
+      ],
+      "actors": [
+        "owner: 文档所有者（docs/ 或对应子树）",
+        "contributors: 改动作者; 中文译者或 dsh-translate-docs 的使用者",
+        "reviewers: 双语评审者",
+        "automation: verify-translation-pairing（check/write/--cached）、lefthook pre-commit 与 pre-merge-commit、doc-sync、doc-standard.spec.ts"
+      ],
+      "steps": [
+        "判定页面是否在配对范围：看 translation-pairing.manifest.json 的 excluded，而不是凭目录猜测。",
+        "先改英文页，再同一次改动内改中文页；保持标题层级、顺序和代码围栏序列。",
+        "运行 pnpm run verify-translation-pairing --write docs/<page>.md 重录 sidecar。",
+        "运行 pnpm run verify-translation-pairing（或让 pre-commit 的 --cached 模式检查暂存字节）。",
+        "人工评审译文语义与术语；门禁不判断译文对错。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-gate-plus-review",
+        "implementation": "verify-translation-pairing 检查每页三件套、语言切换、结构签名与记录的逐节哈希；--cached 读取 Git 索引字节供 hook 使用；manifest 提供显式排除。",
+        "trust": "结构与哈希自动可信；译文语义只能人工判断。检查通过不等于翻译正确。",
+        "failure": "缺中文页、缺 sidecar、结构不一致或哈希过期都会以非零退出；hook 失败时不得用 no-verify 绕过，应重录并重新暂存。",
+        "exceptions": "manifest 中的显式排除项可以单语（如 docs/AGENTS.md、i18n 术语与样式样例）；归档笔记按自身规则处理。"
+      },
+      "applicability": [
+        "when: 任何在 docs/、README 对、Agent Note 对或包 README 对范围内的 Markdown 改动。",
+        "preconditions: 仓库包含 verify-translation-pairing 与 manifest; 中文页与英文页可同时编辑; 本地安装了 Git 与 Node",
+        "inapplicable: 纯代码或生成器内部改动不触发配对；但若生成器重写了已配对页面，仍需重录。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.doc-fence-typecheck-and-type-equiv; documentation-procedures.generated-reference-freshness",
+        "crossDomain: documentation; release; agent-workflows"
+      ],
+      "migration": {
+        "strategy": "先建立三件套与 manifest 排除清单，再要求成对提交；不要先让中文自由漂移再补门禁。",
+        "implementation": "移植 verify-translation-pairing 的 check/write/--cached 三模式；在 pre-commit 与 pre-merge-commit 用索引字节校验；把记录命令写进贡献者文档与每个 cookbook 的收尾步骤。",
+        "requiredSupport": [
+          "逐标题哈希记录格式",
+          "语言切换链接约定",
+          "manifest 排除清单",
+          "可在 hook 中运行的本地检查"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.translation-pairing-and-sidecar",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同一节英文与中文都被修改并重录 sidecar，check 与 pre-commit 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只改英文页且不重录 sidecar 时，检查报告 out-of-sync 或哈希不匹配并失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "对失败对运行 --write 重录后，check 通过且提交成功。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "门禁不做逐句语义比对，也不验证术语一致性。",
+        "本域在抽取期未运行该门禁；结论来自页面与脚本实现，实际通过与否仍需在目标仓库执行。",
+        ".i18n.yaml 的内容是机器生成的，本记录只做结构解析，未逐行当作散文阅读。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.doc-fence-typecheck-and-type-equiv",
+      "title": "Markdown 代码围栏编译与类型逐字校验",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 206,
+          "end": 214,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-typecheck.ts",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-type-equiv.ts",
+          "start": 1,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/type-equiv.manifest.json",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 812,
+          "end": 829,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "文档里的 TypeScript 示例与类型粘贴会随源码演进而腐化；如果「权威类型」只是手工复制的一份文本，它就成了第二个真源。源仓库让普通 ts 围栏真的编译，让源类型粘贴由 manifest 与解析器逐字校验。",
+      "triggers": [
+        "在文档中新增或修改 ts 代码围栏",
+        "粘贴子系统类型定义或其 JSDoc",
+        "改动已被文档粘贴的源类型",
+        "升级依赖后示例编译失败"
+      ],
+      "obligations": [
+        "普通 ts 围栏必须通过 doc-typecheck（按工作区 API 编译）；不能编译的示意必须标 ts ignore-check，并计入 opt-out 比例。",
+        "粘贴源类型时用 ts type-equiv；省去实现体的公共类用 ts public-api 并写 projection: public-api。",
+        "每个 type-equiv/public-api 块必须在 scripts/type-equiv.manifest.json 登记 doc、symbol、source，必要时登记 augmentations 与 projection。",
+        "门禁按文档、符号与投影强制块与条目 1:1；比较忽略空白与非 JSDoc 注释，但必须保留每条原始 JSDoc。",
+        "源类型或其 JSDoc 改动时，同一个变更内更新粘贴内容或 manifest；不得只改一侧。",
+        "字节相同的 .zh.md 围栏复用英文兄弟页的检查；中文若改写代码块则单独校验。",
+        "doc-sync 会运行 doc-typecheck 与 verify-type-equiv，提交前至少跑相关检查。"
+      ],
+      "actors": [
+        "owner: 子系统页/包 README 所有者",
+        "contributors: 改动作者",
+        "reviewers: 代码评审者",
+        "automation: doc-typecheck（含 host-contracts 预备）、verify-type-equiv、doc-sync 调度"
+      ],
+      "steps": [
+        "判定围栏类型：可运行示例用 ts；不可运行示意用 ignore-check；源类型粘贴用 type-equiv 或 public-api。",
+        "为 type-equiv/public-api 块在 manifest 增加与内容匹配的条目。",
+        "运行 pnpm run doc-typecheck 与 pnpm run verify-type-equiv，或直接运行 pnpm run doc-sync。",
+        "失败时更新粘贴块/manifest，或把示例改成可编译形态；不要靠删除 JSDoc 或改 manifest 指向别处来变绿。"
+      ],
+      "enforcement": {
+        "mode": "gate",
+        "implementation": "doc-typecheck 从 Markdown 提取围栏并用工作区类型编译；verify-type-equiv 用 TypeScript 解析器从 source 提取符号声明与 JSDoc，并与块比较；manifest 定义 1:1 关系。",
+        "trust": "编译与结构比较是自动的；示例是否表达正确用法仍需评审。ignore-check 是显式 opt-out，不是通过证明。",
+        "failure": "未登记块、漂移的粘贴、缺失 JSDoc、围栏编译错误都会失败并指出文档与行号。",
+        "exceptions": "type-equiv 与 catalog 变体围栏由各自 owner 门禁负责，doc-typecheck 跳过它们的编译并排除在 opt-out 比例外；归档笔记也可按规则处理。"
+      },
+      "applicability": [
+        "when: 任何含 TypeScript 围栏或源类型粘贴的 Markdown。",
+        "preconditions: 仓库能生成 host 声明; manifest 与解析器可用; 文档范围被 glob 覆盖",
+        "inapplicable: 纯叙述、表格与 shell 围栏不触发；public-api 投影不适合保留实现体的类型。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.generated-reference-freshness",
+        "related: documentation-procedures.translation-pairing-and-sidecar",
+        "crossDomain: documentation; subsystem-contracts-1; engineering"
+      ],
+      "migration": {
+        "strategy": "先让示例可编译，再引入类型粘贴 manifest；把「粘贴类型必须登记」写进文档规范与评审清单。",
+        "implementation": "复用 TypeScript 解析器与 Markdown 围栏解析；为每类围栏定义 owner 门禁；把检查挂到 doc-sync，而不是依赖作者记得运行。",
+        "requiredSupport": [
+          "围栏 info-string 约定",
+          "manifest 格式",
+          "可离线运行的类型解析",
+          "doc-sync 调度"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.doc-fence-typecheck-and-type-equiv",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增一个已登记且与源一致的 type-equiv 块，doc-sync 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "改动源 JSDoc 但不更新粘贴块时，verify-type-equiv 指出不匹配并失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按源重新粘贴并保留全部 JSDoc 后门禁通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "doc-typecheck 证明围栏可编译，不证明示例是推荐用法。",
+        "public-api 投影会省略实现体，读者无法从块内判断运行时行为。",
+        "抽取期未执行 doc-sync。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.generated-reference-freshness",
+      "title": "生成参考的唯一真源与新鲜度",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 39,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 159,
+          "end": 162,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 18,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 36,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 15,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 812,
+          "end": 860,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.ts",
+          "start": 1,
+          "end": 6,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "工具、配置、事件、持久化与 CLI 的清单若手抄进文档，就会与源码产生第二套事实；生成页被手改则会在下一次生成时被覆盖。源仓库把这类内容限定为从源码再生成，并由 doc-sync 的新鲜度门禁把关。",
+      "triggers": [
+        "新增或修改工具、配置字段、事件、CLI 选项、持久化根或 Session 格式边",
+        "修改生成器的输入声明",
+        "发现文档中的清单与运行时不一致",
+        "新增子系统生成区域"
+      ],
+      "obligations": [
+        "生成参考（tool-catalog、config-catalog、persistence-catalog、module-graph、cli-help、子系统 cordis-surface 区域）只由源码生成，不手改英文源。",
+        "中文对应页通过配对流程更新，不单独维护另一份生成逻辑。",
+        "生成参考只描述当前值；散文不复述可由生成器得到的清单。",
+        "改动声明后运行 pnpm run doc-sync；它包含 catalog 新鲜度、doc-typecheck、链接、配对、预算与 doc-standard 测试等门禁。",
+        "Session 格式 catalog 由 gen-session-format-catalog 生成；缺边或元数据错误时修声明，绝不手改 generated.ts。",
+        "新事件用 @mode 标签声明分派模式，使生成的 Cordis catalog 能核对声明与分派点。",
+        "生成页的新鲜度失败应重新生成并评审 diff，而不是调整门禁或删除检查。"
+      ],
+      "actors": [
+        "owner: 生成器与参考页所有者",
+        "contributors: 功能作者; 文档作者",
+        "reviewers: 代码评审者; 文档评审者",
+        "automation: doc-sync 内的 verify-* catalog 门禁、gen-session-format-catalog --check、doc-standard 测试"
+      ],
+      "steps": [
+        "判断内容是否已有生成器；有则改源码/声明，再运行生成命令。",
+        "审阅生成 diff，确认只包含本次变更引起的内容。",
+        "运行 pnpm run doc-sync（或针对性的 verify-* 命令）。",
+        "若生成页与源不一致，修生成器或源声明，不回写生成结果。"
+      ],
+      "enforcement": {
+        "mode": "gate",
+        "implementation": "run-gates 的 doc-sync 聚合包含 doc-typecheck、docs-site-build、doc-graphs、cli-help、markdown-links、type-equivalence、cordis/tool/config/dependency catalog、persistence、session-format-catalog、translation-pairing、markdown-wrap、package README、doc-budgets 与 doc-standard-tests。",
+        "trust": "新鲜度可由 diff/--check 自动判定；「生成内容是否正确表达产品」仍需评审。",
+        "failure": "生成页过期、catalog 缺边或声明冲突时门禁失败；手工修改生成页会在下一次生成被覆盖并在检查中暴露。",
+        "exceptions": "纯人工叙述页（architecture、cookbook、postmortem）不属于生成参考；其事实仍须链接所有者而非复制生成清单。"
+      },
+      "applicability": [
+        "when: 任何会影响生成参考的源码、声明、schema 或 CLI 变更，以及新增生成参考页。",
+        "preconditions: 存在可离线运行的生成器; doc-sync 能调度相关门禁; 仓库接受生成 diff 的评审",
+        "inapplicable: 不产出生成参考的局部文档修正不触发；但仍受链接与配对规则约束。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.doc-fence-typecheck-and-type-equiv; documentation-procedures.session-format-authority",
+        "crossDomain: documentation; release; automation; subsystem-contracts-1"
+      ],
+      "migration": {
+        "strategy": "把清单类事实从散文中迁到生成器；先建立生成与 --check，再禁止手改。",
+        "implementation": "为每类清单建立源与生成器；把 verify 步骤加入统一文档聚合命令；在生成页顶部写明生成器与禁止手改。",
+        "requiredSupport": [
+          "确定性生成器",
+          "--check 模式",
+          "生成页 owner 清单",
+          "统一 doc-sync 入口"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.generated-reference-freshness",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "修改工具 schema 后重新生成 tool catalog，doc-sync 各 catalog 检查通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "手改 generated.ts 或遗漏一条格式边时，catalog 检查报告过期/缺边并失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正声明并重跑生成与 doc-sync 后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "doc-sync 聚合门禁的实际通过与否未在本域执行。",
+        "生成器只能保证结构一致，不能保证生成内容的产品措辞合适。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.session-format-authority",
+      "title": "Session 格式版本与发布状态的单一权威",
+      "sources": [
+        {
+          "path": "docs/session-format-status.md",
+          "start": 1,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 21,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 162,
+          "end": 219,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 220,
+          "end": 299,
+          "kind": "test"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 17,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Session 写入版本、已接受兼容基线、最新已发布格式是三个不同事实；若在散文、fixture 名、包版本或缓存版本里各写一个数字，读者无法判断哪个是权威，发布记录也会被提前推进。",
+      "triggers": [
+        "声明或修改 Session 格式版本",
+        "准备发布包含新格式的产品",
+        "撰写涉及格式数字的文档",
+        "比较不同 checkout 的格式状态"
+      ],
+      "obligations": [
+        "代码常量 SESSION_FORMAT_VERSION 是唯一手维护的当前写入版本；包版本、codec 名、fixture 文件名、投影缓存版本都不是写入权威。",
+        "latestReleasedVersion 只表示已发布格式；evidenceTag 必须命名一个已发布产品 tag，并在同一页给出 tagged writer 路径。",
+        "release record 在发布确认前不得推进；发布后在同一双语变更中同时更新数字、evidence tag 与 tagged writer 路径；开发主干不得降低它。",
+        "finalization record 的已接受基线独立于发布状态；它不冻结未来同版本增量，也不表示已发布。",
+        "其他文档链接本页，不重复 writer/released/finalized 数字。",
+        "一般行为使用 current format 与 next adjacent version；具体数字只保留给固定迁移输入输出、wire schema、历史证据和针对这些版本的测试。",
+        "doc-standard 测试校验记录结构、双语相等、evidence tag/写入路径一致性，以及记录不超过当前 writer。"
+      ],
+      "actors": [
+        "owner: Session 格式/发布记录所有者",
+        "contributors: 格式改动作者; 发布操作者",
+        "reviewers: 发布评审者; 文档评审者",
+        "automation: doc-standard.spec.ts（test:docs / doc-sync）、verify-session-format-catalog、verify-persistence-formats"
+      ],
+      "steps": [
+        "先读本页的 Sources of truth，确定当前 checkout writer、已发布版本与已接受基线。",
+        "需要一般描述时用 current/next adjacent，不复制数字。",
+        "需要具体数字时说明其属于哪个记录（writer、finalized、released）并链接本页。",
+        "发布后确认 tag 与 tagged writer，再同一次双语改动推进 release record。",
+        "运行 pnpm run test:docs 或 pnpm run doc-sync 验证记录测试。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-test",
+        "implementation": "doc-standard.spec.ts 解析 docs/session-format-status.md 与 .zh.md 的 yaml session-format-* 记录，校验唯一块、字段集合、安全整数、tag 形状、evidence 行、双语相等与 writer 上界。",
+        "trust": "记录结构、双语一致性与 writer 上界自动可信；tag 是否真的发布、remote 状态是否最新无法由 keyless 测试证明。",
+        "failure": "缺记录、重复记录、未闭合、非法 tag、超前 writer 或缺 evidence 行都会使测试失败。",
+        "exceptions": "发布记录的推进是人工发布流程的一部分；文档测试不查询 GitHub，也不证明记录已是最新。"
+      },
+      "applicability": [
+        "when: 任何涉及 Session 格式数字、发布状态或历史格式的文档与发布改动。",
+        "preconditions: 存在 writer 常量与生成 catalog; 双语发布记录可解析; 发布 tag 可追溯",
+        "inapplicable: 与本仓库 Session 格式无关的通用文档不引用本权威。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.generated-reference-freshness; documentation-procedures.translation-pairing-and-sidecar",
+        "related: documentation-procedures.session-format-version-procedure; documentation-procedures.persistence-type-change-record",
+        "crossDomain: release; persistence-historical; testing"
+      ],
+      "migration": {
+        "strategy": "把三个事实拆成三个具名记录，并在唯一页面维护；其他页面只链接。",
+        "implementation": "建立 writer 常量、finalized yaml 块与 release yaml 块；写一个结构测试校验字段、双语与上界；把发布推进写成显式步骤。",
+        "requiredSupport": [
+          "机器可读记录块",
+          "writer 常量读取",
+          "发布 tag 命名约定",
+          "双语记录测试"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.session-format-authority",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "release record 与中文页一致，且 evidence tag 与 tagged writer 路径同时存在，doc-standard 测试通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 latestReleasedVersion 提到 writer 之上，或删除 evidence 行，测试抛错。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正记录并同步中文页后测试通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "测试不访问远端，无法证明 tag 是最新发布或记录未被旧分支覆盖。",
+        "最终发布判断仍是人工流程。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.cookbook-procedure-standard",
+      "title": "Cookbook 页的可执行步骤合同",
+      "sources": [
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 3,
+          "end": 6,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 161,
+          "end": 170,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 51,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 192,
+          "end": 197,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/extension-cookbook.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/extension-cookbook.md",
+          "start": 94,
+          "end": 97,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 3,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 99,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 9,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 83,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "操作型文档最容易退化为灵感清单：步骤没有顺序、没有可观察完成信号，或把机制与理由混进步骤。源仓库把 cookbook 定义为带编号验证步骤的 how-to，并要求机制/理由归 reference 与 Agent Note。",
+      "triggers": [
+        "新增一个操作流程页",
+        "把架构说明改写成可执行步骤",
+        "评审发现步骤缺少验证命令",
+        "模板实现变化导致清单漂移"
+      ],
+      "obligations": [
+        "cookbook 页面面向动作：给编号步骤，每步说明输入、动作与可观察结果。",
+        "页首说明前置条件、参考实现或模板；清单以真实包验证，发现漂移时在页内修正而不是另开说明。",
+        "机制、协议语义与设计理由属于 reference 或 Agent Note；cookbook 链接它们，不复述完整机制。",
+        "不能直接运行的片段必须明确标注（例如省略 imports 或实现）。",
+        "收尾必须给验证命令或明确指向 testing policy 选择检查；不是只写「测试一下」。",
+        "生成、持久化、发布等专门步骤要链接其 owner 文档，避免在本页维护第二份规则。"
+      ],
+      "actors": [
+        "owner: cookbook 所有者/对应子系统所有者",
+        "contributors: 功能作者",
+        "reviewers: 代码评审者; 文档评审者",
+        "automation: doc-sync 的链接、配对、围栏与预算门禁；行为检查由测试策略选择"
+      ],
+      "steps": [
+        "确定读者目标与前置条件，先链接机制 owner。",
+        "按实际操作顺序写编号步骤，每步写出命令或可观察输出。",
+        "为易漂移的清单指明模板包与修正位置。",
+        "在末尾列验证命令，并说明哪些检查由 CI 或发布流程负责。",
+        "运行适用于该页的文档检查与行为检查。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "docs/AGENTS.md 的 cookbook 层职责与放置规则；各 cookbook 自述的模板/漂移修正语句；doc-sync 的链接、围栏与配对门禁提供间接检查。",
+        "trust": "步骤完整性与可执行性主要靠作者与评审；没有单一门禁能判断「这步是否真的可完成」。",
+        "failure": "缺少验证步骤或机制复述会通过自动门禁但在评审中应被拒绝；过时命令会在实际执行时失败。",
+        "exceptions": "extension-cookbook 是形态参考而非完整教程，可以只给模式与链接；它明确声明片段不可直接复制。"
+      },
+      "applicability": [
+        "when: 任何 how-to 页、迁移步骤、评审流程页与操作清单。",
+        "preconditions: 存在机制 owner 文档; 有可执行的参考实现或模板; 测试策略可被引用",
+        "inapplicable: 纯概念参考与事故叙事不要求编号操作步骤。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.doc-fence-typecheck-and-type-equiv; documentation-procedures.package-addition-procedure",
+        "crossDomain: documentation; testing; engineering"
+      ],
+      "migration": {
+        "strategy": "把现有说明拆成动作步骤与机制参考；先补验证步骤，再补理由链接。",
+        "implementation": "为 cookbook 建模板（前置条件、编号步骤、验证、相关参考）；在评审清单加入「每步是否有可观察结果」。",
+        "requiredSupport": [
+          "cookbook 模板",
+          "机制 owner 索引",
+          "可运行的验证命令"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.cookbook-procedure-standard",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按新 cookbook 从空目录完成操作，末尾验证命令全部通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "页面只有叙述没有可执行步骤或验证时，评审依据 cookbook 层规则拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补充步骤/验证命令并链接 owner 后重新评审通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "自动门禁无法判断步骤是否真正可执行。",
+        "本域未执行任何 cookbook 中的命令。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.package-addition-procedure",
+      "title": "新增 workspace 包的逐文件清单",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 3,
+          "end": 6,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 7,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 31,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 42,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 76,
+          "end": 111,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 114,
+          "end": 160,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 161,
+          "end": 170,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 57,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-readme-limitations.ts",
+          "start": 1,
+          "end": 21,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "新包最容易漏掉 manifest 不变量、聚合注册、README 合同或验证序列；漏掉后通常直到构建或发布才暴露。清单把这些要求固定在创建时。",
+      "triggers": [
+        "创建新的 @deepseek-ai/dsh-* 包",
+        "把包移入新的 group",
+        "拆分包或新增 Client 包",
+        "包 README 缺少规定章节"
+      ],
+      "obligations": [
+        "按目录模板创建 package.json、tsconfig.json、src、可选 locale 与 README。",
+        "package.json 不变量：private true、版本与根一致、type module、main/types/exports 指向 lib、cordis 同时位于 peerDependencies 与 devDependencies 且范围一致、每个 dsh peer 在 devDependencies 镜像、schemastery 在 dependencies、files 精确列出产物。",
+        "tsconfig 继承根 base，设置 rootDir/outDir，并 references 所需 vendored 包与 dsh 依赖。",
+        "普通包只注册进一个聚合（tsconfig.host.json 或 tsconfig.client.json）；新 group 只是容器；api/remotes 的拆分是特定例外，不得照抄。",
+        "命名按职责选词，并让类角色与 ctx key 单复数一致；不要用首个实现或 Cordis 基类命名。",
+        "README 写服务 API、事件、扩展点与设计说明，并满足受门禁约束的 Model Experience 与 Known Limitations 章节；无限制的包必须进入 allowlist。",
+        "验证顺序：pnpm install、pnpm run doc-sync、pnpm run constraints && pnpm run typecheck && pnpm run lint、pnpm run build && pnpm run hygiene，再按 testing policy 跑行为检查。"
+      ],
+      "actors": [
+        "owner: 包所有者",
+        "contributors: 功能作者",
+        "reviewers: 代码评审者; 文档评审者",
+        "automation: check-workspace-constraints、typecheck/lint、doc-sync（含 README 章节门禁）、build、hygiene"
+      ],
+      "steps": [
+        "选择现有 group；只有确实不适配时才新建纯容器 group。",
+        "复制模板 manifest/tsconfig，修改名称、描述、依赖与 references。",
+        "在恰好一个聚合中注册项目引用。",
+        "按角色命名包、类与 ctx key。",
+        "写 README 的合同章节，补齐 Model Experience 或 audited None 句，并写 Known Limitations（或在 allowlist 说明原因）。",
+        "执行完整验证序列并修复失败。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-gate",
+        "implementation": "workspace constraints 校验 manifest/引用；typecheck/lint/build 校验代码；doc-sync 的 verify-package-readme-limitations 与 model-experience 门禁校验 README 章节；hygiene 校验发布面。",
+        "trust": "manifest 与 README 形态可自动检查；group 选择、命名与合同内容仍需评审。",
+        "failure": "缺字段、双聚合注册、错误 files、README 缺章节或占位句都会失败。",
+        "exceptions": "审计为无限制的包可省略 Known Limitations 并在 allowlist 说明；client 包额外继承 client base 并声明 dsh.client。"
+      },
+      "applicability": [
+        "when: 新增、拆分或迁移 workspace 包。",
+        "preconditions: 仓库使用 pnpm workspace 与 TS project references; 存在约束/README 门禁; README 模板可用",
+        "inapplicable: 只改包内实现且不改变 manifest/README 合同时不触发创建清单。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.cookbook-procedure-standard",
+        "related: documentation-procedures.vendored-package-procedure; documentation-procedures.naming-and-vocabulary",
+        "crossDomain: package-contracts; supply-chain; engineering; documentation"
+      ],
+      "migration": {
+        "strategy": "把新包要求做成可复制的模板与约束门禁；不要依赖口头清单。",
+        "implementation": "提供 package/tsconfig 模板、聚合注册检查、README 章节检查与一条统一验证命令；评审只判断角色与合同是否合理。",
+        "requiredSupport": [
+          "包模板",
+          "workspace 约束检查",
+          "README 章节门禁",
+          "统一验证入口"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.package-addition-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按清单创建的最小包通过 constraints、typecheck、doc-sync、build 与 hygiene。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "遗漏 cordis devDependency 或把包注册进两个聚合时 constraints 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐 manifest/引用后重跑对应门禁通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "README 的 Model Experience 语义正确性无法自动验证。",
+        "本域未实际创建包或运行门禁。",
+        "与 package-contracts 域共享 README 合同的细节，本文只记录 cookbook 侧步骤。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.tool-authoring-contract",
+      "title": "面向模型的工具编写合同",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 7,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 40,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 51,
+          "end": 56,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 57,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 61,
+          "end": 66,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 67,
+          "end": 98,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-tool.md",
+          "start": 99,
+          "end": 101,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/extension-cookbook.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "工具同时是模型输入、执行策略目标与 UI 呈现来源；若作者把校验、错误、展示或后台生命周期混进 execute 或 render，注册表会失去不变量，回放与 PTC 也会破裂。源仓库把每条纪律写成可检查的合同。",
+      "triggers": [
+        "新增或修改模型可见工具",
+        "把 bash/文件操作包装成工具",
+        "让工具支持后台运行",
+        "为工具添加 UI 卡片",
+        "让 PTC 程序调用工具"
+      ],
+      "obligations": [
+        "用 defineTool 声明 name、description、parameters、output 与 execute；注册是 effect，dispose 插件 fiber 即注销。",
+        "参数由 defineTool 在 execute 前按 ParameterSchemaSpec 校验；DSL 未表达的约束（非空、正数、跨字段）由 execute 自己检查；原始 JSON Schema 工具自行负责输入校验。",
+        "注册借用只读定义：注册后不得改 schema 或替换回调；热换工具要 dispose 拥有它的 effect 再注册替代。",
+        "执行身份受保护：arguments 被解构、冻结并分配 exec.token；args 视为只读；只有 around-dispatch 包装可替换并恢复 exec.signal。",
+        "output.schema 是唯一规范返回形状；execute 只返回该值，不得返回 content blocks；throw 或返回非法值即 isError。",
+        "遵守 exec.signal；取消时停止在途工作。",
+        "可选 presentationMeta 从同一规范值派生可回放元数据；UI 卡片数据不得写入模型可见正文。",
+        "后台工作必须通过 ctx.jobs.start 发布，成功分支返回带 jobId 的规范句柄；发布后使用任务自己的取消信号，不把 exec.signal 当任务生命周期。",
+        "部署策略放 tools/pre-execute；单调最终拒绝用 ctx.tools.guard；超时/重试/指标用 tools/execute；结果变换用 tools/post-execute；不可变结果观察用 tools/result。",
+        "presentCall/presentResult 必须是 args（加结果）的纯函数，可在实时流与回放上运行；不得做 I/O、读会话状态或使用时钟/随机。",
+        "UI-only 格式不进入模型结果；Web Client 的专门卡片由 Client 插件注册，不靠 Host presenter 自动产生。"
+      ],
+      "actors": [
+        "owner: 工具包所有者",
+        "contributors: 工具作者",
+        "reviewers: 代码评审者; 工具/UI 评审者",
+        "automation: typecheck 与包测试；工具 schema 进入生成的 tool catalog；回放/快照与 PTC 测试"
+      ],
+      "steps": [
+        "先用最小 defineTool 形状声明工具，确认 execute 参数由 schema 推导。",
+        "为失败选择 throw 或规范错误值；为成功定义唯一 output.schema。",
+        "需要后台运行时接入 ctx.jobs.start 并返回句柄。",
+        "需要卡片时写纯 presenter，并确认回放不依赖会话状态。",
+        "按 testing policy 增加组装覆盖、回放或快照；运行相关检查。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review-plus-tests",
+        "implementation": "dsh-tools 注册表在运行时校验参数、冻结身份、规范化输出与错误；类型检查约束 schema；页面规则由评审与 UI/回放测试保障。",
+        "trust": "注册表不变量自动执行；「工具设计是否合理」「卡片是否忠实」需评审。",
+        "failure": "非法参数、变更 schema、返回非规范值会在运行时被拒绝或标记 isError；回放不纯可能只在特定会话暴露。",
+        "exceptions": "原始 JSON Schema 工具（如 MCP 来源）承担自己的输入校验；嵌套 Code dispatch 不生成卡片，presentationMeta 可被跳过。"
+      },
+      "applicability": [
+        "when: 任何注册到 ctx.tools 的模型可见能力，包括第一方工具、MCP 工具与动态工具。",
+        "preconditions: 使用 dsh-tools 的 defineTool 或等价注册面; 有可运行的工具注册表与策略链; 存在 UI/回放测试通道",
+        "inapplicable: 纯内部辅助函数不注册为工具时不适用；人类命令走 ctx.commands 而非工具合同。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.remote-api-addition-procedure; documentation-procedures.extension-point-map",
+        "crossDomain: subsystem-contracts-1; testing; package-contracts"
+      ],
+      "migration": {
+        "strategy": "把工具合同变成 defineTool 的类型与运行时默认值；把策略放到策略扩展点，不要在每个工具里重写。",
+        "implementation": "提供带类型的 defineTool 包装、参数/输出校验、identity 冻结、presentationMeta 钩子与后台任务 API；用生成的 tool catalog 让 schema 可查。",
+        "requiredSupport": [
+          "类型化 schema DSL",
+          "运行时注册表",
+          "策略事件/守卫",
+          "回放测试"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.tool-authoring-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按最小形状注册的工具通过参数校验、PTC 调用与回放卡片测试。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "execute 返回 content blocks 或修改注册后的 schema 时，注册表/类型检查失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为返回规范值并 dispose/重注册后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "presenter 纯度很难由单一测试完全证明。",
+        "本域未运行工具测试。",
+        "工具 schema 与 catalog 的生成细节属于 generated-reference 机制。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.remote-api-addition-procedure",
+      "title": "新增或修改 Remote API 的五步流程",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 7,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 51,
+          "end": 89,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 90,
+          "end": 106,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 107,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 149,
+          "end": 191,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-remote-api.md",
+          "start": 192,
+          "end": 197,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/api-gateway.md",
+          "start": 100,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/api-gateway.md",
+          "start": 144,
+          "end": 161,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Remote 端点跨越 Host 装饰器、生成契约、包导出与 Client 消费；漏掉任一步会出现「类型有、运行时没有」或「Client 拿到旧 codec」。五步流程把动作与机制参考分开。",
+      "triggers": [
+        "新增 ctx.remote 端点",
+        "修改 Remote 方法签名、namespace 或 export 名",
+        "新增领域失败码",
+        "升级 Client 消费面"
+      ],
+      "obligations": [
+        "第 1 步：在 Host Cordis 服务上继承 TypertRemoteService 并绑定 service key 与 namespace；用 @Remote 标注对外方法；只有形状需调整时才写 remoteExport* adapter。",
+        "lookup 对象只能占顶层参数；协作取消用最后一位 signal: AbortSignal。",
+        "第 2 步：失败统一用 RemoteError 加 RemoteErrorDetailsMap 声明合并；码形如 domain/reason；单生产者就地声明，多包生产者在最低共同域声明；gateway 载体码只使用不复制；不跨 wire 的本地失败不进码表。",
+        "第 3 步：@Remote 必须位于 Loader 入口包；manifest 增加 typert 与 remote 导出及 protocol peer 依赖；Client 由 api-remotes 组装并再导出类型词汇。",
+        "第 4 步：调用方 inject 同时声明 remote 与 remote.<namespace>；直接调用 ctx.remote.<namespace>.<method>；结果分支用 if (!result.ok) 与 code，不用 instanceof；不要写防御性 catch。",
+        "第 5 步：owner 侧用 remoteErrorOf 断言 code 与 details；Client 侧用 @deepseek-ai/dsh-client-test-runtime 的真实 RemoteError/TestRemote 实例；不要深比较错误对象。",
+        "修改签名、码表、namespace 或 export 名后必须运行 pnpm run build:lib；只改实现体不需要重新生成。",
+        "收尾验证：build:lib、typecheck、按名跑 owner/client 两个 spec；产品可见时补录制会话快照。"
+      ],
+      "actors": [
+        "owner: Remote 端点所有者与 Client 组装所有者",
+        "contributors: Host 作者; Client 作者",
+        "reviewers: API 评审者",
+        "automation: Typert 生成器、build:lib、typecheck、vitest、快照"
+      ],
+      "steps": [
+        "声明服务与 @Remote 方法，必要时写 adapter。",
+        "为每个失败定义单一 RemoteError 码与 details。",
+        "登记包导出与 protocol peer 依赖。",
+        "在 Client inject 并直接调用生成的方法。",
+        "两侧分别写断言失败码与结果分支的测试。",
+        "运行 build:lib、typecheck、两个 spec 与快照检查。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-gate",
+        "implementation": "Typert 生成器严格分析签名并生成 Host/Client 契约；包导出由生成器校验；build:lib 顺序保证 Client 拿到新 codec；typecheck 检查两边。",
+        "trust": "契约与生成产物自动；码表放置与错误分类是否合理需评审。",
+        "failure": "非严格签名、缺 lookup、缺 provider 或未重新生成时构建/首次调用失败；码表复制会产生漂移。",
+        "exceptions": "只改实现体不改变契约时不需要重新生成；SRC 开发回退只解决从源码运行的 Host 分派，不替代生成契约。"
+      },
+      "applicability": [
+        "when: 任何通过 ctx.remote 暴露或消费的端点。",
+        "preconditions: Typert 生成管线可用; Host/Client 两面均可构建; 存在 api-remotes 组装",
+        "inapplicable: 会话事件流、分页与增量协议明确不属于 Remote，不得伪装成 Remote 方法。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.generated-reference-freshness",
+        "related: documentation-procedures.tool-authoring-contract; documentation-procedures.wire-extension-exposure-and-receiver",
+        "crossDomain: subsystem-contracts-1; engineering"
+      ],
+      "migration": {
+        "strategy": "先建立生成器与失败码表，再写端点；把「实现体变更无需生成、契约变更必须生成」写进开发命令表。",
+        "implementation": "移植装饰器协议、生成器、gateway 分派与 Client 组装；为失败码定义 declaration merging 表；把 build:lib 加入验证序列。",
+        "requiredSupport": [
+          "装饰器与生成器",
+          "单一失败类型",
+          "包导出约定",
+          "两侧测试工具"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.remote-api-addition-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增端点后 build:lib、typecheck 与两侧 spec 通过，Client 能按 code 分支。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只改实现体却未重新生成时仍可工作；但修改签名不重生成会让 Client 类型/编解码过期并失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "运行 pnpm run build:lib 并重跑 typecheck/spec 后恢复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "生成器与 gateway 的内部实现属于其他域，本记录只覆盖流程义务。",
+        "本域未运行 build 或测试。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.settings-card-procedure",
+      "title": "即时配置表单（设置卡）的接入流程",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 7,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 32,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 38,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 44,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-settings-card.md",
+          "start": 56,
+          "end": 72,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "即时配置若把值当普通字段读取，会错过热更新；若把密钥放进表单响应或把普通字段塞进 settings schema，会破坏信任与作用域。设置卡流程把声明、组合、验证与跨插件页面贡献分开。",
+      "triggers": [
+        "让插件配置可在运行时编辑",
+        "新增设置卡或插件详情页区域",
+        "把密钥/凭据暴露到 UI",
+        "插件浏览器半侧与 Host 行绑定"
+      ],
+      "obligations": [
+        "在 Config schema 中用 Volatile<T> 声明即时字段；运行时读 .get()，需要一致快照时只捕获一次。",
+        "跨字段校验用 .check()；它在 Host 持久化前运行且不进入序列化表单 schema。",
+        "每个实例使用唯一 profile entry id；自定义 profile 先读包 README 再挂载 settings/config-editor。",
+        "role(secret) 阻止值进入表单响应；凭据引用交给 credentials 域；普通字段不放进 settings schema。",
+        "验证编辑：改字段保存后检查 profile patch、下一次消费、插件实例 identity 不变、重启恢复；拒绝非法值后文件与实时值都不变。",
+        "贡献其他插件页面时注册 plugins.detail.actions/badge/section，并对不关心的 subject 返回 null。",
+        "浏览器半侧由 client module system 扫描 dsh.client 提供；它只附着在裸包名对应的 Loader 行；子路径行不带半侧；页面需比其它行长寿时拆成独立包。"
+      ],
+      "actors": [
+        "owner: 插件所有者与产品设置页所有者",
+        "contributors: 插件作者; Client 作者",
+        "reviewers: UI 评审者; 安全评审者",
+        "automation: Config 校验、HMR/volatile 更新、Client slot 类型、浏览器测试"
+      ],
+      "steps": [
+        "在 Config 中声明 volatile 字段与 check。",
+        "给实例唯一 id，确认 settings 服务可用。",
+        "用 role(secret)/credentials 处理敏感值。",
+        "在 Plugins 页修改并保存，验证 patch、实时值、实例 identity 与重启恢复。",
+        "需要跨页贡献时注册带 subject 的 slot，并对未知 subject 返回 null。",
+        "需要浏览器半侧时声明 dsh.client、导出 ./client 并使用共享 preset。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review-plus-tests",
+        "implementation": "Host 在持久化前校验完整 Config 并经 ConfigEditor/volatile HMR 应用；Client 按 slot 合同渲染；secret 角色影响表单响应。",
+        "trust": "schema 校验与 HMR 自动；「该值是否该出现在表单」「卡片是否合理」需评审。",
+        "failure": "非法值应被拒绝且不改文件/实时值；错误的半侧挂载会在行关闭后留下或丢失页面。",
+        "exceptions": "内置命名空间的伴生包可以是空 Host apply 的纯客户端包，通过 whileServed 精确控制页面生命周期。"
+      },
+      "applicability": [
+        "when: 插件需要运行时配置编辑，或需要向插件详情页贡献 UI。",
+        "preconditions: 存在 Volatile/ConfigEditor 机制; profile 与 settings 服务可用; Client module system 可用",
+        "inapplicable: 一次性启动参数或凭据管理本身不属于设置卡；用 credentials 域。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.web-styling-ownership; documentation-procedures.plugin-preview-procedure",
+        "crossDomain: package-contracts; subsystem-contracts-2"
+      ],
+      "migration": {
+        "strategy": "先让配置成为可校验的 schema，再暴露编辑面；敏感值从第一天就走 secret/credentials。",
+        "implementation": "提供 Volatile 包装、ConfigEditor 应用路径、slot 注册面与客户端模块加载约定；为编辑流程写自动化验收。",
+        "requiredSupport": [
+          "Volatile 机制",
+          "Config schema 校验",
+          "settings/config-editor 服务",
+          "client module system"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.settings-card-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "修改 volatile 字段并保存后，patch、下一次消费与重启恢复都符合预期，实例 identity 不变。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "提交非法值或把 secret 放进普通字段时，校验/表单响应阻止且文件不变。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为合法值或 role(secret) 后保存成功。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "UI 交互与 HMR 的端到端行为未在本域执行。",
+        "跨插件 slot 的视觉与可访问性仍需 UI 评审。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.plugin-preview-procedure",
+      "title": "内置插件功能配图的固定画布流程",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 11,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 24,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 38,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-plugin-preview.md",
+          "start": 48,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/builtin-plugin-preview.spec.ts",
+          "start": 1,
+          "end": 77,
+          "kind": "test"
+        }
+      ],
+      "problem": "功能配图若允许任意尺寸、远程资源、脚本文本或单语文件，会破坏主题、本地化与安全边界。源仓库把配图限定为零或一张固定 640×300 的自包含 SVG，并用测试机械校验。",
+      "triggers": [
+        "为内置 bundle 增加功能配图",
+        "修改 BUNDLE_PREVIEWS 或资产",
+        "评审要求 PR 视觉证据"
+      ],
+      "obligations": [
+        "先判断文字是否足够；省略配图不占空间，必要说明留在本地化文字/配置中。",
+        "每个 bundle 零或一张逻辑配图；英文与中文是同一图的替代版本，不是图库。",
+        "仅 SVG，必须有 width=640、height=300、viewBox=0 0 640 300；不接受栅格预览或其他尺寸。",
+        "自包含：不得含 font、远程资源、script、事件 handler、animation、stylesheet、text 或 foreignObject；文字转路径；官方品牌图可作为 base64 data URL 的 image 例外。",
+        "两语言文件合计不超过 1 MiB（会被 base64 内嵌进 Client bundle）。",
+        "在 Plugin Manager assets 放 <feature>-preview.svg 与 .zh.svg，导入并在 BUNDLE_PREVIEWS 加精确包名与 en/zh 对。",
+        "页面合同：描述下、状态通知后、组件与来源前；上 24px、下 32px；单个 img，最多可用宽、最高 320px，比例缩放；语言切换选择文件；未激活也可见；解码失败显示本地化提示且不阻塞。",
+        "运行 preview spec、client component spec、CSS spec 与 build；再在真实页面检查英中、明暗、390px 无横向溢出，并覆盖无图与第三方插件。",
+        "PR 证据从最终干净提交录制，并准确标注演示范围。"
+      ],
+      "actors": [
+        "owner: Plugin Manager 所有者",
+        "contributors: 功能作者; 设计师",
+        "reviewers: UI 评审者; 本地化评审者",
+        "automation: scripts/builtin-plugin-preview.spec.ts、Client component/CSS 测试、build"
+      ],
+      "steps": [
+        "判断是否需要图。",
+        "绘制固定画布自包含 SVG，英文与中文各一份。",
+        "注册资产与 BUNDLE_PREVIEWS 条目。",
+        "运行相关测试与 build。",
+        "在真实页面做双语/明暗/窄屏/降级检查并录制证据。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-test-plus-review",
+        "implementation": "测试解析 BUNDLE_PREVIEWS 与导入，校验包属于 OPTIONAL_BUNDLES、en/zh 对、SVG 尺寸、禁用元素、引用完整、data URL 形状、1 MiB 上限与两份不同。",
+        "trust": "格式与注册关系自动；视觉质量、语义等价与主题可读性只能人工评审。",
+        "failure": "缺语言、错误尺寸、含 script/text/远程引用、超限或未注册都会使测试失败。",
+        "exceptions": "image 元素可嵌入不变的官方品牌 PNG/JPEG/WebP base64；小插件图标仍是纯几何；第三方插件没有配图接口。"
+      },
+      "applicability": [
+        "when: 编辑内置 bundle 的 Plugin Manager 配图。",
+        "preconditions: 存在 BUNDLE_PREVIEWS 与资产目录; 可以运行 jsdom/vitest; 有真实页面可做视觉验收",
+        "inapplicable: 第三方插件无法声明配图；列表与组件行的小图标不走此流程。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.web-styling-ownership; documentation-procedures.settings-card-procedure",
+        "crossDomain: package-contracts; subsystem-contracts-2"
+      ],
+      "migration": {
+        "strategy": "把配图当成受格式约束的资产，而不是自由插画；先建立测试再接第一张图。",
+        "implementation": "建资产目录、BUNDLE_PREVIEWS 类型与自动测试；把页面位置/间距/尺寸写成合同；双语与主题检查进评审清单。",
+        "requiredSupport": [
+          "固定画布约定",
+          "SVG 自包含规则",
+          "OPTIONAL_BUNDLES 列表",
+          "测试与真实页面验收"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.plugin-preview-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "注册一对符合规范的 SVG，preview spec 与 build 通过，页面双语显示正常。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "上传 1280×600 PNG 或含 text/script 的 SVG 时测试失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为 640×300 自包含 SVG 并补齐中文后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "测试只验证格式，不验证图像表达是否准确或美观。",
+        "本域未运行该 spec。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.vendored-package-procedure",
+      "title": "新增 vendored 上游包的清单与 manifest 守卫",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 7,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 36,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 47,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-vendored-package.md",
+          "start": 51,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/check-vendor-manifest.sh",
+          "start": 1,
+          "end": 17,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 133,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/rescope.md",
+          "start": 42,
+          "end": 53,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把 Cordis 依赖作为 npm 包引入会与仓库的 peer/发布模型冲突；而 vendored 源码一旦修改却不更新 manifest，上游快照与本地改动就失去可追溯性。",
+      "triggers": [
+        "harness 需要新的上游 Cordis 包",
+        "更新已 vendored 包",
+        "修改 vendor/*/src",
+        "上游 sync 后重跑 rescope"
+      ],
+      "obligations": [
+        "需要新上游包时 vendor 固定源码，而不是加 npm 依赖。",
+        "复制 package.json/tsconfig/src/README/LICENSE；tsconfig 继承根 base、设置 rootDir/outDir、放宽上游所需严格项，并为每个被引用的 vendored 包加 references。",
+        "package.json：按映射 rescope 名称、保留上游 exports/type、声明元数据指向 lib/types、发布 .d.ts 与 .d.ts.map、cordis 依赖放 peerDependencies；vendored 包可发布，因此不得 private: true 且要 publishConfig.access public。",
+        "根配置：在 tsconfig.base.json paths 加 npm 名到 vendor 目录；在 tsconfig.host.json references 加项目（位于 packages 之前）；在 vendor/README.md 增加 manifest 行并记录本地修改；只有该包本身发布时才改 publint-all。",
+        "源码相对导入使用显式 .ts 说明符；不要把它拉进聚合的严格 program，必须经自己的 vendor/<dir>/tsconfig.json 引用。",
+        "pre-commit 的 vendor manifest guard 要求 vendor/*/src 或 vendored bin.js 的暂存变更同时暂存 vendor/README.md；失败时补 manifest 行而不是跳过 hook。",
+        "验证：pnpm install、pnpm run typecheck、pnpm run build && pnpm run constraints，再按 testing policy 跑行为检查。",
+        "上游 sync 后重跑 rescope，并按脚本打印执行 pnpm install、gen-third-party-notices 与 verify-translation-pairing --write。"
+      ],
+      "actors": [
+        "owner: vendored 层所有者",
+        "contributors: 依赖维护者",
+        "reviewers: 供应链评审者; 代码评审者",
+        "automation: check-vendor-manifest.sh（pre-commit）、typecheck、build、constraints、rescope:check"
+      ],
+      "steps": [
+        "确认确需 vendoring，并找出其传递依赖是否也需 vendoring。",
+        "复制并 rescope 源码与 manifest，补齐 tsconfig references。",
+        "在根 paths/aggregate references 与 vendor/README.md manifest 登记。",
+        "暂存 vendor 源码时同步暂存 manifest，运行 hook 与验证命令。",
+        "上游同步后重跑 rescope 与再生成步骤。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-gate",
+        "implementation": "pre-commit 的 check-vendor-manifest.sh 比较 staged 路径；typecheck/build/constraints 校验编译与 manifest；rescope:check 在 hygiene 中断言后状态。",
+        "trust": "manifest 同步与编译可自动；上游版本正确性与本地修改合理性需评审。",
+        "failure": "vendor 源码变更缺 manifest 时 hook 拒绝提交；错误的 references 会破坏隔离或在 typecheck 暴露。",
+        "exceptions": "vendored 依赖通常不发布，可跳过 publint-all 修改；每包 tsdown 配置只在构建形态偏离根默认时需要。"
+      },
+      "applicability": [
+        "when: 新增/更新 vendor/ 下的上游源码，或改变其发布面。",
+        "preconditions: 存在 vendor manifest 与 hook; 根 tsconfig paths/references 可编辑; 上游源码可固定版本",
+        "inapplicable: 普通 workspace 包依赖不使用 vendoring；纯读取上游文档不触发。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.package-addition-procedure; documentation-procedures.translation-pairing-and-sidecar",
+        "crossDomain: supply-chain; automation; release"
+      ],
+      "migration": {
+        "strategy": "先建立 manifest 与 hook，再引入第一个 vendored 包；让隔离边界由 tsconfig 强制。",
+        "implementation": "提供 vendor 模板、根 paths/references 登记步骤、manifest guard 与 rescope 后处理清单。",
+        "requiredSupport": [
+          "vendor manifest",
+          "pre-commit hook",
+          "根 tsconfig 约定",
+          "rescope 脚本"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.vendored-package-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增 vendored 包并同步 manifest，hook、typecheck、build、constraints 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只暂存 vendor/<dir>/src 改动而不暂存 vendor/README.md 时，pre-commit 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "在 manifest 记录本地修改并重新暂存后提交通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域未运行 hook/build。",
+        "上游版本与本地 patch 的语义正确性无法由格式检查保证。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.llm-adapter-procedure",
+      "title": "新增 LLM 适配器的协议义务",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-an-llm-adapter.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-an-llm-adapter.md",
+          "start": 7,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-an-llm-adapter.md",
+          "start": 25,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-an-llm-adapter.md",
+          "start": 37,
+          "end": 43,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "模型适配器把外部流翻译成 StreamChunk；顺序、工具参数形态、块索引、错误路径与 replay state 一旦不一致，上层回放、PTC 与多轮工具调用都会出错。两个实现验证过的协议必须写成义务。",
+      "triggers": [
+        "接入新模型提供方",
+        "修改现有适配器的流翻译或错误处理",
+        "提供 reasoning effort 或模型元数据",
+        "支持 follow-up 原生状态"
+      ],
+      "obligations": [
+        "继承 LlmAdapter，实现 async *stream(options): AsyncIterable<StreamChunk>，并通过 ctx.llm.registerAdapter 注册；注册是 effect，同一 provider route 重复注册会抛错，多路由注册全有或全无。",
+        "usage 必须在 finish 之前发出；finish 之后不得再发任何 chunk；推荐缓冲到提供方流结束标记再 flush。",
+        "工具调用 arguments 端到端是原始 JSON 字符串；流片段用 argumentsDelta；提供方给对象时在 block-end 重新字符串化。",
+        "block index 按首次出现顺序分配，同一块的每个 delta 复用该 index。",
+        "错误只有两条合法路径：从 stream() 抛出（传输/协议失败，使用带稳定 code 的 LlmError），或以 finish kind error/aborted 结束（提供方 in-band 失败）；按失败类别选择并记录。",
+        "遵守 options.signal，并把它传给 fetch/SDK。",
+        "提供方不支持的 GenerateOptions 字段必须抛 UNSUPPORTED_OPTION，不得静默丢弃。",
+        "需要原生 follow-up 元数据时，把最小无损 JSON 投影放进 finish.replayState 并在重建历史时校验；只在同一 adapter 实例仍拥有历史与目标路由时传回。",
+        "模型元数据通过 resolveModel() 提供 provider/model 身份与可选 context/reasoning；只在确有时声明 defaultEffort；reasoning effort 是有序不透明 id，不暴露 wire 拼写、不钳制不支持值。",
+        "保持 wire 类型、请求序列化、传输解析、chunk 翻译与 adapter 类分离；验证遵循 testing policy 的适配器覆盖、真实提供方与发布入口要求。"
+      ],
+      "actors": [
+        "owner: LLM 适配器所有者",
+        "contributors: 适配器作者",
+        "reviewers: 模型/协议评审者",
+        "automation: 类型检查、适配器单测、真实提供方测试（按密钥自跳过）、发布入口测试"
+      ],
+      "steps": [
+        "先读 StreamChunk 文档与两个参考实现。",
+        "写 adapter 形状与 Config；秘密只从 Config/env 读取。",
+        "实现流翻译，按顺序与索引规则发 chunk。",
+        "选择失败路径并定义稳定 code。",
+        "实现 resolveModel 与可选 replayState。",
+        "按 testing policy 补齐离线与真实提供方覆盖。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review-plus-tests",
+        "implementation": "LlmAdapter 接口与注册表约束类型与路由；StreamChunk 消费者依赖顺序；测试与真实提供方套件验证行为。",
+        "trust": "类型与注册冲突自动；协议顺序与语义需评审和带密钥测试。",
+        "failure": "usage/finish 顺序错误、索引复用错误、静默丢弃选项或错误路径混淆会在消费方或测试暴露。",
+        "exceptions": "真实 API 测试在无密钥时自跳过；这不证明提供方行为，只证明无密钥环境不阻塞。"
+      },
+      "applicability": [
+        "when: 新增模型提供方或修改其流协议翻译。",
+        "preconditions: 存在 LlmAdapter 与 StreamChunk 类型; 可运行类型检查与适配器测试; 真实提供方验证需要密钥",
+        "inapplicable: provider-neutral 的 llm-pi-ai 不实现 DeepSeek 专用 wire 扩展；本流程也不覆盖它们。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.wire-extension-exposure-and-receiver",
+        "crossDomain: subsystem-contracts-1; testing"
+      ],
+      "migration": {
+        "strategy": "先定义 StreamChunk 顺序与错误词汇，再写适配器；把参考实现作为协议证据。",
+        "implementation": "提供 adapter 基类、注册表、稳定错误码、replayState 校验与真实提供方测试骨架；把 wire/parse/translate 分层。",
+        "requiredSupport": [
+          "StreamChunk 契约",
+          "适配器注册表",
+          "稳定错误码",
+          "真实提供方测试通道"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.llm-adapter-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "适配器按顺序发出 usage 后 finish，流内工具参数保持原始 JSON，真实提供方冒烟通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "finish 后再发 chunk 或静默丢弃不支持的 stop 选项时，测试/评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "缓冲到结束标记并在不支持时抛 UNSUPPORTED_OPTION 后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "真实提供方行为可能变化，需带密钥回归。",
+        "本域未运行适配器测试。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.persistence-type-change-record",
+      "title": "持久化类型变更的 bilingual 记录流程",
+      "sources": [
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 9,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 24,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 49,
+          "end": 81,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 83,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 96,
+          "end": 113,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 20,
+          "end": 24,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 549,
+          "end": 554,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 663,
+          "end": 666,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 712,
+          "end": 715,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 846,
+          "end": 851,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-review.ts",
+          "start": 1,
+          "end": 20,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 29,
+          "end": 40,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "持久化 schema 的改动即使不改变 Session 格式版本，也会影响旧记录的读取；只靠作者口头说明无法证明兼容性。源仓库让工具机械分类变更、生成双语记录，并要求作者显式选择同版本或升版。",
+      "triggers": [
+        "修改已声明的 Session 持久化类型/根/枚举/联合",
+        "新增或删除持久化根",
+        "准备提交可能影响读取的 schema 改动",
+        "评审要求独立比较 base/head"
+      ],
+      "obligations": [
+        "先用 pnpm --silent run verify-persistence-changes --json 预览；读 root、path、change kind 与 requiresCompatibilityReview；消费 JSON 时用 --silent。",
+        "需要独立于确认历史评审时，保存 base/head inventory 并运行 persistence-review --before/--after；记录生成不隐藏结构转移。",
+        "先读已接受基线并保留其锁定记录；同时评估读与写两个方向的兼容性。",
+        "写 en/zh 各含 summary、compatibility、verification 的 prose；verification 必须是实际执行过的检查，不是猜测。",
+        "用 persistence-changes --record <date-slug> --prose <file> --json 生成记录、schema、catalog 与配对；省略 --prose 会留下被验证拒绝的草稿。",
+        "requiresCompatibilityReview 的变更必须解释两个读取方向；同版本保留要显式 --decision same-version，否则报 decision-required；真正升 header 才能推断 version-bump。",
+        "记录后运行 pnpm run doc-sync；记录命令的 ok:true 不替代 owner 行为/迁移测试。",
+        "源又变化时用 --update 刷新同一未接受记录；不得更新基线、被依赖记录或已定稿 checkpoint；竞争终态记录要按剩余历史更新并重评 diff。",
+        "不得把旧解释复用于新的属性值类型变更；更新 Compatibility/Verification 说明实际转移与已执行检查。"
+      ],
+      "actors": [
+        "owner: 持久化类型/记录所有者",
+        "contributors: schema 改动作者",
+        "reviewers: 持久化评审者",
+        "automation: persistence-changes --check/--record/--update、persistence-review、doc-sync、配对门禁"
+      ],
+      "steps": [
+        "预览变更并判断是否 requiresCompatibilityReview。",
+        "评估兼容性并编写双语 prose，记录真实执行的验证。",
+        "运行 record 或 update，检查 changes/roots/files 与生成的记录。",
+        "需要同版本时显式加 --decision same-version；需要升版时走格式版本流程。",
+        "运行 owner 测试与 doc-sync，评审并提交预期 diff。"
+      ],
+      "enforcement": {
+        "mode": "gate-plus-review",
+        "implementation": "persistence-changes 分类结构差异、校验双语机器记录与 prose 占位符、拒绝未确认变更并在需要时要求 decision；persistence-review 提供只读结构解释但不能替代确认；doc-sync 检查 catalog/history/pairing。",
+        "trust": "结构分类与格式校验自动；兼容性论证与验证证据的真实性仍由作者与评审负责。",
+        "failure": "未确认变更报 unacknowledged-changes；缺 decision 报 decision-required；占位符或双语记录不一致直接失败。",
+        "exceptions": "接受历史与 finalized checkpoint 不可更新；未被接受的终态记录可以在源变化后刷新。"
+      },
+      "applicability": [
+        "when: 任何影响声明式 Session 持久化类型或历史的源码变更。",
+        "preconditions: persistence-changes 与 inventory 可运行; 存在已接受历史; 双语 prose 可写",
+        "inapplicable: 纯运行时行为变更不触发类型记录；但仍可能需要测试或发布说明。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.session-format-authority",
+        "related: documentation-procedures.session-format-version-procedure",
+        "crossDomain: persistence-current; persistence-historical; release"
+      ],
+      "migration": {
+        "strategy": "把「结构自动分类 + 作者显式决策 + 双语证据」做成一条命令链；不要用自由文本 changelog 替代。",
+        "implementation": "建立 schema 提取、结构分类、记录/更新命令、prose 校验与 doc-sync 检查；为竞争记录定义确定性更新规则。",
+        "requiredSupport": [
+          "schema inventory",
+          "稳定 digest/root 模型",
+          "双语记录模板",
+          "CI 中的 history 检查"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.persistence-type-change-record",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "修改可选字段并提交双语 prose 与 same-version 决策，记录生成且 doc-sync 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "有 requiresCompatibilityReview 的变更但不给 --decision，命令报 decision-required 并拒绝写入。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐两个读取方向的解释与已执行检查，重跑 update 后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "工具不验证 prose 内容是否真实或完整，只拒绝占位符。",
+        "本域未运行 persistence-changes 或 doc-sync。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.session-format-version-procedure",
+      "title": "新增 Session 格式版本的六步流程",
+      "sources": [
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 21,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 36,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 51,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 74,
+          "end": 81,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 83,
+          "end": 97,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 99,
+          "end": 120,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 122,
+          "end": 149,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.ts",
+          "start": 1,
+          "end": 6,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-v3-event-vocabulary.ts",
+          "start": 1,
+          "end": 12,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "格式升版会不可逆地影响已发布数据；如果先改写入器、手改 catalog 或重命名旧 fixture，历史就不可重建。流程把版本选择、边声明、stage 实现、消费方、快照后继与整体验证分开，并强调前一版本不可变。",
+      "triggers": [
+        "有效判别符无法阻止不安全解释",
+        "header/envelope/事件语义或重建结构变化",
+        "发布新的 Session 格式",
+        "修复既有相邻迁移"
+      ],
+      "obligations": [
+        "第 1 步：只有在判别符无法阻止不安全解释时才升版；否则走同版本类型记录。区分 Session 格式整数与包版本、SQLite schema、投影单元、协议包装版本。",
+        "用共享 release/* 集成基线承载 N+1 的写入器、codec、catalog 接线、恒等迁移与验证；每个子分支从该基线创建并以其为目标，不互相为目标。",
+        "已发布 codec 保留既有解释；不得放宽旧 codec 接纳当前特性；N→N+1 转换器可在发布后修复或扩展历史支持，但不得改变既有后继输出。",
+        "第 2 步：创建 N→N+1 库而非挂载插件；在 package.json 声明 dsh.sessionFormatMigration 的 from/to/export/migration/sourceCodec/targetCodec/targetHeaderValidator/targetRestorer；复用前一条边导出的源 codec，不复制。",
+        "设置 SESSION_FORMAT_VERSION 为 N+1 并运行 pnpm run gen-session-format-catalog；生成器要求 0..writer 每步恰好一条相邻边、名称与导出匹配、依赖声明完整；缺边/重复/额外/未知成员都拒绝；修声明，不手改 generated.ts。",
+        "第 3 步：用 Stage 接口实现 transformEvent/transformRun/finish；每个 createStage 拥有独立状态，不跨 Session 复用；同步 emit，零/一/多输出皆可；继承 cut 是逻辑事件数，未知时不得填 0。",
+        "明确事件准入与转换规则；V2→V3 与 alpha V0→V1 的规则只属于各自历史边，不推广到新边；opaque 数据保留，无法映射时可显式拒绝。",
+        "用原生写入器输出作 oracle：同一输入分别过旧/新 writer，比较迁移输出与原生输出（只在文档化 volatile 字段掩码）。",
+        "第 4 步：追踪所有 current-version 消费方（创建/恢复、JSONL 命名与发布、catalog encoder/restorer、投影缓存 identity、回放/快照、fixture 布局、TS/Python SDK 录制）；current 值用 writer 常量，历史字面量留在旧 codec 与 fixture。",
+        "第 5 步：需要当前代际后继时，用目标版本规范命名新建 parent/child 快照，保留每个历史文件；不得把前代重命名为目标名或只改 header；验证前代字节不变、父子角色连续。",
+        "第 6 步：运行 verify-session-format-catalog、相关 Vitest、corpus 回放；新增边后把其测试路径加入；要求 strict restore、identity、拒绝畸形/未知必需事件、重复恢复确定性、独立并发 stage、seeded 多跳与无 fallback。",
+        "发布前若仍是 V3 写入而集成已 V4，按 pinned local commit 运行 verify-v3-event-vocabulary --source-ref；只读该 commit，要求事件名精确相等；命令不获取远端，操作者必须确认该 commit 是最新 V3 写入。",
+        "文档收尾：更新 owning Agent Note，发布前保持 release record 不变；发布后按已验证证据推进；双语一起改并用 --write 重录，再跑 test:docs、doc-sync、lint、git diff --check。"
+      ],
+      "actors": [
+        "owner: Session 格式所有者与发布操作者",
+        "contributors: 格式边作者; 快照所有者",
+        "reviewers: 持久化/发布评审者",
+        "automation: gen-session-format-catalog --check、verify-session-format-catalog、Vitest、corpus 回放、verify-v3-event-vocabulary、doc-sync"
+      ],
+      "steps": [
+        "确认必须升版，并从 release/* 建立 N+1 集成基线。",
+        "创建 N→N+1 库并声明迁移元数据，设置 writer 常量，生成 catalog。",
+        "实现 per-artifact Stage 与准入/拒绝规则。",
+        "更新所有 current-version 消费方并用 writer 常量。",
+        "创建快照后继，保持前代字节不变。",
+        "运行 catalog/Vitest/corpus/strict restore 检查并报告真实命令与失败。",
+        "发布前后分别处理 release record 与 V3 词汇 pin。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-generator-plus-tests",
+        "implementation": "生成器强校验相邻边、命名、导出与依赖；catalog --check 保证生成静态；测试覆盖 strict restore、拒绝、并发与多跳；verify-v3 只读 pinned commit。",
+        "trust": "边拓扑与生成结构自动；转换语义、兼容性论证与发布 tag 仍需评审。",
+        "failure": "缺边、额外边、catalog 手改、前代被改写、快照 fallback 或 strict restore 失败都会阻止合并/发布。",
+        "exceptions": "release/* 分支受 force-push/删除保护，不得 force-sync；历史 alpha 边可拒绝未实现映射的输入。"
+      },
+      "applicability": [
+        "when: 必须新增 Session 格式整数或修复相邻迁移语义。",
+        "preconditions: 存在 release 集成基线与相邻边库模型; catalog 生成器可运行; 有历史 fixture/corpus 与 SDK 录制",
+        "inapplicable: 同版本兼容的结构演进走持久化类型记录；包版本/协议包装版本变化不自动升 Session 格式。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.session-format-authority; documentation-procedures.persistence-type-change-record; documentation-procedures.generated-reference-freshness",
+        "related: documentation-procedures.translation-pairing-and-sidecar",
+        "crossDomain: release; persistence-historical; persistence-current"
+      ],
+      "migration": {
+        "strategy": "先固定不可变历史与 catalog 生成，再写新边；用 release 分支承载组合验证。",
+        "implementation": "移植相邻边包结构、Stage 接口、catalog 生成/校验、strict restore 与 corpus 回放；把 V3 pin 校验做成只读历史检查。",
+        "requiredSupport": [
+          "相邻边包模板",
+          "catalog 生成器",
+          "严格恢复入口",
+          "历史 fixture/corpus",
+          "release 分支保护"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.session-format-version-procedure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新边声明完整，catalog 生成、strict restore、corpus 与前代字节检查全部通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "缺一条相邻边或手改 generated.ts 时，catalog --check 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐边包与声明并重新生成后检查通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "转换语义正确性无法仅靠拓扑检查证明。",
+        "本域未运行生成器或测试。",
+        "V3 pin 命令不证明远端最新，必须人工确认。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.postmortem-admission",
+      "title": "事故复盘的准入条件与叙事专属层",
+      "sources": [
+        {
+          "path": "docs/postmortem/README.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 37,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0002-js-expression-disabled-filesystem-tools.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0003-web-agent-gui-feedback-loop.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md",
+          "start": 7,
+          "end": 10,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "事故叙事容易变成英雄故事或一行修复说明；若与 Agent Note 混用，设计理由与失败复盘互相污染。源仓库给出三个准入条件、固定开篇和专属层规则。",
+      "triggers": [
+        "bug 到达真实用户/已合并 PR/发布",
+        "想记录一次值得复盘的失败",
+        "考虑把事故故事写进 Agent Note 或架构页",
+        "需要为防护栏建立可追溯来源"
+      ],
+      "obligations": [
+        "仅在 bug 同时满足三点时写：机制隐蔽、原因是系统性缺口（测试/工具/约定）、重新发现代价高。",
+        "postmortem 不是 Agent Note：后者记录设计决策与被拒替代或未来工作；前者是回溯性失败记录。",
+        "每篇必须以 Executive summary 开篇：一段 30 秒可读的说明，含坏了什么、平实根因、为何逃逸、可长期沿用的教训。",
+        "随后按 Summary/Impact/Timeline/Root cause/Guardrails/Lessons 组织；有多个根因时分开写。",
+        "链接该复盘推动的防护栏（测试、AGENTS.md 规则、ADR）；不要只写修复。",
+        "事故叙事只属于 postmortem 层；其他层陈述当前事实并链接此处，不复制战争故事。",
+        "README 维护编号与标题索引；新增文件按序号命名并同时更新双语索引。"
+      ],
+      "actors": [
+        "owner: 事故复盘作者/模块所有者",
+        "contributors: 亲历者; 修复者",
+        "reviewers: 模块评审者; 流程评审者",
+        "automation: doc-sync 的链接与配对检查；准入与叙事质量靠评审"
+      ],
+      "steps": [
+        "对照三个准入条件；不满足则写 Agent Note 或普通修复说明。",
+        "收集事件日志与时间线证据，区分事实与推断。",
+        "写 Executive summary，再写详细章节。",
+        "列出并链接新增防护栏。",
+        "在 README 索引登记，补齐中文页与 sidecar。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "docs/postmortem/README.md 定义准入、非 Agent Note 与开篇结构；docs/AGENTS.md 把 postmortem 定为唯一 war-story 层；索引表维护编号。",
+        "trust": "是否满足准入、叙事是否准确由作者与评审判断；没有自动检查能判定「值得复盘」。",
+        "failure": "缺 Executive summary、写成设计决策或只写修复会被评审拒绝；错层会把历史叙事带进当前事实页。",
+        "exceptions": "小型机械修复不需要复盘；无长期教训的事故可以只留 PR 说明。"
+      },
+      "applicability": [
+        "when: 失败已越过安全网并产生真实成本，且机制值得后人重新理解。",
+        "preconditions: 有可核对的日志/时间线; 能指出系统性缺口; 有可链接的防护栏",
+        "inapplicable: 设计选择、未来计划与普通 bugfix 不属于 postmortem；分别写 Agent Note 或 PR 说明。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.translation-pairing-and-sidecar",
+        "related: documentation-procedures.postmortem-evidence-and-guardrails; documentation-procedures.cookbook-procedure-standard",
+        "crossDomain: decisions; rationale; documentation"
+      ],
+      "migration": {
+        "strategy": "先定义准入与专属层，再建模板；不要把所有失败都倒进同一目录。",
+        "implementation": "提供含 Executive summary 的模板、README 索引与链接防护栏的检查清单；在文档分层表中明确 postmortem 的唯一职责。",
+        "requiredSupport": [
+          "分层表",
+          "postmortem 模板",
+          "编号索引",
+          "双语配对"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.postmortem-admission",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按模板写出的复盘含 Executive summary、根因与防护栏链接，索引与中文页齐全。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只写一行修复或把设计理由写成 postmortem 时，评审依据准入与分层规则拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改写成失败叙事或迁移到 Agent Note 后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "准入判断无法自动化。",
+        "本域未执行文档门禁。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.postmortem-evidence-and-guardrails",
+      "title": "复盘的时间线证据与可证伪防护栏",
+      "sources": [
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 11,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 89,
+          "end": 112,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0002-js-expression-disabled-filesystem-tools.md",
+          "start": 11,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0003-web-agent-gui-feedback-loop.md",
+          "start": 11,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md",
+          "start": 11,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 33,
+          "end": 42,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "复盘最容易写成事后合理化的故事：时间线凭记忆、根因只取一个漂亮解释、防护栏只声称存在却没证明会让回归失败。四篇源复盘展示了相反做法。",
+      "triggers": [
+        "撰写 Timeline/Root cause/Guardrails",
+        "评审一篇复盘",
+        "把一次事故转成回归测试",
+        "解释为什么现有测试没发现"
+      ],
+      "obligations": [
+        "时间线以持久日志/事件序号为证据，标明 session id 与关键 sequence；区分当时动作与后来解释。",
+        "根因写到机制层：哪个 API/加载路径/代理/分类器把两个事实合并了；多个根因分别编号，不用一个漂亮理论覆盖。",
+        "解释「为什么每道安全网都没拦住」：指出测试挂载路径、key gate、fixture 共享或断言缺失，而不只写覆盖率高。",
+        "防护栏要具体到文件/测试/规则，并证明它会在未修复代码上失败（引入回归→看红→还原）。",
+        "区分自动防护与人工评审；不要把「已写进文档」当成自动保证。",
+        "测试证据遵循 testing policy：验证外部世界而非自我报告；覆盖真实入口路径；非平凡模型/协议/人可见变更需要组装快照。",
+        "报告未验证状态与证据限制；不从未运行的检查推断通过。"
+      ],
+      "actors": [
+        "owner: 复盘作者",
+        "contributors: 修复者; 测试所有者",
+        "reviewers: 模块评审者",
+        "automation: 回归测试、组装快照、真实 Loader/子进程测试；文档检查只保证格式与链接"
+      ],
+      "steps": [
+        "从持久日志提取时间线与序号。",
+        "分离并编号每个机制性根因。",
+        "逐项审计安全网为何失效。",
+        "为每个防护栏写可证伪测试并实际看它失败。",
+        "在 Guardrails 中链接代码/测试/规则，在 Lessons 中写可迁移判断。"
+      ],
+      "enforcement": {
+        "mode": "review-plus-tests",
+        "implementation": "四篇复盘展示证据结构；0001 的真实 Loader e2e、0002 的静态配置/快照结果守卫、0003 的真实浏览器验收、0004 的规则化分类器与组装场景都是具体防护栏。",
+        "trust": "测试是否真的能在未修复代码上失败需要作者演示；评审不能仅凭绿色套件相信防护栏。",
+        "failure": "没有失败演示的守卫可能两边都通过；只写「已加测试」而不指明路径与失败模式的复盘应被拒绝。",
+        "exceptions": "平台相关行为可用确定性 fake 在边界模拟，但必须再有一条组装产品路径；自跳过的真实内核测试不能独自承担回归。"
+      },
+      "applicability": [
+        "when: 任何复盘或想用事故证明某防护栏有效的场合。",
+        "preconditions: 可读取持久日志/事件; 能运行回归测试; 有组装产品路径或边界 fake",
+        "inapplicable: 纯设计决策不需要失败时间线；用 Agent Note 记录取舍。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.postmortem-admission",
+        "related: documentation-procedures.session-format-authority",
+        "crossDomain: testing; decisions; rationale"
+      ],
+      "migration": {
+        "strategy": "把「证据→根因→失效安全网→可证伪防护栏」固定为模板字段；要求每条防护栏附失败演示。",
+        "implementation": "在模板中加入证据序号、根因编号、安全网审计与守卫失败演示；评审清单要求给出未修复代码上的红色输出。",
+        "requiredSupport": [
+          "持久日志访问",
+          "可运行的回归测试",
+          "组装快照",
+          "评审清单"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.postmortem-evidence-and-guardrails",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新防护栏在未修复代码上失败、在修复后通过，并链接到复盘。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只声称测试存在但无法演示失败时，评审拒绝该防护栏。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补充失败演示与真实入口覆盖后接受。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "评审无法完全排除事后叙事偏差。",
+        "四篇复盘是历史记录，其结论不自动适用于新事故。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.stacked-pr-review-response",
+      "title": "堆叠 PR 的评审修复归属与传播",
+      "sources": [
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 7,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 15,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/responding-to-pr-review-on-a-stack.md",
+          "start": 27,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "堆叠链里同一文件可能出现在多个 PR；在错误的层修复会让引入问题的 PR 带着缺陷落地，并让该层评审者看不到修复。改写推送后旧证据也容易失效。",
+      "triggers": [
+        "评审意见跨多个依赖 PR",
+        "修复需要沿堆叠传播",
+        "rebase 或 force-push 后重新评审",
+        "准备合并堆叠链"
+      ],
+      "obligations": [
+        "每个 PR 分支一个 worktree；并行修复不共享 checkout。",
+        "GitHub stack 对象是权威：base 分支只给依赖顺序，必须检查 PullRequest.stack 与 stackEntry.position 才能称为官方 stack。",
+        "修复落在引入问题的 PR，再沿子链向上传播；即使子 PR 也含该文件也不能在下游起源。",
+        "每项评审修复保留为独立 commit；只 amend 自己尚未推送且未评审的工作。",
+        "merge-forward 与 rebase 都可接受；改写推送必须 lease-protected，远端前移时中止，禁止裸 --force。",
+        "先按代码事实复核每条意见；正确症状也可能伴随错误诊断。",
+        "传播后逐层验证；gh stack sync 可能先发布，因此需要同步后立即验证。",
+        "回复在线程内（review comment replies），说明修复与承载它的 commit/head，不发顶层评论。",
+        "改写推送后重新审计未解决线程、批准、可合并性与检查；旧 OID 不是当前证据。",
+        "只通过官方 stack 流程落地；未链接时按作者规则自动链接或询问，缺少原生支持时硬停。"
+      ],
+      "actors": [
+        "owner: PR 作者/评审响应者",
+        "contributors: 子代理修复者",
+        "reviewers: 各层 PR 评审者",
+        "automation: gh stack 命令、lease-protected push、CI 检查、dsh-merging-stacked-prs skill"
+      ],
+      "steps": [
+        "逐条 triage 评论并按代码复核。",
+        "把接受的意见映射到引入它的 PR。",
+        "在该 PR 修复并逐层 merge-forward 或 cascading rebase。",
+        "重新运行受影响层的门禁并复核子代理报告。",
+        "在线程内回复并重新审计线程/批准/检查。",
+        "按官方 stack 流程落地。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "指南定义归属、传播、lease 保护与复查；stack 关联由 GitHub 对象与 gh stack/落地 skill 校验。",
+        "trust": "GitHub 对象与检查是外部权威；修复归属与诊断正确性靠评审者判断。",
+        "failure": "在下游修复会让上游继续带缺陷；裸 force 会覆盖他人工作；改写后不复审会使用过期证据。",
+        "exceptions": "mixed-author 链在自动链接前需询问；原生 stack 支持不可用时硬停而不是退化。"
+      },
+      "applicability": [
+        "when: 评审意见涉及 A←B←C 形式的依赖 PR 链。",
+        "preconditions: PR 由 GitHub 官方 stack 关联; 每分支有独立 worktree; 可执行 lease-protected push",
+        "inapplicable: 独立单 PR 不需要堆叠规则；非 GitHub 平台需替换权威对象。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.code-review-skill-maintenance",
+        "crossDomain: collaboration; agent-workflows"
+      ],
+      "migration": {
+        "strategy": "先建立 stack 关联与 lease 保护，再规定修复归属；把「修复在引入层」写进评审模板。",
+        "implementation": "提供每 PR worktree、官方 stack 检查、线程回复模板与改写后复核清单；落地交给专用 skill/流程。",
+        "requiredSupport": [
+          "官方 stack 能力",
+          "lease-protected push",
+          "CI 检查",
+          "落地 skill"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.stacked-pr-review-response",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "评审意见在引入层修复并逐层传播，所有受影响 PR 的检查通过且线程已回复。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "在下游 PR 修复并只更新顶部时，评审指出上游仍带缺陷。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把修复移回引入层并重新传播/复查后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "本域不执行 gh/远端操作。",
+        "GitHub stack 字段的实际可用性依赖平台版本。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.code-review-skill-maintenance",
+      "title": "dsh-code-review skill 的周期维护与晋升",
+      "sources": [
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 7,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 19,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 50,
+          "end": 53,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 54,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/maintaining-dsh-code-review.md",
+          "start": 62,
+          "end": 64,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "评审 skill 若靠一次性大审计更新，会把个别事故过度泛化、堆砌清单并与权威文档重复；若全自动合并，又会绕过操作者判断。源仓库用单人周期工具产出候选、双适配器评审、人工三选一与漂移保护晋升。",
+      "triggers": [
+        "周期维护 dsh-code-review skill",
+        "接任维护者",
+        "评审一个 skill 更新 PR",
+        "适配器故障或漏跑周期"
+      ],
+      "obligations": [
+        "指定单一操作者；工具与凭据是私有基础设施，仓库只记录保证，不记录实现。",
+        "按窗口选择已合并且 merge commit 可达 origin/master 的 PR；不可达或超 250 commit 的记入 skipped-pulls.json 后跳过，不中止。",
+        "只收集带 commit 锚点的 pre-merge 人工反馈，比较反馈时与最终 patch；不获取会话评论（无 force-push 安全基线），排除仅目标分支变更。",
+        "两个独立配置的 reviewer adapter 先分类作者与是否采纳，再对照当前 skill；主 adapter 起草完整 SKILL.md，两者评审同一 diff，阻塞问题循环到双方批准。",
+        "声明成功前对候选运行 pnpm run doc-sync 与 pnpm run lint。",
+        "操作者必须按自身价值阅读 diff，检查清单膨胀、历史叙事、单事故外推、与现有 skill/权威文档重复；不得以「评审者已批准」代替决定。",
+        "候选三选一：Discard 删除；Batch 保留待合并并在 master 变化时重做/重评；Promote 从干净 master 运行 helper，校验 skill blob 未漂移后应用并开 draft PR。",
+        "晋升 PR body 列来源反馈 URL/ID、落地 commit 范围、来源 run、检查与操作者编辑；漂移时停止而不是覆盖新指导。",
+        "不得逐字提交 adapter 输出；措辞收紧、去上下文示例、合并规则是预期编辑。",
+        "无候选是正常结果：记录日志、不通知；适配器总故障必须失败并通知，不得折叠成 no candidate。",
+        "交接写后续 Agent Note 取代当前 note，记录迁入仓库或新操作者私有设置。"
+      ],
+      "actors": [
+        "owner: 指定 skill 操作员",
+        "contributors: 两个 reviewer adapter; 仓库评审者",
+        "reviewers: 操作者本人; GitHub PR 评审者",
+        "automation: 私有维护工具、doc-sync、lint、promote helper、macOS 通知与日志"
+      ],
+      "steps": [
+        "运行窗口采集并检查 skipped/failed 记录。",
+        "审阅候选 diff、manifest 证据与至少一条来源反馈。",
+        "决定 Discard/Batch/Promote。",
+        "Promote 时从干净 master 运行 helper，编辑后开/更新 draft PR。",
+        "在 GitHub 上评审并合并或关闭。",
+        "交接时写取代 note。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-tool-plus-review",
+        "implementation": "私有工具执行采集、双 adapter 分类/评审、doc-sync/lint 与 promote 漂移检查；cookbook 规定人工决策与失败语义。",
+        "trust": "门禁与漂移检查自动；候选质量与是否泛化由操作者判断。",
+        "failure": "adapter 命令字节相同则拒绝运行；单批 schema/id 失败整批标 unclear；任一 adapter 无非空有效结果则整次失败并通知。",
+        "exceptions": "无候选不通知；手动周恢复用 7 日窗口；工具源码与凭据不在仓库。"
+      },
+      "applicability": [
+        "when: 维护 dsh-code-review skill 或建立类似的自更新评审规则库。",
+        "preconditions: 有稳定合并历史与人工评审记录; 有双独立 reviewer 通道; 有干净 master 与 PR 流程",
+        "inapplicable: 普通代码评审不需要周期语料挖掘；没有人工评审记录的仓库无法获得反馈锚点。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.stacked-pr-review-response",
+        "crossDomain: agent-workflows; collaboration; automation"
+      ],
+      "migration": {
+        "strategy": "先保证「候选+证据+人工决定+漂移保护」，再谈自动化程度；不要让工具直接改主分支。",
+        "implementation": "实现窗口采集、双 adapter 分类、manifest 证据、doc-sync/lint 与 promote helper；把无候选与总故障区分开。",
+        "requiredSupport": [
+          "合并/评审历史访问",
+          "双 reviewer 通道",
+          "证据 manifest",
+          "draft PR 与漂移检查"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.code-review-skill-maintenance",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "一次 run 产出候选与 manifest，操作者 promote 后 draft PR 通过 doc-sync/lint。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "两个 adapter 指向同一可执行文件，或 master 上 skill blob 已漂移时，工具拒绝运行/晋升。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修复 adapter 配置或基于最新 skill 重跑/重评后继续。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "私有工具实现不可见，无法验证其内部保证。",
+        "本域未运行任何维护命令。",
+        "单人 bus factor 仍是已记录风险。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.ui-corner-radius-standard",
+      "title": "按角色与尺寸选择圆角的统一标准",
+      "sources": [
+        {
+          "path": "docs/ui-radius.md",
+          "start": 3,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 19,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 26,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 46,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 61,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 94,
+          "end": 109,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/ui-radius.md",
+          "start": 111,
+          "end": 117,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/ui-theme/tests/expected/radius-exceptions.expected.json",
+          "start": 1,
+          "end": 27,
+          "kind": "config"
+        }
+      ],
+      "problem": "圆角若按视觉喜好逐个决定，会出现 10/14/18/24px 等局部值、嵌套卡片错位、hover 填充与描边不共形；共享 token 也无法收敛。标准把角色→尺寸→token 的映射与嵌套几何写成规则，并把例外钉到具体声明。",
+      "triggers": [
+        "新增或修改按钮、卡片、菜单、对话框、头像",
+        "发现局部圆角字面量",
+        "调整嵌套卡片或 split button",
+        "评审 UI 圆角不一致"
+      ],
+      "obligations": [
+        "先按角色再按尺寸选值：小细节 R4、紧凑控件 R8、标准控件/单行 cell R12、大控件/多行/嵌套组 R16、独立内容卡 R20、主包围面 R28；宽度、标签长度、意外换行与内容扩张不单独升级半径。",
+        "优先复用共享 token（--dsw-radius-xs/sm/md/lg/xl/panel）；不得为普通控件/卡片引入 10/14/18/24px 局部值。",
+        "固定外尺寸用 border-box；filled/outline/ghost/loading/disabled 变体保持同一尺寸与圆角；hover/pressed/selected/focus 不改变半径。",
+        "普通圆面使用主题 superellipse(1.5)；corner-shape 不继承，需在元素与其 ::before/::after 上应用；不支持引擎退回圆形。",
+        "圆形与胶囊保留 50%/999px，但每条 full-round 声明必须在同一规则配 corner-shape: round；头像容器与 img 都保持圆形与等宽高。",
+        "嵌套几何分三类：同心内缩用 max(0, outer - inset) 并共享圆心；贴边填充由外层拥有可见角并裁剪/继承；独立卡片按自身语义层，不机械减父 padding。",
+        "菜单：标准 outer R16 + 4px padding + R12 items；紧凑 outer R12 + 4px + R8；SegmentedControl outer R12/inset 4/R8；SegmentedTabs outer R16/inset 4/R12。",
+        "设置卡默认 R20 + 0.5px hairline 边框与 alias 填充；嵌套编辑器 R16；账户链接 H36/R12 Button；不要给普通设置卡额外阴影。",
+        "例外必须钉在 radius-exceptions.expected.json 的具体文件+选择器+声明，不得整包豁免；族级属性可引用共享 token，真实 inset 可用 calc。",
+        "验证：成组检查共享 primitive/overlay/pseudo/sibling，分类后再替换；在明暗主题下比较尺寸、圆角、曲线、填充与描边，覆盖 hover/pressed/disabled/focus 与窄布局；用现有 stylesheet guard 抓离刻度字面量与未知 token，但视觉适配仍需人看。"
+      ],
+      "actors": [
+        "owner: ui-theme 所有者与组件所有者",
+        "contributors: UI 作者",
+        "reviewers: 设计/UI 评审者",
+        "automation: radius/corner-shape/elevation stylesheet guards、异常记录、浏览器场景"
+      ],
+      "steps": [
+        "列受影响组件及其共享 primitive、overlay、pseudo 与变体。",
+        "先分类角色，再选择 token 或保留例外。",
+        "改共享 owner，并同步子填充、内角、裁剪与状态样式。",
+        "明暗主题与各状态视觉对比，检查窄布局/长标签。",
+        "运行相关 guard 与最小浏览器场景，报告测试面与未验证状态。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-guard-plus-review",
+        "implementation": "ui-theme radius guard 拒绝离刻度字面量与未知 token；radius-exceptions.expected.json 按文件/选择器/声明钉住允许例外；corner-shape/elevation spec 检查配对与材质。",
+        "trust": "离刻度值与 token 存在性自动；「这个 token 是否适合该组件」「两条渲染轮廓是否对齐」只能人工确认。",
+        "failure": "未知 token/离刻度字面量或未登记例外会让 guard 失败；视觉错位不会自动发现。",
+        "exceptions": "schedule、Desktop onboarding、account notices、shortcut controls 保留包内几何；40px 图标 tile 用 R10 作为组件级例外；dock 贴边可用 R0。"
+      },
+      "applicability": [
+        "when: DSH Web/Desktop 的任何按钮、cell、卡片、菜单、对话框、头像与嵌套表面。",
+        "preconditions: 主题 token 与 corner-shape 样式可用; 存在异常记录与 stylesheet guard; 能运行浏览器场景",
+        "inapplicable: 非 DSH UI 或纯终端输出不适用；局部品牌插画内部几何不受组件圆角规则约束。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.web-styling-ownership",
+        "crossDomain: subsystem-contracts-2; package-contracts"
+      ],
+      "migration": {
+        "strategy": "先把角色映射与 token 落到主题，再把现有局部值收敛；例外先登记再改。",
+        "implementation": "定义 radius token 与 superellipse，建 radius guard 与按声明的 exception 文件；把成组视觉检查写进 UI 评审。",
+        "requiredSupport": [
+          "radius token",
+          "corner-shape 支持",
+          "exception 记录",
+          "浏览器视觉场景"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.ui-corner-radius-standard",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按角色替换局部圆角为 token，明暗/状态视觉一致且 guard 通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "新增 14px 字面量或未登记例外时，radius guard 失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改用对应 token 或把确有必要的例外登记到文件+选择器后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "guard 不能判断 token 语义是否合适。",
+        "本域未运行样式 guard 或浏览器测试。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.web-styling-ownership",
+      "title": "Web 样式归属与组件规则",
+      "sources": [
+        {
+          "path": "docs/web-styling.md",
+          "start": 3,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/web-styling.md",
+          "start": 13,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/web-styling.md",
+          "start": 33,
+          "end": 39,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "功能包各自定义全局主题、复制色值或绕过共享控件，会让明暗主题、焦点、层级与菜单材质分叉。源仓库把 token 与全局样式集中在主题包，功能包只消费语义别名。",
+      "triggers": [
+        "新增浏览器功能包样式",
+        "需要新颜色/字号/阴影/动效",
+        "发现功能包覆盖主题选择器",
+        "新增菜单、模态、提升表面"
+      ],
+      "obligations": [
+        "ui-theme 拥有 --dsw-* 静态色阶、语义别名、排版、动效、渐变、阴影、滚动条与明暗偏好；ui-layout 应用解析后的主题快照。",
+        "全局样式表只在 ui-theme/src/styles/；组件样式用 CSS Modules 并放在组件旁；组件可有局部自定义属性，但共享颜色/排版/层级/动效属于主题包。",
+        "先复用 ui-primitives 控件；跨功能包的视觉差异应做成 primitive 的 prop，而不是复制组件。",
+        "功能组件使用 --dsw-alias-* 语义 token；不复制静态 palette、不写颜色字面量、不写主题选择器。",
+        "字号与行高配对；源码/终端/diff 在合同要求时保持不换行；滚动条用共享样式。",
+        "表现放 CSS；内联 React style 只能传组件局部自定义属性，不编码主题分支。",
+        "保留键盘焦点可见性与 reduced-motion；全圆角必须配 corner-shape: round。",
+        "提升表面（菜单、popover、modal、panel、浮动按钮、composer）用 border: 0 + --dsw-elevation-*；0.5px hairline 是阴影第一层；不得把 alias border 与 elevation shadow 配对。",
+        "菜单/上下文/子菜单/选择菜单用 Menu 或 MenuSurface；材质是主题拥有的 --dsw-menu-surface-fill + --dsw-menu-backdrop-filter，功能/平台 CSS 不得覆盖或重定义。",
+        "模态背景保持半透明深色遮罩且无模糊（--dsw-mask-blur: none）；菜单背景过滤放在隔离层以保留定位与 backdrop。",
+        "中性 flat border/分隔线用 0.5px hairline；虚线 affordance 与状态色边框保持 1px；spinner 轨道按 allowlist。",
+        "可点击工件链接用 --dsw-alias-link、500 字重、静止无下划线、hover/focus 点线下划线；外部已知主机的 leading glyph 用站点自身标记。",
+        "改共享 token 在 ui-theme 中改并由功能包消费；公共样式合同变化时更新 owner 参考；视觉行为遵循 testing policy。"
+      ],
+      "actors": [
+        "owner: ui-theme 与 ui-primitives 所有者",
+        "contributors: 功能包作者",
+        "reviewers: 设计/UI 评审者",
+        "automation: ui-theme elevation/menu/corner-shape spec、CSS 测试、浏览器快照"
+      ],
+      "steps": [
+        "确认样式属于主题、primitive 还是功能组件。",
+        "优先复用 primitive；需要差异时加 prop。",
+        "在功能组件用语义 alias 与 CSS Modules 实现。",
+        "检查焦点、reduced-motion、明暗与菜单材质。",
+        "改公共 token 时同步 owner 参考并跑视觉检查。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-spec-plus-review",
+        "implementation": "ui-theme 的 elevation/menu/corner-shape spec 拒绝 border+shadow 配对、未包装菜单、材质覆盖与 token 重定义；功能包测试与浏览器快照覆盖视觉行为。",
+        "trust": "被 spec 覆盖的模式自动；新组件是否选对表面/层级仍需评审。",
+        "failure": "功能包定义全局主题、覆盖菜单材质、写颜色字面量或破坏焦点会在 spec/评审暴露。",
+        "exceptions": "schedule 的 TaskMenu/ClockPicker 保留既有容器与材质；状态色边框（warn）保持真实 border；Desktop 模态覆盖层也不过滤父页面。"
+      },
+      "applicability": [
+        "when: 任何浏览器客户端包的样式、主题 token 或共享控件改动。",
+        "preconditions: 存在 ui-theme/ui-primitives; CSS Modules 与语义 token 已建立; 有视觉/快照测试",
+        "inapplicable: 非浏览器客户端（终端/TUI）不适用；纯品牌资产内部绘制不受组件 token 规则约束。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.ui-corner-radius-standard; documentation-procedures.plugin-preview-procedure",
+        "crossDomain: subsystem-contracts-2; package-contracts"
+      ],
+      "migration": {
+        "strategy": "先集中 token 与 primitive，再逐步移除功能包里的主题分支与字面量。",
+        "implementation": "建立 semantic alias 层、全局样式 owner、primitive catalog 与 elevation/menu spec；把视觉验收接入浏览器场景。",
+        "requiredSupport": [
+          "主题 token 层",
+          "primitive catalog",
+          "CSS Module 约定",
+          "视觉/快照测试"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.web-styling-ownership",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新组件只用 alias token 与 primitive，明暗/焦点/reduced-motion 检查通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "功能包定义全局主题或给 border 配 elevation shadow 时，spec/评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "迁到主题 token/MenuSurface 并去掉覆盖后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "spec 只能覆盖已知模式；新表面材质仍需设计评审。",
+        "本域未运行样式 spec 或浏览器测试。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.wire-extension-exposure-and-receiver",
+      "title": "DeepSeek wire 扩展的版本化、交付与暴露边界",
+      "sources": [
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 3,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 9,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 22,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 33,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 41,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 74,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 135,
+          "end": 157,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/deepseek-llm-api-wire-extensions.md",
+          "start": 158,
+          "end": 162,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "给模型请求增加 header 或 body 字段会同时改变协议兼容性、交付语义与数据暴露面；若版本混用、把 HTTP 2xx 当持久化确认或把字段塞进 messages，就会产生静默丢数据或 token/隐私问题。",
+      "triggers": [
+        "新增 DeepSeek 请求 header 或 dsh_ body 字段",
+        "修改 session log 上传或水位",
+        "配置自定义 baseURL/网关",
+        "评审数据外发面"
+      ],
+      "obligations": [
+        "扩展只用于 deepseek-official Messages 请求的 dsh-llm-deepseek；不重定义上游自有字段；provider-neutral 接口与 llm-pi-ai 不实现。",
+        "命名分层：HTTP header 小写 kebab；body 扩展 snake + 保留 dsh_ 前缀；DSH 自有嵌套成员 camel；tagged value kebab，持久事件用 domain/action。",
+        "每个 body 扩展独立拥有 version；版本只约束其所在对象；不同字段版本无兼容/排序关系；JSON 成员顺序不属于协议。",
+        "Registry 每个顶层扩展名保留一个 provider；空/空白名、重复注册、与基础请求冲突在 HTTP 前失败。",
+        "事务：先序列化完整基础 body，再让 provider 基于不可变 body/signal/可选 sessionId/purpose 准备；undefined 省略字段；准备失败只省略该贡献并记录首个失败；字段冲突阻止请求；合并序列化失败则回退无扩展 body、跳过 acceptance 并记录字段名。",
+        "只有 HTTP 2xx 后才在读取 SSE 前运行 accept()；传输失败/非 2xx 不接受；acceptance 失败记录但不使模型请求失败，贡献者稍后重发。",
+        "acceptance 只表示端点 HTTP 成功，不表示 SSE 完成或远端持久化。",
+        "dsh_plugin_packages 只发 Loader-backed 活跃包身份；去重排序、允许同名多版本、缺版本可接受；disabled/pending/failed/unloading/disposed/结构条目与临时挂载不出现；包身份不得进入模型输入。",
+        "dsh_session_log 只发同一 Session 的连续后缀；首传 afterSeq=-1；每次取能放进 maxBytes（默认 8 MiB，UTF-8，含 header/数字）的最长连续段；快照后新增属于后续请求。",
+        "watermark 以 session-log-deepseek/delivery-accepted 事件记录；throughSeq 必须指向更早事件并绑定 sessionFormatVersion；按最大匹配水位折叠，防回退与跨代授权；fork 忽略他 Session 水位并从 0 上传继承前缀。",
+        "崩溃可能重发已被端点接受的范围；不确定性产生重复而非序列缺口；没有独立 upload store 或截断路径。",
+        "暴露面：header 暴露应用版本、匿名 home 身份、可选 Session id；plugin packages 暴露包名/版本；session log 可能暴露 cwd、系统提示快照、用户/助手内容、失败尝试、工具参数/结果、压缩摘要、反馈与插件事件；API key 不是 Session 事件，不进入该字段；自定义网关收到相同值。",
+        "接收方按名字处理字段、按各自 version 分派、保留不同包版本、忽略成员顺序；session log 接收方先校验连续序号再解释事件；未知且非 ignorable 的权威事件阻止无损重建；2xx 不代表接收方已持有当前完整日志。"
+      ],
+      "actors": [
+        "owner: DeepSeek 适配器与扩展贡献者所有者",
+        "contributors: 扩展 provider 作者; 接收方实现者",
+        "reviewers: 协议/安全评审者",
+        "automation: registry 校验、适配器测试、session log 水位测试；暴露面需安全评审"
+      ],
+      "steps": [
+        "判定扩展属于 header 还是 body，并分配独立 version。",
+        "在 registry 注册唯一 provider，声明准备与 accept。",
+        "实现 detached JSON、失败省略与冲突处理。",
+        "为 session log 实现连续后缀、maxBytes 与 watermark。",
+        "列出暴露字段与接收方要求，做安全/兼容评审。",
+        "测试 2xx/非 2xx/序列化失败/崩溃重发与跨代水位。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review-plus-tests",
+        "implementation": "registry 在 HTTP 前拒绝非法名/重复/冲突；适配器在 2xx 后运行 accept；文档定义字段与接收方合同；测试覆盖水位与暴露。",
+        "trust": "注册冲突与 HTTP 事务可自动；数据最小化与接收方是否真正持久化无法由发送端证明。",
+        "failure": "把 2xx 当持久化、混用版本、跨代水位或把字段放进 messages 会造成丢数据/重复/token 变化；字段冲突会阻止请求。",
+        "exceptions": "contributor 准备失败时只省略该字段；合并序列化失败时发送无扩展 body；接收方可以忽略未知可选字段，但不能忽略非 ignorable 权威事件。"
+      },
+      "applicability": [
+        "when: 扩展 DeepSeek 官方请求，或实现其接收方/网关。",
+        "preconditions: 有扩展 registry 与 base body 序列化; 有 Session 日志与 durable watermark; 可配置 baseURL/网关",
+        "inapplicable: 其他提供方的适配器不实现这些字段；内部 IPC 不属于该 wire 合同。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.llm-adapter-procedure",
+        "related: documentation-procedures.session-format-authority",
+        "crossDomain: subsystem-contracts-1; persistence-current"
+      ],
+      "migration": {
+        "strategy": "先建立 per-field version 与事务边界，再加字段；把暴露面与接收方要求写进同一参考。",
+        "implementation": "实现 registry、detached JSON 合并、2xx 后 acceptance、连续后缀与水位事件；为每个字段定义接收方校验。",
+        "requiredSupport": [
+          "扩展 registry",
+          "不可变 base body",
+          "acceptance 事务",
+          "Session 水位事件",
+          "数据暴露评审"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.wire-extension-exposure-and-receiver",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增字段在 2xx 前不 accept，接收方按 version 解析且水位不回退。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "非 2xx 或序列化失败时仍推进水位，或跨 sessionFormatVersion 复用水位，测试失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "只在 2xx 后 accept、按 session+format 匹配水位，后续请求重发未接受段后恢复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "发送端无法证明远端真的持久化。",
+        "本域未运行 wire 测试。",
+        "暴露面清单可能随新事件类型扩展，需要持续评审。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.extension-point-map",
+      "title": "新行为必须落在已文档化扩展点",
+      "sources": [
+        {
+          "path": "docs/architecture.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 7,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 67,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 130,
+          "end": 158,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/extension-cookbook.md",
+          "start": 3,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/extension-cookbook.md",
+          "start": 98,
+          "end": 132,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "产品功能若直接改 agent loop 或私有内部状态，微内核声明就不可检查，插件也无法替换。源仓库把每个功能映射到已文档化扩展点，并提供可核对的 feature→mechanism 表。",
+      "triggers": [
+        "新增产品功能",
+        "考虑修改 agent loop 或核心包内部",
+        "评审询问「这属于哪个扩展点」",
+        "新增/改变扩展点"
+      ],
+      "obligations": [
+        "先读 architecture.md 再改 packages/；新行为附着到已文档化扩展点。",
+        "功能映射到 listener/service/registration：模型提供方用 ctx.llm adapter；能力用 ctx.tools；shell/terminal/sandbox/fs 用对应 seam；人类命令用 ctx.commands；事件与政策用 agent/*、tools/*、fs/*。",
+        "改变 loop 本身时更新扩展点地图；不能让 map 与实现脱节。",
+        "extension-cookbook 的 feature→mechanism 表声明「没有一行修改 loop」，并让每个 feature 对应一个可检查的 listener。",
+        "能力设计要同时定义 Service Definition、Provider 与 Consumer；一个角色不构成 seam。",
+        "片段是形态参考，不是 copy-paste 教程；具体步骤链接 cookbook。",
+        "新增事件要声明分派模式（@mode），并区分 durable session event 与 live extension point。"
+      ],
+      "actors": [
+        "owner: 架构/扩展点所有者",
+        "contributors: 功能作者",
+        "reviewers: 架构评审者",
+        "automation: 生成 catalog 校验事件分派；代码评审检查 loop 是否被绕开"
+      ],
+      "steps": [
+        "在 map 中找到功能对应的机制；找不到时先设计扩展点而不是改 loop。",
+        "按 seam 三角色拆分 definition/provider/consumer。",
+        "实现 listener 或 service 注册，并加卸载/回滚。",
+        "更新 map 与相关参考，若改变 loop 则同步文档。",
+        "用真实组装路径测试该扩展点。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "architecture.md 的 Where new behavior goes 表与 extension-cookbook 的 feature→mechanism 表；生成的 event/Cordis catalog 校验声明与分派点。",
+        "trust": "「是否改 loop」需评审与代码搜索；map 本身不是自动证明。",
+        "failure": "新增私有分支或直接改 loop 会使 map 失真并破坏替换性；评审应要求回到扩展点。",
+        "exceptions": "某些核心实现本身（如 agent-loop）就是扩展点所有者，修改它时可更新 map；实验性功能仍须声明扩展点。"
+      },
+      "applicability": [
+        "when: 新增模型能力、工具、命令、seam、UI 集成或持久状态。",
+        "preconditions: 存在扩展点地图与 catalog; 有可挂载的 plugin 组合; 有真实组装测试",
+        "inapplicable: 纯内部重构不新增行为时不要求新扩展点，但仍不得改变公开语义。"
+      ],
+      "relationships": [
+        "dependsOn: documentation-procedures.generated-reference-freshness",
+        "related: documentation-procedures.tool-authoring-contract; documentation-procedures.naming-and-vocabulary",
+        "crossDomain: engineering; subsystem-contracts-1; rationale-architecture-1"
+      ],
+      "migration": {
+        "strategy": "先写扩展点地图与 seam 角色，再实现功能；把 map 当成架构合同。",
+        "implementation": "维护 feature→mechanism 表、事件 @mode 与 seam 三角色模板；评审时先问「哪个扩展点」。",
+        "requiredSupport": [
+          "扩展点地图",
+          "事件分派声明",
+          "seam 模板",
+          "真实组装测试"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.extension-point-map",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新功能通过已文档化事件/服务实现，map 对应行存在且组装测试通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "功能直接修改 loop 且 map 无对应扩展点时，评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "改为 listener/seam 并更新 map 后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "map 与实现的对应关系没有单一自动检查。",
+        "本域未运行组装测试。"
+      ]
+    },
+    {
+      "id": "documentation-procedures.naming-and-vocabulary",
+      "title": "规范术语与职责命名的单一词汇",
+      "sources": [
+        {
+          "path": "docs/glossary.md",
+          "start": 3,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/glossary.md",
+          "start": 11,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/glossary.md",
+          "start": 23,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 42,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "同一概念多个名字、同一名字多种职责，会让文档、代码与评审各说各话；抽象名词（gate、surface、vocabulary）还会掩盖真实机制。源仓库用 glossary 固定规范术语，并用职责词表约束类与 ctx key。",
+      "triggers": [
+        "命名新概念、包、类或 ctx key",
+        "文档中出现同义词漂移",
+        "评审要求解释某个抽象词",
+        "新增 glossary 条目"
+      ],
+      "obligations": [
+        "每个概念一个规范术语；术语用标准 Markdown 锚点链接，实现细节留在包 README/Agent Note。",
+        "glossary 条目定义边界与反例；例如 seam 是完整可替换能力，不是其中一个角色；术语只保留该义。",
+        "包/类命名按稳定当前职责，不按首个实现、未来扩张或 Cordis 基类；接口包命名能力，实现包加机制/协议/环境/厂商限定。",
+        "ctx key：单引擎/运行时/策略/控制器/解析器/存储/当前配置用单数；注册表或拥有多个命名成员的服务用复数；类角色与 key 单复数一致。",
+        "不要在同一 Cordis Context key 上复用于不兼容的 host/client 声明；必要时加角色后缀。",
+        "Controller/Store/Directory/Presenter/Registry/Runtime/Resolver/Binder/Engine/Policy/Executor/Gateway/Provider/Backend/Handle/Config/Service 按词表定义选择；Service 只在没有更精确角色时使用。",
+        "SDK 只指受支持的 Python/TypeScript JSON-RPC 协议；产品拼写用 Typert，不用 TypeRT/typeRT。",
+        "写文档时直接命名 actor 与事实；保留 seam 给已定义能力；用确切检查/类型/API/操作，而非隐喻性 gate/vocabulary/surface。"
+      ],
+      "actors": [
+        "owner: 词汇/架构所有者",
+        "contributors: 功能作者; 文档作者",
+        "reviewers: 架构评审者; 文档评审者",
+        "automation: 无专门门禁；生成的 catalog 与类型检查间接约束名称"
+      ],
+      "steps": [
+        "先在 glossary 查概念是否已有规范术语。",
+        "没有时写条目：定义、边界、反例、链接。",
+        "按职责词表选择包/类/key 名称。",
+        "在文档中首次使用处链接 glossary，不复制定义。",
+        "评审检查同义词与新隐喻。"
+      ],
+      "enforcement": {
+        "mode": "instruction-plus-review",
+        "implementation": "glossary.md 的条目与反例；adding-a-package.md 的职责词表；docs/AGENTS.md 的直接命名规则；没有自动词汇门禁。",
+        "trust": "术语一致性完全靠作者与评审；类型/目录名只能间接提示。",
+        "failure": "同义词漂移或错误角色命名会通过编译，但会造成文档与 API 理解分叉；评审应要求改名或链接 glossary。",
+        "exceptions": "历史名称与外部上游名称可保留（rescope 明确不改 prose 外的上游名）；品牌与协议名不受职责词表约束。"
+      },
+      "applicability": [
+        "when: 命名新概念/包/类/ctx key，或发现文档词汇漂移。",
+        "preconditions: 存在 glossary 与职责词表; 评审愿意为命名把关",
+        "inapplicable: 局部变量与私有辅助函数不需要 glossary 条目；上游 vendored 名称不改。"
+      ],
+      "relationships": [
+        "related: documentation-procedures.extension-point-map; documentation-procedures.package-addition-procedure",
+        "crossDomain: engineering; documentation; subsystem-contracts-1"
+      ],
+      "migration": {
+        "strategy": "先建 glossary 与词表，再在新代码/文档中执行；不要一次性大规模改名。",
+        "implementation": "把概念条目、反例与职责词表放进仓库；评审模板加「术语是否已在 glossary」「角色是否匹配」两项。",
+        "requiredSupport": [
+          "glossary 文件",
+          "职责词表",
+          "锚点链接约定",
+          "评审清单"
+        ]
+      },
+      "reference": "references/documentation-procedures.md#documentation-procedures.naming-and-vocabulary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新概念在 glossary 有条目，包/类/key 按职责词表命名，文档链接而非复述。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 Registry 用作执行调度器或为同一概念造第二个名字时，评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按词表改名并补 glossary 条目后通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "没有自动检查能判断术语是否被正确使用。",
+        "词表是启发式，边界案例仍需判断。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1651 @@
+{
+  "domain": "upgrade-guides",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "upgrade-guides.required-trigger",
+      "title": "外部可观察破坏才写升级指南（触发与排除）",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 2,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 8,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 11,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/account-sign-in-errors/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/instruction-home-override/guide.md",
+          "start": 1,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/remove-runtime-invariants/guide.md",
+          "start": 1,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/desktop-test-auth-popup/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.2/desktop-font-size-shortcuts/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "升级者在发布后才发现 CLI、配置、持久数据或 SDK 变化，却没有可执行的迁移说明；把每次发布都写成“指南”会稀释信号，把外部破坏推迟到发版准备又容易漏写或丢失上下文。",
+      "triggers": [
+        "改动破坏仓库外用户可观察的表面：dsh 命令/flag/profile、cordis.yml/patch/overlay/settings 键或取值、持久用户数据（Session 日志、SQLite、用户数据目录）、TypeScript/Python SDK 导出、JSON-RPC/HTTP/ACP 消息、发布包名与 entry point",
+        "后续改动触及一份尚未随版本冻结的指南已经覆盖的表面",
+        "Session 格式或声明式持久类型发生变化（需要指南 + 类型确认两条记录）",
+        "发布前审计发现某个外部破坏没有对应指南"
+      ],
+      "obligations": [
+        "只为“仓库外的人升级后能观察到”的破坏写指南；普通发布说明、内部重构、无需用户动作的改进不写",
+        "触发面先按源技能列举的五类核对：命令与 profile、配置键与取值、持久用户数据、SDK/wire API、发布包入口；语料证明 Desktop 设置默认值、快捷键与 Web/Desktop 交互也按“外部可观察”纳入判定",
+        "预稳定内部 API 若所有消费者在同一次改动中更新，不需要指南；这是唯一明示的免写条件",
+        "Session 格式变化仍走 docs/cookbook/reviewing-persistence-type-changes.md 的类型确认；指南只写读者动作，并链接该记录，不复述 schema",
+        "一旦识别到破坏就立即记录，不等到 release 准备"
+      ],
+      "actors": [
+        "引入破坏的改动作者",
+        "代码评审者（判定是否属于外部可观察破坏）",
+        "发布负责人（发版前审计指南覆盖）"
+      ],
+      "steps": [
+        "列出本次改动触及的对外表面，并对每一项回答：仓库外的用户或插件作者升级后能否观察到变化？",
+        "若全部消费者都在同一改动内更新，且没有仓库外消费者，判定为免写，并在 PR 说明中记录该判断",
+        "若涉及 Session 格式或声明式持久类型，先按 cookbook 生成类型确认记录，再写指南",
+        "按“一个破坏面一个 item”建立指南；Change 写旧/新行为与受影响者，不写内部实现理由",
+        "把“是否需要指南”的结论交给评审复核；不要以 verifier 绿灯代替该判断"
+      ],
+      "enforcement": {
+        "mode": "review-triggered",
+        "implementation": "SKILL.md 定义范围与免写例外；根 AGENTS.md:11 是常驻命令；没有脚本把源码改动映射到指南，verify-upgrade-guides 只校验已存在的文件，目录整体缺失时返回空。",
+        "trust": "触发判定完全由作者与评审承担；自动门只能证明“写出来的指南形态正确”，不能证明“该写的都写了”。",
+        "failure": "漏写通常由评审或发布审计发现；若无人检查，自动门保持绿色。",
+        "exceptions": [
+          "预稳定内部 API 且消费者在同一次改动内全部更新：不写指南",
+          "Session 格式变化：需要指南，但同时必须遵循类型确认流程，指南只保留读者动作并链接记录"
+        ]
+      },
+      "applicability": "任何发布后存在仓库外消费者的项目。迁移时把“外部可观察表面”参数化为目标产品的实际接口清单；纯内部单仓且无外部消费者时可将本机制标记为不激活，但仍需保留判定记录，不能把自动门当覆盖证明。",
+      "relationships": [
+        "upgrade-guides.same-change-lifecycle",
+        "upgrade-guides.review-completeness"
+      ],
+      "migration": {
+        "strategy": "把触发面做成评审清单，而不是靠记忆；对每类表面给出“观察点”和“免写条件”。",
+        "implementation": "在 PR 模板或评审清单中加入“列出本次改动的外部可观察面；逐项映射到 guide item 或记录免写理由”；保留类型确认记录与指南的双链接。",
+        "requiredSupport": [
+          "一份目标产品的对外表面清单",
+          "一位有权判定免写的评审者",
+          "与发布流程相连的发版前审计"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.required-trigger",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "构造一个破坏 cordis.yml 键的改动，同一 PR 出现 docs/upgrade-guide/v<当前版本>/<item>/guide.md，Change 写明旧/新键与受影响者，Migration 给出替换键与确认命令；评审确认该表面仓库外可观察。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "构造一个仅 workspace 内使用的私有导出重命名，所有消费者在同一改动更新；评审应判定免写。随后删除整棵 docs/upgrade-guide 树并运行 verify-upgrade-guides，确认命令仍以 0 退出，证明“无指南”不会被自动发现。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "评审发现某外部破坏缺少指南：在引入破坏的同一 PR 内补写 guide.md/guide.zh.md/guide.i18n.yaml，重录配对并跑三个校验命令后再合并。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源仓库没有“源码变更 → 指南存在”的自动映射；本机制的正例/反例只能靠评审或额外的迁移期检查器证明。Desktop/UX 类条目说明五类列举不是封闭集合，“外部可观察”才是判定标准，这一点属于从语料得到的解释而非脚本可验证事实。",
+      "crossDomainRelationships": [
+        "文档域拥有 Session 类型的确认流程与双语合同",
+        "发布域拥有 release 边界与版本 bump 语义"
+      ]
+    },
+    {
+      "id": "upgrade-guides.same-change-lifecycle",
+      "title": "同改动写入、原位更新、回滚删除、bump 冻结、单 release 跨度",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 26,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 30,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 46,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 11,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 55,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 3,
+          "end": 3,
+          "kind": "config"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/remove-runtime-invariants/guide.md",
+          "start": 1,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把升级说明推迟到发版准备会丢失破坏被识别时的上下文；同一表面在版本 bump 前再次变化时新建第二个目录会产生互相矛盾的指南；破坏被回滚后保留指南会让读者执行已经不需要的步骤；跨多个 release 的指南无法说明“从哪个版本升到哪个版本”。",
+      "triggers": [
+        "识别到外部可观察破坏",
+        "根 package.json 版本未变，但后续改动触及某指南已覆盖的表面",
+        "破坏被回滚",
+        "根版本 bump",
+        "评审发现指南描述跨越了多个 release"
+      ],
+      "obligations": [
+        "在引入破坏的同一次改动中写指南，立即写，不推迟到发版准备",
+        "根版本未变时，当前版本目录描述从该 release 到当前 master 的 delta；后续改动触及已覆盖表面时，更新同一份指南而不是新建 item",
+        "破坏被回滚时删除该指南（连同中文与配对记录）",
+        "根版本 bump 后，旧版本目录冻结；新的破坏写入新版本目录",
+        "绝不写跨越一个 release 以上的指南；指南描述的升级区间必须是从版本目录对应 release 到下一个 release",
+        "中文 counterpart 也在同一次改动中维护（见 bilingual-pair）"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "发布/版本负责人"
+      ],
+      "steps": [
+        "读取根 package.json 的 version，确定本次改动应落入哪个版本目录",
+        "若该目录已有覆盖同一表面的 item，原位更新 Change/Migration，并重录配对",
+        "若破坏被回滚，删除三件套；不要留下“已回滚”条目当历史",
+        "若版本已 bump，只在新版本目录创建条目，不改旧目录",
+        "评审时检查：指南只描述一个 release 的升级，且所在目录与写入时根版本一致"
+      ],
+      "enforcement": {
+        "mode": "review-with-partial-structure-check",
+        "implementation": "SKILL.md 的 Maintenance 段落给出全部生命周期规则；verify-upgrade-guides 只校验目录形态、frontmatter、节序和词数，不读取 package.json 版本，不检测冻结、跨度、更新或删除。",
+        "trust": "生命周期规则全靠评审；自动门对“写错版本目录/跨 release/未删除回滚指南”保持沉默。",
+        "failure": "常见失败：在旧目录继续加条目、bump 后修改冻结目录、回滚后保留指南、把两个 release 的破坏合写为一份。",
+        "exceptions": [
+          "没有明示例外；唯一边界是“根版本未变”与“已 bump”两种状态。"
+        ]
+      },
+      "applicability": "任何采用版本目录的指南体系。迁移时可换成 monorepo 包版本、日期或 release train 作为目录键，但必须保留四个语义：同改动写入、未发布期间原位更新、回滚删除、发布后冻结且单跨度。",
+      "relationships": [
+        "upgrade-guides.required-trigger",
+        "upgrade-guides.item-layout",
+        "upgrade-guides.version-taxonomy",
+        "upgrade-guides.review-completeness"
+      ],
+      "migration": {
+        "strategy": "把“当前版本目录”定义为一个可从根清单机械读取的值，并把冻结规则写进评审清单；删除动作与新增动作同等重要。",
+        "implementation": "评审清单增加四问：目录版本是否等于写入时根版本？是否只覆盖一个 release？是否原位更新了已有表面？回滚是否删除了三件套？",
+        "requiredSupport": [
+          "可读取的根版本字段",
+          "版本 bump 流程",
+          "能删除整组文件的评审权限"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.same-change-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "根版本为 X 时先写入 vX/a 指南；第二次改动触及同一表面，原位更新 vX/a 且不新增目录；bump 到 Y 后同一表面再次破坏，新建 vY/a，vX/a 字节不变。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "在已 bump 后的旧目录修改指南，或把 vX→vY→vZ 的两次破坏写成一份指南；verify-upgrade-guides 仍通过，评审必须拒绝并记录自动门的盲区。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "破坏被回滚：删除 guide.md/guide.zh.md/guide.i18n.yaml 并重跑配对与链接检查；若已误改冻结目录，还原旧目录并在当前版本目录重建条目。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "冻结与“同改动”是过程事实，当前树只能看到结果，无法仅凭文件证明某次更新发生在同改动内；历史提交未被本域审计。",
+      "crossDomainRelationships": [
+        "发布域拥有版本 bump 与 release 边界；本机制只消费该边界"
+      ]
+    },
+    {
+      "id": "upgrade-guides.item-layout",
+      "title": "路径、版本目录、kebab-case item 与三件套布局",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 22,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 13,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 55,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 54,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 3,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.zh.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.i18n.yaml",
+          "start": 1,
+          "end": 16,
+          "kind": "config"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "指南散落在版本根、item 根或多层子目录时，读者无法按版本定位；把索引、附件或说明文件放进 item 目录会破坏“一个 item 一份可执行说明”的边界；item 名不可读或含大写/下划线会导致 URL 与命令不稳定。",
+      "triggers": [
+        "新建指南",
+        "移动/重命名版本或 item",
+        "评审发现目录里出现第四个文件或额外嵌套",
+        "版本号写法变化"
+      ],
+      "obligations": [
+        "唯一允许路径：docs/upgrade-guide/v<version>/<item>/guide.md；中文为同目录 guide.zh.md，配对记录为 guide.i18n.yaml",
+        "<version> 是写指南时根 package.json 的 version，形如 v0.1.7-rc.2；版本正则接受预发布后缀，不接受缺少 v 前缀、非法 semver 或 build metadata",
+        "<item> 是描述变更面的 kebab-case：仅小写字母数字与连字符，不允许下划线、大写或空段",
+        "每个 item 目录恰好这三个文件：不放 index、附件、notes.md 或更深层目录",
+        "目录树可递归扫描，但任何不符合 v<semver>/<kebab>/guide.{md,zh.md,i18n.yaml} 的文件都会被报告"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "校验脚本"
+      ],
+      "steps": [
+        "读取根 package.json version，得到 v<version>",
+        "为破坏面选择稳定、可读的 kebab-case item 名（如 schedule-optional-bundle）",
+        "只创建 guide.md、guide.zh.md、guide.i18n.yaml 三个文件",
+        "运行 pnpm run verify-upgrade-guides；若存在多余文件或错误层级，按报告移动/删除"
+      ],
+      "enforcement": {
+        "mode": "automatic-layout-gate（源 CI）+ 本包可执行布局门（目标激活）",
+        "implementation": "verify-upgrade-guides 用 GUIDE_PATH 正则匹配相对路径，递归枚举整个 docs/upgrade-guide 树，非匹配文件直接报 “only v<semver>/<kebab-case-item>/guide.{md,zh.md,i18n.yaml} files belong in docs/upgrade-guide”；guide.i18n.yaml 只参与文件名匹配，不解析内容。本包已交付同一语义的可执行移植 tools/doc-gates/verify-upgrade-guides.mjs：同一 SEMVER/路径正则、同一递归 readdirSync 扫描、同一 `/` 归一化与排序、同一条违规消息；guide 根与仓库根是显式参数（`--root`，`--guide-root`，默认 `docs/upgrade-guide`），命令为 `node tools/doc-gates/verify-upgrade-guides.mjs`，退出 0=通过、1=有违规、2=参数或依赖不可用。目标项目仍须把它接进自己的 CI/钩子并保存一次失败输出，才可声称阻断。",
+        "trust": "路径形态与三件套文件名可机械证明；版本是否等于写入时根版本、item 名是否准确描述破坏面仍需评审。",
+        "failure": "多余文件、错误层级、缺 v 前缀、非 kebab item、非法 semver 都会使命令以 1 退出并列出全部违规。",
+        "exceptions": [
+          "docs/upgrade-guide 整棵树不存在时返回空并通过；这是布局门的明示盲区。",
+          "CRLF 文件被接受。"
+        ]
+      },
+      "applicability": "任何采用“版本目录 + 条目目录 + 固定文件集”的指南体系。迁移时若改用其他目录键（日期、release train），必须保留固定文件名集与“无索引/无附件”约束，或同步替换校验器。",
+      "relationships": [
+        "upgrade-guides.version-taxonomy",
+        "upgrade-guides.frontmatter",
+        "upgrade-guides.bilingual-pair"
+      ],
+      "migration": {
+        "strategy": "保持三个固定文件名，把版本与 item 作为唯一可变维度；用校验器拒绝任何第四种文件。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-upgrade-guides.mjs（保留递归扫描、相对路径归一化、semver 与 kebab 正则）；把它接进目标项目的 CI 或 pre-push 钩子作为快速门，并用 `--root`/`--guide-root` 指向真实指南树。不要另写一套正则。",
+        "requiredSupport": [
+          "Node ≥ 22.19 与 tools/doc-gates 的固定解析依赖（npm install --prefix tools/doc-gates --ignore-scripts）",
+          "目标 CI/钩子入口（命令本身不自动挂载）",
+          "根版本字段",
+          "可写的指南树"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.item-layout",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在目标仓库根运行 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs`（可加 `--root <dir>`、`--guide-root handbook`）：v1.2.3/foo-bar/{guide.md,guide.zh.md,guide.i18n.yaml} 与预发布 v0.1.7-rc.2/profile-flag/* 均通过，CRLF 文件也通过，输出 “upgrade guides conform.” 且退出 0。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "在树中放入 README.md、0.1.7/item/guide.md、v0.1/item/guide.md、v0.1.7/Item_Name/guide.md、v0.1.7/item/notes.md、v0.1.7/item/extra/guide.md、v0.1.7+build/item/guide.md，命令逐条报出违规（每条带仓库相对路径）并以 1 退出。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把文件移到 v<semver>/<kebab>/ 并删除多余文件；重新运行命令直到输出 “upgrade guides conform.”。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "布局门不检查版本目录是否连续、是否与 release 历史一致，也不检查 item 是否重复覆盖同一表面；那些属于版本分类与评审。随包移植保留同一盲区：整个指南根不存在时返回空并通过（命令会打印该事实），删除整棵树不会变红。",
+      "crossDomainRelationships": [
+        "文档域拥有通用 Markdown 路径与链接规则"
+      ]
+    },
+    {
+      "id": "upgrade-guides.frontmatter",
+      "title": "frontmatter 精确键集、kind 与一句 description",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 38,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 14,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 30,
+          "end": 38,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 82,
+          "end": 95,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 5,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/account-sign-in-errors/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/working-directory/guide.zh.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "可选的元数据键会漂移成第二套文档分类；空 description 或把变更写进 kind 会让读者与工具都无法判断这份指南在讲什么；新增键却没有对应检查会制造无人维护的字段。",
+      "triggers": [
+        "新建指南",
+        "修改 frontmatter",
+        "想为指南增加新元数据字段",
+        "中文 counterpart 的 frontmatter 与英文不一致"
+      ],
+      "obligations": [
+        "frontmatter 必须从文件第一行开始，形如 ---\\n...\\n---\\n；缺 frontmatter 直接失败",
+        "键集恰好 description 与 kind（顺序由脚本排序后比较，等价于集合相等）；多一个或少一个都失败",
+        "kind 必须是 upgrade-guide",
+        "description 必须是非空字符串；源技能要求它是一句“什么破坏/什么替换”的说明，该语义由评审检查",
+        "新增键必须同时新增对应门禁并回填所有既有指南，不能只在新文件里使用"
+      ],
+      "actors": [
+        "作者",
+        "校验脚本",
+        "评审者"
+      ],
+      "steps": [
+        "从模板复制 frontmatter，只保留 kind 与 description 两个键",
+        "用一句具体的话写 description：点名破坏面与新行为，不写“ Various fixes ”",
+        "中文 counterpart 使用同样的键，description 写中文一句话",
+        "运行 verify-upgrade-guides；若报告键集/kind/description 违规，按原文修正而非改脚本"
+      ],
+      "enforcement": {
+        "mode": "automatic-metadata-gate（源 CI）+ 本包可执行 frontmatter 门（目标激活）",
+        "implementation": "verify-upgrade-guides 用正则提取首个 frontmatter 块，经 js-yaml JSON_SCHEMA 解析；校验对象形状、排序后的键集、kind 常量与非空 description。guide.zh.md 走同一函数，因此中文也必须满足相同键集与 kind。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，用同一正则 `/^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n/u`、同一 `load(..., { schema: JSON_SCHEMA })`、同一键集排序比较与同样的四条消息；`guide.zh.md` 走同一 `guideViolations`，中文不豁免。命令 `node tools/doc-gates/verify-upgrade-guides.mjs`，退出 0/1/2 同上。",
+        "trust": "键集、kind、非空可机械证明；“一句且准确”只能评审。",
+        "failure": "缺 frontmatter、frontmatter 为数组、键集不符、kind 错误、description 为空/非字符串都会以 1 退出。",
+        "exceptions": [
+          "未发现例外；中文与英文使用同一套 frontmatter 规则。"
+        ]
+      },
+      "applicability": "任何需要机器识别文档 kind 的指南体系。迁移时若保留其他元数据（owner、date），必须同时扩展校验器与所有既有文件，否则会重现源仓库明确禁止的“加键不加门”。",
+      "relationships": [
+        "upgrade-guides.item-layout",
+        "upgrade-guides.heading-structure",
+        "upgrade-guides.verifier-scope"
+      ],
+      "migration": {
+        "strategy": "把元数据压到最小：一个 kind + 一句人类可读的断言语义；任何新字段先证明有消费者与检查。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-upgrade-guides.mjs（同一 YAML JSON_SCHEMA 解析与键集比较，中英同一函数）；在评审清单加入“description 是否点名破坏与替换”。若目标要加字段，必须同时改 `FRONTMATTER_KEYS` 与全部既有指南，并补回归用例。",
+        "requiredSupport": [
+          "YAML 解析依赖 js-yaml（已固定在 tools/doc-gates/package.json，安装命令 npm install --prefix tools/doc-gates --ignore-scripts）",
+          "kind 常量",
+          "评审标准"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.frontmatter",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "合法 guide.md 与 guide.zh.md（各自 description 非空、kind: upgrade-guide）通过 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs`；键顺序不同也通过，因为脚本先排序。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "分别构造缺 frontmatter、frontmatter 为列表、键集多 version、kind: guide、description 为空五类 fixture，命令各报对应消息（must start with YAML frontmatter / frontmatter must be a YAML object / frontmatter keys must be exactly description, kind / kind must be upgrade-guide / description must be a non-empty string）并以 1 退出。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复恰好两个键、正确 kind、非空 description；重跑命令通过；中文侧同步后重录配对。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "脚本不检查 description 是否“一句话”、是否点名破坏面，也不检查中英文 description 语义一致。",
+      "crossDomainRelationships": [
+        "文档域拥有 kind→模板映射与全局文档元数据标准"
+      ]
+    },
+    {
+      "id": "upgrade-guides.heading-structure",
+      "title": "一个 H1 加 Change/Migration（中文 变更/迁移）的精确节序",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 39,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 16,
+          "end": 24,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 40,
+          "end": 46,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 97,
+          "end": 120,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 14,
+          "end": 29,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/working-directory/guide.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/web-listener-trust-config/guide.md",
+          "start": 1,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "多余的 H2（References、Notes、背景）会把一份“读者要做什么”的短文档变成混合体裁；节序颠倒会让读者先看步骤后看影响；中英文使用不同节名会破坏配对结构与读者预期。",
+      "triggers": [
+        "新建指南",
+        "增加/删除/重命名章节",
+        "中英文节名不一致",
+        "评审想把理由或链接写成新章节"
+      ],
+      "obligations": [
+        "guide.md 恰好一个 # 标题，然后恰好 ## Change、## Migration，顺序固定",
+        "guide.zh.md 恰好一个 # 标题，然后恰好 ## 变更、## 迁移，顺序固定",
+        "不得出现第二个 H1 或其他 H2；References/Notes/Background 等额外 H2 一律失败",
+        "H3 及更深标题不被布局检查计入，可在节内使用，但源语料 42 个 item 均未使用 H3，说明默认应保持扁平",
+        "标题文本按渲染后的 heading 节点精确比较；大小写、单复数、语言都必须一致",
+        "多余内容应外移到 owner 文档/Agent Note，而不是新增章节"
+      ],
+      "actors": [
+        "作者",
+        "校验脚本",
+        "评审者"
+      ],
+      "steps": [
+        "写一个具体的 # 标题，描述破坏或替换关系",
+        "直接写 ## Change，陈述旧/新行为与受影响者",
+        "直接写 ## Migration，列有序步骤",
+        "中文文件按 ## 变更、## 迁移镜像；保持标题顺序与结构",
+        "运行 verify-upgrade-guides；若报告 headings 违规，按期望字符串重排，而不是新增兼容节"
+      ],
+      "enforcement": {
+        "mode": "automatic-structure-gate（源 CI）+ 本包可执行 heading 门（目标激活）",
+        "implementation": "verify-upgrade-guides 用 mdast 解析 body，收集 depth<=2 的 heading 节点文本，要求长度为 expected+1、首项以 \"# \" 开头、其余与 [\"## Change\",\"## Migration\"] 或 [\"## 变更\",\"## 迁移\"] 完全相等。guide.zh.md 使用独立语言配置。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs：同一 mdast（经 tools/doc-gates/markdown.mjs 的 GFM 扩展）、同一 `depth <= 2` 切片与同一字符串比较；语言节名默认等于源配置，可用 `--sections guide.zh.md=<H2>,<H2>` 换成其他语言的精确节名，但文件集合仍由布局正则固定为 guide.md/guide.zh.md。",
+        "trust": "H1/H2 的数量、文本与顺序可机械证明；标题是否具体、两个节的内容是否充分仍需评审。",
+        "failure": "缺标题、两个 H1、改名、额外 H2、顺序颠倒、中文用英文节名都会以 1 退出并打印实际 outline。",
+        "exceptions": [
+          "H3+ 不被该检查计入；这是允许节内细分但不允许新增 H2 的边界。"
+        ]
+      },
+      "applicability": "任何“影响 → 行动”两段式迁移文档。迁移时若需要“回滚”节，应把它并入 Migration 的步骤，而不是新增 H2；若业务确实需要更多固定节，必须同时扩展校验器与所有既有指南。",
+      "relationships": [
+        "upgrade-guides.frontmatter",
+        "upgrade-guides.change-section",
+        "upgrade-guides.migration-steps",
+        "upgrade-guides.bilingual-pair"
+      ],
+      "migration": {
+        "strategy": "把两节视为合同：读者先理解破坏，再执行并验证；所有背景、理由、代码细节外移。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-upgrade-guides.mjs（同一 mdast heading 提取与精确字符串比较）；为其他语言用 `--sections` 声明精确节名，不要在代码里加语言分支。",
+        "requiredSupport": [
+          "Markdown AST 解析器（已固定 mdast-util-from-markdown + mdast-util-gfm + micromark-extension-gfm）",
+          "每种语言一份节名配置（默认中英，可用 --sections 覆盖第二种）",
+          "评审对“标题具体性”的检查"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.heading-structure",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "合法英文（# 标题 + ## Change + ## Migration）与中文（# 标题 + ## 变更 + ## 迁移），且含 H3 子节，运行 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 均通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "分别构造 no-title、two-titles（第二个 # Migration）、renamed（## Changes）、extra（追加 ## References）、reordered（## Migration 在前）以及中文使用英文节名六类 fixture，命令均报 headings 违规并以 1 退出，消息里带实际 outline。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "按期望顺序重写标题；中文改用 变更/迁移；重跑命令通过；因结构变化重录配对记录。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "脚本只比较 depth<=2 的 heading；不检查标题是否过于笼统，也不检查 H3 的内容或顺序。",
+      "crossDomainRelationships": [
+        "文档域的通用页面骨架与标题规则"
+      ]
+    },
+    {
+      "id": "upgrade-guides.word-ceiling",
+      "title": "英文 500 词上限（含 frontmatter，中文不计）与超限外移策略",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 40,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 46,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 16,
+          "end": 28,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 122,
+          "end": 129,
+          "kind": "test"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/subagent-activations/guide.md",
+          "start": 1,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.md",
+          "start": 1,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 49,
+          "end": 59,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把设计理由、完整代码和机械步骤塞进指南会让它在最需要执行的时候不可读；没有上限时，作者倾向于用篇幅代替精确性；只限制正文而不限制 frontmatter 会留下绕过空间。",
+      "triggers": [
+        "新建或编辑英文 guide.md",
+        "评审认为步骤过长/含大段背景",
+        "作者想提高词数上限"
+      ],
+      "obligations": [
+        "guide.md 最多 500 个空白分隔 token，frontmatter 与代码块都计入；计数与 wc -w 等价",
+        "中文 guide.zh.md 没有词数上限；但这不构成把英文内容倾倒到中文侧的理由，配对仍需语义等价",
+        "超过 500 词时：用源码文件/符号链接替代代码复述；把理由移入 Agent Note；把重复机械步骤做成脚本或 dsh 命令并在指南中调用",
+        "不要通过提高阈值解决超限；源技能明确要求外移",
+        "500 词是上限而非常目标；固定工具名/步骤应保持可执行"
+      ],
+      "actors": [
+        "作者",
+        "校验脚本",
+        "评审者"
+      ],
+      "steps": [
+        "写完后本地运行 verify-upgrade-guides，或先 wc -w 估算",
+        "若超限，先删内部实现叙述，再把理由链接到 Agent Note，把重复步骤抽成命令/脚本",
+        "确认精简后仍保留受影响者、破坏症状、精确标识符与验证方法",
+        "评审检查是否存在“为压词数而丢失失败模式/权限/例外”的退化"
+      ],
+      "enforcement": {
+        "mode": "automatic-word-budget（源 CI）+ 本包可执行词数门（目标激活）",
+        "implementation": "verify-upgrade-guides 对 guide.md 计算 source.split(/\\s+/u).filter(Boolean).length；LANGUAGES 中 guide.md 的 maxWords=500，guide.zh.md 的 maxWords=undefined。超限消息形如 “N words exceeds the 500-word ceiling”。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs：同一 `split(/\\s+/u).filter(Boolean).length`、同一 500/undefined 默认、同一条消息；阈值可用 `--max-words guide.md=<n>` 调整，也可给第二种语言声明上限（源默认不设）。",
+        "trust": "英文总词数可机械证明；信息密度、可执行性与中文语义等价仍靠评审。",
+        "failure": "501 词即失败；frontmatter 或代码块不能规避计数。",
+        "exceptions": [
+          "中文不受该上限约束；未发现英文豁免。",
+          "整棵树不存在时校验器直接通过。"
+        ]
+      },
+      "applicability": "任何短迁移说明。迁移时可调阈值，但必须保留“含元数据计数 + 超限外移而非加预算”的语义；若目标语言不是英文，应对主要读者语言设上限，并明确另一语言是否计数。",
+      "relationships": [
+        "upgrade-guides.heading-structure",
+        "upgrade-guides.migration-steps",
+        "upgrade-guides.review-completeness"
+      ],
+      "migration": {
+        "strategy": "把上限当成设计约束：指南只保留“读者必须知道/必须做/如何确认”，其余全部链接或脚本化。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-upgrade-guides.mjs 的 whitespace token 计数（同一实现）；在评审模板中加入“超限时外移了什么”的检查；为重复步骤提供脚本入口。",
+        "requiredSupport": [
+          "脚本/命令形式的机械步骤载体",
+          "Agent Note 或等价理由归档位置",
+          "独立于指南的源码链接目标",
+          "Node ≥ 22.19 与 tools/doc-gates 依赖（npm install --prefix tools/doc-gates --ignore-scripts）"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.word-ceiling",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "构造恰好 500 词的英文 guide.md，`node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 通过；同一对的中文 guide.zh.md 追加 600 个中文词，命令仍通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "构造 501 词的英文 guide.md，命令以 1 退出并报告 “501 words exceeds the 500-word ceiling”；frontmatter 词也计入。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "把设计理由移入 Agent Note、把源码复述替换为链接、把重复步骤抽成命令；重新计数到 ≤500 并跑命令通过；中文侧同步语义后重录配对。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "词数不等于可读性；脚本无法发现“为了压词数删掉失败模式/例外”的退化。源语料最大 497 词（subagent-activations），说明上限是紧约束而非宽松建议；该统计来自 wc -w，未运行校验器。",
+      "crossDomainRelationships": [
+        "文档域拥有常规文档的 wordcount 预算与 relocate/condense/raise 规则；升级指南使用更严的固定 500 词上限，不进入 doc-budgets.manifest.json"
+      ]
+    },
+    {
+      "id": "upgrade-guides.change-section",
+      "title": "Change 陈述旧/新行为、受影响者与可观察症状",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 21,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/account-sign-in-errors/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-model-catalog/guide.md",
+          "start": 1,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/web-listener-trust-config/guide.md",
+          "start": 1,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "只说“改进了 X”或只列内部实现，读者无法判断自己是否受影响、升级后会看到什么症状；把理由混进行为描述会让 Change 变成设计说明，挤占 500 词预算。",
+      "triggers": [
+        "写/改 Change 节",
+        "评审无法从 Change 判断谁受影响",
+        "破坏表现为错误码、警告、缺失界面或加载失败"
+      ],
+      "obligations": [
+        "Change 必须同时给出旧行为、新行为和受影响者（谁观察/谁需要动作）",
+        "症状要可观察：错误码/错误消息、启动警告、缺失工具或页面、编译/加载失败、默认值变化等",
+        "不要把设计理由、替代方案、实现细节写进 Change；理由属于 Agent Note 或链接",
+        "若破坏只在特定平台/安装形态出现，写明范围（如非 Desktop Web、macOS/Linux、测试包）",
+        "若存在不受影响的相关行为，简要说明边界，避免读者过度迁移"
+      ],
+      "actors": [
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "用一句话写旧行为（版本或条件）",
+        "写新行为及其触发条件",
+        "点名受影响角色与可观察症状",
+        "把“为什么这样设计”移出 Change",
+        "用读者视角复核：只读 Change 能否判断“我是否受影响、升级后会发生什么”"
+      ],
+      "enforcement": {
+        "mode": "review-content",
+        "implementation": "没有脚本检查 Change 的语义；verify-upgrade-guides 仅确认节存在且标题正确。",
+        "trust": "完全由评审承担；语料提供正例模式（旧版本行为 → 下一版本行为 → 受影响症状）。",
+        "failure": "Change 只写“变更了 X”或只写实现细节时，评审应拒绝；自动门仍绿。",
+        "exceptions": [
+          "若破坏极其局部，仍至少要写旧/新行为与受影响者，不能省略其一。"
+        ]
+      },
+      "applicability": "任何迁移说明。迁移时保留“旧→新→谁受影响→症状”的四元结构；可把症状参数化为目标产品的错误码、UI 元素或日志行。",
+      "relationships": [
+        "upgrade-guides.required-trigger",
+        "upgrade-guides.migration-steps",
+        "upgrade-guides.word-ceiling"
+      ],
+      "migration": {
+        "strategy": "把 Change 当“影响评估”而不是变更日志：读者应能据此决定是否继续读 Migration。",
+        "implementation": "评审清单增加四问：旧行为？新行为？谁受影响？升级后看到什么？",
+        "requiredSupport": [
+          "对目标产品错误消息/UI/加载行为的准确知识",
+          "必要时运行产品验证"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.change-section",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "为“登录传输失败改为 no-response”写 Change：说明此前报 network、现在报 no-response、受影响的是账号 API 客户端与校验器，并给出 HTTP 错误仍为 network 的边界。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Change 仅写“重构了账号错误处理，提升健壮性”，不写旧/新错误码与受影响者；评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补入旧/新行为、受影响者与可观察症状；删除设计理由并链接到对应记录；重跑形态门。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "“准确”依赖对产品的真实行为验证；本域只读文档，未执行任何登录/升级操作，语料中的症状是作者声明。",
+      "crossDomainRelationships": [
+        "文档域的 current-state 与受控技术英语规则"
+      ]
+    },
+    {
+      "id": "upgrade-guides.migration-steps",
+      "title": "Migration 有序步骤、精确标识符、可执行确认",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 44,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 25,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/web-listener-trust-config/guide.md",
+          "start": 1,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/subagent-activations/guide.md",
+          "start": 1,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.2/stored-credentials-precedence/guide.md",
+          "start": 1,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/primary-runtime-python-aliases/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.2/from-default-profile-replaces-target/guide.md",
+          "start": 1,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 42,
+          "end": 42,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "“更新你的配置”不是迁移步骤；读者需要知道改哪个文件、哪个键、哪条命令、哪个符号，以及改完如何确认。没有确认步骤时，错误会拖到生产才暴露；步骤过长或含未经验证的代码会误导读者。",
+      "triggers": [
+        "写/改 Migration 节",
+        "评审无法按步骤在 fixture 中执行",
+        "破坏涉及配置、CLI、SDK 或持久数据"
+      ],
+      "obligations": [
+        "Migration 必须是有序步骤（编号列表），每步点名精确文件、键、命令或符号",
+        "能用一个更短的 before/after 片段说清时用片段；不要把整份源码贴进指南",
+        "必须给出“如何确认迁移成功”的可观察检查（命令输出、重启后日志、编译结果、行为）",
+        "需要 owner 细节时链接对应 README/子系统页，而不是复述",
+        "不得要求编辑历史 Session 记录；对自动迁移的场景可写“无需手动编辑”",
+        "对破坏性/不可逆操作（如替换 profile、删除字段）明确备份或恢复路径"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "执行迁移的读者"
+      ],
+      "steps": [
+        "按读者操作顺序编号；每步只做一个决定或一个编辑",
+        "写清路径/键/命令/符号；需要时给最小 before/after",
+        "在最后一步给出确认方法与预期结果",
+        "对可能失败的分支给出错误识别与处理（例如 sandbox-unavailable 与权限拒绝区分）",
+        "评审在 fixture 中逐步执行；不能执行的步骤要求作者补证据或标注前提"
+      ],
+      "enforcement": {
+        "mode": "review-content-with-link-gate",
+        "implementation": "verify-upgrade-guides 不检查步骤内容；verify-md-links 检查指南中的相对链接与锚点；其余由评审执行。",
+        "trust": "步骤精确性、可执行性、确认有效性靠评审与实际运行；链接可解析性可机械检查。",
+        "failure": "步骤含糊、缺确认、要求编辑历史记录、链接失效（由链接门发现）都应阻断合并。",
+        "exceptions": [
+          "某些平台/环境无法在评审机上执行时，作者必须给出替代证据与证据限制，不能假装已验证。"
+        ]
+      },
+      "applicability": "任何面向读者的迁移文档。迁移时保留“精确标识符 + 有序 + 确认”三要素；把目标产品的命令与配置键替换为实际名称，不要照抄源产品的键。",
+      "relationships": [
+        "upgrade-guides.change-section",
+        "upgrade-guides.word-ceiling",
+        "upgrade-guides.review-completeness"
+      ],
+      "migration": {
+        "strategy": "把每一步写成可复制执行的单元，并把“确认”视为步骤的一部分而不是可选建议。",
+        "implementation": "评审时用临时 checkout/fixture 执行步骤；对不可执行的环境记录限制；把重复步骤抽成脚本以减少指南篇幅。",
+        "requiredSupport": [
+          "可运行的 fixture",
+          "目标产品的真实命令",
+          "链接检查器"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.migration-steps",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "按 web-listener-trust-config 的 5 步，在 fixture profile 中改写 connection overlay，运行 dsh --profile web --patch ./extra.yml --no-open 看到 dsh web: URL，再用 --dump-config 检查组合结果。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Migration 只写“更新相关配置并重启”，不含文件名/键/命令/确认；评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐精确路径与键、给出 before/after、增加确认步骤；链接 owner README；重跑链接检查与形态门。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源语料中的命令与行为未在本域执行；步骤是否在目标版本仍有效，需要产品测试或真实升级演练。",
+      "crossDomainRelationships": [
+        "文档域拥有相对链接与锚点校验（verify-md-links）",
+        "各产品域拥有被引用命令/配置的真实语义"
+      ]
+    },
+    {
+      "id": "upgrade-guides.bilingual-pair",
+      "title": "英文/中文/配对记录三件套与同改动维护",
+      "sources": [
+        {
+          "path": "docs/i18n/README.md",
+          "start": 9,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 24,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 32,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 42,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 48,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 65,
+          "end": 65,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 76,
+          "end": 83,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 145,
+          "end": 171,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-translation-pairing.ts",
+          "start": 185,
+          "end": 203,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 1,
+          "end": 4,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 45,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.zh.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.i18n.yaml",
+          "start": 1,
+          "end": 16,
+          "kind": "config"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 40,
+          "end": 40,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "只发英文会让中文读者无法执行迁移；把中文放在独立仓库或交错双语文件会破坏同步；手工声称“已翻译”无法发现一侧已改而另一侧未改；配对记录若没有结构约束，哈希会掩盖结构漂移。",
+      "triggers": [
+        "新增指南",
+        "编辑任意一侧 guide.md/guide.zh.md",
+        "增加/删除/重命名 heading 或代码块",
+        "配对检查报 out-of-sync/missing",
+        "评审要求确认中文语义"
+      ],
+      "obligations": [
+        "一个 pair 是三个同目录文件：guide.md、guide.zh.md、guide.i18n.yaml；不设 locale 目录、不交错双语、不拆分翻译仓库",
+        "一次合并必须带齐三种文件；不允许只落一侧语言",
+        "中文文件在 H1 后紧跟 switcher：[English](guide.md) | 中文；英文 authored 文件对应 English | [中文](guide.zh.md)",
+        "任意一侧改动后，同一次改动更新另一侧并运行 pnpm run verify-translation-pairing --write <guide.md> 重录记录；不许只改哈希不改内容；--write 必须点名已确认的 pair，--write --all 是显式的 corpus-wide 形式",
+        "配对记录按 heading section 保存 en/zh 内容哈希；section i 对应 section i；哈希覆盖 section 内除 fenced code blocks 与 generated regions 外的所有顶层块；这两类必须两侧逐字一致，但相同内容仍会被哈希；没有剩余块的 section 没有条目",
+        "不同步的 pair 通过对照已编辑侧的 diff 对 counterpart 做最小补丁来更新，绝不整篇重译；配对门会点名每个变化的 section",
+        "用户显式调用扩展工作流时，pnpm run gen-translation-brief <pair> 从“内容能产生已记录条目”的最新提交恢复最后确认文本，按最窄安全粒度组装更新；--apply 只能在结构校验后拼接仅代码围栏变化的补丁",
+        "记录按 section 分行，使 Git 默认文本合并可以组合不同 section 的改动；只有同一 section 两侧都改了被哈希内容时才冲突；解决 Markdown 冲突后重录该 pair",
+        "结构镜像：heading 深度与顺序、列表种类/起始/条目数、表格行列数、语义链接目标（含 query/fragment）、verbatim 代码块一一对应",
+        "一对中文/英文可能作者语言不同，但两侧权威相等，必须说同一件事"
+      ],
+      "actors": [
+        "改动作者",
+        "翻译/评审者",
+        "配对校验脚本"
+      ],
+      "steps": [
+        "在改动英文的同时写中文 counterpart，保持标题、列表、代码块与链接结构镜像",
+        "检查两侧 switcher 位置与形式",
+        "若 pair 不同步，先生成最小 counterpart patch；只有用户显式要求扩展工作流时才运行 gen-translation-brief，且 --apply 仅用于结构校验后的 code-fence-only 变更",
+        "运行 scoped 检查：pnpm run verify-translation-pairing docs/upgrade-guide/v<version>/<item>/guide.md",
+        "用 --write 点名该路径重录哈希；只把 yaml diff 当作“确认一致”的可评审动作；corpus 级使用 --write --all",
+        "合并前运行 corpus 级配对检查（doc-sync 中的 verify-translation-pairing）"
+      ],
+      "enforcement": {
+        "mode": "automatic-pairing-gate-plus-review（源 CI）+ 本包可执行配对检查/写入器（目标激活）",
+        "implementation": "verify-translation-pairing 枚举 docs/** 等范围内的 *.md 与 *.i18n.yaml，要求每个 source 有 zh，三元组完整/规范，哈希与当前内容一致，switcher 与结构签名匹配；--write 要求点名已确认的 pair（--all 为显式 corpus-wide），只对完整 pair 重录。verify-upgrade-guides 明确不拥有中文配对，只做文件名匹配。本包已交付 tools/doc-gates/verify-translation-pairing.mjs 及其同源模块（translation-pairing / translation-pairing-record / translation-pairing-git / translation-links / markdown）：三文件 pair、半删除锚点、canonical 记录、switcher 方向、链接 locale、generated region 等价、结构签名与 scoped `--write` 均按源语义移植，`--list`/`--cached` 也保留。唯一参数化是语料：源仓的 `docs/**`、README 与根文档集合是产品事实，移植版要求目标项目在自己的 `.doc-gates/translation-pairing.json`（`roots`/`files`/`excluded`/`generatedSources`/`publicRepositoryBlobRoot`）中声明；缺文件或空语料是退出 2，不是静默通过。`gen-translation-brief` 没有移植，属于未交付的源能力。",
+        "trust": "完整性、哈希、switcher、结构可机械证明；两侧是否“说同一件事”、术语与措辞质量由评审承担。",
+        "failure": "缺 zh/记录、哈希过期、记录非规范、switcher 缺失、结构签名不符都会使配对门以 1 退出；同一 section 两侧都改哈希内容会造成记录冲突，必须解决 Markdown 后重录；只重录哈希而不能通过评审的劣质翻译仍属违规。",
+        "exceptions": [
+          "generated English source 可省略英文侧 switcher（升级指南不适用）",
+          "manifest 中显式 excluded 的文档不配对（升级指南不在其中）",
+          "scoped 检查通过不能替代 corpus 级检查"
+        ]
+      },
+      "applicability": "任何双语或多语读者群体。迁移时保留“三文件同目录 + 记录 + 同改动 + 结构镜像”；若只维护一种语言，应将本机制标记为不激活并删除配对记录要求，而不是保留空壳记录。",
+      "relationships": [
+        "upgrade-guides.item-layout",
+        "upgrade-guides.heading-structure",
+        "upgrade-guides.review-completeness"
+      ],
+      "migration": {
+        "strategy": "把三件套与记录作为合并单位；把“确认一致”做成一次可评审的 yaml diff，而不是口头声明。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-translation-pairing.mjs：先用 `.doc-gates/translation-pairing.json` 声明目标语料（roots/files/excluded/generatedSources/publicRepositoryBlobRoot），再把 corpus 级检查接进 CI、把 `--cached <pair>` 接进 pre-commit；重录用 `--write <guide.md>`，corpus 级重录用 `--write --all`。在评审清单加入“两侧同改、重录、语义复核”。",
+        "requiredSupport": [
+          "配对校验器与写入器（已随包交付，需 tools/doc-gates 固定依赖）",
+          "目标语料配置 `.doc-gates/translation-pairing.json`（缺省即退出 2）",
+          "每语言 heading 名配置",
+          "术语表",
+          "能审阅目标语言的评审者"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.bilingual-pair",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在目标仓库声明 `.doc-gates/translation-pairing.json` 后，为 v0.2.1-alpha.4/account-notification-fields 维护完整三件套；两侧 switcher 正确，`node <skill>/tools/doc-gates/verify-translation-pairing.mjs --write docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md` 后记录与内容一致，scoped 与 corpus 检查均输出 consistent。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除 guide.zh.md 或 guide.i18n.yaml、只改英文不重录、中文使用英文 H2、结构/代码块不镜像、switcher 缺失，分别使配对门以 1 退出并点名原因；缺少 `.doc-gates/translation-pairing.json` 或语料为空时以 2 退出。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补齐 counterpart 与记录，按 English/中文 节名修正结构和 switcher，运行 `--write <guide.md>` 后重跑 scoped 与 corpus 检查；语义仍由评审复核。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "配对门只证明“这些内容上已确认一致”，不证明翻译正确、术语自然或两侧没有语义漂移；本域读取了 42 份记录但未重算哈希或运行门禁。42 个中文 guide 正文已逐文件读取并与英文逐项对照，未发现仅中文侧存在的义务。docs/i18n/README.md:22 超过 768 字符，已用 :raw 重读后把最小补丁、gen-translation-brief、--write 点名与合并语义纳入义务。移植版的 `gen-translation-brief` 与源 `docs/**` 默认语料均未交付：前者是未移植能力，后者被目标配置替代（缺失即退出 2）。",
+      "crossDomainRelationships": [
+        "文档域拥有配对合同、术语表与翻译流程的完整实现",
+        "文档域拥有 verify-md-wrap 与 verify-md-links 对中文文件的同等适用"
+      ]
+    },
+    {
+      "id": "upgrade-guides.verifier-scope",
+      "title": "verify-upgrade-guides 的实际边界与门禁接线",
+      "sources": [
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 54,
+          "end": 62,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 64,
+          "end": 80,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 804,
+          "end": 883,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 127,
+          "end": 132,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 198,
+          "end": 198,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/verify-doc-budgets.ts",
+          "start": 1,
+          "end": 12,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 9,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/verify-md-links.ts",
+          "start": 1,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 44,
+          "end": 44,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把“校验器存在/绿灯”当成“指南完整且正确”会留下最大盲区：脚本只检查已存在文件的形态；整棵树缺失、该写未写、版本目录错误、步骤不可执行都不会让它变红。",
+      "triggers": [
+        "接入或修改升级指南门禁",
+        "评审引用绿灯作为证据",
+        "删除/移动整棵指南树",
+        "怀疑词数/路径/节序检查是否覆盖某个失败模式"
+      ],
+      "obligations": [
+        "准确知道自动检查覆盖：路径与文件名、frontmatter 键集/kind/非空 description、H1/H2 文本与顺序、英文 500 词上限",
+        "准确知道未覆盖：是否该有指南、版本目录是否等于写入时根版本、冻结/跨度/原位更新/回滚删除、标题具体性、description 一句话语义、Change 准确性、Migration 可执行性/确认、双语语义、链接解析、重复覆盖",
+        "整棵树不存在时 collectUpgradeGuideViolations 返回空，删除目录不会触发失败；迁移必须另设“必需文件/变更映射”检查或评审清单",
+        "guide.i18n.yaml 只被布局正则匹配，不被该脚本解析；中文配对由 verify-translation-pairing 独立拥有",
+        "词数检查包含 frontmatter 与代码块；只统计英文；CRLF 与预发布版本被接受",
+        "把这些边界写进评审证据：绿灯只能证明形态，不能证明完整性或正确性"
+      ],
+      "actors": [
+        "门禁维护者",
+        "CI 负责人",
+        "评审者"
+      ],
+      "steps": [
+        "确认命令入口：源仓为 pnpm run verify-upgrade-guides（同时挂在 doc-sync 与 test:docs 的快速门列表）；本包为 node tools/doc-gates/verify-upgrade-guides.mjs",
+        "用正例树确认输出 “upgrade guides conform.”；用六类布局/五类 frontmatter/六类 heading/超词 fixture 确认拒绝路径",
+        "显式验证盲区：空树通过、删除某必需指南仍通过、旧版本目录可改、i18n.yaml 内容不解析",
+        "把链接与配对交给独立门禁：verify-md-links、verify-translation-pairing；不要在升级门里重复实现",
+        "在评审模板中补上脚本无法判断的检查项"
+      ],
+      "enforcement": {
+        "mode": "automatic-shape-gate-with-documented-blind-spots（源 CI）+ 本包可执行同语义门（目标激活）",
+        "implementation": "verify-upgrade-guides.ts 是纯函数 collectUpgradeGuideViolations + CLI；run-gates 把 upgrade-guides 注册为 quick 门，出现在 docSyncLeafGates 与 docQuickLeafGates 中；package.json 暴露 verify-upgrade-guides、test:docs、doc-sync。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，包含同一 collect 语义（递归枚举、路径正则、frontmatter/YAML、精确 H1/H2、whitespace 词数、空树通过、i18n 不解析、H3+ 忽略、中文不计数）；CLI 在空树时打印 “is absent; nothing to check” 而不是静默通过。它不改写源盲区：删除整棵树仍退出 0。",
+        "trust": "形态可机械证明；门禁接线可核对；完整性/准确性不可由该门证明。",
+        "failure": "形态违规以 1 退出；语义/覆盖缺失不会失败；参数错误或解析依赖缺失以 2 退出（不当作通过）。",
+        "exceptions": [
+          "树缺失返回 []；i18n.yaml 不解析；H3+ 不参与 heading 检查；中文不计数；不检查 package.json 版本一致性。"
+        ]
+      },
+      "applicability": "任何移植该门禁的项目。迁移时必须同时移植“已知盲区”清单与补偿检查；只复制脚本会得到虚假的安全感。",
+      "relationships": [
+        "upgrade-guides.item-layout",
+        "upgrade-guides.frontmatter",
+        "upgrade-guides.heading-structure",
+        "upgrade-guides.word-ceiling",
+        "upgrade-guides.review-completeness",
+        "upgrade-guides.bilingual-pair"
+      ],
+      "migration": {
+        "strategy": "把门禁分成“形态自动”与“完整性/语义评审”两层，并显式测试两层之间的缝隙。",
+        "implementation": "直接使用随包交付的 tools/doc-gates/verify-upgrade-guides.mjs 作为形态层；增加一个额外的覆盖检查（变更标签→指南存在，或发布清单→指南目录）作为迁移期补偿；把空树行为写进目标文档并配一个“必需文件”断言。",
+        "requiredSupport": [
+          "Node ≥ 22.19（核心无依赖）",
+          "YAML/Markdown 解析依赖（js-yaml、mdast-util-from-markdown、mdast-util-gfm、micromark-extension-gfm，已固定在 tools/doc-gates/package.json）",
+          "CI 快速门或 pre-push 钩子入口",
+          "独立链接与配对门"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.verifier-scope",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在合规树上运行 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs`，输出 “upgrade guides conform.” 且退出 0；把同一命令接进目标 CI 后确认它在管道中执行。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "用布局/frontmatter/heading/超词 fixture 分别触发退出 1 与具体消息；再删除整棵树运行命令，确认退出 0（输出 absent 提示），记录该门不覆盖缺失；传入未知参数或以缺失依赖运行，确认退出 2。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正形态后重跑通过；对缺失指南，新增覆盖检查或在评审清单中补写；对删除整棵树的情况，恢复目录并补一个“必需文件”断言。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本域仅静态阅读脚本与测试，未执行 pnpm/vitest 或随包命令；正例/反例中的输出为源码与移植代码推断，标记 planned。门禁在 CI 中是否真正阻断合并，取决于目标分支保护配置，本域未查询；随包命令本身不自动挂载到任何 CI。",
+      "crossDomainRelationships": [
+        "自动化域拥有 gate 调度与 CI 强制；本域只描述脚本与接线",
+        "文档域拥有链接、换行、doc-typecheck 与配对检查"
+      ]
+    },
+    {
+      "id": "upgrade-guides.review-completeness",
+      "title": "评审拥有的完整性、版本正确性与迁移可执行性",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 20,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 32,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 42,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 11,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 75,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 44,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 55,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.spec.ts",
+          "start": 54,
+          "end": 62,
+          "kind": "test"
+        }
+      ],
+      "problem": "自动门只能验证“写出来的东西形态正确”；是否该写、写没写全、版本对不对、步骤是否真能执行、中文是否同义，都没有脚本证据。把这些当作已由门禁保证，会把风险留到用户升级时。",
+      "triggers": [
+        "任何包含外部可观察破坏的 PR",
+        "发布前审计",
+        "指南被移动/删除/冻结目录被修改",
+        "评审引用 verify-upgrade-guides 绿灯"
+      ],
+      "obligations": [
+        "评审必须独立判断触发：列出本次改动的外部可观察面，并逐项映射到 guide item 或记录免写理由",
+        "检查版本目录：是否等于写入时根 package.json 版本；是否只描述一个 release；bump 后是否只改新目录",
+        "检查生命周期：未发布期间是否原位更新；回滚是否删除；是否存在重复/矛盾的 item",
+        "检查 Change：旧/新行为、受影响者、可观察症状是否齐全；是否混入理由/实现细节",
+        "检查 Migration：标识符是否精确、步骤是否有序、是否有可执行确认、是否要求编辑历史记录、是否给出不可逆操作的恢复路径",
+        "检查 description 是否一句且点名破坏；标题是否具体",
+        "运行并记录 scoped 门禁：verify-upgrade-guides、verify-translation-pairing <pair>、verify-md-links；发布前跑 corpus 级 doc-sync",
+        "中文语义与术语必须人工复核；配对绿灯不替翻译质量背书",
+        "不要把“门禁绿灯”写成“指南完整/正确”；证据必须说明执行了哪些命令、哪些判断由人完成"
+      ],
+      "actors": [
+        "代码评审者",
+        "发布负责人",
+        "作者（响应评审）"
+      ],
+      "steps": [
+        "打开 diff，先枚举外部可观察面",
+        "对照 docs/upgrade-guide 树，确认每个面有指南或免写理由",
+        "核对版本目录/生命周期/重复项",
+        "逐节审阅 Change 与 Migration，必要时在 fixture 中执行步骤",
+        "运行三个 scoped 命令并记录输出；发布前跑 doc-sync",
+        "在评审结论中区分“已自动验证”与“人工判断”"
+      ],
+      "enforcement": {
+        "mode": "human-review",
+        "implementation": "没有自动完整性检查；评审依赖 SKILL 的触发/维护/内容规则、根 AGENTS 常驻命令、配对门的明示限制，以及本域整理的盲区清单。",
+        "trust": "这是唯一能覆盖触发与语义的层，但它是人的判断，不是保证；评审者必须有权拒绝缺少指南或步骤不可执行的 PR。",
+        "failure": "漏审会导致缺指南、错误版本、跨 release、回滚残留或不可执行步骤进入发布。",
+        "exceptions": [
+          "对无法在评审环境执行的平台步骤，接受作者提供的替代证据并标注限制，但不得声称已验证。"
+        ]
+      },
+      "applicability": "所有采用指南门禁的项目。迁移时把本机制写成评审清单与证据模板；没有人类评审权的地方，不能把“有校验器”当成等价替代。",
+      "relationships": [
+        "upgrade-guides.required-trigger",
+        "upgrade-guides.same-change-lifecycle",
+        "upgrade-guides.verifier-scope",
+        "upgrade-guides.change-section",
+        "upgrade-guides.migration-steps",
+        "upgrade-guides.bilingual-pair"
+      ],
+      "migration": {
+        "strategy": "把自动门无法回答的问题显式列成评审清单，并要求评审结论引用具体证据而不是“看起来没问题”。",
+        "implementation": "在 PR 模板加入：外部可观察面清单、guide 映射、版本目录、生命周期、命令输出、人工判断项；发布清单加入指南覆盖审计。",
+        "requiredSupport": [
+          "有拒绝权的评审者",
+          "可执行 fixture",
+          "发布前审计流程",
+          "与 CI 门禁输出相连的证据记录"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.review-completeness",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "对一个含两个外部破坏的 PR，评审列出两个面并映射到两个 item；核对版本目录与单 release 跨度；在 fixture 执行 Migration；记录三个 scoped 命令输出与人工结论。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "PR 只改英文不重录配对、把破坏写入冻结目录、或 Migration 无可执行确认，但 verify-upgrade-guides 通过；评审拒绝并记录自动门未覆盖。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "作者补写/更新指南、修正版本目录、补确认步骤并重跑门禁；评审复核后合并；发布审计记录该缺口与修复。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "评审质量无法从仓库静态证明；本域未观察任何真实评审记录或发布审计日志，清单来自源规则与脚本盲区的组合。",
+      "crossDomainRelationships": [
+        "文档域拥有散文标准、术语与翻译评审",
+        "发布域拥有发版前审计与发布证据"
+      ]
+    },
+    {
+      "id": "upgrade-guides.version-taxonomy",
+      "title": "按 release 边界分版本目录的语料形态（证据，非模板）",
+      "sources": [
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 13,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 3,
+          "end": 3,
+          "kind": "config"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.md",
+          "start": 1,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.0-rc.2/account-sign-in-errors/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.1/deepseek-model-discovery/guide.md",
+          "start": 1,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-identity-watch/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.3/plugin-engines-dsh/guide.md",
+          "start": 1,
+          "end": 21,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把版本目录当成发布日志会给每个 release 建空目录；把多个 release 的破坏混在一个目录会让“从哪个版本升到哪个版本”不可判定；照抄源仓库的版本序列会误以为必须使用相同的 alpha/rc 编号。",
+      "triggers": [
+        "规划新版本目录",
+        "决定某个破坏应落入哪个版本",
+        "迁移时设计自己的版本键",
+        "审计目录数量与 release 是否对应"
+      ],
+      "obligations": [
+        "版本目录记录“写入时根版本”，一个目录对应一个 release 边界；不要求每个 release 都有目录，只为发生外部破坏的 release 建目录",
+        "指南描述从该目录 release 到下一个 release 的升级，不能跨多个 release",
+        "目录名使用 v<semver>，源校验器接受预发布标识（alpha/rc），不接受 build metadata 或缺少 v 前缀",
+        "item 以变更面命名，同一版本内可以有多条；版本之间不复制同一 item，除非破坏在新的 release 再次发生",
+        "根版本 bump 后旧目录冻结；当前根版本没有对应目录是合法状态（本提交即如此：package.json 为 0.2.1-rc.2，最新目录为 v0.2.1-alpha.4）"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "读取根 package.json version，确定“当前写入版本”",
+        "仅在存在外部破坏时创建对应版本目录；不为空 release 建目录",
+        "把同一 release 的多个破坏拆成多个 item；不要建立跨版本汇总条目",
+        "bump 后停止修改旧目录；新破坏进入新目录",
+        "迁移时用目标项目的版本方案替换 v<semver>，但保留“一个目录一个 release 边界”的语义"
+      ],
+      "enforcement": {
+        "mode": "convention-plus-layout-regex",
+        "implementation": "verify-upgrade-guides 只校验路径符合 v<semver>/<kebab>/...，不检查目录是否对应真实 release、是否连续、是否等于根版本；版本边界与冻结由评审/发布流程保证。",
+        "trust": "目录名合法可机械检查；目录选择、数量与 release 对应关系靠评审和发布审计。",
+        "failure": "空版本目录、目录版本与写入时根版本不符、把两个 release 混在一个目录、复制 item 制造重复，都不会被布局门发现。",
+        "exceptions": [
+          "当前根版本可以没有目录；预发布版本可以作为目录键；不要求目录连续。"
+        ]
+      },
+      "applicability": "任何按 release 组织的指南体系。参数化：版本来源（根 package.json / release tag / train）、是否允许预发布、目录与 item 的命名。不要照搬源项目的具体版本号或 42 个条目。",
+      "relationships": [
+        "upgrade-guides.same-change-lifecycle",
+        "upgrade-guides.item-layout"
+      ],
+      "migration": {
+        "strategy": "先定义“release 边界”的可机械读取来源，再决定目录键；只在有破坏时建目录，保持单跨度。",
+        "implementation": "在发布清单中记录每个目录对应的 release；评审核对目录版本与写入时根版本；迁移期可用脚本比对 package.json/tag。",
+        "requiredSupport": [
+          "可读取的版本来源",
+          "发布历史",
+          "评审对版本边界的判断"
+        ]
+      },
+      "reference": "references/upgrade-guides.md#upgrade-guides.version-taxonomy",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在目标仓库中，根版本 X 有破坏时创建 vX/<item>；bump 到 Y 后不再改 vX；Y 的破坏进入 vY；无破坏的 release 不建目录。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为无破坏的 release 建空目录，或把 vX 与 vY 的破坏合并到同一目录；布局门仍通过，评审必须拒绝并记录自动门盲区。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除空目录；把条目拆到各自 release 目录；冻结旧目录并更新发布映射；重跑形态门。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "语料的 6 个目录/42 个 item/126 个文件是目录枚举事实，不能证明每个历史破坏都被覆盖；版本与 release tag 的对应关系未在 Git 历史中逐条核对。",
+      "crossDomainRelationships": [
+        "发布域拥有版本号与 tag 的真实来源"
+      ]
+    }
+  ]
+}

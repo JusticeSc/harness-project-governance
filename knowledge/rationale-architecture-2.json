@@ -1,0 +1,2315 @@
+{
+  "domain": "rationale-architecture-2",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale-architecture-2.canonical-vocabulary",
+      "title": "One canonical vocabulary authority per boundary",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-11-custom-schema-dsl.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-11-tool-schemas-in-prompt-assembly.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-15-first-class-tool-role-messages.md",
+          "start": 1,
+          "end": 28,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-10-public-package-manifest.md",
+          "start": 1,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-11-plugin-owned-message-projections.md",
+          "start": 1,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-28-identified-immutable-message-values.md",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-12-pi-ai-route-default-input-modalities.md",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-10-05-shared-agents-root-instructions.md",
+          "start": 1,
+          "end": 37,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "The same concept accumulated several live descriptions (schema object versus JSON Schema text; wrapper-shaped versus first-class tool results; public versus internal manifest fields; per-feature message transforms inside Session). When two representations stay active, validation, replay, generation and adapter projection can disagree, and callers cannot tell which one is authoritative.",
+      "triggers": [
+        "A concept appears at more than one boundary: authoring type, persisted event, model projection, wire schema, or public package surface.",
+        "A feature-specific transformation (for example image offload) would need core code to interpret a plugin event.",
+        "A generated/derived artifact (schemas, catalogs, type declarations) would acquire a second naming source."
+      ],
+      "obligations": [
+        "Pick exactly one authoritative representation per semantic concept; derive every other form mechanically or by a checked projection.",
+        "Close vocabularies that model-visible roles depend on: a role must have a persisted event, an adapter projection and a validation path, otherwise it cannot be introduced.",
+        "Keep durable event envelopes opaque to the core except for declared, typed fields; a plugin-owned transformation supplies a pure interpreter instead of editing core.",
+        "Publish only a selected field set as public API; internal metadata stays with its owning tool and is not made discoverable merely because it exists.",
+        "Keep generated artifacts derived from one typed source and reject a second hand-maintained list."
+      ],
+      "actors": [
+        "core vocabulary owner",
+        "plugin that owns the domain event",
+        "code generator / type checker",
+        "reviewer"
+      ],
+      "steps": [
+        "Name the concept and its single authoritative source type.",
+        "List every representation the concept takes (persisted, wire, prompt, UI, public manifest).",
+        "Derive or validate each representation from the source; delete parallel hand-written descriptions.",
+        "For plugin-extensible concepts, register a pure interpreter keyed by the owning event type and require it at every decode and append path.",
+        "Add a gate or test that fails when a derived artifact and its source disagree, or when an internal field appears in the public surface."
+      ],
+      "enforcement": {
+        "mode": "type-checked derivation plus rejection at decode/append",
+        "implementation": "Single schema object compiled once (custom schema DSL); `@messageProjection` inventory generated from the owning `SessionEventMap` member; missing interpreters reject append, restore and folding; `DshPackageManifest` excludes packer/catalog fields; V4 tool-role rows validated as one unit.",
+        "trust": "Same-process typed calls are trusted; durable and model/wire boundaries are materialized and validated.",
+        "failure": "Missing or duplicate interpreter rejects the operation; wrapper rows accepted by the adjacent migration edge only; malformed manifest fields fail consumer validation; unknown role cannot reach a request.",
+        "exceptions": "Historical formats are handled only by their frozen migration edge, never by accepting both current shapes."
+      },
+      "applicability": "Any project with a plugin or extension model, several serialization surfaces, or a public package API. The pattern scales down to one repository-wide type module and one generated schema artifact.",
+      "relationships": [
+        "Depends on `rationale-architecture-2.structured-error-taxonomy` for stable rejection identity.",
+        "Constrains `rationale-architecture-2.extension-point-ownership` when a plugin supplies the interpretation.",
+        "Interacts with `rationale-architecture-2.naming-ledger` because one concept must also have one name."
+      ],
+      "migration": {
+        "strategy": "Choose the authoritative form, migrate all producers and consumers in one cutover, refuse mixed current representations, and leave historical conversion to an explicit edge.",
+        "implementation": "Introduce the canonical value/type, then update writers, readers, validators, fixtures and generated artifacts together; add negative tests for the retired form.",
+        "requiredSupport": "A single owning package for the concept and a way to run type/contract checks in CI."
+      },
+      "reference": "references/rationale-architecture-2.md#canonical-vocabulary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A persisted tool result decodes to exactly one first-class role and adapters project it without inspecting wrapper text.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A plugin message projection registered for one event yields the same derived messages on live append and detached replay.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Appending an event whose declaration lacks a required interpreter is refused before commit.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A public manifest type check rejects internal packer or migration fields.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A stored historical wrapper row is converted only by the adjacent format edge, and a refused nested wrapper leaves the source generation intact.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source notes describe the repository's own vocabulary; adopting projects must decide which of their concepts are genuinely closed and which remain provider-extensible.",
+        "Generated inventories prove completeness of registration, not semantic correctness of each interpreter."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.structured-error-taxonomy",
+      "title": "Stable structured failures instead of message matching",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-11-structured-error-taxonomy.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-19-package-owned-invariant-service.md",
+          "start": 1,
+          "end": 106,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Errors surfaced as prefixed strings or generic Error instances force callers to branch on prose. Sandboxes, retry policies and UIs then depend on wording, and cross-tool failures lose the distinction between 'the operation failed' and 'the operation was denied'.",
+      "triggers": [
+        "A plugin or adapter must branch on a failure produced by another package.",
+        "A durable event or wire response needs a failure identity that survives replay.",
+        "Several packages would otherwise each invent an error class for the same condition."
+      ],
+      "obligations": [
+        "Give each package one error base and stable machine codes; attach the original cause rather than flattening it.",
+        "Expose codes on the boundary that consumers use (tool result, remote failure, invariant report); do not require parsing `message`.",
+        "Keep presentation text free to change without changing the code.",
+        "Attribute failures from extension contributions to the contributing package name."
+      ],
+      "actors": [
+        "package owner",
+        "boundary adapter",
+        "consumer"
+      ],
+      "steps": [
+        "Define the error base and code union next to the domain contract.",
+        "Throw with a code and cause; wrap foreign errors without discarding their identity.",
+        "Project the code through each durable/wire boundary and test both a positive branch and an unchanged human message.",
+        "For extensible services, report the registering package in the failure rather than a generic service error."
+      ],
+      "enforcement": {
+        "mode": "typed error union plus boundary projection",
+        "implementation": "Single `HarnessError`-style base with `code` and `cause`; `InvariantError` carries the registering package name; remote failures preserve their own code through the gateway.",
+        "trust": "Errors crossing a durable or wire boundary are materialized; in-process casts remain trusted.",
+        "failure": "Unknown codes still surface as an internal failure; a missing code is a defect, not a text fallback.",
+        "exceptions": "Historical durable records are not rewritten; their stored code is honored as data."
+      },
+      "applicability": "Every project with plugins, retries, or a machine client. A minimum viable version is one error base plus a code enum per public boundary.",
+      "relationships": [
+        "Supports `rationale-architecture-2.canonical-vocabulary` by giving each rejection a stable identity.",
+        "Used by `rationale-architecture-2.reconstructable-requests` for fail-loud reconstruction."
+      ],
+      "migration": {
+        "strategy": "Introduce the base and codes at the owning boundary first, then migrate callers off string matching; retain only documented legacy parsing at decode edges.",
+        "implementation": "Add codes, convert throw sites, update boundary projections and tests.",
+        "requiredSupport": "A lint or review rule that forbids new `message.includes(...)` branching."
+      },
+      "reference": "references/rationale-architecture-2.md#structured-errors",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A consumer branches on `error.code` and renders the same result across two message wordings.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "An invariant failure names the registering package and does not masquerade as a product-package error.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A wrapped foreign error retains its cause for diagnostics while the boundary exposes the stable wrapper code.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Codes are only stable if owners treat them as API; the source does not provide a repository-wide code registry beyond the owning packages."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.released-format-contract",
+      "title": "Released durable formats are a frozen contract with an explicit migration catalog",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-30-retain-ignorable-external-session-events.md",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-31-alpha-historical-unknown-event-refusal.md",
+          "start": 1,
+          "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-01-v2-embedded-assistant-streams.md",
+          "start": 1,
+          "end": 80,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md",
+          "start": 1,
+          "end": 251,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Once a format ships in any release, existing artifacts exist in the wild. Silent coercion of unknown data can delete information, invent semantics, or publish a generation that later readers cannot interpret.",
+      "triggers": [
+        "A durable artifact format is released (even as alpha), or a new event kind/cardinality changes sequence numbers.",
+        "An external producer wants to write a field the current reader does not know.",
+        "A migration would need to guess an identity or relationship it cannot prove."
+      ],
+      "obligations": [
+        "Keep a static catalog of released source→target format edges; a running process must restore historical formats before feature plugins mount.",
+        "Refuse unknown historical events unless a producer explicitly marked them ignorable; refusal preserves the artifact rather than deleting it.",
+        "Require an event that changes interpretation to declare `ignorable` explicitly; absence is never treated as safe.",
+        "Never roll back a published generation; publication is run-to-settlement once started.",
+        "Rewrite every declared reference when event cardinality changes, and refuse undeclared relationships.",
+        "Keep the exact original generation until the successor publishes."
+      ],
+      "actors": [
+        "format owner",
+        "migration edge author",
+        "persistence owner",
+        "operator"
+      ],
+      "steps": [
+        "Inventory the released versions and their physical/logical shapes.",
+        "Add one edge per adjacent version; keep edges static and independent of mounted plugins.",
+        "Decode with the source edge, validate the target shape, then publish only after verification.",
+        "Reject unknown or undeclared data with a diagnostic naming the artifact and event; do not rewrite in place on refusal.",
+        "Test refusal, unknown-ignorable retention, reference rewriting and fork-cut preservation."
+      ],
+      "enforcement": {
+        "mode": "fail-closed decode plus static migration catalog",
+        "implementation": "Alpha inventory refuses unknown v1 events and undeclared references; `ignorable: true` is the only retention route for external events; V3→V4 lifts exactly one wrapper and rejects nested wrappers; migration edges are static code.",
+        "trust": "Persisted bytes are untrusted input and are validated; in-memory typed events remain trusted.",
+        "failure": "A refusal leaves the source generation untouched and the open fails with a diagnostic.",
+        "exceptions": "A documented ignoreable external event may be retained verbatim; no other unknown event is guessed."
+      },
+      "applicability": "Any project that persists user data, especially plugin-extensible events. The minimum is a version field, a static edge per released version, and refusal instead of best-effort coercion.",
+      "relationships": [
+        "Uses `rationale-architecture-2.staged-migration` for large artifacts.",
+        "Uses `rationale-architecture-2.append-only-persistence` for publication and repair.",
+        "Constrains `rationale-architecture-2.extension-point-ownership` for third-party events."
+      ],
+      "migration": {
+        "strategy": "Freeze the current shape, add an explicit edge, migrate on open, publish atomically, and keep refusal paths.",
+        "implementation": "A versioned reader plus one adjacent edge; static catalog assembled at build time; process-local preparation shared by readers.",
+        "requiredSupport": "A persistence layer that can write a new generation and verify it before deleting/ignoring the old one."
+      },
+      "reference": "references/rationale-architecture-2.md#released-format-contract",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "An artifact from the previous released version opens and yields the same logical events after the edge runs.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "An unknown non-ignorable event or an undeclared reference refuses the open with the source generation intact.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed publication leaves the source readable and a retry re-runs the same edge without duplicating it.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source catalog is specific to DeepSeek Harness Session versions; another project must derive its own version inventory.",
+        "Static catalogs make future cardinality-changing migrations deliberately expensive; this is a tradeoff, not a free guarantee."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.staged-migration",
+      "title": "Bounded staged migration with read preparation separated from write publication",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md",
+          "start": 104,
+          "end": 251,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-05-read-only-session-migration-preparation.md",
+          "start": 1,
+          "end": 170,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/proposed/architecture/2026-09-29-session-migration-follow-redirect.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        }
+      ],
+      "problem": "Whole-artifact conversion of a large log materializes overlapping copies, exhausts memory, and blocks read-only consumers behind encode/verify/publish work they do not need. A single-flight preparation shared by readers must not let one caller cancel another's work.",
+      "triggers": [
+        "A format conversion can exceed memory or the event loop budget.",
+        "History pagination, follow, export and resume need the logical artifact without write access.",
+        "Several callers open the same historical artifact concurrently."
+      ],
+      "obligations": [
+        "Split conversion into stateful stages with bounded buffers and forward cancellation at declared yield points.",
+        "Produce one prepared logical artifact; read-only callers consume it without publishing.",
+        "Write open performs encode, verification and no-overwrite publication before returning an append handle.",
+        "Share one preparation among concurrent callers; a caller's cancellation must not cancel shared work, and the last waiter releases it.",
+        "A published generation is never rolled back; caller cancellation stops being honored once publication starts.",
+        "Do not persist intermediate format versions."
+      ],
+      "actors": [
+        "migration pipeline",
+        "read caller",
+        "write caller",
+        "verification worker",
+        "publication owner"
+      ],
+      "steps": [
+        "Decode the source with a streaming decoder and frame-boundary checks.",
+        "Run each declared edge as a stateful stage; keep only the source and current artifacts.",
+        "Yield cooperatively at a fixed cadence and check caller cancellation before publication.",
+        "Verify the encoded successor in a worker, re-check the source identity, then publish without overwrite.",
+        "Read open returns primed events; write open joins the same preparation and awaits publication before append."
+      ],
+      "enforcement": {
+        "mode": "single-flight preparation plus one-shot publication",
+        "implementation": "Stage pipeline with stateful codecs and an emit context; `StoredLog.publish()`; read open returns prepared events; write open claims a process-local ownership and a cross-process lease, re-resolves the generation, then publishes.",
+        "trust": "The source file is validated; the Worker verifies the encoded target; source identity is rechecked before publication.",
+        "failure": "A failed verification refuses publication and preserves the source; source drift cancels replacement instead of re-running on changed bytes.",
+        "exceptions": "Once publication starts it runs to settlement and ignores caller cancellation; the caller checks its signal again afterwards."
+      },
+      "applicability": "Any project converting large user artifacts on open (logs, databases, exports). Small projects can still separate read preparation from write publication.",
+      "relationships": [
+        "Implements `rationale-architecture-2.released-format-contract` for large artifacts.",
+        "Relies on `rationale-architecture-2.append-only-persistence` for the final write.",
+        "The proposed follow-redirect note shows the UI-level progress contract, not an implemented feature."
+      ],
+      "migration": {
+        "strategy": "Introduce the stage pipeline before adding new format edges, then make read and write opens consume the prepared artifact.",
+        "implementation": "Streaming decode/encode, verification worker, single-flight cache keyed by resolved source identity, no-overwrite publication.",
+        "requiredSupport": "Cancellation propagation, a worker boundary for verification, and a publication primitive with source-identity checks."
+      },
+      "reference": "references/rationale-architecture-2.md#staged-migration",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A 100MB-class artifact migrates with bounded memory and a read-only open returns without publishing.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Two concurrent readers share one preparation and both receive the same logical events.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Source drift between preparation and publication refuses replacement.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A cancelled waiter detaches while the shared preparation completes for the remaining waiter; publication is not rolled back.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source includes measured performance for its own 116MB case; those numbers are observations, not general guarantees.",
+        "The follow-redirect progress UI is a proposal, not implemented behavior."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.append-only-persistence",
+      "title": "Append-only durable artifacts with bounded repair and physical packing",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-18-shared-persistence-write-coordinator.md",
+          "start": 1,
+          "end": 53,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-19-zstandard-jsonl-session-logs.md",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-18-sqlite-physical-chunk-row-compression.md",
+          "start": 1,
+          "end": 82,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-15-packed-session-history-transport.md",
+          "start": 1,
+          "end": 62,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-31-live-assistant-stream-frames.md",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-24-project-session-directories.md",
+          "start": 1,
+          "end": 53,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-01-parent-owned-subagent-catalog.md",
+          "start": 1,
+          "end": 51,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-16-host-schedule-storage.md",
+          "start": 1,
+          "end": 65,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Rewriting a whole artifact on every commit loses crash semantics and scales with file size. Naively coalescing logical events changes sequence numbers, replay and partial-output evidence. Physical packing must reduce bytes without changing the logical stream.",
+      "triggers": [
+        "A durable log receives high-frequency small records.",
+        "A crash can leave a torn final record.",
+        "Consumers need metadata-only listing or suffix reads without decoding everything."
+      ],
+      "obligations": [
+        "Commit only by append (or a transactional batch); never rewrite committed bytes on the normal path.",
+        "Make physical frame/row boundaries coincide with durable append batches.",
+        "Repair only a torn tail, at an exact record/frame boundary, and never resurrect an unacknowledged record.",
+        "Keep the logical stream uncoalesced: packing is a physical representation and must decode losslessly.",
+        "Bound any packed unit (count and bytes) and reject rows outside the format limits.",
+        "Keep a fixed codec per schema version so a database remains readable independent of runtime topology."
+      ],
+      "actors": [
+        "persistence backend",
+        "coordinator",
+        "crash-recovery path",
+        "reader"
+      ],
+      "steps": [
+        "Write the header as its own framed unit, then one framed unit per durable batch.",
+        "fsync before acknowledging; on failure truncate to the prior length and retry.",
+        "On open, validate all complete units; treat EOF inside the final unit as a torn tail and truncate from its start.",
+        "Append synthetic closers only after repair, as a new durable batch.",
+        "For packed representations, validate references and sequence contiguity before exposing logical events."
+      ],
+      "enforcement": {
+        "mode": "append/transaction commit with explicit recovery",
+        "implementation": "JSONL frames with checksums (one per batch), SQLite `BEGIN IMMEDIATE` with schema ownership, packed rows tagged and bounded to 1,024 events / 1 MiB, repair marker at the row base sequence.",
+        "trust": "Existing bytes are untrusted and validated on every read; writers recheck schema ownership and stale writers are rejected.",
+        "failure": "Write/sync failure rolls back the append and rethrows; malformed interior data is corruption, not a silent empty result.",
+        "exceptions": "Explicit crash repair may delete a malformed final row and later rows before appending closers; normal appends never replace."
+      },
+      "applicability": "Any durable event log or append-heavy store. The minimum is append-only writes, an acknowledged boundary, and torn-tail detection.",
+      "relationships": [
+        "Provides storage for `rationale-architecture-2.released-format-contract`.",
+        "Coordinates through `rationale-architecture-2.scoped-lifetime` for backend ownership.",
+        "Feeds `rationale-architecture-2.bounded-envelope` because transport packing is separate from physical packing."
+      ],
+      "migration": {
+        "strategy": "Adopt append-only writes and a repair rule before introducing compression or packing.",
+        "implementation": "Frame format with magic/checksum, batch boundaries, header-only listing, suffix reads from the nearest candidate, and a regression guard that compares retained physical fields after each batch.",
+        "requiredSupport": "A filesystem with fsync and an atomic publication primitive (hard link or no-replace move)."
+      },
+      "reference": "references/rationale-architecture-2.md#append-only-persistence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Metadata listing reads only the header unit and never decodes event units.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A packed physical row decodes to the identical logical events and sequence range.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A checksum failure or sequence gap inside a committed region refuses the read.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A torn final frame is truncated and synthetic closers are appended as a new frame; earlier frames are unchanged.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The SQLite and JSONL designs are two backend-specific implementations; adopting projects need equivalent guarantees per backend rather than copying schema details.",
+        "Measured compression and latency figures in the source are machine- and corpus-specific."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.cache-isolation",
+      "title": "Derived caches are optional, fail-soft, per-record and never authoritative",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-19-projection-cache-per-session-files.md",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-18-shared-persistence-write-coordinator.md",
+          "start": 1,
+          "end": 53,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "A single global cache file creates write amplification proportional to session count and one malformed file takes every row down. A cache that reads disk directly while writes are throttled exposes inconsistent state; a cache that becomes required turns an optimization into a durability dependency.",
+      "triggers": [
+        "A read model is expensive to rebuild but derivable from the authoritative log.",
+        "Metadata listing must not open every log.",
+        "Multiple processes or sessions share one storage root."
+      ],
+      "obligations": [
+        "Keep the authoritative log as the only source of truth; a cache miss or corrupt record must fall back to refolding, not fail the domain.",
+        "Isolate failures per record so one bad document cannot brick unrelated sessions.",
+        "Serve reads from one coherent in-memory state after durability, not from direct disk reads that can lag writes.",
+        "Version-gate records and treat an unsupported version as absent unless the domain explicitly declares structural compatibility.",
+        "Do not let the cache own medium/path policy that belongs to the storage layer."
+      ],
+      "actors": [
+        "cache owner",
+        "storage domain",
+        "listing consumer"
+      ],
+      "steps": [
+        "Define the cache record and its version next to the domain schema.",
+        "Write through a per-record storage unit after the durable state advances.",
+        "On open, drop or skip invalid records and refold the affected records from the log.",
+        "Expose a synchronous snapshot read from memory; a cold consumer that needs certainty refolds from the log."
+      ],
+      "enforcement": {
+        "mode": "advisory cache with fail-soft decode",
+        "implementation": "`session_projcache` per-record domain documents; invalid record reads as absent; version 7 with declared 3-6 compatibility; storage owns tree creation and write chains.",
+        "trust": "Stored cache documents are untrusted; the log remains authoritative.",
+        "failure": "Malformed or stale-version documents are skipped, not allowed to reject the whole domain.",
+        "exceptions": "A legacy whole-unit cache is bootstrapped only when no new-layout document exists and the version is explicitly accepted."
+      },
+      "applicability": "Projects with expensive derived read models (search indexes, summaries, conversation projections) and a durable event log.",
+      "relationships": [
+        "Depends on `rationale-architecture-2.append-only-persistence` for the authoritative log.",
+        "Supports `rationale-architecture-2.reconstructable-requests` (cache may accelerate, never decide)."
+      ],
+      "migration": {
+        "strategy": "Move from a monolithic cache to per-record documents only after the storage abstraction exists; keep reads fail-soft throughout.",
+        "implementation": "Per-record unit with write chain, memory-authoritative reads, versioned documents, bootstrap from the legacy unit.",
+        "requiredSupport": "A storage layer that can create owner-only trees and serialize per-unit writes."
+      },
+      "reference": "references/rationale-architecture-2.md#cache-isolation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A listing with a missing cache record still returns the session row after refolding.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A malformed cache document affects only its own session.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A version bump discards stale records per record and rewrites them at the next checkpoint.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source cache covers session projections only; other derived indexes need their own record schemas and refold rules."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.reconstructable-requests",
+      "title": "Model-visible implies durably referenced",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md",
+          "start": 1,
+          "end": 57,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-28-identified-immutable-message-values.md",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-14-provider-routed-llm-adapters.md",
+          "start": 1,
+          "end": 93,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "If a request can include content that is not reconstructable from the log (system prompt, tool schemas, per-call config, provider route, replay state), then replay, audit and prefix-cache stability become dependent on which plugins happened to be loaded.",
+      "triggers": [
+        "A model request reads state that is not itself logged.",
+        "A hook or listener can replace the request on a per-call basis.",
+        "Resume, fork or compaction must reproduce earlier requests."
+      ],
+      "obligations": [
+        "Every model-visible value must be derivable from the session log plus referenced immutable objects and the pinned code version.",
+        "Log a full request-header snapshot at each conversation instance, real change and series boundary; do not invent a delta codec.",
+        "Make the projected request immutable; mutating a built request throws.",
+        "Put provider and model in both request and assistant message; never guess a missing route during migration.",
+        "Keep replay state in the durable terminal chunk and the assembled assistant message, aligned block-for-block.",
+        "Keep message identity minted at creation and preserved across representations; freeze at creation or import."
+      ],
+      "actors": [
+        "session owner",
+        "agent loop",
+        "adapter",
+        "migration edge"
+      ],
+      "steps": [
+        "Enumerate every input to request construction.",
+        "For each input, either log it (event/header) or derive it from logged data by a public pure function.",
+        "Freeze the built request and expose only observation; replacement happens through a logged channel with a reason.",
+        "Verify by rebuilding requests from the log and comparing bytes; a cache-read metric is the production signal."
+      ],
+      "enforcement": {
+        "mode": "interface-level unrepresentability plus logged snapshots",
+        "implementation": "`deriveMessages()` projections; `EpochHeader`/`request/header` full snapshots; frozen `GenerateOptions`; branded `MessageId`; assistant message stores provider/model/replay state.",
+        "trust": "In-process typed values are borrowed; durable/model boundaries are materialized once.",
+        "failure": "A request not explained by the log cannot be constructed; a mutating attempt throws; malformed headers refuse at load.",
+        "exceptions": "Direct one-shots (for example compaction summarization) log their envelope scalars instead of entering the session request sequence."
+      },
+      "applicability": "Any system with model calls, reproducible builds, or auditable external requests. The core rule generalizes to any external effect whose inputs must be explainable.",
+      "relationships": [
+        "Depends on `rationale-architecture-2.canonical-vocabulary` for message/role identity.",
+        "Constrains `rationale-architecture-2.extension-point-ownership` so hooks cannot bypass logging.",
+        "Uses `rationale-architecture-2.append-only-persistence` for durability."
+      ],
+      "migration": {
+        "strategy": "Add the missing logged facts first, then make request construction a pure function of the log, then freeze it.",
+        "implementation": "Message creation helpers, header snapshots, provider/model fields, replay envelope; rebuild tests over recorded logs.",
+        "requiredSupport": "A durable event log with stable identities and a public derivation function."
+      },
+      "reference": "references/rationale-architecture-2.md#reconstructable-requests",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A recorded log plus its referenced attachments reconstructs each request byte-for-byte, including the same header and tool schemas.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A per-call listener that tries to change the model without logging cannot alter the built request.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A missing referenced attachment fails the request loudly rather than silently dropping content.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Byte-exact reconstruction assumes a pinned code version and unchanged provider serialization.",
+        "The source accepts that some inherent costs (compaction, real prompt/tool changes) still bust provider caches."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.capability-seam",
+      "title": "Capability seam with one interface, swappable providers and explicit execution world",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-03-filesystem-directory-listing-seam.md",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-26-subprocess-seam.md",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-05-windows-fs-permissions.md",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-19-shared-win32-process-primitives.md",
+          "start": 1,
+          "end": 36,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-11-posix-ssh-runtime.md",
+          "start": 1,
+          "end": 65,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-20-extract-example-app-packages.md",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-10-unary-apiproxy-remote-migration.md",
+          "start": 1,
+          "end": 66,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-18-session-history-and-event-transport.md",
+          "start": 1,
+          "end": 385,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "A capability mixes stable domain semantics with a mechanism that changes per platform, backend, or deployment. If consumers import the mechanism directly, policy and platform behavior proliferate, and a second implementation must fork the plumbing.",
+      "triggers": [
+        "Two consumers need the same primitive with different execution worlds (local, sandboxed, remote, PTY).",
+        "A platform-specific implementation (Windows DACL, ConPTY, Win32 process, SSH) would otherwise leak into consumers.",
+        "A model-facing tool starts owning process or storage mechanics rather than command semantics."
+      ],
+      "obligations": [
+        "Define the capability interface in a service-definition package; put each mechanism in a provider package; keep consumers.",
+        "Consumers own policy and presentation; providers own primitive mechanics and resource cleanup.",
+        "State the execution world in provider paths, not as a local/remote flag on every call.",
+        "Keep provider outputs as storage/process facts (before/after text, exit facts) and let the consumer compute presentation.",
+        "Do not add speculative provider APIs without a production consumer.",
+        "Platform differences are documented behavior, not hidden shims: mode bits vs DACLs, signal availability, readiness tiers."
+      ],
+      "actors": [
+        "capability owner",
+        "provider author",
+        "consumer",
+        "platform reviewer"
+      ],
+      "steps": [
+        "Split the interface from the first implementation only when a second consumer or execution world is real.",
+        "Define the smallest operation set and its failure vocabulary.",
+        "Move shared plumbing and resource ownership into the provider.",
+        "Make consumers inject the service and express their own policy.",
+        "Test provider mechanics once and consumer behavior against the real service."
+      ],
+      "enforcement": {
+        "mode": "package boundary plus service injection",
+        "implementation": "`dsh-fs`/`dsh-fs-local`, `dsh-subprocess`/`dsh-subprocess-local`, `dsh-shell` consumer; `dsh-win32-process` shared ABI; SSH providers reuse local file/process semantics; example apps become app packages with leaf choices.",
+        "trust": "Provider boundaries validate external inputs; in-process typed calls are trusted.",
+        "failure": "A missing provider leaves the consumer pending by standard injection semantics; an unavailable platform operation fails explicitly.",
+        "exceptions": "Some launches stay outside the seam by ownership (MCP transport, test launchers); PTY allocation is behind the provider."
+      },
+      "applicability": "Any multi-platform or pluggable system. Start with one interface and one provider; split only at a real second implementation, not preemptively.",
+      "relationships": [
+        "Shares the ownership discipline with `rationale-architecture-2.extension-point-ownership`.",
+        "Uses `rationale-architecture-2.structured-error-taxonomy` for provider failures.",
+        "Underpins `rationale-architecture-2.platform-packaging`."
+      ],
+      "migration": {
+        "strategy": "Extract the seam when a second legitimate consumer appears; move mechanics first, keep public consumer behavior unchanged.",
+        "implementation": "Create definition/provider/consumer packages, re-export moved vocabulary during the cutover, then remove the old location.",
+        "requiredSupport": "Dependency-injection framework or equivalent service registry; a test harness that can select providers."
+      },
+      "reference": "references/rationale-architecture-2.md#capability-seam",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "The same filesystem consumer works through local and remote providers without a local/remote branch in its domain code.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A second implementation of one provider for the same capability is rejected at composition time.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A provider failure leaves the consumer pending or returns a structured failure without corrupting shared state.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Seam extraction adds packages and composition rows; the source warns against preemptive splitting.",
+        "Remote providers add transport, reservation and disconnect responsibilities even when they reuse local semantics."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.scoped-lifetime",
+      "title": "Effect-owned registration lifetimes and atomic scoped layers",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-12-scoped-layers-store.md",
+          "start": 1,
+          "end": 127,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-12-agent-scope-runtime-design.md",
+          "start": 1,
+          "end": 403,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-05-slot-declaration-injection.md",
+          "start": 1,
+          "end": 46,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-22-tui-interactive-extension-service.md",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-15-llm-model-catalog-and-acp-selection.md",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-16-explicit-turn-cancellation.md",
+          "start": 1,
+          "end": 56,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-30-followup-enqueue-and-owned-runs.md",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Plugins register into global and scoped layers, may load in any order, and may unload or be replaced. Hand-written maps duplicate visibility, ownership, rollback and reclamation; a disposer that is wrapped or a slot registered before its declaration leaks or races.",
+      "triggers": [
+        "A registration must be visible only within one agent/session/scope and disappear with its owner.",
+        "A contribution may arrive before the slot or service that declares it.",
+        "A throwing observer must not leave a half-applied registration."
+      ],
+      "obligations": [
+        "Derive visibility and ownership from the same context; never accept them as separate inputs.",
+        "Collect undo before notifying observers so a throwing callback rolls the mutation back.",
+        "Return the exact framework disposer; wrapping breaks ordered teardown.",
+        "Reclaim a scoped layer only when its complete aggregate is empty.",
+        "Make declaration timing explicit: injection waits for the declaration and restarts on a new declaration epoch; direct registration into an undeclared target fails loud.",
+        "Serialize modal/interactive requests through one focus owner and tie queued work to the caller's fiber."
+      ],
+      "actors": [
+        "scope service",
+        "registry owner",
+        "plugin author",
+        "framework"
+      ],
+      "steps": [
+        "Model one aggregate layer type per service.",
+        "Create the global layer eagerly; create scoped layers on first effect.",
+        "Insert atomically, return an exact undo, notify after collecting undo.",
+        "On plugin disposal, remove that plugin's entries and reclaim only fully empty layers.",
+        "For declarations, track an epoch so collapse/redeclare restarts injections even if the final state looks continuous."
+      ],
+      "enforcement": {
+        "mode": "framework lifecycle plus transactional registration",
+        "implementation": "`ScopedLayers` with `NamedEntries`/`AnonymousEntries`; `SlotRegistry.inject()` with declaration epochs; TUI overlay manager FIFO; service traceable proxy installs the effect on the caller fiber.",
+        "trust": "Same-process registration values are trusted; lifecycle ordering is framework-enforced.",
+        "failure": "A setup failure disposes earlier yielded effects in reverse order and releases the name reservation.",
+        "exceptions": "`notify: false` registrations keep the domain's own change policy; a filtered registration retains only its name reservation."
+      },
+      "applicability": "Plugin platforms, multi-tenant UI composition, or any registry where registrations outlive or precede their declarations.",
+      "relationships": [
+        "Supports `rationale-architecture-2.extension-point-ownership`.",
+        "Explains the slot and scope mechanisms reused by `rationale-architecture-2.composition-truth`."
+      ],
+      "migration": {
+        "strategy": "Replace per-facade maps with one shared storage primitive one service at a time, keeping domain validation local.",
+        "implementation": "Introduce the generic store, migrate facades, then delete duplicated lifecycle code; pin ordering, rollback and disposer identity with tests.",
+        "requiredSupport": "A DI framework with effects/disposers, or an equivalent explicit ownership abstraction."
+      },
+      "reference": "references/rationale-architecture-2.md#scoped-lifetime",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A registration made through a scoped context is visible to that scope and its descendants, and disappears when the scope is disposed.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A duplicate named registration in one layer fails with the registry's diagnostic; two claims on one slot fail at load.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "An observer throw rolls back the registration; a delayed declaration failure unsubscribes and releases collected effects.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The concrete APIs are Cordis-specific; another framework needs equivalent fiber/effect guarantees.",
+        "The interactive overlay service deliberately covers modals only; broader UI contracts remain separate."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.extension-point-ownership",
+      "title": "Each extension point has exactly one presentation/interpretation owner",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-05-slot-declaration-injection.md",
+          "start": 1,
+          "end": 46,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-08-client-tool-presentation-ownership.md",
+          "start": 1,
+          "end": 77,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-21-conversation-build-groups.md",
+          "start": 1,
+          "end": 174,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-10-12-exclusive-conversation-matches.md",
+          "start": 1,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-11-plugin-owned-message-projections.md",
+          "start": 1,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-22-slot-type-chain-implementation.md",
+          "start": 1,
+          "end": 123,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-25-web-input-machine-and-slash-pipeline.md",
+          "start": 1,
+          "end": 122,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-17-dynamic-client-render-and-attachment-ownership.md",
+          "start": 1,
+          "end": 44,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-26-local-submission-echoes.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-01-jobs-absorb-activity-record.md",
+          "start": 1,
+          "end": 49,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-27-progressive-office-skills.md",
+          "start": 1,
+          "end": 32,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-10-09-composer-command-chip.md",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "When the host and every feature plugin can each interpret the same event or render the same region, duplicate nodes, competing layouts and silent ownership drift follow. Moving React components or adding a second registry does not change who decides placement or semantics.",
+      "triggers": [
+        "Two Definitions match the same event and each builds a node.",
+        "The conversation/view layer would need to know business tool names.",
+        "A plugin wants to add a presentation without owning the underlying data lifecycle."
+      ],
+      "obligations": [
+        "Make the matching Definition able to claim its event exclusively on a target; conflicting claims fail rather than rank silently.",
+        "Assign root/subcall composition, fallback and atomic renderer dispatch to one presentation package; business plugins register only atomic renderers.",
+        "Keep business grouping rules in a registered Definition; generic assembly supplies inputs, validation and publication only.",
+        "Keep command/reference chips as data-bearing nodes with explicit projections; do not derive claim state from text shape where the machine already knows it.",
+        "Registration into a region requires an explicit declaration/injection rather than an ordering convention."
+      ],
+      "actors": [
+        "conversation/target owner",
+        "business Definition author",
+        "presentation package",
+        "plugin author"
+      ],
+      "steps": [
+        "Decide which layer owns placement and which owns atomic content.",
+        "Add a claim mechanism to dispatch (evaluated per event, independent of registration order).",
+        "Move generic composition into the framework and leave business rules in Definitions.",
+        "Add negative tests for duplicate claims, duplicate registrations, and fallback behavior."
+      ],
+      "enforcement": {
+        "mode": "single-claim dispatch and typed registration",
+        "implementation": "`ConversationMatchResult.exclusive` with two-claim failure; `ui-tool` owns `ToolCallTree` and `GenericToolCard`; `ConversationGroupDefinition` registry; slot `inject`; message projection inventory.",
+        "trust": "Definitions are trusted same-process code; the framework enforces structural invariants.",
+        "failure": "A conflicting claim throws during dispatch naming event, seq and Definition kinds; duplicate target registration fails.",
+        "exceptions": "Definitions of other targets and target-less Definitions still receive the event; a generic Definition may remain unaware of claims."
+      },
+      "applicability": "Extensible UIs, document models, or event-sourced renderers with multiple contributors per event family.",
+      "relationships": [
+        "Relies on `rationale-architecture-2.scoped-lifetime` for registration lifetimes.",
+        "Uses `rationale-architecture-2.canonical-vocabulary` for event/definition keys.",
+        "Complements `rationale-architecture-2.reconstructable-requests` for durable presentation metadata."
+      ],
+      "migration": {
+        "strategy": "Introduce claims/dispatch checks before relocating components; move ownership in package-sized steps with fallback retained.",
+        "implementation": "Claim field, dispatch two-pass evaluation, ownership table, targeted slots, regression tests for duplicate presentation.",
+        "requiredSupport": "An event/definition dispatch layer with stable event identity and per-target routing."
+      },
+      "reference": "references/rationale-architecture-2.md#extension-ownership",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A claimed event yields exactly one context/node on its target and no generic duplicate for either registration order.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Two claims on one target throw during dispatch; a target-less claim throws.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Removing a presentation plugin leaves the generic fallback and durable data readable.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Exclusive claims are per target and per event; they do not solve cross-target duplication.",
+        "The grouping framework adds a publication phase and reader protocol; adoption cost is real."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.composition-truth",
+      "title": "Composition is the single statement of what runs, and scope is explicit",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-08-per-preset-standing-mounts.md",
+          "start": 1,
+          "end": 33,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-09-headless-direct-core-entry-point.md",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-06-app-owned-command-line.md",
+          "start": 1,
+          "end": 51,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-29-plugin-inventory-agent-preset-scopes.md",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-24-web-default-schedule-composition.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-10-desktop-web-wrapper.md",
+          "start": 1,
+          "end": 51,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Features reach a deployment through several places at once (bundle patches, overlays, launcher flags, preset scopes, separate app compositions). A surface then disagrees with documentation, rows mount twice, and the inventory hides what sessions actually run.",
+      "triggers": [
+        "A feature is available only through an example overlay or a flag.",
+        "A per-session scope mounts rows that a host-plane inventory does not see.",
+        "Two launchers maintain separate flag parsing or boot paths."
+      ],
+      "obligations": [
+        "Make the shipped composition the single source of truth; delete overlays that duplicate rows.",
+        "Mount a per-process preset once under a standing scope and bind agents to it, rather than per-session instances.",
+        "Keep each app entry point minimal and aligned with its contract (headless has no browser/HTTP tree).",
+        "Let an app own its command line; the launcher parses only its own flags and passes the rest verbatim.",
+        "Make inventory read both planes and evaluate declaration gates without mounting anything.",
+        "Use the same boot/serving path across surfaces where the contract is shared (Desktop through the Web host)."
+      ],
+      "actors": [
+        "composition owner",
+        "launcher/app author",
+        "inventory surface",
+        "operator"
+      ],
+      "steps": [
+        "List every place a row or flag can be introduced; choose one owning composition.",
+        "Delete duplicate overlays and update consumers to the shipped profile.",
+        "Implement app-owned argument parsing via a provided immutable argv service.",
+        "For scoped rows, establish one standing mount per process and bind scopes explicitly.",
+        "Make the inventory report both global and preset planes, with gates evaluated but nothing activated."
+      ],
+      "enforcement": {
+        "mode": "single composition plus structural app contracts",
+        "implementation": "Web bundle patch owns schedule rows; `headless-runner` direct core entry; `provideCmdline`/`parseCmdline`; `compositionInventory()` reads live mounts or files; Desktop delegates to the CLI profile runner.",
+        "trust": "Composition files and arguments are deployment input; the runtime validates rows and fails on missing providers.",
+        "failure": "A row depending on an absent provider fails at settlement with pending entries; duplicate insertion is avoided by not keeping the overlay.",
+        "exceptions": "Optional bundles remain explicit opt-ins; a deployment may disable shipped rows in its own patch layer."
+      },
+      "applicability": "Products with several front ends, bundles, or deployment profiles. The minimum is one canonical composition per product profile and a launcher that does not know app flags.",
+      "relationships": [
+        "Depends on `rationale-architecture-2.scoped-lifetime` for standing mounts.",
+        "Interacts with `rationale-architecture-2.config-credential-provenance` because composition is a configuration tier.",
+        "Explains the desktop/packaging split in `rationale-architecture-2.platform-packaging`."
+      ],
+      "migration": {
+        "strategy": "Consolidate on the shipped composition, delete overlays, then move flags into the apps and make inventory truthful.",
+        "implementation": "Bundle patch edits, app package bins, `cmdlineArgs`, preset standing mounts, inventory composition provider.",
+        "requiredSupport": "A loader that can mount entries once and a way to evaluate conditional rows without activating them."
+      },
+      "reference": "references/rationale-architecture-2.md#composition-truth",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "The default profile exposes the feature without an overlay or flag, and the inventory lists the preset rows that sessions run.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A missing provider for a consumer row fails at settlement and names the pending service.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Disabling shipped rows in a user patch removes the surface without changing the capability implementation.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source decisions assume a specific Cordis/Loader composition model; equivalent mechanisms are needed elsewhere.",
+        "Default-on features carry token and runtime cost even for users who never use them."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.config-credential-provenance",
+      "title": "Configuration and credential precedence with explicit provenance",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-04-configuration-source-ownership.md",
+          "start": 1,
+          "end": 75,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-30-credential-boundaries-and-atomic-registration.md",
+          "start": 1,
+          "end": 36,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-30-web-config-plane.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-deepseek-account-login.md",
+          "start": 1,
+          "end": 71,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-17-account-provider-signout.md",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Flattening configuration into the process environment loses provenance: a stored key appears ambient and becomes unwritable, a project file can redirect an endpoint that receives a credential, and two credential routes can silently fall back to each other.",
+      "triggers": [
+        "A value can come from a CLI flag, user settings, composition, shell environment, project file or default.",
+        "A stored secret must be writable, rotatable and revocable.",
+        "Several credential routes share one protocol implementation."
+      ],
+      "obligations": [
+        "Define one explicit ordering for non-secret values and a separate ordering for credentials; do not unify them by author.",
+        "Reject discovered files that set process-launch, runtime-injection, instruction-root, proxy or `DSH_*` variables.",
+        "Never hoist a stored credential document into the process environment.",
+        "Resolve one request from one configuration generation; a rejected generation contributes nothing.",
+        "Each adapter has exactly one credential resolver and header mode; no fallback to another route's credential.",
+        "Route replacement is atomic: validate the complete candidate set, then swap, and leave previous routes serving on refusal.",
+        "Redact secrets structurally at every wire face and enumerate the stripped slots."
+      ],
+      "actors": [
+        "launcher",
+        "settings/credential service",
+        "adapter",
+        "UI client"
+      ],
+      "steps": [
+        "Write down both orders and the tests that distinguish them.",
+        "Freeze a launch-environment snapshot before boot; resolve values through named layers.",
+        "Validate a discovered `.env` and refuse forbidden variables before materializing anything.",
+        "Read a credential only for its configured reference; fail with a stable missing-credential code rather than ambient discovery.",
+        "Swap route sets atomically and advance the caller's cache only after the registry holds the new set."
+      ],
+      "enforcement": {
+        "mode": "ordered layers plus fail-closed validation",
+        "implementation": "`LaunchEnvironmentSnapshot`; `.env` variable denylist by capability; `credentials-local` store; `registerAdapter(...).replace()`; `describe({redactSecrets:true})`; account grant issuer/origin validation.",
+        "trust": "Project files are trusted for ordinary values but not for variables that change the harness itself; stored secrets are access-controlled only against other OS users.",
+        "failure": "A forbidden `.env` variable fails launch; a rejected generation is discarded; a missing referenced key fails `MISSING_CREDENTIAL`.",
+        "exceptions": "An explicit launching-environment credential is read-only by design; proxy variables may be exempted only by a documented decision."
+      },
+      "applicability": "Any tool with layered configuration, secrets, or multiple auth routes. The mechanism is independent of the specific YAML/env formats.",
+      "relationships": [
+        "Uses `rationale-architecture-2.composition-truth` for the composition tier.",
+        "Feeds `rationale-architecture-2.egress-identity` because provenance determines where a credential may be sent.",
+        "Relies on `rationale-architecture-2.bounded-envelope` for large settings responses where applicable."
+      ],
+      "migration": {
+        "strategy": "Introduce provenance and refusal before adding UI writes; then make route replacement atomic and redaction structural.",
+        "implementation": "Layer snapshot, credential store split, per-request resolution, atomic adapter registration, redacted descriptors.",
+        "requiredSupport": "A settings/credential service with revision checks and a launch-time environment hook."
+      },
+      "reference": "references/rationale-architecture-2.md#config-credential-provenance",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A value set in user settings overrides composition and a stored credential overrides a project key but not a launching-environment credential.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A project `.env` containing `PATH`, `NODE_OPTIONS`, a proxy variable or a `DSH_*` variable fails launch before materialization.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A refused route replacement leaves previous routes serving and a later corrected replacement applies.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source explicitly notes the stored credential is not protected from the model's same-user tools; an OS keychain is deferred, not implemented.",
+        "Layers are still materialized into `process.env`, so ordinary project variables reach child processes."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.egress-identity",
+      "title": "Egress identity, origin pinning and redirect refusal",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-27-outbound-proxy-policy.md",
+          "start": 1,
+          "end": 97,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-21-mandatory-app-attribution-headers.md",
+          "start": 1,
+          "end": 83,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-deepseek-account-login.md",
+          "start": 1,
+          "end": 71,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-17-account-provider-signout.md",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-24-deepseek-account-remote-model-catalog.md",
+          "start": 1,
+          "end": 36,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Outbound requests can silently inherit proxy settings, cross-origin redirects, ambient credentials or per-deployment client identity. A credential is only as safe as the origin it is sent to and the identity headers that describe the caller.",
+      "triggers": [
+        "A provider adapter sends credentials or user data.",
+        "A browser or host shares one process among several callers.",
+        "A deployment uses proxies, gateways, custom base URLs or SSH forwarding."
+      ],
+      "obligations": [
+        "Apply one documented proxy policy to every outbound subsystem; no component silently bypasses it.",
+        "Pin credential use to a configured origin and issuer; refuse redirects that leave it.",
+        "Attribute every provider request with a stable, non-secret `User-Agent`; do not adopt provider-specific headers as universal.",
+        "Carry caller client identity per request rather than storing the last caller on the Host.",
+        "Keep deployment authentication headers separate from account authorization and reserve their names.",
+        "Do not send secrets into URLs, questionnaires, logs or model-visible text."
+      ],
+      "actors": [
+        "HTTP client/provider",
+        "proxy policy owner",
+        "account provider",
+        "deployment operator"
+      ],
+      "steps": [
+        "Centralize outbound request creation and proxy resolution.",
+        "Validate the configured origin at startup and per request; reject redirects outside it.",
+        "Build attribution from package metadata and merge it last over profile headers.",
+        "Attach caller identity from the initiating UI for each account operation.",
+        "Test the wire with a mock server for both hand-rolled and library-backed adapters."
+      ],
+      "enforcement": {
+        "mode": "policy function applied at request construction",
+        "implementation": "`attributionHeaders`/`User-Agent`; `proxyForUrl`/`ProxyAgent` routing; account `inferenceOrigin` and issuer checks; per-call client headers; redirect refusal.",
+        "trust": "Deployment configuration is trusted; external endpoints and redirects are not.",
+        "failure": "A redirect outside the origin is refused; a missing attribution identity falls back to the product default rather than suppressing it.",
+        "exceptions": "Explicit alternate origins require grants from the configured issuer; OpenRouter-specific headers are deliberately not sent."
+      },
+      "applicability": "Any networked agent or CLI that sends credentials or user content. The minimum is one egress helper plus origin/redirect checks.",
+      "relationships": [
+        "Depends on `rationale-architecture-2.config-credential-provenance` for what may be sent.",
+        "Uses `rationale-architecture-2.bounded-envelope` for upload payloads.",
+        "Constrains `rationale-architecture-2.platform-packaging` where desktop/web transports differ."
+      ],
+      "migration": {
+        "strategy": "Centralize egress first, then add origin pinning and per-caller identity; keep provider-specific behavior behind explicit configuration.",
+        "implementation": "Shared HTTP helper, attribution helper, origin/issuer validation, mock-server assertions.",
+        "requiredSupport": "A single outbound transport abstraction and a configuration source for origins/proxies."
+      },
+      "reference": "references/rationale-architecture-2.md#egress-identity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Every adapter sends the standard attribution header and only requests to the configured origin carry credentials.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A redirect to another host does not receive the authorization header; an unconfigured provider-specific header is absent.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed sign-out still removes local credentials and does not restore login on remote failure.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source's proxy policy is Windows/Node-specific in parts; other runtimes need equivalent enforcement.",
+        "A modified client can still request arbitrary model ids; the server-side floor is not enforceable locally."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.bounded-envelope",
+      "title": "Bound every external payload by bytes, not by record count",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-24-bounded-session-log-upload.md",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-25-session-log-otel-byte-limits.md",
+          "start": 1,
+          "end": 29,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-session-log-upload-default.md",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-15-packed-session-history-transport.md",
+          "start": 1,
+          "end": 62,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-06-embedded-stream-record-readers.md",
+          "start": 1,
+          "end": 51,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-15-narrow-pi-ai-runtime-imports.md",
+          "start": 1,
+          "end": 26,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Count-based batching does not bound bytes after UTF-8 encoding and JSON escaping. A long backlog can exceed the runtime string limit, fail serialization repeatedly, and block every request; a single large upload can wait tens of seconds.",
+      "triggers": [
+        "A payload is serialized into a request body, an OTLP record, or a history page.",
+        "A backlog can accumulate while an endpoint is unavailable.",
+        "A single record can be pathologically large."
+      ],
+      "obligations": [
+        "Measure the complete serialized field, including header and numeric envelope, in UTF-8 bytes.",
+        "Pack greedily up to a configured byte cap; advance an acceptance watermark only to the last included item.",
+        "An oversized first item is omitted with a diagnostic; the watermark does not advance and later requests retry it.",
+        "A merged body that fails to serialize is an extension failure: send the base body and skip the joint acceptance transaction.",
+        "Keep per-record measurement linear; do not serialize the whole candidate set to discover overflow.",
+        "Separate transport batching from producer-level durable semantics; queue overflow is lossy and documented."
+      ],
+      "actors": [
+        "producer plugin",
+        "adapter",
+        "collector/endpoint",
+        "operator"
+      ],
+      "steps": [
+        "Define the byte cap and the exact serialized shape being measured.",
+        "Compute the longest contiguous run from the watermark that fits.",
+        "Send and advance only on provider acceptance.",
+        "On serialization overflow, drop extension fields for one request, log names, and resend later.",
+        "For OTLP, measure each record with its full envelope and greedily pack; reject an oversized record without blocking later ones."
+      ],
+      "enforcement": {
+        "mode": "byte-bounded queue plus acceptance watermark",
+        "implementation": "`maxBytes` default 8 MiB; `throughSeq`; oversized-event warning path; adapter base-body fallback; OTLP per-record measurement and greedy packing.",
+        "trust": "Serialized payloads are untrusted input to the endpoint; the producer validates own records before sending.",
+        "failure": "Provider rejection still fails the model request; preparation/acceptance failures are logged and retried.",
+        "exceptions": "An event larger than the runtime string limit blocks upload without failing requests until the cap admits it."
+      },
+      "applicability": "Any telemetry/upload/history transport. Start with a byte cap and a watermark even without compression.",
+      "relationships": [
+        "Complements `rationale-architecture-2.append-only-persistence` (physical packing is separate from transport packing).",
+        "Applies to `rationale-architecture-2.egress-identity` payloads.",
+        "Relates to `rationale-architecture-2.evidence-limits` because measured throughput is an observation."
+      ],
+      "migration": {
+        "strategy": "Replace count-only batching with byte-bounded packing, then add the fallback for unserializable merged bodies.",
+        "implementation": "Per-field byte measurement, watermark, greedy run selection, diagnostic on omission.",
+        "requiredSupport": "A serialization API that reports byte length cheaply and access to the schema envelope."
+      },
+      "reference": "references/rationale-architecture-2.md#bounded-envelope",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A backlog drains over requests each at most the cap, and acceptance advances the watermark to the last included item.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A first pending item above the cap is omitted with a warning and the watermark stays before it.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A merged body serialization failure sends the base body and resends the extension on a later request.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source's throughput figures come from one machine and corpus; they are not protocol guarantees."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.naming-ledger",
+      "title": "Role-accurate naming contract with a mechanical rename ledger",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-11-repository-naming-contract-and-rename-ledger.md",
+          "start": 1,
+          "end": 391,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-12-ptc-runtime-vocabulary.md",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-10-06-web-desktop-plugin-identity-compatibility.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Names that describe the first implementation rather than the responsibility mislead contributors. Repository-wide renames are cheap before release and expensive after; aliases preserve two vocabularies forever.",
+      "triggers": [
+        "A class, package, key or provider name no longer states its role.",
+        "A capability acquires a second implementation or a different execution environment.",
+        "A product identity change or consolidation moves packages without changing behavior."
+      ],
+      "obligations": [
+        "Use the role-word contract: Registry, Runtime, Store, Directory, Presenter, Controller, Resolver, Binder, Engine, Policy, Executor, Gateway, Provider, Backend, Handle, Config, Service.",
+        "One family has one vocabulary across directory, package, import, plugin id, context key, types, events, tools, config, tests and docs.",
+        "Do not keep aliases, dual keys, fallback parsers or compatibility packages in a pre-release cutover.",
+        "Record explicit non-renames and their reasons so reviewers can distinguish a deliberate exception from an oversight.",
+        "Keep behavior unchanged during a rename; a boundary defect needs its own proposal."
+      ],
+      "actors": [
+        "maintainer",
+        "rename author",
+        "reviewer",
+        "CI"
+      ],
+      "steps": [
+        "Write the ledger tables mapping former to current names with reasons.",
+        "Apply the rename mechanically across all surfaces.",
+        "Update current notes to factual names; keep historical records with their recorded spelling.",
+        "Run repository-wide searches and build/snapshot gates to catch residual old names.",
+        "Document retained product-visible or on-disk names in non-renames."
+      ],
+      "enforcement": {
+        "mode": "review contract plus repository checks",
+        "implementation": "Role-word table; rename ledger; explicit non-renames; audit of renamed source tokens; type/build/snapshot gates.",
+        "trust": "Names are code, so type checking and review enforce most of it; persisted/wire names need explicit migration decisions.",
+        "failure": "An old package/context/event name fails to resolve; a stale config parser fails clearly instead of accepting both forms.",
+        "exceptions": "Durable session formats, external URLs, historical note identifiers and product-visible commands may retain old spelling."
+      },
+      "applicability": "Any codebase before a major release. The role-word contract is portable; the rename ledger format is directly reusable.",
+      "relationships": [
+        "Supports `rationale-architecture-2.canonical-vocabulary`.",
+        "Constrains `rationale-architecture-2.plugin-identity` for published names.",
+        "Interacts with `rationale-architecture-2.released-format-contract` because persisted names must not be renamed casually."
+      ],
+      "migration": {
+        "strategy": "Perform one cutover while compatibility cost is low; no aliases; mechanically verify every surface.",
+        "implementation": "Ledger tables, bulk rename, residual-name audit, updated docs and snapshots.",
+        "requiredSupport": "Repository-wide search/type/build tooling and a reviewer empowered to reject aliases."
+      },
+      "reference": "references/rationale-architecture-2.md#naming-ledger",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "Every ledger mapping resolves to the current name across package, import, context key, event, tool and docs.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A compatibility alias or duplicate context key for a renamed family is absent and a stale configuration fails clearly.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Branches based on old paths are repaired once; current notes carry the new factual names.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The 391-line ledger is repository-specific; another project must build its own mappings, not copy this one."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.plugin-identity",
+      "title": "Stable plugin identity across ownership moves and a minimal public contract",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-10-06-web-desktop-plugin-identity-compatibility.md",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-10-public-package-manifest.md",
+          "start": 1,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md",
+          "start": 1,
+          "end": 29,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-16-plugin-configuration-on-the-plugins-page.md",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Moving a package between support tiers or directories changes ownership, not behavior. Renaming it or its configuration rows would break installed profiles; exposing internal metadata would turn it into a public contract.",
+      "triggers": [
+        "A package moves to an experimental/optional tier.",
+        "A package's configuration page moves between surfaces.",
+        "External authors need a documented manifest subset."
+      ],
+      "obligations": [
+        "Keep published package names and existing configuration row ids across ownership moves; record exceptions in one typed map.",
+        "Do not publish aliases or duplicate rows; retained identity is the compatibility mechanism.",
+        "Expose only the selected public manifest fields; internal packer/catalog metadata stays with its tool.",
+        "Each consumer owns parsing/validation/defaults; a shared type is not a shared parser.",
+        "A deferred rename requires an explicit release/migration decision and installed-profile evidence."
+      ],
+      "actors": [
+        "package owner",
+        "plugin manager",
+        "external plugin author"
+      ],
+      "steps": [
+        "Separate directory/support classification from published identity.",
+        "Record naming exceptions in one typed policy that manifests and checks agree with.",
+        "Keep row ids stable; new capabilities get new ids, existing ones are not reinterpreted.",
+        "Publish the minimal manifest type and document that format/compatibility declarations are not yet enforced."
+      ],
+      "enforcement": {
+        "mode": "typed exception policy plus manifest checks",
+        "implementation": "`experimental-package-policy.ts` directory-to-name map; row ids remain valid selectors; `DshPackageManifest` selected field set; consumer-owned validation.",
+        "trust": "Published packages are external input; local profiles may be partial.",
+        "failure": "A missing, moved or duplicated naming exception is rejected; an internal field in the public type fails type checks.",
+        "exceptions": "Pre-stable public APIs may still change; pre-stable status alone does not retire an identity exception."
+      },
+      "applicability": "Any plugin ecosystem with installed manifests and configuration that outlives a release.",
+      "relationships": [
+        "Uses `rationale-architecture-2.naming-ledger` for naming discipline.",
+        "Relates to `rationale-architecture-2.composition-truth` for row identity."
+      ],
+      "migration": {
+        "strategy": "Preserve identity during internal moves; defer cleanup to an explicit release with migration evidence.",
+        "implementation": "Typed exception map, stable row ids, minimal public manifest, consumer-owned parsing.",
+        "requiredSupport": "Installed-profile fixtures and manifest/type checks."
+      },
+      "reference": "references/rationale-architecture-2.md#plugin-identity",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A package moved to an experimental directory keeps its published name and existing profile rows still resolve.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A duplicated or missing naming exception is rejected, and internal metadata is absent from the public type.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A later rename requires an explicit release decision; until then installed profiles continue to work.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source's compatibility scope is Web/Desktop profiles; other installers need their own evidence."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.platform-packaging",
+      "title": "Independent release units and qualified platform carriers",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-07-prebuilt-system-primitives.md",
+          "start": 1,
+          "end": 33,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md",
+          "start": 1,
+          "end": 29,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-15-platform-office-engines.md",
+          "start": 1,
+          "end": 32,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md",
+          "start": 1,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-23-python-sdk-windows-x64-runtime.md",
+          "start": 1,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-11-windows-directory-installation.md",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-09-desktop-in-place-profile.md",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-11-desktop-electron-node-runtime.md",
+          "start": 1,
+          "end": 28,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-18-client-build-environment.md",
+          "start": 1,
+          "end": 44,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-11-pwsh-persistent-pty.md",
+          "start": 1,
+          "end": 69,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-17-shared-office-runtime.md",
+          "start": 1,
+          "end": 38,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-08-desktop-welcome-window-material.md",
+          "start": 1,
+          "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-19-profile-resolution-lookup-order.md",
+          "start": 1,
+          "end": 182,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Native engines, platform binaries and application shells have release cycles different from the main product. Installing compilers at consumer time, duplicating payloads, or claiming a platform from cross-platform tests leaves the shipped artifact unproved.",
+      "triggers": [
+        "A dependency needs native compilation or a per-platform binary.",
+        "A large engine or resource has a different qualification cycle.",
+        "An installer/updater can fail between staging and activation."
+      ],
+      "obligations": [
+        "Distribute prebuilt native primitives with stable ABI and platform packages; do not compile during ordinary install.",
+        "Select exactly one engine/payload per platform from a manifest; a declared native package is required, not a fallback to another implementation.",
+        "Keep release identity, signing and installed-artifact qualification with packaging, not startup.",
+        "Stage and verify before replacing an installation; keep the old tree until promotion succeeds.",
+        "Ship build-environment values through one exact public namespace and record the artifact digest.",
+        "Qualify each platform with its own installed-artifact test; unit tests or another executable cannot substitute."
+      ],
+      "actors": [
+        "packaging owner",
+        "native/library maintainer",
+        "release engineer",
+        "platform QA"
+      ],
+      "steps": [
+        "Split reusable engine/kit from application integration.",
+        "Publish versioned platform packages and lock exact versions in the app.",
+        "Build a descriptor/inventory and verify it before signing.",
+        "Install by staging plus atomic directory promotion, with rollback on failure.",
+        "Run the installed artifact on each target; record the platform's exact shell and payload."
+      ],
+      "enforcement": {
+        "mode": "artifact inventory plus platform release gates",
+        "implementation": "`@deepseek-ai/node-addon-system` platform packages; libreoffice kit optional dependencies and one-engine selection; NSIS directory transaction; Electron RunAsNode; `DSH_CLIENT_*` build namespace.",
+        "trust": "Installed artifacts are untrusted until verified against the recorded inventory; downloaded engines require hash verification.",
+        "failure": "A missing declared engine fails installation; a failed promotion restores the old directory; a corrupt archive leaves the old app intact.",
+        "exceptions": "Targets without a native engine use the shared WASM package; Windows arm64 is explicitly unsupported until a separate product decision."
+      },
+      "applicability": "Applications shipping native dependencies or desktop installers. The portable rules are one payload per platform, prebuilt distribution, staged replacement and per-platform qualification.",
+      "relationships": [
+        "Builds on `rationale-architecture-2.capability-seam`.",
+        "Uses `rationale-architecture-2.composition-truth` for the Desktop/Web wrapper split.",
+        "Interacts with `rationale-architecture-2.plugin-identity` for external plugin resolution."
+      ],
+      "migration": {
+        "strategy": "Move native compilation out of install first, then split independent release units, then harden installation transactions.",
+        "implementation": "Platform packages with prebuilt binaries, manifest-driven selection, staged directory swap, installed-artifact smokes.",
+        "requiredSupport": "Per-platform CI runners, signing infrastructure and an artifact inventory."
+      },
+      "reference": "references/rationale-architecture-2.md#platform-packaging",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A clean install on each declared target runs the installed artifact with its declared engine and no compiler/download.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A missing declared native package fails installation instead of silently selecting WASM.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed promotion restores the previous directory; a locked-file failure leaves the old installation intact.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Many platform details are specific to Windows/macOS/Linux and Electron/NSIS/pkg; the general rules need re-derivation per toolchain.",
+        "The source explicitly does not claim crash-atomic replacement across two renames."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.trusted-input-boundaries",
+      "title": "Materialize only at real trust boundaries",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-12-agent-scope-runtime-design.md",
+          "start": 124,
+          "end": 403,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-30-bash-stdin-env-trusted-plugin-api.md",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-02-result-time-applied-hunk-diffs.md",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-08-document-preview-operations.md",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-14-deepseek-account-login.md",
+          "start": 1,
+          "end": 71,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Copying and validating everything at every call is expensive and encourages treating trusted typed in-process calls as hostile. Skipping validation at the places where data actually changes ownership (queues, files, models, workers, wires) leaks mutable state into durability.",
+      "triggers": [
+        "Data crosses from a caller into persistence, a model request, a worker, a process or a wire.",
+        "A model-facing tool reads untrusted files or renders untrusted HTML/SVG.",
+        "A credential or authorization callback travels through a browser or a preload bridge."
+      ],
+      "obligations": [
+        "Borrow readonly values inside one trusted process; materialize/validate at durable, queue, model, file, worker, process and wire boundaries.",
+        "Freeze/validate durable events before commit; freeze built requests; do not retain caller objects across async consumption.",
+        "Run untrusted HTML in a sandboxed context with no same-origin/navigation privileges; use static image contexts for SVG rather than injecting markup.",
+        "Bind a browser-login flow to a local cancellation authority and a PKCE verifier; do not treat callback arrival as success before credentials persist.",
+        "Keep hook-only inputs (`stdin`, `env`) off the model-facing tool and merge them after the ambient scrub with managed variables last."
+      ],
+      "actors": [
+        "runtime owner",
+        "tool author",
+        "security reviewer"
+      ],
+      "steps": [
+        "Draw the boundary table for the system.",
+        "At each boundary, detach/freeze/serialize and validate structure.",
+        "Inside a process, rely on types and documented trusted calls; test ownership contracts rather than hostile casts.",
+        "Contain listener failures so one extension cannot starve others or make committed data look uncommitted."
+      ],
+      "enforcement": {
+        "mode": "boundary-specific ownership plus fail-closed security defaults",
+        "implementation": "`materialize + validate + commit + notify` append sequence; `structuredClone` + `deepFreeze` at creation; subprocess env scrub then explicit env then managed env; HTML iframe `sandbox=allow-scripts`; PKCE/loopback/issuer checks.",
+        "trust": "Same-process typed APIs are trusted; all external/durable input is not.",
+        "failure": "Invalid durable data refuses commit; a failed exchange does not persist credentials; an unauthorized path read reports a stable error.",
+        "exceptions": "A trusted caller may explicitly set `stdin`/`env`; that is a capability choice, not a new model capability."
+      },
+      "applicability": "Every application; the boundary table makes the tradeoff explicit and prevents both over- and under-validation.",
+      "relationships": [
+        "Supports `rationale-architecture-2.reconstructable-requests`.",
+        "Supports `rationale-architecture-2.config-credential-provenance`.",
+        "Supports `rationale-architecture-2.egress-identity`."
+      ],
+      "migration": {
+        "strategy": "Adopt the boundary table, then move validation to the crossing points and delete redundant deep copies inside the process.",
+        "implementation": "Freeze/materialize helpers, append sequence, sandboxed renderers, PKCE flow, env merge order.",
+        "requiredSupport": "A clear ownership model and tests that exercise each boundary."
+      },
+      "reference": "references/rationale-architecture-2.md#trusted-input-boundaries",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A durable event is immutable after append; a built request cannot be mutated; untrusted HTML cannot reach the application origin.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A same-Session path outside the authorized workspace is refused; a hook env entry cannot override a managed `DSH_*` value.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A rejected login exchange leaves the previous credentials and reports failure; a failed listener does not mask a committed event.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Same-user filesystem confinement is explicitly not claimed by the credential note; an OS keychain remains the stronger design.",
+        "Sandbox guarantees depend on the browser and the Host authorization path."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.evidence-limits",
+      "title": "Separate measured observation, unexecuted verification and product-only gaps",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-15-packed-session-history-transport.md",
+          "start": 1,
+          "end": 62,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-18-sqlite-physical-chunk-row-compression.md",
+          "start": 1,
+          "end": 82,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-08-desktop-bundled-runtime-and-external-plugins.md",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-11-posix-ssh-runtime.md",
+          "start": 1,
+          "end": 65,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Architecture notes tend to blur what was measured, what was tested, what is planned and what remains a release-environment obligation. Treating one as another creates false confidence and hides real work.",
+      "triggers": [
+        "A note reports performance, platform support or security properties.",
+        "A feature can be unit-tested but not installed/qualified in the current environment.",
+        "A decision has a known deferred item."
+      ],
+      "obligations": [
+        "Label measured figures as observations of a specific corpus/machine, not protocol or performance guarantees.",
+        "List required verification separately from executed tests; unit fixtures do not substitute for installed-artifact evidence.",
+        "Name product-only limitations and unsupported targets explicitly.",
+        "Record deferred work with the condition that would reactivate it.",
+        "Do not claim an improvement (startup, size, latency) without measurement."
+      ],
+      "actors": [
+        "note author",
+        "reviewer",
+        "release engineer"
+      ],
+      "steps": [
+        "State the claim and its evidence class.",
+        "For measurements, record the corpus, machine and method; avoid thresholds.",
+        "For unexecuted checks, list the platform/environment and keep them as obligations.",
+        "For deferred work, record the prerequisite and owner."
+      ],
+      "enforcement": {
+        "mode": "documentation contract plus release gates",
+        "implementation": "Notes carry `Verification`, `Consequences`, `Deferred work`; release-environment qualification is listed separately; this extraction marks every target check `planned`.",
+        "trust": "Self-reported green flags are not evidence.",
+        "failure": "A note without an evidence boundary is rejected in review; an unproved metric is removed or labeled.",
+        "exceptions": "A design note may have no measurement when it explicitly says none is claimed."
+      },
+      "applicability": "Any engineering decision record; essential for independent audits.",
+      "relationships": [
+        "Applies to `rationale-architecture-2.bounded-envelope` and `rationale-architecture-2.platform-packaging`.",
+        "Shapes `rationale-architecture-2.decision-discipline`."
+      ],
+      "migration": {
+        "strategy": "Add evidence classes to the decision template; keep verification out of the decision's prose claim.",
+        "implementation": "Sections for measured results, planned verification, deferred work and limitations.",
+        "requiredSupport": "Reviewer discipline and, ideally, executable checks recorded with their environment."
+      },
+      "reference": "references/rationale-architecture-2.md#evidence-limits",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A note with performance numbers labels the corpus/machine and makes no general guarantee.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A claim of platform support without installed-artifact evidence is rejected or marked unproved.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A deferred item is picked up only when its declared prerequisite exists.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source notes are internal engineering records; this mechanism extracts their evidence discipline, not a formal external audit standard."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.decision-discipline",
+      "title": "Proposal, rejection and supersession discipline",
+      "sources": [
+        {
+          "path": ".agents/notes/proposed/architecture/2026-07-29-durable-last-activity-index.md",
+          "start": 1,
+          "end": 64,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/architecture/2026-09-29-session-migration-follow-redirect.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/architecture/2026-06-16-typed-event-schemas.md",
+          "start": 1,
+          "end": 75,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-01-v2-embedded-assistant-streams.md",
+          "start": 1,
+          "end": 80,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Without an explicit lifecycle, proposals read like decisions, rejections disappear, and superseded notes keep being cited as current. Readers cannot tell what is authoritative or why an alternative was declined.",
+      "triggers": [
+        "A design is not ready for implementation or is deliberately deferred.",
+        "A proposal was rejected or narrowed.",
+        "A new decision replaces part of an older one."
+      ],
+      "obligations": [
+        "Mark status (`implemented`, `proposed`, `rejected`, `superseded`) and state the exact scope of any supersession.",
+        "A proposal lists acceptance criteria, risks, open questions and unresolved prerequisites; it does not masquerade as implemented.",
+        "A rejection records why and what would reopen it, including blast radius and alternatives.",
+        "A partial supersession names the surviving responsibilities of the older note.",
+        "Link the owner of each remaining area rather than duplicating it."
+      ],
+      "actors": [
+        "author",
+        "reviewer",
+        "future maintainer"
+      ],
+      "steps": [
+        "Choose the status before writing; keep it in the header.",
+        "For proposals, enumerate acceptance criteria and open prerequisites.",
+        "For rejections, record the measured/structural reason and the proportionate alternative.",
+        "When superseding, state which decisions remain active and link them.",
+        "Update current notes to point at the replacement instead of silently drifting."
+      ],
+      "enforcement": {
+        "mode": "document metadata and review",
+        "implementation": "Status header and supersession sentence; acceptance criteria/risks sections; replaced mechanisms explicitly named.",
+        "trust": "Documentation is trusted only after review; code remains the final authority for implemented behavior.",
+        "failure": "A note lacking status or supersession scope is rejected in review; a proposal's unfinished prerequisite stays visible.",
+        "exceptions": "Historical decision records keep their original spelling and are not rewritten."
+      },
+      "applicability": "Any project using decision records; especially valuable for long-lived architecture with staged delivery.",
+      "relationships": [
+        "Uses `rationale-architecture-2.evidence-limits`.",
+        "Protects `rationale-architecture-2.released-format-contract` from ambiguous migration promises."
+      ],
+      "migration": {
+        "strategy": "Adopt a status header and a short supersession sentence before adding more records; audit older notes lazily when touched.",
+        "implementation": "Template sections: status, problem, decision, alternatives, consequences, verification, deferred work, related.",
+        "requiredSupport": "A notes directory and review convention."
+      },
+      "reference": "references/rationale-architecture-2.md#decision-discipline",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A reader can determine from the header and supersession sentence which decisions are current.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A proposal is not cited as implemented and keeps its unresolved prerequisite visible.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A superseded note still names the responsibilities that remain active.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source repository uses Agent Notes; the discipline is transferable but the exact template is project-specific."
+      ]
+    },
+    {
+      "id": "rationale-architecture-2.publication-transaction",
+      "title": "One transaction publishes; one start promise transfers ownership",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-12-agent-scope-runtime-design.md",
+          "start": 124,
+          "end": 403,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-16-explicit-turn-cancellation.md",
+          "start": 1,
+          "end": 56,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-07-19-package-owned-invariant-service.md",
+          "start": 1,
+          "end": 106,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-30-followup-enqueue-and-owned-runs.md",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-01-parent-owned-subagent-catalog.md",
+          "start": 1,
+          "end": 51,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-08-08-per-preset-standing-mounts.md",
+          "start": 1,
+          "end": 33,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Async creation, resume and subagent start allocate resources in several registries and persistence before the object is usable. If any caller can observe or drive a half-published object, two owners can dispose it, a failed setup can leak prepared resources, and cancellation during the handoff window can escape as a running orphan. Terminal outcomes and physical cleanup also settle at different times, so conflating them loses either the result or the cleanup guarantee.",
+      "triggers": [
+        "Creation or resume spans more than one registry, a persistence load, and plugin setup.",
+        "Ownership crosses a provider or process boundary (in-process driver, ACP, worker).",
+        "A start can fail after some resources were prepared.",
+        "Cancellation can arrive while the object is still unpublished."
+      ],
+      "obligations": [
+        "Install the transaction in the caller's context before any await, so the enclosing context owns cleanup.",
+        "Keep every prepared object private until one ordered commit path publishes all registrations; never return a partially configured handle.",
+        "On rejection before publication, destroy prepared effects in reverse order, release name reservations, and emit no start/end lifecycle pair.",
+        "Recheck the required cancellation signal immediately after ownership transfer; an abort in the narrow handoff window must dispose the new handle.",
+        "Let the returned handle's disposer request cancellation and await ordered quiescence; do not expose a second revoke channel.",
+        "Keep terminal result arbitration separate from physical cleanup: choosing an outcome does not release processes or children."
+      ],
+      "actors": [
+        "Creation transaction owner",
+        "Subagent provider/runtime",
+        "Caller that awaits start and owns the returned handle",
+        "Disposer/teardown owner"
+      ],
+      "steps": [
+        "Create the transaction object and attach it to the caller's context before load or setup can suspend.",
+        "Load or prepare the session, registers and setup contributions in a private world.",
+        "Validate cancellation, then publish in observer-required order (registries, listeners, announcements).",
+        "Return only the published handle; the caller becomes the owner and must dispose it.",
+        "On any pre-publication failure, roll back prepared resources and reject without a lifecycle pair.",
+        "On dispose, mark the path memoized, request cancellation, drain pending work, deliver final events, then revoke the scope."
+      ],
+      "enforcement": {
+        "mode": "Type-level published handle + runtime transaction/invariant + behavioral tests",
+        "implementation": "Separate unpublished and published types; one commit function; required AbortSignal; memoized dispose; tests pin publication rollback, ordered quiescence and handoff-window abort.",
+        "trust": "Same-process typed callers are trusted; the transaction is a lifecycle guarantee, not a security boundary.",
+        "failure": "A rejected start emits no start/end pair and cleans prepared work; a failed publication rolls back the final entry; cancel after publication settles through the run result.",
+        "exceptions": [
+          "Read-only cold readers do not need an agent transaction.",
+          "A process/worker provider additionally owns transport readiness, but still resolves start only after its protocol handshake succeeds."
+        ]
+      },
+      "applicability": "Any runtime with async creation plus multiple registries or provider handoffs. The transaction shape is portable; the specific registry order and context API are framework-specific.",
+      "relationships": [
+        "Builds on scoped-lifetime for effect-owned registrations.",
+        "Uses capability-seam when the provider crosses a process or protocol boundary.",
+        "Uses evidence-limits to distinguish published, terminal and quiescent states."
+      ],
+      "migration": {
+        "strategy": "Introduce explicit unpublished/published states and a single commit point before adding features that allocate in two places.",
+        "implementation": "Wrap existing creation in a transaction object, return a branded published handle, require one cancellation signal, and make dispose await quiescence. Add rollback and handoff-abort tests.",
+        "requiredSupport": [
+          "A cancellation primitive that survives the handoff.",
+          "Ordered teardown/drain hooks per registry.",
+          "A test seam for injecting failure between prepare and publish."
+        ]
+      },
+      "reference": "references/rationale-architecture-2.md#publication-transaction",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "A successful create returns a handle whose registrations, listeners and persistence view are all visible and whose dispose drains every hook.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "A setup failure after preparing two registrations leaves neither registered and emits no start/end pair.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "An abort delivered between core publication and provider listener installation disposes the new handle instead of returning it.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "A failed publication rolls back the final entry and a retry can create a clean handle.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Dispose during an active turn cancels, delivers final events, and still reaches quiescence.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "The source guarantees lifetime and registration composition; it does not prove confinement or parent-to-child non-escalation.",
+        "Cross-process providers need their own transport readiness and kill-to-exit proof, which this mechanism does not supply."
+      ]
+    }
+  ]
+}

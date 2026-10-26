@@ -1,0 +1,863 @@
+{
+  "schema": "governance-domain/v1",
+  "domain": "website-contracts",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "bounds": {
+    "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "sourceRoot": "deepseek-harness",
+    "sourceInventorySha256": "4485c550c067b7c13cdec7a6b3036093fa76897c35bacca0fabdbca6fde02a32",
+    "scope": "Residual reading partition website-contracts: 28 assigned paths under deepseek-harness/website/ covering VitePress site configuration, generated raw Markdown and llms.txt development serving, page Markdown actions, shared image/Mermaid viewers, theme installation, SVG assets, and theme contract tests with generated per-locale expected HTML."
+  },
+  "mechanisms": [
+    {
+      "id": "website-contracts-config-single-source",
+      "title": "站点配置的单一来源：清单派生导航、editSource 失败关闭与可处置输出目录",
+      "sources": [
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 13,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 46,
+          "end": 107,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 160,
+          "end": 189,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 265,
+          "end": 284,
+          "kind": "config"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 285,
+          "end": 352,
+          "kind": "config"
+        }
+      ],
+      "problem": "站点导航、侧栏、模块标签和编辑链接如果各自维护，发布清单新增或移动页面后就会漂移；把输出目录、公开资源或原始文档放进生成树，又会让生成物被跟踪或让站点丢资源。",
+      "triggers": [
+        "新增或移动发布页",
+        "修改 locale、导航、侧栏分组或模块标签",
+        "修改 DOCS_BASE 或部署到子路径",
+        "新增站点公开资源",
+        "修改构建输出目录"
+      ],
+      "obligations": [
+        "导航、侧栏与 locale 页面集合从发布清单的 orderedPages、localeCollections、routeLink、landingLink、sectionSpec 派生，不在 config 里复制第二份页面列表或路由表。",
+        "guideModules 是 guide 集合与 develop/reference 模块标签的唯一来源，导航栏与 guide 侧栏都读它，不各写一套标签。",
+        "每个被投影的页面必须在前言提供字符串 editSource；缺失时 editLink 的 pattern 直接抛错，禁止静默回退到仓库根或空链接。",
+        "站点 base 只从 DOCS_BASE 解析一次，并保持 VitePress 要求的前后斜杠；head 里的 favicon、raw 中间件和 llms.txt 使用同一个 base。",
+        "srcDir=.generated、cacheDir=.cache、outDir=.dist 都是可处置目录；受跟踪的站点资源只放在 website/public，并通过显式 publicDir 暴露，因为 Vite 根位于生成树内。",
+        "wordmark 从 website/public/wordmark.svg 读取后内联，使其 currentColor 跟随主题；不要改用会冻结配色的 img。",
+        "buildEnd 在静态构建中从同一清单生成 raw Markdown 孪生和 llms.txt，不在生成树里手写这两类文件。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档所有者",
+        "评审者"
+      ],
+      "steps": [
+        "在发布清单声明或移动页面，并保持路由、locale 与对侧一致。",
+        "确认页面投影带有 editSource。",
+        "在 config 中只通过清单辅助函数生成导航和侧栏，模块标签只写入 guideModules。",
+        "把新增图片、favicon 等公开资源放进 website/public。",
+        "在根路径和子路径 base 下分别验证 favicon、编辑链接与 raw 路由。",
+        "确认没有改动或提交 .generated、.cache、.dist。"
+      ],
+      "enforcement": {
+        "mode": "manifest-derived configuration + fail-closed editSource",
+        "implementation": "website/.vitepress/config.ts 从 docs.ts 导入 orderedPages、localeCollections、routeLink、landingLink、sectionSpec；editLink pattern 在 frontmatter.editSource 非字符串时 throw；srcDir/cacheDir/outDir 固定为可处置目录，publicDir 显式指向 website/public。",
+        "trust": "导航与侧栏到清单的绑定、缺失 editSource 的失败和输出目录选择可机械检查；清单内容是否正确、页面是否应发布仍需文档评审。",
+        "failure": "缺 editSource 时渲染/构建抛错；清单与 locale 集合不一致时导航缺页或链接 404；把资源放进 .generated 会随清理丢失；在子路径部署未使用 base 时 favicon 与 raw 链接失效。",
+        "exceptions": [
+          "未发布页面不需要 editSource，因为它不进入站点。",
+          "仓库内相对链接的投影规则由 documentation 域的 link-projection 机制拥有，本机制只承接投影后的路由。"
+        ]
+      },
+      "applicability": "任何从显式发布清单生成 VitePress 站点的仓库。若站点没有清单而直接扫描文件系统，必须先建立清单再套用本机制；单语言站点可删去 en locale，但仍需单一 base 与 editSource 规则。",
+      "relationships": [
+        "documentation-website-publication-manifest",
+        "documentation-website-link-projection",
+        "documentation-website-raw-llms",
+        "website-contracts-raw-dev-serving"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留“配置只消费清单、不复制清单”的结构；把仓库 URL、base 环境变量、locale 键、输出目录名和公开资源目录参数化。若目标站点没有 editSource，可在投影器统一注入，而不是在主题里猜测源路径。",
+        "requiredSupport": [
+          "显式发布清单及路由/locale 辅助函数",
+          "VitePress 或等价的静态站点配置",
+          "能注入 editSource 的投影步骤"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-config-single-source",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新增一个清单页面后，导航与侧栏自动出现该页，且不需要改 config 中的页面列表。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "在 DOCS_BASE=/deepseek-harness/ 下构建，favicon、编辑链接和 raw 页面都带同一 base。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "移除某投影页的 editSource，渲染或构建在 editLink 处失败而不是生成空链接。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把一张受跟踪图片放进 .generated 后执行清理/构建，图片不被保留；站点资源配置检查应指出资源必须在 website/public。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "补回 editSource、改放 public 资源或用清单辅助函数重建导航后重新构建并通过。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "仓库内没有专门断言“导航等于清单”的测试；本机制依赖清单辅助函数的单一调用点。base 行为只在 page-markdown-actions 的测试里间接覆盖，未覆盖 favicon 与所有 head 链接。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-vue-interpolation-safety",
+      "title": "正文与行内代码的 Vue 插值转义，以及围栏渲染的失败关闭与构建期缓存",
+      "sources": [
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 125,
+          "end": 127,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 355,
+          "end": 379,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "VitePress 把 Markdown 渲染结果交给 Vue 编译；文档正文或行内代码中出现字面量 {{ }} 时会当作模板表达式，轻则内容消失，重则执行非预期表达式。直接全局替换 HTML 又会破坏代码围栏和 Mermaid。",
+      "triggers": [
+        "文档需要展示 Vue 模板语法或双花括号字面量",
+        "升级 VitePress/Markdown 渲染器",
+        "新增 Markdown 渲染规则包装"
+      ],
+      "obligations": [
+        "只在 renderer.rules.text 与 renderer.rules.code_inline 的输出上把 {{ 与 }} 转义为 HTML 实体，覆盖正文和行内代码两处。",
+        "围栏代码不参与该转义：mermaid/mmd 围栏与带 src 的 VitePress snippet 必须原样交给原生 fence 渲染器。",
+        "text、code_inline、fence 三个原生规则任一缺失时立即抛错，禁止跳过包装后继续构建。",
+        "围栏缓存仅在生产环境启用，并以 content、info、markup、attrs 的组合为键；开发渲染器可能跨多次 HMR 存活，不得使用旧缓存。",
+        "不在渲染后对整页 HTML 做字符串替换，也不引入第二个 Markdown 渲染器。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档作者",
+        "评审者"
+      ],
+      "steps": [
+        "确认 VitePress 原生 text、code_inline、fence 规则存在。",
+        "包装 text 与 code_inline，只转义双花括号。",
+        "在 fence 包装中先放行 mermaid/mmd 与带 src 的 token。",
+        "只在 production 下按 token 内容缓存 fence 输出。",
+        "用包含字面量 {{ }} 的正文、行内代码、普通围栏和 Mermaid 页面做渲染验证。"
+      ],
+      "enforcement": {
+        "mode": "renderer-wrapper guards",
+        "implementation": "config.ts 的 escapeVueInterpolation 与 markdown.config 包装；原生规则缺失时 throw；fence 缓存以进程内 Map 保存并限定 production。",
+        "trust": "转义与放行逻辑可代码审查；本域未发现专门回归测试，因此“字面量显示正确”只能靠实际渲染验证。",
+        "failure": "未转义时正文出现空白或表达式被执行；误转义围栏会破坏代码示例；缺少原生规则时静默跳过会让转义整体失效。",
+        "exceptions": [
+          "文档中的原始 HTML 块不经过 text/code_inline 包装，作者需自行保证不含可执行插值。",
+          "Mermaid 与 snippet 的源码解析由 VitePress/插件负责，本机制只保证不篡改其输出。"
+        ]
+      },
+      "applicability": "用 Vue/VitePress 渲染 Markdown 且允许作者写模板语法的站点。若渲染器不是 Vue，本机制可删除；若只禁用插值而不展示字面量，需保留等价的安全配置。",
+      "relationships": [
+        "website-contracts-code-group-isolation",
+        "documentation-mermaid-syntax"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "保留“只包装 text/code_inline、放行 fences”的最小面；把转义实体映射与缓存键参数化。若目标渲染器已默认转义，删除本包装并保留回归用例。",
+        "requiredSupport": [
+          "可访问 Markdown renderer 规则的钩子",
+          "包含模板字面量的渲染测试页"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-vue-interpolation-safety",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "正文与行内代码中的 {{ value }} 按字面量显示，普通代码围栏内容与 Mermaid 图不受影响。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "移除 text 包装后，同一页面的双花括号内容消失或触发 Vue 编译错误。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "让原生 fence 规则缺失，构建在配置阶段抛错而不是静默通过。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复包装或修复放行条件后重建，并确认代码围栏字节不变。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本域没有找到针对 Vue 插值转义的专用测试；证据仅为实现代码。开发环境不缓存 fence，性能差异未测量。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-code-group-isolation",
+      "title": "代码组分组的表单隔离、MPA 全量可见与搜索摘要可见性",
+      "sources": [
+        {
+          "path": "website/.vitepress/code-groups.ts",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/theme/code-group.css",
+          "start": 1,
+          "end": 10,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/tests/code-groups.spec.ts",
+          "start": 1,
+          "end": 71,
+          "kind": "test"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 265,
+          "end": 270,
+          "kind": "config"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 355,
+          "end": 356,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "VitePress 搜索会把编译后的代码组 HTML 重新挂载到摘要里，原生 radio 复用相同 name；摘要中点选平台会清掉正文的选择。MPA 构建没有客户端 tab 处理器，非活动块会永久隐藏。",
+      "triggers": [
+        "使用 ::: code-group 展示多平台命令",
+        "升级 VitePress 的代码组标记",
+        "启用 MPA 构建",
+        "修改本地搜索样式"
+      ],
+      "obligations": [
+        "把每个原生 tab 条包进独立的 form.tabs，并保留 @submit.prevent；不要改 radio 的 name/id，否则正文与摘要的选中状态失去隔离之外的其他行为也会变化。",
+        "container_code-group_open 规则或预期标记缺失时抛错，禁止输出未隔离的代码组。",
+        "仅在 siteConfig.mpa 时通过 transformHead 注入备用样式：隐藏 .tabs 与 button.copy，并让 .blocks > div 全部 display:block。",
+        "本地搜索摘要中的代码组也始终显示所有命令块，因为摘要没有可用的 tab 控件。",
+        "测试必须用真实 createMarkdownRenderer 生成 HTML，并用 JSDOM 断言 form 身份、选中状态、原生 CSS 与 MPA 备用 CSS 的 computed display。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档作者",
+        "评审者"
+      ],
+      "steps": [
+        "确认 VitePress 代码组输出包含 <div class=\"tabs\"> 与 </div><div class=\"blocks\">。",
+        "在渲染规则中把 tab 条替换为 form，同时保留块结构。",
+        "在 transformHead 中按 mpa 注入备用样式。",
+        "用搜索摘要重挂载场景验证正文选择不被清除。",
+        "用 MPA 场景验证两个命令块都可见且控件隐藏。"
+      ],
+      "enforcement": {
+        "mode": "renderer transform + DOM/CSS contract tests",
+        "implementation": "code-groups.ts 的 isolateCodeGroupRadios 与 codeGroupFallbackHead；config.ts 的 transformHead 与 markdown.config；code-group.css 的搜索摘要显示规则；tests/code-groups.spec.ts。",
+        "trust": "JSDOM 能证明表单隔离、radio name 与 computed display；不能证明真实浏览器的搜索 UI、键盘操作或视觉布局。",
+        "failure": "摘要选择清空正文选中平台；MPA 只显示第一个命令；VitePress 标记变化时未抛错会静默失去隔离。",
+        "exceptions": [
+          "普通代码围栏不属于代码组，不应用本机制。",
+          "非 MPA 构建不注入备用样式，codeGroupFallbackHead(false) 必须返回空数组。"
+        ]
+      },
+      "applicability": "使用 VitePress 原生 code-group 且启用本地搜索的文档站点；MPA 部分仅在构建模式为 MPA 时适用。其他静态站点需重新实现等价的分组隔离与无 JS 可见性。",
+      "relationships": [
+        "website-contracts-vue-interpolation-safety",
+        "website-contracts-theme-test-evidence"
+      ],
+      "migration": {
+        "strategy": "retain",
+        "implementation": "保留“每个 tab 条独立 form + 失败关闭 + MPA 全量可见”的合同；把 VitePress 标记字符串抽成可测试的匹配条件，升级时先跑 DOM 测试。",
+        "requiredSupport": [
+          "可包装 Markdown renderer 的站点",
+          "JSDOM 或等价 DOM 测试",
+          "能读取 VitePress 原生 CSS 的测试环境"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-code-group-isolation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在摘要中选中同名 radio 后，正文已选平台保持不变，且两个 radio 属于不同 form。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "MPA 备用样式下两个命令块 computed display 均为 block，tab 与复制控件均隐藏。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "移除 form 包装后，摘要选择清空正文选择，测试失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "让 VitePress 代码组标记缺少 tab 条，渲染抛错而不是输出坏结构。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "恢复 form 包装或更新标记匹配后重跑代码组测试。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "测试是 JSDOM 级，不覆盖真实搜索弹层与浏览器原生 radio 行为；MPA 样式依赖 VitePress 内部类名。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-raw-dev-serving",
+      "title": "开发服务器 raw Markdown 请求路由：显式 404、Vite 模块直通与 HEAD 语义",
+      "sources": [
+        {
+          "path": "website/raw-markdown.ts",
+          "start": 1,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/tests/raw-markdown.spec.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "test"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 108,
+          "end": 123,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/config.ts",
+          "start": 340,
+          "end": 352,
+          "kind": "config"
+        }
+      ],
+      "problem": "开发服务器若把所有 .md 请求都当作 raw 文档，会劫持 Vite 的页面模块导入和脚本请求，导致 hydration 失败；反过来，对未发布页面返回 200 会让草稿内容泄露。",
+      "triggers": [
+        "开发服务器新增 raw Markdown 或 llms.txt 路由",
+        "修改 base 或页面模块导入方式",
+        "新增发布/未发布页面",
+        "调整中间件顺序"
+      ],
+      "obligations": [
+        "只处理 GET/HEAD；URL 无法解析、路径不以 base 开头或方法不符时交给 Vite。",
+        "dsh-raw=1 只在路径以 .md 结尾时成立；sec-fetch-dest 为 script、style、image 等非 document 请求一律交给 Vite，唯一例外是 empty 且显式 raw。",
+        "llms.txt 由当前清单渲染回调提供，其他 .md 由 rawMarkdownRoute 提供；不要另建第二份 raw 文件列表。",
+        "显式 raw 请求指向未发布 Markdown 时返回 404 且结束响应；非显式缺失路径继续交给 Vite。",
+        "Markdown 响应使用 text/markdown; charset=utf-8，llms.txt 使用 text/plain; charset=utf-8；HEAD 只发头不发正文。",
+        "投影错误必须向上抛出，不得捕获后返回成功或空 200。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档作者",
+        "评审者"
+      ],
+      "steps": [
+        "在 Vite 插件 configureServer 中先注册 raw 中间件。",
+        "按 base 剥离前缀并区分 llms.txt 与 .md。",
+        "用 sec-fetch-dest 区分文档导航与模块/脚本请求。",
+        "显式 raw 未命中返回 404，非显式未命中调用 next()。",
+        "运行请求矩阵测试，覆盖 GET/HEAD、query、错误 base 与投影异常。"
+      ],
+      "enforcement": {
+        "mode": "development middleware request-routing contract",
+        "implementation": "raw-markdown.ts 的 rawMarkdownMiddleware；config.ts 的 serveRawMarkdown/configureServer；tests/raw-markdown.spec.ts 用 mock rawMarkdownRoute 覆盖矩阵。",
+        "trust": "请求分类、状态码、content-type 与 HEAD 无语义可测试；生产静态主机的行为不在本机制证据内。",
+        "failure": "脚本导入被 raw 响应劫持会使页面白屏；未发布 raw 泄露；投影异常被吞掉会得到 200 空内容；错误 content-type 会让复制动作拒绝内容。",
+        "exceptions": [
+          "该中间件只服务开发服务器；生产 raw 孪生由 buildEnd 生成。",
+          "非 document 且非显式 empty 的请求即使路径是 .md 也必须交给 Vite。"
+        ]
+      },
+      "applicability": "有 Vite 开发服务器并为发布 Markdown 提供 raw 路由的站点。若使用其他 dev server，需要保留同样的请求分类与 404 语义。",
+      "relationships": [
+        "documentation-website-raw-llms",
+        "website-contracts-page-markdown-actions",
+        "website-contracts-config-single-source"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留请求分类顺序；把 base、raw query 参数名和 llms.txt 路径参数化。若目标框架已有 raw 路由，至少保留“脚本/模块请求直通”和“显式未发布 404”两条。",
+        "requiredSupport": [
+          "可插入中间件的开发服务器",
+          "发布清单驱动的 raw 路由解析",
+          "请求矩阵测试"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-raw-dev-serving",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "带 dsh-raw=1 的已发布 .md 返回 text/markdown；llms.txt 返回 text/plain；HEAD 只发头。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "带 sec-fetch-dest=script 的 .md 请求交给 Vite，不发生 raw 响应。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "显式请求未发布 .md 时返回 404；非显式缺失路径调用 next()。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "让 rawMarkdownRoute 抛错，请求不被转换成 200。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正分类条件或补发布清单后重跑请求矩阵测试。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "测试 mock 了 rawMarkdownRoute，不验证真实投影内容；开发中间件与生产静态主机的一致性只由 buildEnd 的生成逻辑间接保证。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-page-markdown-actions",
+      "title": "页面 Markdown 操作：rawMarkdownPath 门槛、水合前直链、复制请求与页面级取消",
+      "sources": [
+        {
+          "path": "website/.vitepress/theme/page-markdown-actions.ts",
+          "start": 1,
+          "end": 215,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/theme/index.ts",
+          "start": 40,
+          "end": 53,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/tests/page-markdown-actions.spec.ts",
+          "start": 1,
+          "end": 415,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/page-markdown-actions.en-US.html",
+          "start": 1,
+          "end": 1,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/page-markdown-menu.en-US.html",
+          "start": 1,
+          "end": 1,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/page-markdown-static.en-US.html",
+          "start": 1,
+          "end": 1,
+          "kind": "test"
+        }
+      ],
+      "problem": "阅读页需要把原始 Markdown 交给模型或复制到剪贴板，但复制是异步的浏览器权限操作；若在 await 之后才触发剪贴板、或在路由切换后继续写旧页内容，就会出现权限失败、串页或把未发布内容暴露给按钮。",
+      "triggers": [
+        "新增发布页",
+        "修改页面布局或 doc-before 插槽",
+        "修改 raw 路由或 base",
+        "修改主题多语言文案"
+      ],
+      "obligations": [
+        "只有 page.isNotFound 为 false 且 frontmatter.rawMarkdownPath 是字符串时才渲染操作；主页（layout:false）与 404 不显示。",
+        "布局用 route.path、lang、rawMarkdownPath 组成 key，使每个页面实例拥有自己的复制请求与状态。",
+        "未水合时渲染真实静态链接 href=base+rawMarkdownPath、target=_blank、rel=noopener，并提供可访问名称；不得依赖 JS 才能查看 Markdown。",
+        "复制请求为 rawMarkdownPath + ?dsh-raw=1，只接受 2xx 且 content-type 为 text/markdown 或 text/plain；其他响应归为 requestFailed。",
+        "剪贴板写入必须在点击手势内启动；缺少 ClipboardItem 或 clipboard.write 时归为 clipboardFailed，并保留 View as Markdown 手动路径。",
+        "同一时间只允许一个复制；路由、语言或卸载时中止 fetch；旧请求完成不得更新新页面的 status。",
+        "菜单支持指针外部、焦点离开与 Escape 关闭，并通过 role=status 报告复制中/成功/失败；英文与中文文案必须成对覆盖所有状态。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档作者",
+        "评审者"
+      ],
+      "steps": [
+        "投影器为页面写入 rawMarkdownPath；布局只在存在该字段时挂载操作。",
+        "服务端渲染输出静态直链，客户端挂载后启用复制与菜单。",
+        "点击复制时立即调用 clipboard.write，并把 fetch 的 Blob promise 传入 ClipboardItem。",
+        "在路由、语言、卸载变化时 abort 当前请求并清空状态。",
+        "按 en-US 与 zh-CN 分别更新并审查 expected HTML。"
+      ],
+      "enforcement": {
+        "mode": "jsdom behavior tests + locale file snapshots",
+        "implementation": "page-markdown-actions.ts 的状态机与 AbortController；theme/index.ts 的 doc-before 挂载与 key；tests/page-markdown-actions.spec.ts 的 fetch/Clipboard mock 与 toMatchFileSnapshot。",
+        "trust": "DOM 结构、请求 URL、content-type 门槛、取消语义和本地化文案可测试；真实浏览器剪贴板权限、Safari 焦点差异与真实网络不在 jsdom 证据内。",
+        "failure": "await 后再写剪贴板会丢用户手势；旧请求完成会污染新页面状态；缺 rawMarkdownPath 仍渲染会导致 404 直链；content-type 不校验会把 HTML 错误页复制成 Markdown。",
+        "exceptions": [
+          "没有 rawMarkdownPath 的页面是正常无操作页，不是错误。",
+          "静态宿主把 .md 作为 text/plain 返回是允许的。"
+        ]
+      },
+      "applicability": "有原始 Markdown 路由的文档或知识站点。若站点不提供 raw 内容，可删除复制动作，但保留“未水合可用的静态查看链接”原则。",
+      "relationships": [
+        "documentation-website-raw-llms",
+        "website-contracts-raw-dev-serving",
+        "website-contracts-theme-test-evidence",
+        "testing-expected-output-placement"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留“手势内启动 + 页面级 AbortController + static fallback”的结构；把 query 参数、可接受的 content-type、locale 文案与 base 参数化。不要把 fetch 改成 await 后再写剪贴板。",
+        "requiredSupport": [
+          "raw Markdown 路由",
+          "ClipboardItem/Clipboard API 或降级文案",
+          "按 locale 的 expected 快照"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-page-markdown-actions",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "点击复制后在点击调用栈内执行 clipboard.write；fetch 地址为 rawMarkdownPath?dsh-raw=1，成功后 status 显示已复制。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "未水合渲染仍输出带 base 的静态 Markdown 链接；en-US 与 zh-CN 快照分别匹配。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "返回 404、HTML content-type 或网络失败时不报告成功，并允许重试。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "路由、语言或卸载变化后旧请求 signal 变为 aborted，旧完成不更新新页面 status。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正 URL、content-type 判断或取消时机后重跑对应 jsdom 用例并审查快照 diff。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "jsdom 使用测试替身模拟 ClipboardItem、navigator.clipboard 与 fetch，不能证明真实浏览器权限、Safari 焦点行为或大文件性能；快照只覆盖 DOM，不覆盖视觉布局。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-media-viewer",
+      "title": "共享图片/图表查看器：增强资格、单一模态、焦点与资源生命周期",
+      "sources": [
+        {
+          "path": "website/.vitepress/theme/image-viewer.ts",
+          "start": 1,
+          "end": 127,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/theme/mermaid-viewer.ts",
+          "start": 1,
+          "end": 98,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/theme/media-viewer.ts",
+          "start": 1,
+          "end": 232,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/.vitepress/theme/index.ts",
+          "start": 16,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": "website/tests/image-viewer.spec.ts",
+          "start": 1,
+          "end": 350,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/mermaid-viewer.spec.ts",
+          "start": 1,
+          "end": 274,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/image-viewer.en-US.html",
+          "start": 1,
+          "end": 3,
+          "kind": "test"
+        }
+      ],
+      "problem": "文档图片与 Mermaid 图需要全屏查看，但增强逻辑若移动或替换源元素会破坏 Markdown 投影；若每个图各自创建模态，会出现多个 dialog、滚动锁泄漏、焦点丢失，以及路由切换后仍显示旧内容。",
+      "triggers": [
+        "新增内容图片或 Mermaid 图",
+        "修改主题布局、路由或语言切换",
+        "修改图片的 alt、src/srcset 或禁止缩放标记",
+        "修改查看器样式或交互"
+      ],
+      "obligations": [
+        "图片与图表共用一个 MediaViewer；打开新视图前关闭旧视图，并销毁旧 panzoom/ResizeObserver。",
+        "图片只有已加载、naturalWidth/naturalHeight 为正、alt 非空、独占段落（同级只有空白与查看按钮），且不在 a/button/.mermaid/[data-no-zoom]/aria-hidden/role=presentation|none 内时才增强。",
+        "增强不得移动或替换源图片；克隆进 shadow root 显示，保留源元素和 Markdown 输出。",
+        "Mermaid 仅接受 viewBox 宽高有限且为正的 SVG；标题取页面首个 h1，缺失或空白时用本地化回退标题。",
+        "模态使用 aria-labelledby、Close 自动聚焦、Tab/Shift+Tab 焦点循环、Escape/cancel 关闭；打开时锁定 body 滚动，关闭时恢复并让仍连接的 trigger 获得焦点。",
+        "路由、语言、主题变化，图片 src/srcset/currentSrc 变化、元素移除、refresh 或 dispose 时关闭旧视图；dispose 必须断开 observer、监听器、按钮、类名与滚动锁。",
+        "图片视图提供 100% 原尺寸控件与当前缩放百分比；图表按 viewBox 适配视口并支持滚轮/键盘平移与 fit。",
+        "移除或替换图表/图片时不得留下旧监听器、旧 dialog 或旧 aria 控件。"
+      ],
+      "actors": [
+        "网站维护者",
+        "文档作者",
+        "评审者"
+      ],
+      "steps": [
+        "主题挂载时动态导入 viewer 并在 onMounted 后安装，避免 SSR 访问浏览器对象。",
+        "扫描 .vp-doc 内的独立图片与 Mermaid 容器，按资格条件加查看按钮。",
+        "通过共享 MediaViewer 打开克隆内容，设置标题、尺寸与是否显示原尺寸控件。",
+        "在 route/lang/isDark 变化时 refresh；卸载时 dispose 并 close。",
+        "用 jsdom 测试资格、替换、焦点、滚动锁与资源释放；真实浏览器补充原生 dialog/布局检查。"
+      ],
+      "enforcement": {
+        "mode": "single modal controller + eligibility scan + lifecycle disposal",
+        "implementation": "MediaViewer 持有唯一 #close；ImageViewer/MermaidViewer 各自管理 entries、MutationObserver、AbortController；theme/index.ts 在 onMounted 安装并在 refresh/dispose 中收尾。",
+        "trust": "jsdom 能证明资格过滤、单模态、事件中止、dialog 标记与快照；panzoom、ResizeObserver 与 HTMLDialogElement 被 mock，不能证明真实布局、原生焦点或 SVG 渲染。",
+        "failure": "移动源图片会破坏投影；多个模态会泄漏滚动锁；dirty srcset 未关闭会显示旧图；dispose 不彻底会留下监听器或可点击的孤儿按钮。",
+        "exceptions": [
+          "链接图片、行内图片、装饰图片、data-no-zoom 容器内图片与失败图片保持原交互，不增强。",
+          "Mermaid 尺寸不可用时不加查看按钮。"
+        ]
+      },
+      "applicability": "用 VitePress/Vue 渲染文档并允许图片或 Mermaid 的站点。其他框架需保留增强资格、单一模态与生命周期规则；没有 panzoom 时可去掉缩放控件但保留焦点/滚动/释放语义。",
+      "relationships": [
+        "website-contracts-page-markdown-actions",
+        "website-contracts-theme-test-evidence",
+        "agent-workflows-ui-review",
+        "testing-web-browser-lane"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留“资格扫描 + 克隆显示 + 单一模态 + 生命周期释放”的结构；把选择器、data 属性名、本地化文案与尺寸阈值参数化。不要把增强写进 Markdown 投影器。",
+        "requiredSupport": [
+          "客户端可用的 DOM 扫描点",
+          "原生 dialog 或等价模态",
+          "pan/zoom 库（可选）",
+          "jsdom 测试与至少一次真实浏览器验证"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-media-viewer",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "独立且已加载的图片与 Mermaid 图各出现一个查看按钮，打开后只有一个 dialog，源 DOM 保持不变。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "关闭、取消、路由变化或 dispose 后滚动恢复、焦点回到 trigger、旧 zoom 控件不再生效。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "链接、行内、装饰、data-no-zoom 或加载失败的图片不出现按钮，DOM 与原始 HTML 一致。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "打开第二个视图后旧 dialog 被移除，旧 panzoom 被 destroy，页面仍只有一个 dialog。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "修正资格条件或释放顺序后重跑 image/mermaid 测试，并在真实浏览器复核 dialog 焦点与 SVG 布局。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "jsdom 测试 mock 了 HTMLDialogElement、panzoom 与 ResizeObserver；真实模态焦点、SVG 样式隔离与移动端布局只能由浏览器检查补充，本域未提供自动化像素或真实浏览器门禁。",
+      "origin": "source",
+      "sourceBacked": true
+    },
+    {
+      "id": "website-contracts-theme-test-evidence",
+      "title": "主题契约测试：JSDOM 行为断言、按 locale 的 expected 快照与真实浏览器边界",
+      "sources": [
+        {
+          "path": "website/tests/page-markdown-actions.spec.ts",
+          "start": 1,
+          "end": 415,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/image-viewer.spec.ts",
+          "start": 1,
+          "end": 350,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/mermaid-viewer.spec.ts",
+          "start": 1,
+          "end": 274,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/code-groups.spec.ts",
+          "start": 1,
+          "end": 71,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/raw-markdown.spec.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/page-markdown-actions.zh-CN.html",
+          "start": 1,
+          "end": 1,
+          "kind": "test"
+        },
+        {
+          "path": "website/tests/expected/page-markdown-static.zh-CN.html",
+          "start": 1,
+          "end": 1,
+          "kind": "test"
+        }
+      ],
+      "problem": "网站主题的行为、可访问名称和本地化标记容易在重构中退化；只靠人工点页面无法稳定回归，而把 jsdom 结果当成真实浏览器证明又会漏掉原生模态、布局与剪贴板差异。",
+      "triggers": [
+        "修改主题组件、查看器或 Markdown 动作",
+        "修改英文/中文界面文案",
+        "升级 VitePress、Vue 或 panzoom",
+        "新增网站行为测试"
+      ],
+      "obligations": [
+        "主题行为测试放在 website/tests 下，用 @vitest-environment jsdom 与 @testing-library/dom 的 role/name 查询，不靠 CSS 选择器猜结构。",
+        "用户可见 HTML 用 toMatchFileSnapshot 与 website/tests/expected/<feature>.<locale>.html 比较；刷新后必须人工审查 diff，不得盲目接受。",
+        "每个 locale 单独快照，至少覆盖 en-US 与 zh-CN 的按钮名称、状态消息与静态直链。",
+        "依赖 VitePress 内部标记的测试必须用真实 createMarkdownRenderer 生成 HTML，不能手写预期 DOM 代替渲染器。",
+        "请求路由测试使用真实中间件并只 mock 投影函数，断言显式 404、Vite 直通、HEAD 与异常传播。",
+        "JSDOM 测试不得声称证明原生 dialog 焦点、SVG 布局或真实剪贴板；这些需要真实浏览器检查，当前不是自动像素门禁。"
+      ],
+      "actors": [
+        "网站维护者",
+        "测试作者",
+        "评审者"
+      ],
+      "steps": [
+        "为行为写 role/name 级断言，并在需要时加 expected HTML 快照。",
+        "按 locale 生成/刷新快照并审查每个 diff。",
+        "涉及 VitePress 渲染时使用真实 renderer。",
+        "运行主题测试，区分契约失败与环境/浏览器边界。",
+        "对 jsdom 无法覆盖的行为补真实浏览器手动检查或另建 lane。"
+      ],
+      "enforcement": {
+        "mode": "owner-local JSDOM specs + reviewed file snapshots",
+        "implementation": "website/tests/*.spec.ts 与 website/tests/expected/*.html；page-markdown-actions、image-viewer、mermaid-viewer 使用 toMatchFileSnapshot；raw-markdown 与 code-groups 用真实中间件/渲染器。",
+        "trust": "能证明 DOM 契约、请求分类与本地化文案；不能证明真实浏览器权限、原生 dialog 焦点、SVG 布局或视觉像素。",
+        "failure": "快照过期会掩盖 UI 文案/结构回归；无条件刷新会接受错误输出；把 jsdom 绿灯当成浏览器验证会在真实环境暴露焦点/剪贴板问题。",
+        "exceptions": [
+          "纯视觉样式可不由快照覆盖；本域没有像素门禁。",
+          "真实浏览器 lane 属于 testing 域；本域只记录边界，不复制其规则。"
+        ]
+      },
+      "applicability": "有独立文档站主题与本地化 UI 的仓库。测试框架可替换，但必须保留 owner-local expected 输出、按 locale 快照与 jsdom/真实浏览器分层。",
+      "relationships": [
+        "testing-expected-output-placement",
+        "testing-web-browser-lane",
+        "website-contracts-page-markdown-actions",
+        "website-contracts-media-viewer",
+        "website-contracts-code-group-isolation",
+        "website-contracts-raw-dev-serving"
+      ],
+      "migration": {
+        "strategy": "retain-and-parameterize",
+        "implementation": "保留 expected 目录与 locale 后缀；把 snapshot 路径、locale 集合和测试环境参数化。升级主题库时先跑真实 renderer 的契约测试，再更新快照。",
+        "requiredSupport": [
+          "JSDOM 或等价 DOM 环境",
+          "文件快照能力",
+          "真实 VitePress renderer",
+          "真实浏览器检查清单"
+        ]
+      },
+      "reference": "references/website-contracts.md#website-contracts-theme-test-evidence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "两种 locale 的主题测试通过，expected HTML 与当前输出逐字匹配，role/name 断言稳定。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "代码组测试使用真实 renderer 并断言原生与 MPA CSS 的 computed display。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "修改一个本地化按钮名称但不更新快照，测试失败并显示 diff。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用 JS 在 await 后写剪贴板，行为测试因点击手势断言失败。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "确认新文案/结构正确后刷新对应 locale 快照并人工审查 diff；若失败源于浏览器差异，转真实浏览器检查，不修改快照掩盖。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "JSDOM 与 mock 覆盖不到原生 dialog、真实剪贴板、搜索弹层和 SVG 布局；仓库内的真实浏览器检查是手动/外部 lane，不是本域自动门禁。",
+      "origin": "source",
+      "sourceBacked": true
+    }
+  ]
+}

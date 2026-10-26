@@ -1,0 +1,1662 @@
+{
+  "domain": "rationale",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale.decision-record-content",
+      "title": "决策记录的内容契约：问题、决定、备选、代价与永久边界",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 44,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 54,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 61,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-06-11-event-sourced-sessions.md",
+          "start": 5,
+          "end": 23,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md",
+          "start": 7,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md",
+          "start": 5,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md",
+          "start": 5,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/README.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "决策记录容易退化成变更日志、实现计划或规格书，导致未来读者看不到为什么这样选、放弃了什么、哪些边界必须保持、哪些证据只到某一层。",
+      "triggers": [
+        "新增或修改持久化/事件/上下文/协议契约",
+        "改变用户可见行为、默认值、公开 API、CLI 或扩展点",
+        "新增跨包依赖或移除能力",
+        "提出、否决或取代一个设计决定",
+        "事故后需要留下可复用的判断"
+      ],
+      "obligations": [
+        "在与代码相同的变更中新增或更新 Note；不要只在 PR/commit body 里解释。",
+        "Problem 描述可观察的失败/机会和受影响 actor，不把方案写进问题。",
+        "Decision 用现在时写已落地的选择、边界、所有权和负向保证。",
+        "Alternatives considered 至少包含一个真实备选，并逐条说明为什么不选。",
+        "Consequences 同时写成本与收益：新增包、迁移负担、失去的确定性、换来的能力。",
+        "implemented Note 不包含 open questions、计划/迁移步骤或 future work；这些属于 PR/issue。",
+        "记录永久事实：什么永不发生、什么是结构上不可能、一个跨切面事实的唯一主人、重新引入条件。",
+        "验证段区分已运行、计划和无法观察的证据；不要把计划标成已通过。",
+        "引用已提交的路径/符号/commit/PR，不使用未提交状态或相对设计序号。",
+        "具体散文命名 actor、文件、函数、配置键和记录事实；避免空泛的“更简单/更清晰”与 it's not X, it's Y。",
+        "被取代时写明确 Superseded by 链接和原因；不要静默改写旧 Note。",
+        "归档 Note 是历史快照，不是当前权威；需要修正时新增当前 Note 并链接，不编辑归档字节。"
+      ],
+      "actors": [
+        "变更作者：写 Note 并对内容负责",
+        "评审者：检查备选真实性、代价完整性、边界与验证分层",
+        "文档维护者：检查格式、链接、翻译配对与当前权威落点"
+      ],
+      "steps": [
+        "确认变更非平凡，并读当前规则与同主题活 Note。",
+        "写 Problem：具体失败/机会、观察方式、受影响 actor。",
+        "写 Decision：选择、边界、所有权、负向保证；使用现在时。",
+        "写 Alternatives：逐条列真实备选和否决理由。",
+        "写 Consequences：成本、收益、被禁止的旧做法、迁移负担。",
+        "写 Verification/Risks/Limitations：区分已运行、计划、无法观察。",
+        "与代码同一变更落地；若取代旧 Note，加链接并处理归档/保留。",
+        "评审通过后合并；后续发现冲突时新增/重写当前 Note，不改历史。"
+      ],
+      "enforcement": {
+        "mode": "review-only + mechanical format/pairing/link gates",
+        "implementation": "scripts/verify-agent-note-format.ts 检查头部/段落/文件名/配对；scripts/verify-translation-pairing.ts 检查配对与结构；scripts/verify-doc-refs.ts 检查活文档链接。三者都不检查论证质量。",
+        "trust": "机械门能证明“段落存在、状态/配对/链接形状正确”，不能证明备选真实、代价完整、根因正确或内容与运行时一致。",
+        "failure": "缺段/状态错误/配对缺失/死链会红；语义空洞不会红，必须由评审拦下。",
+        "exceptions": "纯机械/纯格式变更可不写 Note；proposed Note 可保留未决问题和计划；事故使用 postmortem 而非普通 Note。"
+      },
+      "applicability": "所有非平凡变更；尤其适用于持久化、协议、所有权、默认值、删除与跨包依赖。小型变更可以只写一段，但不能省略 Problem/Decision/Consequences 的实质。",
+      "relationships": [
+        "rationale.alternatives-and-rejected-knowledge",
+        "rationale.non-trivial-note-policy",
+        "rationale.archive-retention-and-freeze",
+        "documentation:prose-and-citations",
+        "decisions:note-lifecycle-and-format"
+      ],
+      "migration": {
+        "strategy": "把本机制落成一个模板 + 评审清单：模板只保留结构，评审清单检查语义；不要做自动内容评分。",
+        "implementation": "在安装后项目的 AGENTS.md/Note 模板中放 Problem/Decision/Alternatives/Consequences/Verification 五段；在 PR 模板中要求作者声明“实际改了什么/没改什么、证据层级、当前权威链接”。",
+        "requiredSupport": "一个可写的 Note 目录、一个评审者、一个能运行格式/配对/链接检查的脚本入口；没有自动检查时明确标 review-only。"
+      },
+      "reference": "references/rationale.md#1",
+      "verification": {
+        "positive": [
+          "第三人只读 Note 能复述：问题、选择、至少一个被否方案及原因、代价、永久边界、验证层级。",
+          "Note 与代码同一变更；当前权威链接可达。"
+        ],
+        "rejection": [
+          "缺 Alternatives、只写收益不写代价、implemented 中出现计划/TODO、引用未提交状态或设计序号，应被评审拒绝。",
+          "格式门对缺段/状态/配对/死链报红；但它不能替代语义拒绝。"
+        ],
+        "recovery": [
+          "删掉方案化/编年史语言，改写为当前状态与边界。",
+          "若旧 Note 被取代，新增 Superseded by 链接并保留历史；不要追加“后来我们……”到旧 Note。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "本次只做源文件静态阅读；未在安装后项目执行模板/评审流程。"
+        }
+      },
+      "limitations": [
+        "结构完整不等于论证正确；没有门能证明“为什么”是真的。",
+        "未来代码可能漂移；Note 的 Verification 只是该版本的契约，不是永久证明。",
+        "评审者可能疲劳或共享盲点；同一人重复审查不是独立验证。"
+      ]
+    },
+    {
+      "id": "rationale.alternatives-and-rejected-knowledge",
+      "title": "备选方案与否决知识：把“为什么不”写成可检验的护栏",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 105,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md",
+          "start": 9,
+          "end": 23,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md",
+          "start": 11,
+          "end": 78,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 3,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md",
+          "start": 1,
+          "end": 10,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md",
+          "start": 25,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+          "start": 31,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 18,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 25,
+          "end": 30,
+          "kind": "history"
+        }
+      ],
+      "problem": "没有备选与否决理由，决定会退化成断言；无差别删除或保留 rejected 都会失效（删掉仍能阻止现实错误的 guardrail 会让团队重复失败，保留过时拒绝会制造噪音）；PR body 不是持久记录。",
+      "triggers": [
+        "任何设计决定",
+        "一个提案被否决或实现后否决",
+        "一次调查发现“看起来可行”的替代路径",
+        "未来提案想重新提出旧方案"
+      ],
+      "obligations": [
+        "每篇非 rejected Note 必须有 Alternatives considered；每个备选单独一段，逐条写不选理由。",
+        "备选必须是认真考虑过的路径，不是稻草人；如果试过并失败，记录失败证据/PR。",
+        "rejected Note 用 Proposal 代替 Decision，并在 Status 行给出否决理由，不能只写 rejected。",
+        "实现后否决要写清哪条前提被什么证据推翻，例如 fake clock 不拦截 builtin timer。",
+        "rejected 不归档；只在仍能阻止一个有诱惑力的现实错误时保留，否则删除整个三元组并修复链接。",
+        "未来提案必须引用旧否决并说明哪条理由不再成立；只重复旧提案而不处理理由，应被拒绝。",
+        "同一政策的多个候选可以合并成一篇分组审计，不必每个候选一篇。",
+        "PR/issue 可以补充证据，但持久理由必须落在 Note。",
+        "历史模式是带范围的假说/反例，不是命令；必须回到本仓文件和当前行为验证。"
+      ],
+      "actors": [
+        "提案者：枚举备选、提供证据",
+        "评审者：识别稻草人、检查否决理由是否仍成立",
+        "未来提案者：先读 rejected，再决定是否重提"
+      ],
+      "steps": [
+        "枚举至少一个真实备选；写出它需要满足的条件。",
+        "给出不选理由：行为、成本、平台、测试能力、所有权、安全边界。",
+        "若已实现后否决，记录推翻前提的证据和影响范围。",
+        "把理由写入 Note 的 Alternatives/Status；不要只留在聊天或 PR。",
+        "定期/触发式审计：仍能阻止现实错误则保留，否则删除并修复链接。",
+        "新提案先引用旧 Note，再逐条说明变化的前提。"
+      ],
+      "enforcement": {
+        "mode": "review-only; archive skill adds a semantic audit",
+        "implementation": "格式门检查 Alternatives 段存在与状态骨架；归档技能要求新增 Note 前审计同主题 active Note，并按 future value 处理 rejected；没有工具判断理由真假。",
+        "trust": "门能证明“有一段备选文字”，不能证明它不是稻草人、理由仍成立或未来提案真的变强。",
+        "failure": "缺段会被格式门标红；空泛/伪造备选只能在评审中拒绝；过时 rejected 可能被保留成噪音。",
+        "exceptions": "如果确实只有一个可行路径，说明硬约束并保留该段；不要把“没想到”写成“没有备选”。"
+      },
+      "applicability": "所有设计决定，尤其是简化、依赖替换、包拆分、协议/平台选择。否决理由的适用范围必须写明版本/平台/消费者。",
+      "relationships": [
+        "rationale.decision-record-content",
+        "rationale.archive-retention-and-freeze",
+        "rationale.dependency-policy",
+        "rationale.simplification-evidence",
+        "decisions:rejected-note-lifecycle"
+      ],
+      "migration": {
+        "strategy": "建立 rejected 索引与“击败旧理由”检查：新提案必须逐条对照旧理由；定期清理不再有 guardrail 价值的 rejection。",
+        "implementation": "在 PR 模板加一项：若重提旧方案，链接旧 Note 并说明变化前提；在归档评审中记录 rejected 的保留/删除决定。",
+        "requiredSupport": "一个可搜索的 rejected 目录、一个归档/保留判断者、一个能修复入站链接的检查。"
+      },
+      "reference": "references/rationale.md#2",
+      "verification": {
+        "positive": [
+          "每个非 rejected Note 有至少一个真实备选和可检验理由。",
+          "新提案能指出旧否决的具体理由及变化前提。"
+        ],
+        "rejection": [
+          "空泛的“也可以不做”、多个备选挤在一段、只写 rejected 不写理由，应被评审拒绝。",
+          "过时/不再可信的 rejected 若继续保留，应被归档审计删除并修链接。"
+        ],
+        "recovery": [
+          "若旧否决被推翻，新增当前决定并链接旧 Note；不要改写旧 Note 的当时结论。",
+          "若旧否决仍有效，保留并补充新证据到 PR/issue，不制造第二权威。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未在安装后项目执行 rejected 审计或“击败旧理由”演练。"
+        }
+      },
+      "limitations": [
+        "备选段可能被形式化填充；没有语义门。",
+        "否决理由会随依赖/平台/消费者变化而过时；需要定期审计。",
+        "分组审计可能掩盖单个候选的细节；分组理由必须仍然可检验。"
+      ]
+    },
+    {
+      "id": "rationale.non-trivial-note-policy",
+      "title": "非平凡变更的判定与记录理由",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md",
+          "start": 7,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 44,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 155,
+          "end": 155,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "变更范围是语义判断；用行数/文件数/目录或 CI 分类器决定是否写 Note 会漏掉小而重要的契约变化，也会为机械改动制造噪音。",
+      "triggers": [
+        "任何代码/配置/文档/测试/依赖/运维改动",
+        "作者或评审者不确定是否非平凡"
+      ],
+      "obligations": [
+        "非平凡定义：新增/修改事件、上下文、hook、流、状态存储、用户可见行为、公开 API、默认值、CLI、扩展点、跨包依赖或移除能力。",
+        "平凡示例：typo、格式、注释编辑、纯机械 fixture 更新；但小 UI 调整不自动平凡，测试/fixture 若定义新契约也不平凡。",
+        "不要用行数、文件数、目录名或“是否 architecture”作为判定。",
+        "不要引入自动 trivial/non-trivial 分类器；评审负责语义边界。",
+        "判为平凡时在 PR 中给出可复核理由（纯格式/纯机械/无行为变化），不要只写 trivial。",
+        "判为非平凡时，Note 与代码同一变更；删除时保留原动机、失效理由、能力损失、重新引入条件和缺席验证。",
+        "Note 是决策记录，不是规格书/计划；实现步骤留在 PR/issue。"
+      ],
+      "actors": [
+        "作者：判断并声明范围",
+        "评审者：复核边界",
+        "没有机器兜底"
+      ],
+      "steps": [
+        "用判定表逐项问：事件/状态/契约/用户行为/API/依赖/所有权是否变化。",
+        "不确定时按非平凡处理。",
+        "在 PR 描述中写实际改了什么、没改什么、测试范围。",
+        "若判平凡，给出纯机械/无行为变化的证据。",
+        "评审者质疑时补 Note 或补理由。"
+      ],
+      "enforcement": {
+        "mode": "review-only",
+        "implementation": "没有自动分类器；当前规则只要求评审与作者判断。",
+        "trust": "只能依赖人对语义的理解；行数/覆盖率不能替代。",
+        "failure": "漏写 Note 会丢失理由；过度要求会制造噪音。",
+        "exceptions": "紧急回滚可先落地后补 Note；纯机械修改可豁免。"
+      },
+      "applicability": "所有仓库改动；对持久化、安全、所有权、默认值、跨包依赖尤其严格。",
+      "relationships": [
+        "rationale.decision-record-content",
+        "rationale.archive-retention-and-freeze",
+        "collaboration:pr-scope"
+      ],
+      "migration": {
+        "strategy": "提供判定表 + PR scope 声明；不实现自动分类器。",
+        "implementation": "在 CONTRIBUTING/PR 模板中放判定表和“实际改了什么”字段；评审清单加一项“边界是否被正确分类”。",
+        "requiredSupport": "评审者培训、可搜索的 Note 模板；无需新 CI。"
+      },
+      "reference": "references/rationale.md#3",
+      "verification": {
+        "positive": [
+          "作者能引用判定表解释为什么非平凡/平凡；Note 与代码同一变更。"
+        ],
+        "rejection": [
+          "把持久化默认值/安全边界/用户行为变化称为 trivial，应被评审拒绝。"
+        ],
+        "recovery": [
+          "漏写时补 Note；误判平凡时在 PR 中修正范围声明。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未在安装后项目执行判定表/评审演练。"
+        }
+      },
+      "limitations": [
+        "语义判断无自动证明；评审者可能低估小改动的契约影响。",
+        "过度应用会让 Note 目录膨胀；需要归档/删除边界配合。"
+      ]
+    },
+    {
+      "id": "rationale.format-classification-and-index",
+      "title": "统一格式、分类与索引：结构服务于发现，不证明内容",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md",
+          "start": 9,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-06-20-agent-note-classification.md",
+          "start": 7,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-07-19-remove-generated-agent-note-index.md",
+          "start": 7,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 7,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 54,
+          "end": 125,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/agent-note-tree.ts",
+          "start": 1,
+          "end": 83,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-format.ts",
+          "start": 1,
+          "end": 94,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-agent-note-classification.ts",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-doc-refs.ts",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 9,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-23-section-keyed-translation-pairing-records.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        }
+      ],
+      "problem": "格式/分类/索引不一致会让读者把时间花在找段落和猜状态上；生成索引会变成陈旧第二权威；分类漂移会让检索和归档失效。",
+      "triggers": [
+        "新增 Note",
+        "移动/重命名 Note",
+        "新增类型或目录",
+        "翻译配对",
+        "发现索引/目录陈旧"
+      ],
+      "obligations": [
+        "使用统一骨架：Status、Problem、Decision（或 Proposal）、Alternatives、Consequences；proposed 加 acceptance/risks。",
+        "文件名 YYYY-MM-DD-short-kebab-title.md；日期是创建日。",
+        "类型由变更意图决定：architecture/bug-fix/feature/process/simplification/testing；不要按改了哪些文件猜。",
+        "分类器两遍：目录推类型、解析 Status；未知目录、类型/状态矛盾、缺 Problem 拒绝。",
+        "新增类型必须同时改分类器/文档，不只建目录。",
+        "不要重新引入生成的 Note INDEX；用目录/链接/主题交叉引用发现。",
+        "生成的参考/目录只镜像，不拥有内容；中文对照按配对规则维护。",
+        "归档 Note 不重新格式化；格式门只作用于活 Note。"
+      ],
+      "actors": [
+        "作者：按模板写",
+        "CI：跑格式/分类/链接门",
+        "评审者：判断类型/结构是否合理"
+      ],
+      "steps": [
+        "按创建日命名；同变更创建 .zh.md 与 .i18n.yaml。",
+        "填头部 Status 与语言切换链接；按状态选骨架。",
+        "运行 node scripts/agent-note-tree.ts --write 与格式/分类/链接检查。",
+        "修机械错误；语义问题交给评审。",
+        "若发现生成索引/第二真源，删除并用链接替代。"
+      ],
+      "enforcement": {
+        "mode": "mechanical gates + review",
+        "implementation": "agent-note-tree/verify-agent-note-format/verify-agent-note-classification/verify-doc-refs；配对门验证结构与 hash。",
+        "trust": "能证明文件名/段落/状态/类别/链接/配对形状；不能证明分类合理、备选真实、译文等义。",
+        "failure": "缺段、未知目录、状态矛盾、死链、配对缺失会红；空话不会红。",
+        "exceptions": "归档 Note 冻结；旧 Note 的缺段由冻结规则允许；纯机械 Note 可少于完整骨架。"
+      },
+      "applicability": "所有活 Note；归档只校验不重排；翻译配对只覆盖在范围内的文档。",
+      "relationships": [
+        "rationale.decision-record-content",
+        "rationale.archive-retention-and-freeze",
+        "documentation:translation-pairing",
+        "decisions:classification-gates"
+      ],
+      "migration": {
+        "strategy": "用一个模板 + 一个机械校验器，不追求多套模板；索引只做一次性报告。",
+        "implementation": "复制骨架和路径分类；在 CI 跑格式/分类/链接；不把索引纳入提交。",
+        "requiredSupport": "脚本运行环境、Note 目录、翻译配对规则；没有 CI 时明确标 review-only。"
+      },
+      "reference": "references/rationale.md#4",
+      "verification": {
+        "positive": [
+          "格式/分类/链接/配对门通过；读者能按固定段找到问题/决定/备选/后果。"
+        ],
+        "rejection": [
+          "未知目录、类型/状态矛盾、缺 Problem、死链、配对缺失应失败。"
+        ],
+        "recovery": [
+          "按错误修路径/状态/链接；不要用“加索引”绕过发现问题。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "本次未运行这些脚本；只读实现与规则。"
+        }
+      },
+      "limitations": [
+        "结构正确可被空话通过；分类正确不等于分类合理；生成参考可能滞后于源。"
+      ]
+    },
+    {
+      "id": "rationale.archive-retention-and-freeze",
+      "title": "冻结归档的取舍：删除什么、保留什么、为什么归档不是权威",
+      "sources": [
+        {
+          "path": ".agents/notes/README.md",
+          "start": 36,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md",
+          "start": 5,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 18,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 38,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-archived-agent-notes.ts",
+          "start": 1,
+          "end": 115,
+          "kind": "implementation"
+        },
+        {
+          "path": ".rgignore",
+          "start": 1,
+          "end": 2,
+          "kind": "config"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 23,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "active Note 目录会累积低价值记录；直接删除会丢失历史理由；归档若被默认搜索或被编辑，会变成陈旧第二权威；拒绝/提案若被归档会打乱生命周期。",
+      "triggers": [
+        "新增 Note 触发同主题 supersession 审计",
+        "active 目录膨胀",
+        "Note 被取代",
+        "发现归档被编辑/移动/默认搜索"
+      ],
+      "obligations": [
+        "先应用 delete 标准：只删除小 UI/纯机械变更的完整三元组；本地 bug fix、性能、新能力、实质行为/所有权决定不能仅因已实现就删除。",
+        "keep active：理由、备选、负向保证、durable/wire 语义、所有权、安全、重新引入条件仍可能指导未来；长度不是标准。",
+        "archive：完整、实质、历史理由值得保留但不太可能指导未来；不要归档满足直接删除标准的记录。",
+        "proposed 永不归档；不值得推进时诚实转 rejected。",
+        "rejected 只作为 guardrail 保留；过时/被取代/不再可信时删除三元组并修复链接。",
+        "所有符合条件 implemented 三元组在同一 PR 归档；部分取代更新幸存 Note，不制造两份权威。",
+        "归档字节冻结：不编辑/重排/翻译/删除/移动；唯一写入是 manifest hash；不默认搜索；不声称归档出站链接有效。",
+        "不要按配额归档；检查范围内每一篇；同类归一个原则；记录边界案例。"
+      ],
+      "actors": [
+        "作者/归档者：判断保留/删除/归档",
+        "评审者：复核语义与当前权威",
+        "CI：字节/manifest/链接校验"
+      ],
+      "steps": [
+        "新增 Note 前审计同决定/机制/被否代方案的 active Note。",
+        "分类 full/partial supersession；同 PR 处理完整三元组。",
+        "运行归档技能移动文件并生成 manifest；不手写 hash。",
+        "更新当前文档链接到新权威；不修归档内部链接。",
+        "运行归档/链接校验；记录 borderline 决定。"
+      ],
+      "enforcement": {
+        "mode": "review + artifact verifier",
+        "implementation": "归档技能负责语义分类；verify-archived-agent-notes 校验字节、manifest、路径、必需文件；.rgignore 排除默认搜索；链接检查覆盖活文档。",
+        "trust": "verifier 能证明“字节未变/清单匹配/三元组存在”，不能证明低价值判断正确、归档内容仍适用或出站链接有效。",
+        "failure": "字节/manifest/路径/必需文件错误会红；误归档只能在评审/后续审计发现。",
+        "exceptions": "归档内部链接允许失效；历史 Note 缺 alternatives 由冻结规则允许；不按配额。"
+      },
+      "applicability": "只适用于 implemented Note 的归档；postmortem 不进入 Note 归档；proposed/rejected 不归档。",
+      "relationships": [
+        "rationale.decision-record-content",
+        "rationale.alternatives-and-rejected-knowledge",
+        "rationale.authority-and-history-routing",
+        "decisions:archive-workflow"
+      ],
+      "migration": {
+        "strategy": "把六类 lifecycle 做成归档评审表；用 manifest/hash 冻结；默认搜索排除归档。",
+        "implementation": "建立 archived/<type>/ 目录、manifest 生成器、字节校验；活文档只链接当前权威。",
+        "requiredSupport": "版本控制历史、manifest 工具、链接检查；语义判断仍需人。"
+      },
+      "reference": "references/rationale.md#5",
+      "verification": {
+        "positive": [
+          "每个 implemented 三元组符合 keep/delete/archive 之一；归档字节与 manifest 匹配；默认搜索不返回归档；活文档指向当前权威。"
+        ],
+        "rejection": [
+          "把仍有负向保证/所有权/重新引入条件的 Note 归档，或编辑归档字节、把 rejected 归档，应被评审拒绝。"
+        ],
+        "recovery": [
+          "误归档从 Git 恢复并留在 active；字节/manifest 错误从 Git 恢复后重新生成；链接失效改当前文档。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未运行归档校验；只读规则/实现与历史映射。"
+        }
+      },
+      "limitations": [
+        "“低价值”是事后判断；归档会累积陈旧事实；manifest 只证字节，不解释理由；边界案例需人记录。"
+      ]
+    },
+    {
+      "id": "rationale.postmortem-root-cause",
+      "title": "事故复盘：把根因、安全网和可复用教训写成可检验叙事",
+      "sources": [
+        {
+          "path": "docs/postmortem/README.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 1,
+          "end": 113,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0002-js-expression-disabled-filesystem-tools.md",
+          "start": 1,
+          "end": 47,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0003-web-agent-gui-feedback-loop.md",
+          "start": 1,
+          "end": 53,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md",
+          "start": 1,
+          "end": 55,
+          "kind": "history"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md",
+          "start": 3,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-08-ci-completion-observations.md",
+          "start": 3,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md",
+          "start": 5,
+          "end": 44,
+          "kind": "history"
+        }
+      ],
+      "problem": "只修症状会留下同类失败；postmortem 若只写“发生了什么”而不解释机制、为什么安全网没拦住、补了哪些 guardrail，就无法防止复发。",
+      "triggers": [
+        "bug 到达真实用户/合并 PR/发布",
+        "机制不直观、需要仔细重推",
+        "逃逸原因是测试/工具/约定缺口",
+        "重新发现成本高"
+      ],
+      "obligations": [
+        "触发条件：subtle + systemic + costly to rediscover；小 bug 可只写 bug-fix Note。",
+        "每篇先写 Executive summary：坏了什么、根因、为何逃过、可复用教训。",
+        "正文覆盖 Summary/Impact/Timeline/Root cause/Guardrails；区分观察与推断。",
+        "解释机制，不只说某个调用错了；解释错误如何传播/被吞掉。",
+        "做安全网分析：哪条规则/门/测试应该拦、为什么没拦、缺口在哪层。",
+        "修在失败发生的层；补真实入口/负向控制/回归；链接被激发的 test/AGENTS 规则/ADR。",
+        "一个错误可能有多个必要条件；验证“只修一个仍失败”的反例。",
+        "不要只相信 trace/漂亮理论；用证据区分第一根因与第二根因。",
+        "记录仍存在的限制/未复现平台；不要把事后叙事当运行时证明。",
+        "postmortem 不是 Agent Note；决策理由链接到 Note，不混用。"
+      ],
+      "actors": [
+        "事故处理者/作者：写时间线与根因",
+        "评审者：检查因果/证据/guardrail",
+        "领域 owner：确认修复边界"
+      ],
+      "steps": [
+        "收集日志/commit/测试/截图/用户报告，标来源。",
+        "写 Executive summary 与时间线。",
+        "列竞争假设，逐条用证据排除；区分 trace 与理论。",
+        "写根因机制与安全网缺口。",
+        "写修复/guardrail，链接测试/规则/ADR。",
+        "写限制/未知；评审后发布。"
+      ],
+      "enforcement": {
+        "mode": "review-only",
+        "implementation": "docs/postmortem/README.md 规定结构与触发；docs/AGENTS.md 指定 postmortem 是事故叙事层；没有自动门检查根因质量。",
+        "trust": "只能靠评审与后续回归；文件存在/链接可达不等于根因正确。",
+        "failure": "根因错误会误导后续修复；guardrail 可能只覆盖症状。",
+        "exceptions": "无系统缺陷的用户操作错误可只写支持记录；安全/隐私细节脱敏。"
+      },
+      "applicability": "已发生、值得留下过程教训的事故；不要用它替代普通设计 Note。",
+      "relationships": [
+        "rationale.verification-epistemics",
+        "testing:postmortem-and-regression",
+        "documentation:incident-narrative"
+      ],
+      "migration": {
+        "strategy": "用 Executive summary + Timeline/Root cause/Guardrails 模板；评审只问因果与证据。",
+        "implementation": "在 docs/postmortem/ 建编号模板；要求链接 guardrail；在 bug-fix Note 与 postmortem 之间做选择。",
+        "requiredSupport": "日志/commit 访问、评审者、回归测试入口；无需自动根因分析。"
+      },
+      "reference": "references/rationale.md#6",
+      "verification": {
+        "positive": [
+          "第三人能复述时间线、根因机制、安全网缺口、guardrail、剩余限制。"
+        ],
+        "rejection": [
+          "只写“修了 X”不写机制/安全网/guardrail，或把相关当根因，应被评审拒绝。"
+        ],
+        "recovery": [
+          "证据不足时标未知并补日志/复现；根因错误时新增更正/后续 Note，不改历史叙事。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "本次未复现 0001-0004 的运行环境；根因来自源叙事。"
+        }
+      },
+      "limitations": [
+        "hindsight bias；日志可能不完整；平台差异不可复现；叙事不能替代运行时证据。"
+      ]
+    },
+    {
+      "id": "rationale.verification-epistemics",
+      "title": "验证证据的层次：接受、完成、状态与真实世界不是同一个观察",
+      "sources": [
+        {
+          "path": "docs/testing.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md",
+          "start": 3,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/testing/2026-09-08-ci-completion-observations.md",
+          "start": 3,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md",
+          "start": 5,
+          "end": 44,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 7,
+          "end": 63,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 97,
+          "end": 125,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md",
+          "start": 1,
+          "end": 19,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 508,
+          "end": 557,
+          "kind": "test"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 787,
+          "end": 806,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/suite.ts",
+          "start": 1197,
+          "end": 1199,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 5,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 79,
+          "end": 106,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "测试/评审常把一个观察当成另一个：接受请求当完成、UI 投影当 durable 状态、进程启动当工具执行、快照相等当输入状态正确、绿色套件当覆盖真实入口。",
+      "triggers": [
+        "写异步/进程/快照/e2e 断言",
+        "修复 flake",
+        "声称“已验证”",
+        "设计 guard/负向控制",
+        "评审测试证据"
+      ],
+      "obligations": [
+        "先命名观察：接受、投影、进程启动、durable 完成、用户可见结果彼此独立；不要互相推断。",
+        "测试走真实入口/发布工件，不用测试专用旁路；guard 只有在真实入口上才 guard。",
+        "加负向控制：坏输入/去掉保护/超时/取消至少一种应失败；证明回归会红再修。",
+        "快照/golden 捕获必须自己建立输入状态（hover/focus/滚动/读完成）；timeout 不是状态。",
+        "刷新 volatile 字段时不要用暂停时钟原样刷新；证明非目标文本/结构不变。",
+        "进程归因用合取：退出状态 + stderr 子系统标记 + 日志形状；区分 timeout/signal/自身失败。",
+        "跨进程保留结构化错误/cause/字段，不要只抛 message。",
+        "确定性 fake 与真实装配路径并用：fake 证顺序/规则，真实 Context/merge 证注入/默认值/未知字段。",
+        "世界验证：e2e 重跑命令/外部重读文件；不信任 Agent 自报；未触及文件字节一致。",
+        "检查器只证它检查的属性；格式/schema/链接/代码分数不等于语义/运行时。",
+        "清理/超时必须释放资源并等待完成信号；不要把 abort/close/kill 当 teardown。"
+      ],
+      "actors": [
+        "测试作者：选择观察与入口",
+        "评审者：问“这个测试能不能失败”",
+        "CI：执行/报告",
+        "领域 owner：确认真实世界路径"
+      ],
+      "steps": [
+        "写出要证明的观察与对应真实入口。",
+        "为断言建立输入状态；异步等待明确事件/状态。",
+        "加负向控制/回归证明；如果是 guard，先观察红。",
+        "跨进程/快照/UI 分别用结构化错误/状态命名/真实世界验证。",
+        "在 Note/PR 中标注证据层级与限制。"
+      ],
+      "enforcement": {
+        "mode": "review + test execution; some mechanical schema/snapshot gates",
+        "implementation": "docs/testing.md 规定 tiers/真实入口/世界验证；dsh-ci-test-reliability 规定同步/清理/回归证明；快照/schema 门只覆盖格式与已记录行为。",
+        "trust": "测试能证明已覆盖断言的通过/失败；不能证明未覆盖路径/生产行为/输入状态。",
+        "failure": "sleep/重试/序列化可能掩盖 flake；绿色套件可能绕过真实入口；快照相等可能捕获错状态。",
+        "exceptions": "纯文档/格式变更不需要世界验证；静态类型/格式门可作为补充。"
+      },
+      "applicability": "所有测试与“已验证”声明；对异步、进程、快照、UI、跨进程错误尤其严格。",
+      "relationships": [
+        "rationale.postmortem-root-cause",
+        "testing:ci-reliability",
+        "testing:real-entry-path",
+        "rationale.human-judgment-boundary"
+      ],
+      "migration": {
+        "strategy": "建立观察矩阵：断言→观察→真实入口→负向控制→限制；禁止用 timeout 当条件。",
+        "implementation": "在测试模板/评审清单中加入入口、状态建立、负控、清理；对快照/进程/UI 分别加检查。",
+        "requiredSupport": "可运行的 CI/lane、真实浏览器/进程入口、结构化错误约定；无自动验证时标 planned。"
+      },
+      "reference": "references/rationale.md#7",
+      "verification": {
+        "positive": [
+          "每个关键断言能指出观察、真实入口、输入状态、负向控制和失败模式。"
+        ],
+        "rejection": [
+          "只断言 UI 投影/HTTP 202/进程启动就声称完成，或用 timeout/sleep 作为状态条件，应被评审拒绝。"
+        ],
+        "recovery": [
+          "测试只能证明弱观察时加观察点/真实入口；无法稳定时隔离并记录限制，不用重试掩盖。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "本次未运行测试/lane；只读规则与事故记录。"
+        }
+      },
+      "limitations": [
+        "没有测试能证明所有路径；测试环境与生产不同；负向控制也可能错；世界验证依赖人工/浏览器。"
+      ]
+    },
+    {
+      "id": "rationale.simplification-evidence",
+      "title": "简化调查的证据门槛：行为、消费者与维护成本先于“看起来更少”",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 8,
+          "end": 61,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+          "start": 1,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md",
+          "start": 7,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 9,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md",
+          "start": 7,
+          "end": 47,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 3,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-06-13-capability-seams.md",
+          "start": 11,
+          "end": 36,
+          "kind": "history"
+        }
+      ],
+      "problem": "grep 级“删除/合并”会漏动态消费者、DI、tree-shaking、行为区分和维护成本；净删除可能只是把义务搬进依赖；调查容易退化成 checklist。",
+      "triggers": [
+        "重复实现/死代码/过度抽象/重复状态",
+        "依赖替换",
+        "包拆分/合并",
+        "测试重复",
+        "调查输出需要决策"
+      ],
+      "obligations": [
+        "读 owner docs/历史/代码/测试；建立 inventory；不设删除数量/机制数量目标。",
+        "问完整效果路径：符号/包/配置是否真的进入执行？构造器、DI、tree-shaking、canonical API、动态 import 都可能改变结论。",
+        "检查消费者区分：undefined vs 空值、顺序、错误类型、同步/异步、取消语义；消费者区分则不能合并。",
+        "行为减少要显式：空目录、负向前瞻/XOR、可变配置等变化不是“清理”；记录失去的能力。",
+        "能派生就不要维护计数/时间戳/数组；新增冗余状态会成为第二真源。",
+        "不要把一次性插件/bundle 的组合便利搬进共享层，给无关表面增加风险。",
+        "维护成本是正当理由：但“净删除/单一机制”不充分；测试确定性、安全边界、平台行为能否决替换。",
+        "保护取消/abort/auth stub/验证/错误暴露/默认值/可观测性；不要用“保留测试”代替保留行为。",
+        "不要因“没有生产调用点”否决一个协议/契约；可见面不需要临时激活。",
+        "报告未知/动态 import/可选插件边界；发现更多工作要报告，不隐藏。",
+        "小批量落地，每个机制/批次后跑相关验证；不要一次性大爆炸。",
+        "历史模式只作假设/反例，必须回到本仓文件和当前行为验证。"
+      ],
+      "actors": [
+        "调查者：建 inventory、证据分级",
+        "领域 owner：确认行为/所有权",
+        "评审者：检查效果路径/行为损失/验证"
+      ],
+      "steps": [
+        "按领域读并记录候选；不预设数量。",
+        "对每个候选走六问：效果路径、消费者区分、行为减少、可派生、组合风险、维护成本。",
+        "标证据级别：充分/需验证/不可行/保留；记录未知。",
+        "写行为变化、能力损失、受保护义务、验证计划。",
+        "小批量删除/合并；每批跑类型/测试/构建；记录结果与回归。",
+        "对依赖替换额外验证测试时钟/安全/平台/净删除。"
+      ],
+      "enforcement": {
+        "mode": "review + compile/tests; no generic checker",
+        "implementation": "dsh-find-simplifications 规定调查方法；编译/测试能发现部分行为回退，但动态/可选路径需人工。",
+        "trust": "测试通过能证明已覆盖行为；不能证明未引用/未导入模块真的无人使用。",
+        "failure": "动态 import/配置字符串/外部消费者会漏；测试弱会掩盖行为损失；一次性大改难回滚。",
+        "exceptions": "纯死代码/未引用文件在完整搜索后可快速删；仍记录范围。"
+      },
+      "applicability": "重复实现、死代码、过度抽象、依赖替换、包拆分/合并、测试重复。",
+      "relationships": [
+        "rationale.dependency-policy",
+        "rationale.removal-and-reintroduction",
+        "engineering:architecture-ownership",
+        "testing:coverage"
+      ],
+      "migration": {
+        "strategy": "用调查模板 + 决策表 + 小批量验证；不实现“简化 checker”。",
+        "implementation": "在调查 Note 中列候选/证据/行为变化/保护义务/验证；每个批次单独可回滚。",
+        "requiredSupport": "类型/测试/构建入口、owner 评审、可搜索的调用图；动态路径需运行时验证。"
+      },
+      "reference": "references/rationale.md#8",
+      "verification": {
+        "positive": [
+          "每个删除/合并都有完整效果路径、消费者区分、行为变化、验证；批次可回滚。"
+        ],
+        "rejection": [
+          "按文件数/行数删除、只靠 grep、无行为变化说明、无验证，应被评审拒绝。"
+        ],
+        "recovery": [
+          "测试/类型失败回退该批；动态消费者恢复并补证据；无法确定时保留并标未知。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未运行完整调查/构建；只读方法/案例。"
+        }
+      },
+      "limitations": [
+        "静态搜索漏动态 import/外部消费者；测试覆盖有限；调查者可能有“想删”的偏见；架构拆分需要长期判断。"
+      ]
+    },
+    {
+      "id": "rationale.dependency-policy",
+      "title": "依赖与内置的取舍：维护成本、净删除与已记录否决",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 9,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 140,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md",
+          "start": 3,
+          "end": 78,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md",
+          "start": 1,
+          "end": 10,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 45,
+          "end": 55,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "手写基础设施与 maintained dependency 的取舍常被简化成“少一个包/少几行”；这会忽略维护成本、测试确定性、安全边界、平台方言和净删除是否真实。",
+      "triggers": [
+        "发现手写 sleep/retry/CLI/解析器",
+        "依赖替换候选",
+        "NIH 审计",
+        "依赖维护状态变化"
+      ],
+      "obligations": [
+        "优先 maintained dependency 而非手写同类基础设施；TUI/边界方言/快照稳定性可例外并记录理由。",
+        "替换必须带来净删除（stdlib/维护代码），不能只是把代码搬进依赖；一行能解决的内置/标准库优先。",
+        "不要为一行 await 引入外部包；先看内置/标准库。",
+        "安全/平台/许可证是正当例外；记录范围与依赖版本。",
+        "被否决的替换分组记录；未来提案必须先击败记录的理由。",
+        "不要为了“单一机制”重复已有的 check/staging 控制流；不要新增只做转发的 guard。",
+        "替换必须验证测试能力：fake clock 是否拦截、确定性是否保留、失败是否可复现。"
+      ],
+      "actors": [
+        "提案者：证净删除/维护收益",
+        "评审者：检查测试/安全/平台",
+        "依赖审计：记录拒绝理由"
+      ],
+      "steps": [
+        "列出手写实现的维护成本、边界行为、测试依赖。",
+        "查 maintained dependency/内置是否覆盖；比较净删除与新增义务。",
+        "验证测试时钟/安全/平台/许可证。",
+        "若否决，写清理由与重新提出条件；分组记录。",
+        "若采用，记录版本/范围/迁移与回滚。"
+      ],
+      "enforcement": {
+        "mode": "review + dependency audit",
+        "implementation": "AGENTS.md 的依赖规则 + dependencies-over-hand-rolling Note + 拒绝记录；没有自动判断“该不该换”。",
+        "trust": "能检查许可证/版本/构建，不能证明维护成本/测试确定性/平台行为。",
+        "failure": "只看行数会引入更贵依赖；忽略测试时钟会失去确定性；忽略安全边界会引入风险。",
+        "exceptions": "安全修复/平台方言/许可证强制可优先；仍要记录。"
+      },
+      "applicability": "基础设施/CLI/解析/重试/sleep/加密/平台适配等依赖替换。",
+      "relationships": [
+        "rationale.simplification-evidence",
+        "supply:dependency-audit",
+        "testing:deterministic-clocks"
+      ],
+      "migration": {
+        "strategy": "建依赖决策表：净删除、维护成本、测试确定性、安全、平台、回滚。",
+        "implementation": "在 PR 模板加依赖替换检查；把拒绝理由写入 rejected Note/审计清单。",
+        "requiredSupport": "依赖审计/许可证工具、测试时钟能力、安全评审。"
+      },
+      "reference": "references/rationale.md#2-1",
+      "verification": {
+        "positive": [
+          "替换能证明净删除/维护收益，且测试/安全/平台验证通过。"
+        ],
+        "rejection": [
+          "只减少行数但引入未维护依赖、失去 fake clock、绕过安全边界，应被拒绝。"
+        ],
+        "recovery": [
+          "回滚依赖/恢复手写实现；把失败证据写入拒绝记录。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未执行依赖审计/替换验证。"
+        }
+      },
+      "limitations": [
+        "维护状态会变化；peer/平台范围复杂；不是所有手写都该替换；拒绝理由可能过时。"
+      ]
+    },
+    {
+      "id": "rationale.performance-evidence",
+      "title": "性能与预算证据：端点、分布、控制与棘轮",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 7,
+          "end": 63,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md",
+          "start": 97,
+          "end": 125,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md",
+          "start": 5,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-10-11-lossless-build-speedups.md",
+          "start": 5,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 1,
+          "end": 55,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "微基准/更小文件不等于用户可感知的改进；单次样本和墙钟阈值无法区分慢机器与真实增长；速度优化可能改变输出。",
+      "triggers": [
+        "新增性能门/预算",
+        "声称加速",
+        "构建时间/内存优化",
+        "基准失败或噪声"
+      ],
+      "obligations": [
+        "先定义用户/系统端点与阶段；不要用内部函数替代用户可感知路径。",
+        "用分布/分位数/多次样本，不用单次；记录环境/缓存/冷热。",
+        "正/负控制：已知成本应显示成本，无操作应接近零；控制失败时先修测量。",
+        "预算按 suite/lane；合法改进后 ratchet；失败应阻止新回退，不是追赶。",
+        "工作计数（图操作/文件操作）可用于跨机器比较，但要证明与真实成本相关。",
+        "无损优化必须证明输出字节/诊断集合不变；否则可能是删除内容。",
+        "内存/worker/并发优化要记录 RSS/限制/关键路径；不要只看墙钟。",
+        "记录限制：CI 噪声、机器差异、fixture 代表性、无生产内存画像。"
+      ],
+      "actors": [
+        "性能作者：测量/控制",
+        "评审者：检查端点/预算/输出",
+        "CI：跑门禁"
+      ],
+      "steps": [
+        "跑基线并记录分布/样本数。",
+        "加正/负控制，确认测量能区分成本。",
+        "改一处，重测同一端点；记录差异与噪声。",
+        "若改进成立，收紧预算/ratchet；若回退，回滚或解释。",
+        "记录输出不变/限制；更新基准数据。"
+      ],
+      "enforcement": {
+        "mode": "performance gate + benchmark + review",
+        "implementation": "test:bench/性能门禁、work budget 脚本、字节比较；没有自动判断端点是否用户可感知。",
+        "trust": "能测已定义端点的分布/预算；不能证明生产用户体验/所有路径。",
+        "failure": "单样本/热缓存/放宽阈值会掩盖回退；工作计数可能与真实成本脱节。",
+        "exceptions": "纯构建时间可只看墙钟但固定环境；安全/正确性优先。"
+      },
+      "applicability": "用户路径/构建/安装/内存/工作预算。",
+      "relationships": [
+        "testing:performance-gates",
+        "rationale.verification-epistemics",
+        "rationale.simplification-evidence"
+      ],
+      "migration": {
+        "strategy": "先建立端点/基线/控制，再加预算；预算 ratchet；无损优化做字节比较。",
+        "implementation": "在 benchmarks/CI 中加正负控制、分布统计、预算常量与注释；记录机器/环境。",
+        "requiredSupport": "稳定 runner/基准数据、预算脚本、评审者。"
+      },
+      "reference": "references/rationale.md#9",
+      "verification": {
+        "positive": [
+          "同一端点分布改进可重复；控制有效；预算更新有理由；输出不变。"
+        ],
+        "rejection": [
+          "单次样本/无控制/放宽阈值/改变输出却称无损，应被拒绝。"
+        ],
+        "recovery": [
+          "噪声大时增加样本/固定环境/改工作计数；预算不合理先修测量；回退并记录。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未运行基准/性能门；只读案例。"
+        }
+      },
+      "limitations": [
+        "基准环境不等于生产；缓存/预热影响；预算过时；工作计数不一定线性。"
+      ]
+    },
+    {
+      "id": "rationale.removal-and-reintroduction",
+      "title": "移除与重新引入：保留原动机、失去的能力与回归条件",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md",
+          "start": 15,
+          "end": 22,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 44,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 24,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md",
+          "start": 7,
+          "end": 47,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.md",
+          "start": 5,
+          "end": 57,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md",
+          "start": 5,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md",
+          "start": 10,
+          "end": 19,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 3,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/references/historical-patterns.md",
+          "start": 31,
+          "end": 31,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "移除记录常只写“删了 X”，未来读者不知道原动机、失去什么、何时可回；静默丢弃公共类型会让生产者在运行时丢数据。",
+      "triggers": [
+        "删除能力/路径/类型/包",
+        "部分移除 transport/default/implementation",
+        "重新引入旧能力",
+        "发现静默丢弃"
+      ],
+      "obligations": [
+        "移除 Note 保留：原动机、为什么不再成立、不完全删除的替代方案、失去的能力、重新引入条件、完整缺席验证。",
+        "清单覆盖源码/测试/fixture/文档/引用/忽略文件；区分“未找到”与“证明不存在”。",
+        "部分移除要写清范围；未移除部分保留当前记录，不声称全局缺席。",
+        "重新引入检查旧条件是否真的满足；说明旧理由如何被新证据击败；选最小路径。",
+        "类型回归必须所有适配器/压缩/序列化路径一起支持；不能回到静默丢弃；退回时至少显式拒绝。",
+        "更新当前权威/文档；旧 Note 保持历史，不改写。",
+        "不要为了“以后可能”保留无消费者的公共表面；缺席比空壳更安全。"
+      ],
+      "actors": [
+        "删除者：写 Note/清引用/证明缺席",
+        "领域 owner：确认能力损失",
+        "评审者：检查重新引入条件"
+      ],
+      "steps": [
+        "列消费者/入口/文档/测试/fixture；写 Note 六项。",
+        "删除并清引用；不要留死类型/别名/shim（除非迁移期明确）。",
+        "用精确搜索/构建/测试证明缺席；记录范围。",
+        "若部分移除，限定范围并保留其余记录。",
+        "若回归，检查条件、消费者、最小路径、协调改动；更新当前权威。"
+      ],
+      "enforcement": {
+        "mode": "review + tests; no completeness gate",
+        "implementation": "Note 规则要求移除内容；测试/构建能发现部分残留；没有门证明动态/外部消费者不存在。",
+        "trust": "搜索/测试能证明已检查路径；不能证明全宇宙缺席。",
+        "failure": "动态 import/外部消费者会漏；部分移除可能被误报为全局；重新引入条件会过时。",
+        "exceptions": "纯未使用文件可快速删；仍需记录搜索范围。"
+      },
+      "applicability": "能力/包/类型/transport/default/实现移除与回归。",
+      "relationships": [
+        "rationale.simplification-evidence",
+        "rationale.archive-retention-and-freeze",
+        "engineering:architecture-seams"
+      ],
+      "migration": {
+        "strategy": "用移除模板（六项）+ 缺席证据表 + 回归条件；不要把“删除”写成 changelog。",
+        "implementation": "在删除 PR 中要求 Note/搜索/测试/当前权威更新；回归时先读旧 Note 条件。",
+        "requiredSupport": "代码搜索/构建/测试入口、owner 评审、当前权威链接。"
+      },
+      "reference": "references/rationale.md#10",
+      "verification": {
+        "positive": [
+          "Note 能回答为什么删/失去什么/何时可回；缺席证据覆盖源码/测试/文档；无残留引用。"
+        ],
+        "rejection": [
+          "只写“删除 X”、保留无消费者公共表面、类型回归只改一个适配器，应被拒绝。"
+        ],
+        "recovery": [
+          "发现动态消费者/残留路径：恢复并补证据；无法证明缺席：标未知/保留。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未执行删除/回归验证；只读案例。"
+        }
+      },
+      "limitations": [
+        "动态/外部消费者搜不到；测试通过不等于无人使用；重新引入条件会过时。"
+      ]
+    },
+    {
+      "id": "rationale.authority-and-history-routing",
+      "title": "当前权威与历史路由：一条事实一个主人，历史不得冒充现状",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 7,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 36,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md",
+          "start": 13,
+          "end": 23,
+          "kind": "history"
+        },
+        {
+          "path": ".rgignore",
+          "start": 1,
+          "end": 2,
+          "kind": "config"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 40,
+          "end": 41,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 61,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 34,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-08-09-committed-artifact-citations.md",
+          "start": 7,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md",
+          "start": 1,
+          "end": 13,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-find-simplifications/SKILL.md",
+          "start": 10,
+          "end": 10,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "归档 Note 被默认搜索/被编辑/被当现状，会造成第二权威；同一事实在根/子目录/技能/生成参考里重复；相对设计序号和未提交引用让读者无法定位。",
+      "triggers": [
+        "新增/移动文档",
+        "引用历史决定",
+        "跨工具投影指令",
+        "翻译配对",
+        "发现重复规则"
+      ],
+      "obligations": [
+        "一条事实一个主人：根 AGENTS 放通用 standing orders；子树 AGENTS 放子树规则；docs 放当前状态；Note 放 why；postmortem 放事故；cookbook 放步骤；README 放包契约；技能放工作流。",
+        "归档 Note 是历史，不是当前权威；活文档不得把归档事实当现状。",
+        "归档不进默认搜索（.rgignore）；需要历史时显式包含；不重新引入全量索引。",
+        "历史失效时不编辑归档字节；在当前文档加新决定/重定向，旧 Note 保持历史。",
+        "引用已提交工件；不要用未提交状态或“设计 1/2”相对序号。",
+        "跨工具入口只保留必要的指令投影，避免在每个入口重述完整规则；关键契约在各自入口都写。",
+        "翻译：英文在代码树为 canonical，中文为配对；按 heading/hash 配对；归档冻结不重译。",
+        "发现重复规则时，选一个 home，其他位置改为链接；不要制造第二套解释。"
+      ],
+      "actors": [
+        "文档维护者：分层/链接",
+        "作者：把理由放 Note、把当前状态放 docs",
+        "评审者：检查是否第二权威"
+      ],
+      "steps": [
+        "确定事实类型（规则/状态/理由/事故/步骤/契约/工作流）。",
+        "放到对应 tier；其他位置只链接。",
+        "若引用历史，链接归档并说明“历史”；当前权威另链。",
+        "若是翻译，按配对规则更新并 --write 记录。",
+        "运行链接/配对/归档检查；删重复索引。"
+      ],
+      "enforcement": {
+        "mode": "link/pairing/archive gates + prose review",
+        "implementation": "verify-doc-refs 检查活文档链接；verify-translation-pairing 检查配对；verify-archived-agent-notes 校验归档字节；.rgignore 排除归档；没有门判断“这个事实是否只有一个 home”。",
+        "trust": "门能证明链接/配对/归档字节；不能证明事实权威分配正确、读者不会误用历史。",
+        "failure": "死链/配对缺失/归档改动会红；重复规则/历史当现状只能在评审发现。",
+        "exceptions": "归档内部链接允许失效；生成参考可镜像；跨工具投影必须局限在各自入口。"
+      },
+      "applicability": "所有文档/指令/Note/翻译/引用；尤其跨包/跨工具/跨版本。",
+      "relationships": [
+        "rationale.archive-retention-and-freeze",
+        "documentation:prose-and-translation",
+        "agent-flows:instruction-routing",
+        "decisions:note-lifecycle"
+      ],
+      "migration": {
+        "strategy": "建立 tier 表 + 当前权威映射 + 链接策略；不要复制规则。",
+        "implementation": "在 docs/AGENTS 写 tier taxonomy；在归档索引/当前文档写重定向；跨工具只投影必要入口。",
+        "requiredSupport": "链接/配对检查、归档 manifest、文档 owner；语义分诊靠人。"
+      },
+      "reference": "references/rationale.md#5-4",
+      "verification": {
+        "positive": [
+          "每个事实能指出唯一 home；归档引用标明历史；当前权威链接可达；翻译配对通过。"
+        ],
+        "rejection": [
+          "把归档当现状、复制规则、默认搜索归档、用设计序号/未提交引用，应被评审拒绝。"
+        ],
+        "recovery": [
+          "修正当前文档/重定向；重复规则合并到一个 home；归档只在 Git 恢复，不编辑。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "未运行链接/配对检查；当前权威映射部分为阅读推断。"
+        }
+      },
+      "limitations": [
+        "历史与现状的边界需要语义判断；链接会腐烂；翻译语义不由门保证；跨工具投影可能漂移。",
+        "技能 invocation metadata 门只枚举带 agents/openai.yaml 的技能；缺少该文件的技能被跳过，干净检出可能报 0 对并通过，不能证明全部技能对齐。"
+      ]
+    },
+    {
+      "id": "rationale.human-judgment-boundary",
+      "title": "人为判断与工具边界：哪些治理只能评审，不能声称自动保证",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md",
+          "start": 30,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 8,
+          "end": 8,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-archive-agent-notes/SKILL.md",
+          "start": 18,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 44,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md",
+          "start": 15,
+          "end": 19,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md",
+          "start": 9,
+          "end": 85,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-08-09-committed-artifact-citations.md",
+          "start": 28,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-archived-agent-notes.ts",
+          "start": 1,
+          "end": 115,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/postmortem/README.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "团队容易把“评审要求”说成“自动保证”，或把格式/字节/链接检查当成语义/运行时验证；这会让未实现的保证被误标为已落地。",
+      "triggers": [
+        "声称某规则“已强制”",
+        "设计评审/门禁",
+        "安装后项目迁移",
+        "安全/翻译/归档/根因等语义判断"
+      ],
+      "obligations": [
+        "区分保证级别：automatic gate、automatic observation、review-only、recommendation、unknown。",
+        "语义判断（trivial/non-trivial、低价值归档、备选真实性、译文等义、根因充分性、设计权衡）必须标 review-only。",
+        "工具只能证明它实际检查的字节/结构/schema/链接/测试结果；不能证明内容正确/运行时行为/人工评审发生。",
+        "人类评审提案的双评审/私有工具/operator 晋升是推荐/提案，不是自动保证；同一人不是两个信任域。",
+        "不要把“公开工件存在”当成“私有工件仍在”；不要把“字节不同的执行”当成 provider 独立。",
+        "不要把 review-only 写成已自动执行；在迁移文档/JSON 中标 planned。",
+        "评审问题要能指出：如果判断错了，什么会失败？有没有负向控制/反例？"
+      ],
+      "actors": [
+        "评审者：承担语义判断",
+        "工具作者：标明检查边界",
+        "迁移者：标注保证级别"
+      ],
+      "steps": [
+        "列出机制声称的保证与实际检查。",
+        "把每个检查归类到 automatic/review/recommendation/unknown。",
+        "对语义判断写评审问题与反例。",
+        "在文档/JSON 中标注 planned/review-only，不夸大。",
+        "定期验证“自动”声明是否仍有工具支撑。"
+      ],
+      "enforcement": {
+        "mode": "human review + mechanical prerequisites",
+        "implementation": "格式/链接/配对/归档/测试门提供机械信号；归档技能/评审/人类评审提案承担语义；没有元门检查“保证级别标注”是否正确。",
+        "trust": "机械门可证明已执行的检查；不能证明语义/运行时/评审质量。",
+        "failure": "把语义判断自动化会误杀/漏放；把评审说成自动会掩盖未实现。",
+        "exceptions": "安全/法律硬约束可自动拒绝；仍需说明检查范围。"
+      },
+      "applicability": "所有治理机制的迁移说明、审计、对外承诺；尤其安全/翻译/归档/根因/设计评审。",
+      "relationships": [
+        "rationale.archive-retention-and-freeze",
+        "rationale.verification-epistemics",
+        "documentation:translation-review",
+        "automation:gate-boundaries"
+      ],
+      "migration": {
+        "strategy": "给每个机制加 guarantee-level 字段；默认 review-only，除非有工具/CI 证据。",
+        "implementation": "在 JSON/README 中写 automatic/review/recommendation/planned；在 PR 模板中要求作者标注。",
+        "requiredSupport": "评审流程、工具清单、CI 证据；没有证据时保留 unknown。"
+      },
+      "reference": "references/rationale.md#11",
+      "verification": {
+        "positive": [
+          "每个机制都能指出实际检查/评审/未实现；保证级别与证据一致。"
+        ],
+        "rejection": [
+          "把 review-only 写成 automatic、用格式门证明语义、用公开工件证明私有保证，应被拒绝。"
+        ],
+        "recovery": [
+          "补工具/CI 或降级为 review-only/planned；不要把未知改成通过。"
+        ],
+        "evidence": {
+          "status": "planned",
+          "note": "本次未验证安装后项目的自动支持/远程配置；只读源规则。"
+        }
+      },
+      "limitations": [
+        "评审者差异/疲劳；同一人重复审查不是独立；工具可能漏报；保证级别标注本身需要人维护。"
+      ]
+    }
+  ]
+}

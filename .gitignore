@@ -1,0 +1,15 @@
+node_modules/
+.toolchains/
+_working/
+verification/
+adoption/
+dist/
+.tmp*
+*.tgz
+*.log
+*.err
+__pycache__/
+.venv/
+.env
+.env.*
+!.env.example

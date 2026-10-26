@@ -1,0 +1,3442 @@
+{
+  "domain": "rationale-feature-3",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "rationale-feature-3-kernel-write-lease",
+      "title": "Kernel-arbitrated cross-process write ownership",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-31-cross-process-session-write-lease.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Two processes can write-open the same session log and interleave appends, tearing compressed frames and sequence contiguity; a TTL/rename claim protocol leaves bounded dual-writer races.",
+      "triggers": [
+        "A durable file may be written by more than one process (CLI plus host, SDK plus CLI).",
+        "An in-process lock or a claim file is proposed as the only exclusion."
+      ],
+      "obligations": [
+        "Take an ownership arbiter outside every writer process: an OS kernel lock held for the whole write-handle lifetime.",
+        "Map contention to a typed already-owned error; never wait, retry or steal.",
+        "Rely on kernel release on descriptor/handle close (including process death); add no expiry, renewal or takeover bookkeeping.",
+        "After acquiring a POSIX lock, verify the locked inode is still the file at the lock path; retry if not.",
+        "Acquire when opening an existing artifact for write, or immediately before the first materialization of a new one; a lock-taking handle keeps the lock even if materialization fails.",
+        "Release must not delete the lock file, preserving a stable inode for later lockers.",
+        "Document platform limits (for example advisory flock on some network filesystems)."
+      ],
+      "actors": [
+        "Persistence backend owner",
+        "Process supervisors",
+        "Test harness"
+      ],
+      "steps": [
+        "Choose the platform primitive (flock on POSIX; named kernel semaphore on Windows with zero filesystem footprint).",
+        "Hold it for the write-handle lifetime and map contention.",
+        "Validate lock identity after acquisition.",
+        "Expose typed errors to callers; never auto-recover by deleting a live lock.",
+        "Test real concurrent processes and crash release."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Kernel lock acquired by the persistence write handle; no writer-side liveness protocol.",
+        "trust": "The kernel, not a writer process, owns liveness and release.",
+        "failure": "Contention fails the second writer with a typed error; a wedged holder blocks that session until exit.",
+        "exceptions": [
+          "Browser-worker deployments stub the lock only because in-process ownership already excludes all writers."
+        ]
+      },
+      "applicability": [
+        "when: Any multi-process durable writer, especially append-only logs.",
+        "exceptions: Single-process-only storage may keep an in-process claim, but must state that boundary.; Network filesystems without reliable locks degrade to in-process exclusion; disclose the limit.",
+        "reactivation: If a second writer process becomes possible, the kernel lease is mandatory."
+      ],
+      "relationships": [
+        "rationale-feature-3-id-reservation",
+        "rationale-feature-3-staged-atomic-publish"
+      ],
+      "migration": {
+        "strategy": "Replace claim-file/TTL protocols with a kernel primitive per platform.",
+        "implementation": "Wrap acquisition and release in the write-handle lifecycle; add an identity check and crash test.",
+        "requiredSupport": "Platform bindings for flock and named semaphores; a typed ownership error."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-kernel-write-lease",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Two processes contend; exactly one write handle opens; the loser gets the typed already-owned error.",
+          "Kill the holder; a successor acquires immediately with no expiry wait."
+        ],
+        "rejection": [
+          "Deleting a live lock file does not grant a second writer on POSIX; the design documents that deliberate forfeiture."
+        ],
+        "recovery": [
+          "A stale lock file left after release is reusable; the inode identity check passes on the next open."
+        ]
+      },
+      "limitations": [
+        "Advisory locks are unreliable on some NFS versions.",
+        "A live but wedged holder blocks the session until it exits; the source refuses ownership stealing because a revived writer would tear the log."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-ordered-commit-concurrency",
+      "title": "Opt-in concurrency with ordered commits and fail-closed classification",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-10-parallel-tool-call-execution.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Independent sibling calls add avoidable latency, but naive parallelism makes results, middleware and cancellation order-dependent and lets unproven tools race.",
+      "triggers": [
+        "Several sibling operations are requested together.",
+        "A scheduler is tempted to expose concurrency metadata to the model or to hardcode tool names."
+      ],
+      "obligations": [
+        "Keep concurrency a host scheduling concern; do not put scheduler policy in model-visible tool metadata.",
+        "Require an explicit, synchronous, pure unary opt-in classifier per call; missing, invalid, throwing or non-true results are exclusive.",
+        "Treat a true result as a promise that the call may overlap any other true call; relational/resource-conflict rules that the unary contract cannot express remain exclusive.",
+        "Only dispatch and the operation body may overlap; pre/post middleware and commit remain in model order.",
+        "Commit results and collected context through one cursor in model order, regardless of completion order.",
+        "Bound the pool; an exclusive call is a barrier and a pool of one.",
+        "On abort, stop replenishment, drain started calls, commit their results in order, record synthetic aborted pairs for undispatched calls.",
+        "Keep declarations conservative; a tool without a proven input-sensitive classifier stays exclusive.",
+        "A scheduler failure is terminal, not converted into an ordinary result; recover after live dispatches settle and report unknown outcomes honestly."
+      ],
+      "actors": [
+        "Scheduler owner",
+        "Tool authors",
+        "Middleware owners"
+      ],
+      "steps": [
+        "Add the unary classifier and a tagged execution mode; unknown tools fail closed.",
+        "Group consecutive parallel calls; barrier each exclusive call.",
+        "Run a rolling pool bounded by a deployment cap; reclassify after barriers and before refills.",
+        "Commit through the model-order cursor.",
+        "Drain and pair aborted calls; preserve the first scheduler failure."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Scheduler groups calls, a rolling pool enforces the cap, and a commit cursor serializes results.",
+        "trust": "The tool's opt-in is a safety promise; the scheduler only checks explicit true.",
+        "failure": "Classifier error or unknown tool means exclusive; scheduler failure stops new dispatches and rethrows after quiescence.",
+        "exceptions": [
+          "A code-execution program owns its own bounded nested pool under the same rules."
+        ]
+      },
+      "applicability": [
+        "when: Any loop that may execute sibling calls concurrently.",
+        "exceptions: Serial execution (cap 1) remains valid and must preserve the same ordering contract.",
+        "reactivation: Any new concurrent executor must adopt ordered commit and fail-closed classification."
+      ],
+      "relationships": [
+        "rationale-feature-3-fail-closed-classification",
+        "rationale-feature-3-single-owner-contract"
+      ],
+      "migration": {
+        "strategy": "Introduce a per-call classifier and an ordered commit cursor before enabling concurrency.",
+        "implementation": "Start with cap 1; add opt-ins only after a tool proves input-sensitive safety; test reentrancy of wrappers.",
+        "requiredSupport": "A scheduler with barriers/rolling pool, a model-order commit cursor and synthetic abort records."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-ordered-commit-concurrency",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Parallel siblings overlap; results and post-context arrive in model order.",
+          "An exclusive call drains the current pool and acts as a barrier."
+        ],
+        "rejection": [
+          "Unknown tool, invalid arguments, thrown classifier or false returns exclusive.",
+          "A registry change between barrier and refill reclassifies the next call as exclusive."
+        ],
+        "recovery": [
+          "Abort stops refills, drains started calls, commits ordered results and synthesizes aborted pairs for undispatched calls.",
+          "Scheduler failure waits for every started dispatch and rethrows the first error."
+        ]
+      },
+      "limitations": [
+        "Relational safety (for example non-overlapping writes) cannot be expressed and stays exclusive.",
+        "A too-broad opt-in can expose latent shared-state races."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-id-reservation",
+      "title": "Reserve identity before asynchronous creation; adopt-only resume",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-09-web-sidebar-terminal.md",
+          "start": 1,
+          "end": 55,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md",
+          "start": 1,
+          "end": 101,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A create request can time out or be retried, a delayed create can revive a closed resource, and a mistyped resume id can silently open an empty history the caller believes it is continuing.",
+      "triggers": [
+        "A remote create/attach operation is asynchronous and can be retried.",
+        "A caller supplies an identity to resume or adopt."
+      ],
+      "obligations": [
+        "Let the caller reserve the identity before creation; repeating create with the same live id must not allocate a second resource.",
+        "Record a closed id before awaiting allocation so a delayed create cannot revive it.",
+        "Persist an unfinished close intent and retry it at startup; only explicit close cleans up, not unmount/teardown signals.",
+        "For resume, adopt-only: fail when the persisted object does not exist or when its recorded context (cwd/preset) conflicts; never create on behalf of a supplied id.",
+        "Report the minted identity in the first machine-readable event so a supervisor can persist and pass it back."
+      ],
+      "actors": [
+        "Client caller",
+        "Host resource owner",
+        "Supervisor"
+      ],
+      "steps": [
+        "Mint or accept an id before the request.",
+        "Write a pending/closed tombstone before awaiting creation or close.",
+        "Deduplicate create on (owner, id); reject or ignore a create after close.",
+        "On adopt, validate existence and context, else exit with a diagnostic.",
+        "Retry close intents idempotently."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Ids are caller-owned; create is idempotent per id; close tombstones precede awaits; adopt is existence-checked.",
+        "trust": "The host owns allocation and liveness; the client may reserve but not invent state.",
+        "failure": "Duplicate create is a no-op or typed error; adopt of a missing or mismatched target fails rather than creating.",
+        "exceptions": [
+          "A first wake may mint an id because no prior caller exists."
+        ]
+      },
+      "applicability": [
+        "when: Retryable remote creation, resumable processes, terminals, sessions, jobs.",
+        "exceptions: A purely local synchronous factory may skip reservation only if it cannot be retried.",
+        "reactivation: Any idempotency or resume feature needs this contract."
+      ],
+      "relationships": [
+        "rationale-feature-3-committed-state-only",
+        "rationale-feature-3-bounded-remote-recovery"
+      ],
+      "migration": {
+        "strategy": "Move identity generation to the caller or the terminal owner and add tombstones.",
+        "implementation": "Make create idempotent per id, write close intent before await, validate adopt context, and test delayed responses.",
+        "requiredSupport": "Durable pending-close storage; existence and context checks."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-id-reservation",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Two create requests with the same owner/id allocate one resource.",
+          "A close requested before a delayed create response prevents revival."
+        ],
+        "rejection": [
+          "Adopt with an unknown id or mismatched cwd/preset fails with a diagnostic and creates nothing."
+        ],
+        "recovery": [
+          "A crash between request and acknowledgement is retried from the persisted close intent; an explicit not-found clears it."
+        ]
+      },
+      "limitations": [
+        "An id is opaque; validation is limited to non-emptiness and context checks.",
+        "A host restart may lose live processes even though layout identity is restored."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-staged-atomic-publish",
+      "title": "Publish only a complete staged artifact and retain the previous version",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md",
+          "start": 1,
+          "end": 43,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Installing or replacing a managed runtime in place can leave a partially written artifact, and a crash mid-replacement can destroy the only working copy.",
+      "triggers": [
+        "Installing or upgrading a managed payload, plugin, runtime or generated bundle.",
+        "An installer or updater writes into a live directory."
+      ],
+      "obligations": [
+        "Build and verify the complete payload in a staging location.",
+        "Publish by replacement only after staging succeeds; retain the previous directory until the replacement succeeds.",
+        "Reuse an installed payload only when its manifest identity matches; reuse must not require reinstalling.",
+        "Execute a smoke test against the final payload after temporary files are removed; signature validity alone does not prove the artifact runs.",
+        "A development launcher must await preparation so an unfinished build cannot exit successfully."
+      ],
+      "actors": [
+        "Installer/updater",
+        "Release builder",
+        "Smoke test owner"
+      ],
+      "steps": [
+        "Compute the payload identity.",
+        "Stage a complete copy and verify hashes/signatures.",
+        "Swap atomically or with a recoverable rename; keep the previous directory.",
+        "Run the smoke test on the final path.",
+        "Record the signed bytes in the manifest."
+      ],
+      "enforcement": {
+        "mode": "build+runtime",
+        "implementation": "Staged copy, atomic replacement, retained previous directory, post-cleanup smoke execution.",
+        "trust": "The installer owns the swap; the smoke test observes the real artifact.",
+        "failure": "A staging or verification failure leaves the old payload usable; a failed replacement keeps the previous directory.",
+        "exceptions": [
+          "A fresh install has no previous directory; it still must not publish a partial stage."
+        ]
+      },
+      "applicability": [
+        "when: Managed runtimes, plugin bundles, generated release artifacts.",
+        "exceptions: Read-only packaged resources may be installed by the platform installer if it provides equivalent atomicity.",
+        "reactivation: Any self-updating or managed payload needs staged publication."
+      ],
+      "relationships": [
+        "rationale-feature-3-artifact-identity-digest",
+        "rationale-feature-3-bounded-remote-recovery"
+      ],
+      "migration": {
+        "strategy": "Separate materialization from publication; add a retained previous directory and a final-path smoke test.",
+        "implementation": "Stage to a temp root, verify, rename, keep the old root, then execute the new artifact once with temp files removed.",
+        "requiredSupport": "Atomic rename on the target filesystem; a smoke entry point; manifest hashes."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-staged-atomic-publish",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A staged payload replaces the old one only after verification; the old directory survives a simulated failure.",
+          "The smoke test runs the final artifact after staging cleanup."
+        ],
+        "rejection": [
+          "A hash or signature mismatch aborts before publication and leaves the old payload active."
+        ],
+        "recovery": [
+          "A crash after staging but before swap leaves the old payload and a reusable stage; a failed replacement keeps the old directory."
+        ]
+      },
+      "limitations": [
+        "Running processes can block replacement on Windows.",
+        "A cached archive is not proof of completed native preparation."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-artifact-identity-digest",
+      "title": "Derive artifact identity from locked inputs, not directory names",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md",
+          "start": 1,
+          "end": 43,
+          "kind": "config"
+        }
+      ],
+      "problem": "A version string or directory name cannot prove which bytes were assembled; two builds with the same label can differ, and a silent assembly change can masquerade as the same artifact.",
+      "triggers": [
+        "Caching, reusing or replacing a built/installed payload.",
+        "Multiple release targets or wheel/package sets contribute to one artifact."
+      ],
+      "obligations": [
+        "Record application version, top-level tool versions, distribution maps and a digest of locked inputs in a manifest (for example runtime.json), not in the directory name.",
+        "Make the digest cover the selected target's archives, shared inputs, distribution versions, tool version and assembly format; unrelated targets must not invalidate it.",
+        "Include semantically relevant ordering in the digest and exclude irrelevant ordering; define this explicitly.",
+        "Any extraction or assembly change that alters bytes without changing locked inputs requires an explicit format bump.",
+        "Normalize package names before duplicate rejection."
+      ],
+      "actors": [
+        "Release builder",
+        "Installer",
+        "Cache reader"
+      ],
+      "steps": [
+        "Canonicalize the locked input set.",
+        "Hash the selected target and assembly format.",
+        "Write the manifest beside the payload.",
+        "Compare manifest identity before reuse; bump the format when the assembler changes.",
+        "Keep old manifests readable and distinguishable from current ones."
+      ],
+      "enforcement": {
+        "mode": "build",
+        "implementation": "A manifest digest computed from locked inputs; installer compares it before reuse.",
+        "trust": "The manifest is the build's claim; the installer must verify the bytes it consumes.",
+        "failure": "Missing or mismatched identity forces a rebuild or reinstall rather than silent reuse.",
+        "exceptions": [
+          "Legacy manifests without a digest remain readable but are distinguishable from current payloads."
+        ]
+      },
+      "applicability": [
+        "when: Reproducible builds, caches, managed runtimes, release artifacts.",
+        "exceptions: Source-only artifacts may use a commit id if it fully determines bytes.",
+        "reactivation: Any reuse decision needs a byte-relevant identity."
+      ],
+      "relationships": [
+        "rationale-feature-3-staged-atomic-publish",
+        "rationale-feature-3-artifact-reference-store"
+      ],
+      "migration": {
+        "strategy": "Add a manifest with a canonical input digest and a format version.",
+        "implementation": "Compute at build time, verify at install time, and test that unrelated targets do not invalidate.",
+        "requiredSupport": "Canonical serialization and hashing in the build pipeline."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-artifact-identity-digest",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Two builds from the same locked inputs share an identity; a changed archive changes it.",
+          "An unrelated target does not invalidate the selected target."
+        ],
+        "rejection": [
+          "A changed assembler without a format bump is rejected as ambiguous identity."
+        ],
+        "recovery": [
+          "A legacy manifest without a digest is readable but never treated as a current match."
+        ]
+      },
+      "limitations": [
+        "A digest proves input identity, not runtime correctness.",
+        "Key-order rules are subtle; they must be documented and tested."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-model-authority-fixed-policy",
+      "title": "When a model holds approval authority, fix the policy and fail closed",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-28-auto-review.md",
+          "start": 1,
+          "end": 81,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Delegating approval to a model can let a misclassification execute destructive or exfiltration actions; ad-hoc policy, cached grants or tool-name exemptions remove the safety ceiling.",
+      "triggers": [
+        "A mode lets a model decide whether a tool body may run.",
+        "A reviewer or classifier is inserted before execution."
+      ],
+      "obligations": [
+        "Define one fixed policy that classifies actual effects, not tool names or claimed intent.",
+        "Separate low (allow), medium (allow only with explicit current human/direct-parent authorization naming action, exact target and scope) and high (deny, even if requested).",
+        "Treat ambiguous or broader-than-established effects as fail-closed.",
+        "Give the reviewer one complete request: fixed policy, environment, project constraints, filtered sourced history and the full pending action (name, description, schema, parsed arguments).",
+        "Read the complete action history when authorization identity matters; a bounded window is insufficient.",
+        "Exclude untrusted roles (assistant text, tool results, project instructions as authority) from the authority set.",
+        "Require exactly one closed-form JSON result with only allowed risk/decision combinations; reject extra fields, other blocks or non-terminal output.",
+        "Fail closed on missing step ownership, inconsistent action facts, missing schemas and oversized requests; do not summarize or truncate an authority request.",
+        "Review every supported call fresh: no cached grants, no tool-name exemptions, no retries, no second authorization check.",
+        "Do not persist reviewer traces or risk labels as durable state."
+      ],
+      "actors": [
+        "Reviewer integration",
+        "Tool runtime",
+        "Human/direct-parent authority",
+        "Session log"
+      ],
+      "steps": [
+        "Build the fixed request partitions from durable facts.",
+        "Send one review before the body.",
+        "Parse strictly.",
+        "On allow, dispatch immediately; on deny or reviewer failure, stop before dispatch.",
+        "On unload, stop new admissions, migrate live sessions to a safe mode, abort and drain reviews."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "A pre-dispatch reviewer call with a closed result schema; only allow dispatches.",
+        "trust": "An LLM classifier is not a deterministic security boundary; the fixed ceiling and fail-closed paths are the guarantee.",
+        "failure": "Reviewer failure or invalid output denies the call and reports the specific error; the body never runs.",
+        "exceptions": [
+          "An explicitly installed experimental layer may be absent; then the mode does not exist.",
+          "Child/subagent sessions may pin a stricter policy."
+        ]
+      },
+      "applicability": [
+        "when: Model-mediated approval, auto-approval or risk classification before an effect.",
+        "exceptions: A purely advisory label that cannot gate execution is not this mechanism.",
+        "reactivation: Any execution gate driven by a model needs the fixed policy and closed schema."
+      ],
+      "relationships": [
+        "rationale-feature-3-denied-body-never-executes",
+        "rationale-feature-3-policy-vs-failure",
+        "rationale-feature-3-fail-closed-classification"
+      ],
+      "migration": {
+        "strategy": "Ship the reviewer as an explicit opt-in layer with a fixed policy and a closed result schema.",
+        "implementation": "Build the five request partitions, strict parsing, pre-dispatch enrollment and lifecycle cancellation; test denial, malformed output and oversized requests.",
+        "requiredSupport": "A pre-execute hook, durable action history, request-header schema, cancellation lifecycle."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-model-authority-fixed-policy",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A low-risk project-local action is allowed and executes.",
+          "A medium action with explicit current human authorization naming target and scope is allowed."
+        ],
+        "rejection": [
+          "High-risk exfiltration is denied even when explicitly requested.",
+          "Extra JSON fields, duplicate members, wrong block types, missing step ownership and oversized requests all deny without executing."
+        ],
+        "recovery": [
+          "A reviewer failure reports its actual cause and denies; unload aborts late allows before dispatch."
+        ]
+      },
+      "limitations": [
+        "Model latency and token cost.",
+        "Misclassification remains possible; filtering untrusted roles does not make the classifier a security boundary.",
+        "A PTC program's outer transport and direct node effects are outside the per-call guarantee."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-denied-body-never-executes",
+      "title": "A denial always stops the body; approval prompts come after other gates",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-28-auto-review.md",
+          "start": 1,
+          "end": 81,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md",
+          "start": 1,
+          "end": 33,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A late allow, a swallowed denial or a prompt issued before downstream gates can execute a body that policy or another listener rejected.",
+      "triggers": [
+        "A review/approval decision is asynchronous.",
+        "More than one pre-execute listener can deny or cancel."
+      ],
+      "obligations": [
+        "Enrollment and active-review registration happen synchronously before the first await.",
+        "After provider settlement, a lifecycle abort produces a canonical pre-dispatch cancellation even for a late allow, deny or failure.",
+        "Caller cancellation keeps runtime priority: a late allow cancels before dispatch; a late failure or final denial keeps that outcome.",
+        "Ask a human only after later pre-execute listeners allow the call, so a downstream denial or cancellation wins without prompting.",
+        "A final denial must not run the body; expose only a stable denial identity and a not-executed output line, not the input body.",
+        "Catching a denial inside a program does not elevate it to an outer failure."
+      ],
+      "actors": [
+        "Tool runtime",
+        "Approval service",
+        "Pre-execute listeners",
+        "Reviewer integration"
+      ],
+      "steps": [
+        "Admit and enroll before awaiting.",
+        "Let all listeners run in order.",
+        "If any denies/cancels, stop.",
+        "If policy says ask and the call is otherwise allowed, request approval.",
+        "Dispatch only on allowed-once; on rejection/cancel/unavailable, do not run.",
+        "On teardown, abort and drain."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "A single dispatch gate after listeners and approval; denial paths return without invoking the body.",
+        "trust": "The runtime owns the body-invocation fact; no caller can claim execution.",
+        "failure": "Deny/cancel/unavailable all mean no execution; the model receives an ordinary failure message.",
+        "exceptions": [
+          "A child may pin never and keep a structured final denial."
+        ]
+      },
+      "applicability": [
+        "when: Any asynchronous approval or review before an effect.",
+        "exceptions: Synchronous validation before any await may reject earlier, but must not bypass later listeners.",
+        "reactivation: Any new gate must preserve the no-body-on-deny invariant."
+      ],
+      "relationships": [
+        "rationale-feature-3-model-authority-fixed-policy",
+        "rationale-feature-3-policy-vs-failure"
+      ],
+      "migration": {
+        "strategy": "Centralize dispatch behind one gate and test late-allow races.",
+        "implementation": "Enroll before await, order listeners, ask after them, and abort on teardown.",
+        "requiredSupport": "A cancellation-aware tool runtime and approval service."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-denied-body-never-executes",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A denied call produces a structured denial and no body execution.",
+          "A later listener denial prevents an approval prompt."
+        ],
+        "rejection": [
+          "A late allow after lifecycle abort is cancelled before dispatch.",
+          "A late denial under ask yields a cancelled approval and no dispatch."
+        ],
+        "recovery": [
+          "Unload aborts and drains reviews; already-started bodies settle under normal cancellation rules."
+        ]
+      },
+      "limitations": [
+        "A body that starts before a later gate cannot be recalled; gates must precede dispatch.",
+        "Some transports (outer code execution) may be outside the per-call guarantee."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-fail-closed-classification",
+      "title": "Fail closed on unknown, invalid or ambiguous classification",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-07-10-parallel-tool-call-execution.md",
+          "start": 1,
+          "end": 107,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-present-filesystem-access.md",
+          "start": 1,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md",
+          "start": 1,
+          "end": 56,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Optimistic defaults on unknown tools, invalid arguments, unmapped provider paths or failed native calls turn uncertainty into authority.",
+      "triggers": [
+        "A policy decision depends on a classifier, registry lookup or capability probe.",
+        "A native call or provider mapping can fail."
+      ],
+      "obligations": [
+        "Only an explicit positive opt-in enables the less restrictive path; unknown tools, invalid arguments, thrown classifiers and other return values take the restrictive path.",
+        "Validate arguments before invoking a typed classifier; invalid arguments classify restrictive and surface the ordinary argument error only if the call executes.",
+        "Do not create a parallel allowlist where an existing composed capability already defines access; derive policy from that capability.",
+        "Reject missing/unmapped provider paths instead of substituting a same-named local object.",
+        "Every native call failure is fail-closed; record the error rather than continuing with a partial effect.",
+        "An idempotent skip must require the exact full precondition (for example exact allow ACE, exact deny ACE and exact label), not a subset."
+      ],
+      "actors": [
+        "Policy owner",
+        "Tool registry",
+        "Filesystem/provider adapter",
+        "Native helper"
+      ],
+      "steps": [
+        "Resolve the live definition/capability.",
+        "Validate inputs.",
+        "Require explicit positive evidence.",
+        "On any error/absence, take the restrictive branch.",
+        "Record a typed failure."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Restrictive branch is the default in the scheduler, access policy and native helpers.",
+        "trust": "The decision owner resolves facts; callers cannot assert safety.",
+        "failure": "Unknown/invalid means deny or exclusive; a native error aborts the effect.",
+        "exceptions": [
+          "A documented, tested capability may be treated as safe only when the source states that exact condition."
+        ]
+      },
+      "applicability": [
+        "when: Concurrency opt-in, access control, native operations, provider mapping.",
+        "exceptions: Purely diagnostic reads with no effect may degrade to a generic fallback, but must say so.",
+        "reactivation: Any new classifier needs the same default."
+      ],
+      "relationships": [
+        "rationale-feature-3-ordered-commit-concurrency",
+        "rationale-feature-3-trust-boundary-per-surface",
+        "rationale-feature-3-layered-enforcement"
+      ],
+      "migration": {
+        "strategy": "Invert defaults: absence/error means restrictive.",
+        "implementation": "Add typed validation, explicit opt-ins, and negative tests for unknown and throwing paths.",
+        "requiredSupport": "A live registry/capability resolver and typed errors."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-fail-closed-classification",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "An explicit true/declared capability takes the permissive path."
+        ],
+        "rejection": [
+          "Unknown tool, invalid args, thrown classifier, unmapped provider path and native error all take the restrictive path."
+        ],
+        "recovery": [
+          "After a transient lookup failure, a later successful resolution may take the permissive path; the earlier call is not retroactively allowed."
+        ]
+      },
+      "limitations": [
+        "A wrong positive declaration is not caught by fail-closed defaults.",
+        "Some platform APIs cannot distinguish all failure modes."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-ownership-scoped-deletion",
+      "title": "Delete only what you own; protect shared data and continue past locked items",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-08-desktop-uninstall-preserve-dsh-home.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "An uninstaller or cleanup routine that removes shared user data, follows links or aborts on the first locked file either destroys data another product needs or leaves large residue.",
+      "triggers": [
+        "Uninstall, cleanup, cache purge or destructive migration.",
+        "Several products share a home directory."
+      ],
+      "obligations": [
+        "Delete only the product-owned Electron/user-data and updater caches; never the shared home that holds sessions, credentials, settings and plugins.",
+        "Remove empty ordinary parents only; never remove linked or non-empty scope directories.",
+        "Reject protected OS directories and paths overlapping the installation or protected home.",
+        "Hold directory handles during traversal so paths cannot be renamed/replaced underneath; unlink reparse points without entering targets; clear read-only attributes; keep deleting siblings after a locked file.",
+        "Require a fixed local drive; leave a linked root or ancestor untouched.",
+        "A failure leaves residue and does not abort the rest or show a custom prompt.",
+        "Support an update/keep-data flag; silent uninstall removes the same owned data.",
+        "A home path published as an environment variable protects every overlapping target."
+      ],
+      "actors": [
+        "Uninstaller",
+        "Native helper",
+        "Installer",
+        "User"
+      ],
+      "steps": [
+        "Compute owned roots from product identity.",
+        "Reject protected/overlapping targets.",
+        "Traverse with handles, no link following.",
+        "Delete siblings, skipping locked items.",
+        "Remove empty parents.",
+        "Report residue; never touch shared home."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "A native helper performs deletion with protected-path and overlap checks.",
+        "trust": "The helper, not the UI, enforces ownership.",
+        "failure": "Residue remains; uninstall continues; no data is deleted outside owned roots.",
+        "exceptions": [
+          "An explicit update/keep-data mode retains owned data too."
+        ]
+      },
+      "applicability": [
+        "when: Destructive cleanup in a shared user environment.",
+        "exceptions: A product that owns the entire home may delete it only if it can prove no sibling product uses it; the source rejects profile presence as such proof.",
+        "reactivation: Any uninstaller or purge tool needs an ownership boundary."
+      ],
+      "relationships": [
+        "rationale-feature-3-staged-atomic-publish"
+      ],
+      "migration": {
+        "strategy": "Move deletion into a helper with an explicit owned-root allowlist and overlap rejection.",
+        "implementation": "Add handle pinning, link unlink-not-follow, read-only clearing, sibling continuation, and fixtures for update/keep flags.",
+        "requiredSupport": "Native filesystem APIs with reparse-point inspection."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-ownership-scoped-deletion",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Owned Electron data is removed; shared home, sessions and credentials remain.",
+          "Update/keep-data mode retains data."
+        ],
+        "rejection": [
+          "Protected directories, paths overlapping the install/home, linked roots and network drives are refused or left in place."
+        ],
+        "recovery": [
+          "A locked file leaves residue but deletion continues; reinstall restores shared data."
+        ]
+      },
+      "limitations": [
+        "The native helper cannot see a home configured only in a shell profile.",
+        "macOS cleanup is deferred in the source."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-layered-enforcement",
+      "title": "Every enforcement layer must close a distinct bypass",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md",
+          "start": 1,
+          "end": 56,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "An access-control layer can appear to confine writes while a second OS authorization path (parent-directory delete rights) bypasses it; adding a layer without naming the bypass it closes creates false assurance.",
+      "triggers": [
+        "A security boundary relies on one OS access check.",
+        "A test demonstrates an escape that the existing model cannot express."
+      ],
+      "obligations": [
+        "Enumerate every authority path the OS accepts, not just the object's own descriptor.",
+        "For each layer, state the exact bypass it closes and why the others cannot.",
+        "Keep all layers load-bearing; test removing or narrowing each one.",
+        "Narrow inheritance flags to the smallest scope that still closes the bypass (for example container-only deny) and measure the side effects.",
+        "Make the standing part of the policy idempotent and independently revocable where grants overlap.",
+        "Fail closed on every native call and document the externalities (standing label widening, WRITE_OWNER requirement, denied FullControl opens)."
+      ],
+      "actors": [
+        "Sandbox owner",
+        "Native ACL helper",
+        "Security reviewer"
+      ],
+      "steps": [
+        "Model the bypass.",
+        "Add the minimal layer that reaches it.",
+        "Measure collateral effects on real objects.",
+        "Require exact preconditions for idempotent skip.",
+        "Test real processes and real tokens, not only synthetic ACLs."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "ACL edits (capability allow, parent-delete deny, mandatory label) applied in one call; token lowered to match.",
+        "trust": "The kernel enforces the mandatory policy inside the access check.",
+        "failure": "Any Win32 failure aborts the grant/operation; errors are fail-closed.",
+        "exceptions": [
+          "Read-only modes may use a different integrity level only if the confined shell still starts; the source measured that Untrusted cannot."
+        ]
+      },
+      "applicability": [
+        "when: OS-level sandboxing or access control with more than one authorization path.",
+        "exceptions: A platform with a single enforceable check may need one layer, but must prove there is no second path.",
+        "reactivation: Any demonstrated escape reopens the layer analysis."
+      ],
+      "relationships": [
+        "rationale-feature-3-fail-closed-classification",
+        "rationale-feature-3-trust-boundary-per-surface"
+      ],
+      "migration": {
+        "strategy": "Reproduce the bypass in a real environment, add the minimal layer, then test each layer's necessity.",
+        "implementation": "Apply the three edits atomically, lower the token, require the exact triple for idempotency, and document costs.",
+        "requiredSupport": "Native ACL APIs and a real confined runner."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-layered-enforcement",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Out-of-root deletes are denied through cmd, .NET, Remove-Item and libuv while host files survive.",
+          "One granted root cannot delete inside another."
+        ],
+        "rejection": [
+          "File-level FullControl opens inside the root still succeed; directory FullControl opens are denied."
+        ],
+        "recovery": [
+          "Revoking one of two grants leaves the other usable; a root granted by an earlier build picks up the missing layer on next provision."
+        ]
+      },
+      "limitations": [
+        "The standing Low label widens the tree for any same-user Low process and outlives the product.",
+        "A granted directory must also grant WRITE_OWNER for its label.",
+        "FAT-like targets are unverified."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-trust-boundary-per-surface",
+      "title": "Give each trust model its own surface; never substitute across identities",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-16-sidebar-browser.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-present-filesystem-access.md",
+          "start": 1,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-promote-open-anywhere-plugin.md",
+          "start": 1,
+          "end": 62,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Reusing a document renderer for an arbitrary Web page, or mapping a provider path to a same-named local file, hides a different trust model and can expose data or authority the user did not grant.",
+      "triggers": [
+        "A new content type has different execution, network or identity semantics from an existing viewer.",
+        "A remote/provider path is presented as if it were a local path."
+      ],
+      "obligations": [
+        "Separate surfaces by trust model (for example document preview versus live Web browsing) instead of overloading one renderer.",
+        "Parse addresses against a strict scheme allowlist; reject credentials, the application's own origin, malformed addresses, file: and unknown schemes.",
+        "Do not add a host-side probe/proxy for arbitrary targets; it creates an SSRF path and can disagree with later redirects.",
+        "Default to a sandbox; any escape is per-occurrence, non-persistent, explicitly warned and never inherited by later tabs.",
+        "Honestly model unsupported capabilities (for example unknown cross-origin history) and disable actions the platform cannot support.",
+        "Do not auto-activate saved third-party pages; require an explicit restore.",
+        "Never substitute a same-named local object for an unmapped provider object.",
+        "Keep consent scoped: inherited parent feedback does not authorize a child export.",
+        "Do not present process or runner isolation as a security boundary unless it is actually enforced as one; state the limitation instead."
+      ],
+      "actors": [
+        "Surface owner",
+        "Address parser",
+        "Sandbox/carrier",
+        "Provider adapter",
+        "User"
+      ],
+      "steps": [
+        "Declare the trust model.",
+        "Implement a dedicated surface.",
+        "Validate at the wire boundary.",
+        "Default-deny capabilities; expose explicit, scoped escape.",
+        "Model unknown states honestly.",
+        "Refuse identity substitution."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Separate tab/renderer type, strict parser, sandbox attribute, no host proxy, explicit restore.",
+        "trust": "The browser/OS carrier enforces isolation; the parser enforces scheme and origin.",
+        "failure": "Invalid addresses and unmapped paths are rejected; unsupported controls are disabled.",
+        "exceptions": [
+          "A per-occurrence sandbox escape may be offered with a persistent warning; it is not persisted."
+        ]
+      },
+      "applicability": [
+        "when: Embedding third-party content, browsing, remote files, provider paths, consent-scoped export.",
+        "exceptions: A surface that only receives pre-selected bytes may use a simpler renderer if it never executes active content.",
+        "reactivation: Any new active content type requires a new trust analysis."
+      ],
+      "relationships": [
+        "rationale-feature-3-fail-closed-classification",
+        "rationale-feature-3-claims-disclosed"
+      ],
+      "migration": {
+        "strategy": "Create a dedicated surface and a strict address parser; keep local-file and Web trust models separate.",
+        "implementation": "Default sandbox, per-occurrence escape, no host probe, explicit restore, collision-free provider mapping.",
+        "requiredSupport": "Carrier isolation (iframe/webview), scheme allowlist, user warning UI."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-trust-boundary-per-surface",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "HTTP(S) links open in the browser surface; local files stay in the document preview.",
+          "A cross-origin navigation shows an explicit unknown state and disables unsupported history actions."
+        ],
+        "rejection": [
+          "file:, credentials, malformed URLs and the app origin are rejected.",
+          "A provider path without an identity mapping is rejected; a same-named local file is never opened."
+        ],
+        "recovery": [
+          "A saved page is not requested until the user restores it; closing the tab removes its checkpoint only when the authoritative inventory no longer contains it."
+        ]
+      },
+      "limitations": [
+        "Many sites refuse framing; browser policies (mixed content, private network) remain.",
+        "Sandbox escape trades protection for compatibility and can navigate the top-level app.",
+        "Persisted URLs may contain sensitive query values."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-durable-vs-projection",
+      "title": "Separate durable state from transient request projections",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md",
+          "start": 1,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-24-route-priced-image-request-pressure.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-24-web-per-turn-token-usage.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Using one admitted artifact as both durable history and every later request payload forces one limit to serve incompatible concerns and lets a rejection or optimizer change history.",
+      "triggers": [
+        "An artifact is stored durably and also sent/derived per request.",
+        "Different routes, models or budgets impose different projections."
+      ],
+      "obligations": [
+        "Keep the durable record provider-independent and normalized; store only a reference in history.",
+        "Derive a deterministic per-route request projection (variant identity covers format, dimensions, encoder, quality and all parameters).",
+        "Cache derived projections by identity; validate header facts on a hit instead of trusting a key.",
+        "Keep inline bytes and provider file ids transient; never rewrite existing history when projections change.",
+        "Publish exact totals only when every contributing attempt reported them; otherwise omit the disclosure.",
+        "Price or measure under the effective route at measurement time, storing route-neutral facts rather than a precomputed baseline."
+      ],
+      "actors": [
+        "Attachment/artifact backend",
+        "Route adapter",
+        "Meter/compactor",
+        "Client disclosure"
+      ],
+      "steps": [
+        "Define the durable normalized form and its independent limits.",
+        "Compute a deterministic variant id.",
+        "Project per request; cache by id and verify.",
+        "Keep history references stable.",
+        "Omit or degrade when evidence is incomplete."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Durable reference plus derived, cached request variants; exactness checks before disclosure.",
+        "trust": "The owner of each route computes its projection; history never depends on it.",
+        "failure": "Missing/corrupt historical attachments remain fail-loud and are reported by attachment identity; durable quarantine and verified recovery are proposed and unimplemented (tracked by .agents/notes/proposed/bug-fix/2026-08-20-attachment-read-quarantine.md). Failed projection falls back to a bounded inline form; incomplete totals produce no disclosure.",
+        "exceptions": [
+          "A route that cannot project may use a text-only substitution, never a guessed visual price."
+        ]
+      },
+      "applicability": [
+        "when: Media attachments, token accounting, request optimization, any derived view over durable history.",
+        "exceptions: A single-route system may compute on demand, but must still keep history independent.",
+        "reactivation: Any second route or limit change requires the split."
+      ],
+      "relationships": [
+        "rationale-feature-3-committed-state-only",
+        "rationale-feature-3-bounded-remote-recovery",
+        "rationale-feature-3-batch-all-or-nothing"
+      ],
+      "migration": {
+        "strategy": "Introduce a durable normalized artifact and a versioned per-route projection.",
+        "implementation": "Store references; add variant ids and verified caches; make disclosures exact-or-absent.",
+        "requiredSupport": "Content-addressed storage, route adapters, bounded caches."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-durable-vs-projection",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "History keeps one normalized reference across turns; derived variants differ by route without rewriting history.",
+          "A complete per-turn total renders; an incomplete one renders no row."
+        ],
+        "rejection": [
+          "A cache hit with mismatched header facts is not used.",
+          "A text-only route prices substitution text, not phantom visual tokens."
+        ],
+        "recovery": [
+          "A malformed cache index is treated as empty; a failed remote lookup falls back to the smaller inline budget.",
+          "A missing or corrupt historical attachment fails loudly with its identity; no quarantine or verified recovery is claimed."
+        ]
+      },
+      "limitations": [
+        "Derived storage consumes additional space.",
+        "Encoder/transform changes create new identities without rewriting old history.",
+        "Conservative pricing can over-estimate.",
+        "Durable quarantine and verified recovery are proposed future work, not current behavior."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-committed-state-only",
+      "title": "Publish only committed durable state; ignore discarded attempts",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md",
+          "start": 1,
+          "end": 101,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-19-persisted-same-session-goal-domain.md",
+          "start": 1,
+          "end": 64,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Projecting live deltas, retried attempts or UI state into a durable or machine-readable interface exposes content the log does not contain and makes replay unstable.",
+      "triggers": [
+        "An API/event stream is derived from an agent/session log.",
+        "Retries or streaming produce partial attempts."
+      ],
+      "obligations": [
+        "Project text/reasoning only from committed messages, never from live attempt deltas; ignore discarded attempts.",
+        "Each committed content block becomes exactly one event; do not double-publish a tool call from both a block and its event.",
+        "Project tool results only when they append to the surface, not when a compaction replaces older history.",
+        "Derive final text and exit status from flushed durable settlements, not from progress-presentation state.",
+        "A streaming projection may exist, but must be declared transient and must not feed the durable record.",
+        "Replay must fail loudly on malformed durable records and stay failed rather than silently repairing."
+      ],
+      "actors": [
+        "Log projector",
+        "Agent loop",
+        "Replay consumer"
+      ],
+      "steps": [
+        "Wait for the commit point.",
+        "Project only committed records.",
+        "Deduplicate ownership between content blocks and events.",
+        "Recompute after replay.",
+        "Fail on malformed records."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Projection filters on committed message/append markers and step ownership.",
+        "trust": "The log is authoritative; the UI is not.",
+        "failure": "Malformed records fail replay; missing step ownership fails closed.",
+        "exceptions": [
+          "A live UI may show pending calls, but not as durable facts."
+        ]
+      },
+      "applicability": [
+        "when: Event streams, APIs, replay, resume, any derived durable view.",
+        "exceptions: A purely ephemeral progress indicator may use live frames if clearly non-durable.",
+        "reactivation: Any new projection must name its commit point."
+      ],
+      "relationships": [
+        "rationale-feature-3-durable-vs-projection",
+        "rationale-feature-3-artifact-reference-store"
+      ],
+      "migration": {
+        "strategy": "Identify commit points and filter out deltas/retries.",
+        "implementation": "Add step ownership, append-only result filtering, and replay tests for discarded attempts.",
+        "requiredSupport": "A durable log with commit markers and step identity."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-committed-state-only",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A retried step publishes only the committing attempt.",
+          "Two consecutive runs with the same id share history and replay identically."
+        ],
+        "rejection": [
+          "A discarded attempt's text/reasoning never appears.",
+          "A compaction replacement is not emitted as a new tool result."
+        ],
+        "recovery": [
+          "A malformed log fails replay with a diagnostic; it does not silently drop or repair records."
+        ]
+      },
+      "limitations": [
+        "Cold start plus replay grows with session length.",
+        "Streaming consumers lose live token-level text."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-complete-sequence-authority",
+      "title": "One complete ordering authority; filters are projections, not rewrites",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md",
+          "start": 1,
+          "end": 80,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-25-session-list-browsing-and-manual-order.md",
+          "start": 1,
+          "end": 61,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Persisting a filtered or per-view order loses hidden positions; a separate pin sequence creates a second ordering authority and breaks drag behavior.",
+      "triggers": [
+        "A list has visibility filters, grouping, pinning or multiple sort modes.",
+        "A UI writes an order back to storage."
+      ],
+      "obligations": [
+        "Keep one complete sequence per owner/account, including hidden members; membership bounds it.",
+        "Filtering and grouping change display only; never rewrite stored positions.",
+        "Supplement missing members in memory and adopt the supplemented sequence only on the next explicit order write.",
+        "Make state transitions mutually exclusive in one durable write (for example archive drops the pin).",
+        "A pin is an intentional reorder; unpin does not restore a prior slot.",
+        "Restoration/removal is idempotent and does not probe existence when removing an id cannot introduce an unknown referent.",
+        "Ignore a stale response when a newer request or pushed state supersedes it."
+      ],
+      "actors": [
+        "List/registry owner",
+        "Client view",
+        "Persistence"
+      ],
+      "steps": [
+        "Store the complete sequence.",
+        "Derive each view.",
+        "Write only on explicit reorder.",
+        "Supplement missing members in memory.",
+        "Serialize operations and reject stale replies."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "A single stored sequence and derived views; one serialized write path.",
+        "trust": "The registry owns authority; views cannot overwrite hidden positions.",
+        "failure": "A failed write leaves the previous sequence; a stale reply is ignored.",
+        "exceptions": [
+          "A chronological mode may ignore manual positions but still preserves them."
+        ]
+      },
+      "applicability": [
+        "when: Ordered collections with filters, pins, archives, grouping.",
+        "exceptions: A truly stateless sorted view needs no stored sequence.",
+        "reactivation: Any second ordering source requires merging or explicit precedence."
+      ],
+      "relationships": [
+        "rationale-feature-3-stale-response-supersession",
+        "rationale-feature-3-id-reservation"
+      ],
+      "migration": {
+        "strategy": "Replace filtered/per-view persistence with one complete sequence and derived views.",
+        "implementation": "Add supplementation, single-write exclusivity, idempotent removal and stale-reply rejection.",
+        "requiredSupport": "Optimistic concurrency / revision tokens."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-complete-sequence-authority",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Filtering hides rows without changing their stored positions.",
+          "Pinning moves one row to the front of the complete sequence; unpin only clears the mark."
+        ],
+        "rejection": [
+          "A drag based on display indices cannot drop hidden members.",
+          "Pinning an archived row fails."
+        ],
+        "recovery": [
+          "A stale unary reply is superseded by a newer request or pushed increment.",
+          "An absent id removal is a no-op with no write."
+        ]
+      },
+      "limitations": [
+        "An orphan id without a loaded summary has no visible restore row.",
+        "Pin timestamps are not used for Last-updated ordering."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-stale-response-supersession",
+      "title": "One ordered state owner; supersede stale replies",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-24-web-session-model-selector.md",
+          "start": 1,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md",
+          "start": 14,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-workspace-sidebar-order-and-folding.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Concurrent reads and optimistic writes can apply an older snapshot over a newer one, or let two surfaces disagree about the selected value.",
+      "triggers": [
+        "A client reads state and also applies pushed updates or optimistic writes.",
+        "Multiple views can mutate the same selection."
+      ],
+      "obligations": [
+        "Have one ordered state owner per account/session; clients render one snapshot from one source, not a merge of partial reads.",
+        "Attach ordering (sequence control frames or revisions) to pushed updates; ignore a stale unary reply when a newer pushed increment or request supersedes it.",
+        "Use optimistic updates with a defined rejection path: roll back or refetch, never leave the optimistic value silently.",
+        "After reconnect or hard reload, obtain a fresh snapshot; never resume from a stale cursor without revalidation.",
+        "A local selection change wins until the host confirms or rejects it; then the confirmed state is authoritative."
+      ],
+      "actors": [
+        "State owner",
+        "Client view",
+        "Transport"
+      ],
+      "steps": [
+        "Read a snapshot and its cursor.",
+        "Apply ordered pushes above the cursor.",
+        "Tag local optimistic writes.",
+        "On reply, compare revision/sequence.",
+        "Ignore stale; refetch on gap."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Sequence/revision checks at the applying store; one snapshot source.",
+        "trust": "The owner's version is authoritative; clients cannot invent ordering.",
+        "failure": "A stale reply is dropped; a gap triggers a full refresh; a rejected optimistic write rolls back.",
+        "exceptions": [
+          "A read-only diagnostic view may lag if it labels the snapshot time."
+        ]
+      },
+      "applicability": [
+        "when: Live-updated lists, selections, settings, model choice.",
+        "exceptions: Files with no concurrent writer may use last-write-wins if documented.",
+        "reactivation: Any push channel or optimistic write needs supersession."
+      ],
+      "relationships": [
+        "rationale-feature-3-complete-sequence-authority",
+        "rationale-feature-3-single-owner-contract"
+      ],
+      "migration": {
+        "strategy": "Introduce revision/cursor and a single applying store.",
+        "implementation": "Tag replies, compare, refetch on gap, roll back rejected optimism.",
+        "requiredSupport": "Versioned snapshots or sequence control messages."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-stale-response-supersession",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A pushed update with a higher sequence replaces the local view."
+        ],
+        "rejection": [
+          "A late unary reply with an older revision cannot overwrite the newer state."
+        ],
+        "recovery": [
+          "A detected gap triggers a fresh snapshot; a rejected optimistic write restores the confirmed value."
+        ]
+      },
+      "limitations": [
+        "Clock-free sequence requires a single owner; multi-writer state needs a stronger protocol.",
+        "Full snapshots can be costly at scale."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-single-owner-contract",
+      "title": "One explicit owner per resource, card, flow or setting",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-web-cards-toolrow.md",
+          "start": 1,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md",
+          "start": 20,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md",
+          "start": 14,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-settings-font-size-control.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Two components that each believe they own a card, flow, setting or appearance channel produce duplicate rendering, divergent defaults or one owner clearing another's state.",
+      "triggers": [
+        "A resource can be represented in more than one place.",
+        "Multiple plugins can contribute to the same slot.",
+        "A setting is read in several components."
+      ],
+      "obligations": [
+        "Name exactly one owner for each resource/flow/slot; other contributors add data or intents, never a second representation.",
+        "Give one component the whole card/row; subparts are children, not independent tool rows.",
+        "Read a setting through one path, once, before dependent surfaces hydrate; do not let each surface define its own default.",
+        "A preview or draft read must not mutate the owned state; activation stays with the source owner."
+      ],
+      "actors": [
+        "Owner component",
+        "Contributors",
+        "Settings store"
+      ],
+      "steps": [
+        "Declare ownership in the design.",
+        "Route all writes through the owner.",
+        "Pass data/intents to contributors.",
+        "Do not let contributors write the owner's state.",
+        "Test duplicate-mount and contributor-conflict cases."
+      ],
+      "enforcement": {
+        "mode": "design+runtime",
+        "implementation": "Single owner module/store per resource; one settings read path.",
+        "trust": "The owner is a code seam, not a runtime permission.",
+        "failure": "A non-owner write is rejected or ignored; a duplicate owner path is a review defect.",
+        "exceptions": [
+          "A temporary migration may dual-read but must not dual-write."
+        ]
+      },
+      "applicability": [
+        "when: Cards, dialogs, settings, flows, sockets, appearance, layout slots.",
+        "exceptions: Independent resources may each have an owner; this is per resource, not one global owner.",
+        "reactivation: Any second writer/representation requires an explicit contract."
+      ],
+      "relationships": [
+        "rationale-feature-3-complete-sequence-authority",
+        "rationale-feature-3-single-flow-owner",
+        "rationale-feature-3-single-base-default"
+      ],
+      "migration": {
+        "strategy": "Consolidate duplicate owners into one; convert others to contributors.",
+        "implementation": "Move writes behind the owner and delete the duplicate path. Adoption guidance (not source-derived): generation-guard releases so a late release from an old holder cannot clear a newer holder's state; when ownership transfers, state the handoff and invalidate the old owner's pending work.",
+        "requiredSupport": "A stable slot/registry and a settings store."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-single-owner-contract",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "One card renders per resource even when two contributors supply data.",
+          "One settings value applies to every surface."
+        ],
+        "rejection": [
+          "A second independent writer is rejected or has no effect.",
+          "A second contributor cannot render a second card/tool row; the owner renders subparts as children."
+        ],
+        "recovery": [
+          "A rejected owner write leaves the prior state; a remount re-reads the single setting."
+        ]
+      },
+      "limitations": [
+        "Ownership boundaries need maintenance as features move.",
+        "A shared slot can still let contributors render conflicting content if the contract is vague.",
+        "Single ownership is source-derived; release-generation and ownership-transfer guards are adoption guidance, not statements in the five cited notes."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-single-authority-geometry",
+      "title": "One geometry/layout authority; surfaces receive slots, not coordinates",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-04-right-sidebar-docking-infrastructure.md",
+          "start": 21,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-conversation-adaptive-content-width.md",
+          "start": 1,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Panels that each compute widths, breakpoints or split geometry drift, fight resizing and duplicate constants.",
+      "triggers": [
+        "A multi-pane layout supports docking, resizing, collapsing or floating.",
+        "Several components need the same dimensions."
+      ],
+      "obligations": [
+        "Keep one normalized layout tree and one engine that computes geometry; surfaces render slots derived from it.",
+        "Brand ids and mint them through the engine so no consumer fabricates a node.",
+        "Components render a snapshot and report settled intents; gestures preview locally but commit one operation.",
+        "Keep one stylesheet for the layout kit; consumers compile sources rather than fork CSS.",
+        "Persist layout as the engine's normalized state, not as per-panel pixel copies."
+      ],
+      "actors": [
+        "Layout engine",
+        "Panel plugins",
+        "Persistence"
+      ],
+      "steps": [
+        "Define the node model and operations.",
+        "Compute geometry centrally.",
+        "Pass stable slots/sizes to panels.",
+        "Serialize operations for undo/redo.",
+        "Persist and restore normalized layout."
+      ],
+      "enforcement": {
+        "mode": "architecture",
+        "implementation": "A dependency-free layout kit owns the tree; panels consume slots.",
+        "trust": "The engine is the only writer of layout state.",
+        "failure": "An invalid operation is rejected; a stale panel snapshot is re-rendered from the engine.",
+        "exceptions": [
+          "A fixed single-pane surface may use static CSS without the engine."
+        ]
+      },
+      "applicability": [
+        "when: Docking, split panes, resizable columns, floating windows.",
+        "exceptions: Truly independent overlays may position themselves if they do not claim layout state.",
+        "reactivation: Any second geometry authority requires consolidation."
+      ],
+      "relationships": [
+        "rationale-feature-3-single-owner-contract",
+        "rationale-feature-3-shared-presentation-defaults"
+      ],
+      "migration": {
+        "strategy": "Extract geometry into a kit and convert panels to slots.",
+        "implementation": "Brand ids, snapshot rendering, intent reporting, one stylesheet.",
+        "requiredSupport": "A normalized tree store and pointer-gesture layer."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-single-authority-geometry",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A split operation returns the next tree plus its undo operations; `replay(initial, ops)` reproduces the same tree from the same start.",
+          "A drag previews locally and commits one settled operation; node ids are branded `PaneId`/`SplitId`/`TabId` and minted only by the engine.",
+          "The layout kit keeps exactly one stylesheet; `ui-sidebar-right` stores one `SurfaceState` per session id rather than per-panel pixel copies."
+        ],
+        "rejection": [
+          "A panel cannot fabricate a node id or write geometry directly."
+        ],
+        "recovery": [
+          "A failed operation leaves the prior tree; replay reads no clock and no random source."
+        ]
+      },
+      "limitations": [
+        "An engine adds abstraction for simple layouts.",
+        "Branded ids and snapshots require discipline in every consumer."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-artifact-reference-store",
+      "title": "Durable artifacts are referenced by stable handles, not copied into every surface",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md",
+          "start": 12,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md",
+          "start": 16,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Re-rendering an artifact from a second copy lets the copies disagree; embedding bytes in every message duplicates storage and gives the model stale content.",
+      "triggers": [
+        "A generated artifact (plan, image, file) must survive reloads and appear in several surfaces.",
+        "A model request needs the artifact."
+      ],
+      "obligations": [
+        "Keep the authoritative artifact once (durable log/attachment store) and reference it by a stable handle/id.",
+        "Derived surfaces read the reference; they do not persist a second durable copy.",
+        "A preview may be transient and browser-lifetime-scoped; it must not claim durability.",
+        "The log owns the exact submitted text/bytes; a rejected invocation may still retain its artifact but must not certify approval.",
+        "Provider-side file handles are transient; re-materialize from the durable form when needed."
+      ],
+      "actors": [
+        "Artifact store",
+        "Log",
+        "Preview/sidebar",
+        "Provider adapter"
+      ],
+      "steps": [
+        "Write the artifact once and record its handle.",
+        "Reference the handle in events/cards.",
+        "Resolve on render from the store.",
+        "Keep previews transient.",
+        "Re-materialize provider handles on demand."
+      ],
+      "enforcement": {
+        "mode": "architecture",
+        "implementation": "Single durable write plus handle references; UI resolves at read time.",
+        "trust": "The store/log is authoritative; the UI cache is disposable.",
+        "failure": "A missing artifact renders an explicit unavailable state; it is not reconstructed by guess.",
+        "exceptions": [
+          "Small inline values may be duplicated if the source states an explicit size bound."
+        ]
+      },
+      "applicability": [
+        "when: Plans, attachments, generated files, images, long tool outputs.",
+        "exceptions: Ephemeral previews with no durability claim may hold their own copy.",
+        "reactivation: Any second durable copy needs reconciliation."
+      ],
+      "relationships": [
+        "rationale-feature-3-durable-vs-projection",
+        "rationale-feature-3-committed-state-only"
+      ],
+      "migration": {
+        "strategy": "Move artifacts into the store and replace copies with handles.",
+        "implementation": "Add stable ids, resolve-on-render, transient preview scope, provider re-materialization.",
+        "requiredSupport": "Content-addressed or log-backed artifact storage."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-artifact-reference-store",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A plan card survives reload by resolving its logged invocation.",
+          "One attachment is stored once and referenced by several turns."
+        ],
+        "rejection": [
+          "A preview cannot become a second durable source.",
+          "A missing handle shows unavailable rather than re-deriving text."
+        ],
+        "recovery": [
+          "A transient provider handle is re-created from the durable artifact; a failed resolution shows an explicit error."
+        ]
+      },
+      "limitations": [
+        "References create lifetime/GC obligations.",
+        "A log-backed artifact may be expensive to read on every render; caching is needed."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-machine-identity-vs-label",
+      "title": "Stable machine identity, separate human label",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-23-language-neutral-default-workspace-naming.md",
+          "start": 12,
+          "end": 23,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Using a display name as the routing key makes identity change with language, rename or collision, and makes persisted references unstable.",
+      "triggers": [
+        "An entity has a user-visible name and is also referenced by tools, storage or routes.",
+        "Localization or rename is possible."
+      ],
+      "obligations": [
+        "Persist and route by a stable opaque id or a fixed language-neutral key; treat the human name as a projection.",
+        "A default stored name is a fixed neutral string; only the on-screen label is localized.",
+        "Renaming changes the label, not the identity or existing references.",
+        "Reject duplicate names where the name is the identity; otherwise allow duplicates and disambiguate display.",
+        "Never infer identity from a basename, path segment or title when an id exists."
+      ],
+      "actors": [
+        "Entity owner",
+        "Tool API",
+        "UI label layer"
+      ],
+      "steps": [
+        "Define the id/key.",
+        "Store it in durable records.",
+        "Localize only at render.",
+        "Validate uniqueness only where required.",
+        "Migrate legacy references explicitly."
+      ],
+      "enforcement": {
+        "mode": "design",
+        "implementation": "Ids in records and APIs; labels computed at the edge.",
+        "trust": "The owner mints ids; consumers cannot derive them from labels.",
+        "failure": "A missing id is an error; a duplicate name is rejected only for name-keyed entities.",
+        "exceptions": [
+          "A user-chosen unique name may serve as the id if rename is forbidden or migrates references."
+        ]
+      },
+      "applicability": [
+        "when: Workspaces, subagent instances, files, plugins, sessions, models.",
+        "exceptions: Purely local display-only values need no id.",
+        "reactivation: Any rename or localization feature requires the split."
+      ],
+      "relationships": [
+        "rationale-feature-3-no-fabricated-coverage",
+        "rationale-feature-3-forward-compatible-strict-format"
+      ],
+      "migration": {
+        "strategy": "Introduce a neutral key, migrate records, and localize labels.",
+        "implementation": "Keep old localized names as labels; do not rename directories or break references.",
+        "requiredSupport": "A stable id generator and a display-label function."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-machine-identity-vs-label",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Changing the UI language changes the label only; stored keys and paths stay fixed."
+        ],
+        "rejection": [
+          "A route or tool call that keys on the label fails or is normalized to the id.",
+          "A duplicate name is rejected where identity is name-based."
+        ],
+        "recovery": [
+          "Legacy localized names remain readable as labels; no bulk rename is attempted."
+        ]
+      },
+      "limitations": [
+        "A name that is also an id cannot be renamed without migration.",
+        "Display disambiguation may still be ambiguous to users."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-no-fabricated-coverage",
+      "title": "Show only observed facts; name unknown and unavailable states",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-web-home-path-tilde.md",
+          "start": 12,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md",
+          "start": 30,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-16-sidebar-browser.md",
+          "start": 1,
+          "end": 74,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-27-web-at-mention-discovery-and-row-content.md",
+          "start": 20,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-loaded-turn-chat-navigation.md",
+          "start": 1,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md",
+          "start": 12,
+          "end": 28,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A renderer that fills gaps with guesses (a shortened path, a fabricated file, a placeholder preview, a claimed read range) turns absence of evidence into a false statement.",
+      "triggers": [
+        "A UI renders data that may be missing, partial, stale or outside the loaded window.",
+        "A summary or coverage artifact is produced."
+      ],
+      "obligations": [
+        "Abbreviate or summarize only when the exact precondition holds; otherwise show the full value.",
+        "Render an explicit empty/unknown/unsupported state rather than a plausible placeholder.",
+        "Never fabricate file paths, coverage ranges or read claims from names or expectations.",
+        "Preview content is transient and labeled as such; it is not evidence that the artifact is durable.",
+        "A status summary/card derives from durable facts; it does not certify approval or execution that did not happen.",
+        "Disclose the exact scope of what was read or inspected; do not imply a full read from a sample.",
+        "A derived index refresh must fail closed: an unreadable root or failed refresh leaves prior entries and is retried, never published as an empty replacement.",
+        "A discovery label reads projections, not full logs; a missing projection is labeled by id, not backfilled by reading the log."
+      ],
+      "actors": [
+        "Renderer",
+        "Summarizer",
+        "Inspector"
+      ],
+      "steps": [
+        "Check whether the fact is known and in scope.",
+        "Render the known value or an explicit unknown state.",
+        "Label preview/projection scope.",
+        "Record actual ranges in coverage artifacts.",
+        "Test missing-data paths."
+      ],
+      "enforcement": {
+        "mode": "review+runtime",
+        "implementation": "Explicit conditionals for abbreviation/unknown; evidence fields record real ranges.",
+        "trust": "The UI/summary is not an authority; the underlying record is.",
+        "failure": "Missing data shows unavailable; an out-of-window value is marked, not interpolated.",
+        "exceptions": [
+          "A deliberately approximate label may be shown if marked approximate and bounded."
+        ]
+      },
+      "applicability": [
+        "when: Path display, previews, coverage reports, inspector, status summaries.",
+        "exceptions: Decorative placeholders with no factual claim are acceptable if visually distinct.",
+        "reactivation: Any new summarization or coverage claim needs this review."
+      ],
+      "relationships": [
+        "rationale-feature-3-machine-identity-vs-label",
+        "rationale-feature-3-claims-disclosed",
+        "rationale-feature-3-preview-read-only"
+      ],
+      "migration": {
+        "strategy": "Replace guessed fallbacks with explicit unknown states and record actual evidence.",
+        "implementation": "Add precondition checks, labels, and tests for absent/partial data.",
+        "requiredSupport": "Source records that can answer in-scope questions."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-no-fabricated-coverage",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A home-rooted path shortens only when it exactly matches the home prefix; other paths show full.",
+          "A missing preview renders an explicit unavailable state."
+        ],
+        "rejection": [
+          "A Windows drive path never becomes ~.",
+          "A plan card for a rejected invocation still renders the plan but does not certify approval or execution; a status row without durable evidence shows unavailable."
+        ],
+        "recovery": [
+          "A later successful fetch replaces the unknown state; the earlier absence is not retroactively claimed as covered."
+        ]
+      },
+      "limitations": [
+        "Explicit unknown states add UI surface.",
+        "A coverage artifact can still be incomplete; the obligation is to disclose, not to be omniscient."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-machine-readable-contract",
+      "title": "Stable machine-readable codes and event shapes; prose is not an API",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md",
+          "start": 28,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-18-account-quota-top-up.md",
+          "start": 12,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-08-web-background-job-display.md",
+          "start": 20,
+          "end": 26,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Scripts and supervisors parse human prose or incidental field order; a copy or localization change then breaks automation.",
+      "triggers": [
+        "A CLI/API/event stream is consumed by a program.",
+        "An error is shown to both humans and machines."
+      ],
+      "obligations": [
+        "Expose stable codes/identifiers and typed event shapes; keep prose for humans only.",
+        "Distinguish durable error codes from transient display copy.",
+        "Keep credentials, billing URLs and secrets out of machine-readable/log surfaces.",
+        "A machine-readable stream reports identity in its first event so a supervisor can persist and reuse it.",
+        "Do not change field meaning/order silently; version the contract."
+      ],
+      "actors": [
+        "CLI/API owner",
+        "Event producer",
+        "Automation client"
+      ],
+      "steps": [
+        "Define codes and schemas.",
+        "Emit identity early.",
+        "Separate durable vs display facts.",
+        "Version changes.",
+        "Test parsing independently of prose."
+      ],
+      "enforcement": {
+        "mode": "interface",
+        "implementation": "Typed schemas/codes; prose generated separately.",
+        "trust": "Consumers rely on the schema, not messages.",
+        "failure": "An unknown code is surfaced as unknown, not mapped by string matching.",
+        "exceptions": [
+          "A purely interactive human CLI may omit codes if it has no automation contract."
+        ]
+      },
+      "applicability": [
+        "when: Headless runs, HTTP APIs, event streams, error taxonomies.",
+        "exceptions: Internal in-process calls may use typed errors directly.",
+        "reactivation: Any consumer script requires the stable contract."
+      ],
+      "relationships": [
+        "rationale-feature-3-committed-state-only",
+        "rationale-feature-3-forward-compatible-strict-format"
+      ],
+      "migration": {
+        "strategy": "Add codes/schemas alongside prose; deprecate prose parsing.",
+        "implementation": "Emit a version, document fields, and test with a real consumer.",
+        "requiredSupport": "Schema definitions and a stable error taxonomy."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-machine-readable-contract",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A supervisor parses the id from the first event and resumes the run."
+        ],
+        "rejection": [
+          "Changing copy does not change the code.",
+          "Credentials never appear in the event/log."
+        ],
+        "recovery": [
+          "An unknown code is reported verbatim; no guessed repair is attempted."
+        ]
+      },
+      "limitations": [
+        "A schema adds maintenance cost.",
+        "Some failure detail cannot be reduced to a code; a structured detail field is needed."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-policy-vs-failure",
+      "title": "Separate a policy decision from an execution failure",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-28-auto-review.md",
+          "start": 11,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md",
+          "start": 11,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md",
+          "start": 14,
+          "end": 24,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Treating a denial as an exception, or a failure as a denial, hides the reason, invites retries and can turn a refusal into execution.",
+      "triggers": [
+        "An approval/review gate and an executor both produce outcomes.",
+        "A child agent or downstream listener can refuse."
+      ],
+      "obligations": [
+        "Model denial/cancellation as a normal, structured outcome distinct from a thrown failure.",
+        "On failure, report the actual cause; do not fabricate a policy reason.",
+        "Do not retry a denial; retry only transient failures where the contract allows.",
+        "A child cannot escalate its own authority; preserve the reason up the chain.",
+        "Ask a human only after downstream gates allow, so a later denial/cancel is not laundered into a prompt."
+      ],
+      "actors": [
+        "Gate",
+        "Executor",
+        "Child agent",
+        "UI"
+      ],
+      "steps": [
+        "Classify outcome (allowed/denied/cancelled/failed).",
+        "Carry a stable reason/code.",
+        "Render distinct UI.",
+        "Do not auto-retry denials.",
+        "Propagate without reinterpretation."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Typed result variants; dispatch checks the allowed variant only.",
+        "trust": "The gate owns the decision; the executor owns the failure.",
+        "failure": "Failure is surfaced as failure; denial never executes.",
+        "exceptions": [
+          "An unavailable approver may map to a documented conservative outcome, not to allow."
+        ]
+      },
+      "applicability": [
+        "when: Approvals, sandbox denials, permission errors, child delegation.",
+        "exceptions: A fatal infrastructure error may abort the whole run rather than return a normal denial.",
+        "reactivation: Any new gate/result type needs the distinction."
+      ],
+      "relationships": [
+        "rationale-feature-3-denied-body-never-executes",
+        "rationale-feature-3-model-authority-fixed-policy"
+      ],
+      "migration": {
+        "strategy": "Replace boolean/exception denials with typed outcomes.",
+        "implementation": "Add reason codes, UI branches and no-retry rules.",
+        "requiredSupport": "A result type that can express deny/cancel/fail."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-policy-vs-failure",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A reviewer denial returns the approval service's `ask` decision when the policy is `ask`; `allowed-once` executes, while `rejected`, `cancelled`, and `unavailable` deny and the body does not run."
+        ],
+        "rejection": [
+          "A denial is never retried automatically.",
+          "A downstream denial prevents an approval prompt.",
+          "A reviewer failure denies with a distinct `Auto review of tool \"<name>\" failed; its body was not executed: <error>` message carrying finish kind, failure code and provider message."
+        ],
+        "recovery": [
+          "A transient executor failure may be retried by the caller; a denial is final for that attempt."
+        ]
+      },
+      "limitations": [
+        "More result variants complicate callers.",
+        "Some failures are ambiguous; the contract must choose a default."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-claims-disclosed",
+      "title": "Disclose provenance, scope and known limits; do not endorse third-party claims",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-third-party-memory-mcp-examples.md",
+          "start": 1,
+          "end": 79,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-04-claude-code-and-codex-subagent-backends.md",
+          "start": 1,
+          "end": 96,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-04-web-context-source-and-steer-marks.md",
+          "start": 1,
+          "end": 51,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md",
+          "start": 229,
+          "end": 236,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/proposed/feature/2026-09-08-desktop-update-extensions.md",
+          "start": 11,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Presenting a third-party backend, plugin, telemetry default or deferred feature as fully supported hides untested behavior and implied endorsement.",
+      "triggers": [
+        "A capability depends on a third party or an experimental path.",
+        "A feature ships with defaults that affect privacy or data."
+      ],
+      "obligations": [
+        "Name the exact owner/provider of each capability and what the product actually guarantees.",
+        "Do not imply endorsement from inclusion; pin examples/versions and mark them as examples.",
+        "Disclose defaults that affect privacy/telemetry and make opt-in/opt-out explicit.",
+        "Mark deferred or unverified features as such; do not claim they are implemented.",
+        "Separate source-quoted claims from the project's own tested behavior.",
+        "An unsigned market index is a set of claims: titles, authors, labels and scores are not DSH verification; clients must show the index URL and each version's source, and the installed manifest/source decides what is installed."
+      ],
+      "actors": [
+        "Docs owner",
+        "Adapter owner",
+        "Reviewer"
+      ],
+      "steps": [
+        "List capabilities and owners.",
+        "State guarantees and limits.",
+        "Pin external examples.",
+        "Disclose privacy defaults.",
+        "Mark deferred work."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Docs/notes distinguish owned vs external behavior and tested vs planned.",
+        "trust": "None of this is runtime enforcement; it prevents false assurance.",
+        "failure": "An unverified claim is removed or labeled, not silently shipped.",
+        "exceptions": [
+          "A fully owned, tested capability may state a guarantee without third-party caveats."
+        ]
+      },
+      "applicability": [
+        "when: Backends, plugins, telemetry, experimental/deferred features, external docs.",
+        "exceptions: Internal prototypes not exposed to users may omit user-facing disclosure.",
+        "reactivation: Any new dependency or default needs a disclosure pass."
+      ],
+      "relationships": [
+        "rationale-feature-3-no-fabricated-coverage",
+        "rationale-feature-3-experimental-gate-default-off"
+      ],
+      "migration": {
+        "strategy": "Add provenance/limits sections and pin examples.",
+        "implementation": "Review claims against tests; label planned work.",
+        "requiredSupport": "Accurate ownership metadata."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-claims-disclosed",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Third-party MCP examples are pinned and labeled as interoperability examples, not endorsement; backend notes state provider-specific tested scope.",
+          "An unsigned market index is presented with its index URL and each version's source; an `official` label is not treated as DSH verification."
+        ],
+        "rejection": [
+          "A deferred feature is not described as available.",
+          "Shared-base telemetry with unset/empty `DSH_TELEMETRY_MODE` resolves to `FEEDBACK_ONLY`; no upload occurs without explicit feedback.",
+          "Plugin omitted `mode` resolves to `DISABLED`; non-empty `DSH_TELEMETRY_DISABLED` is a hard opt-out; `FULL` is rejected."
+        ],
+        "recovery": [
+          "A proposed desktop update extension remains labeled proposed and is not an initial acceptance requirement; an untested claim is labeled rather than presented as implemented."
+        ]
+      },
+      "limitations": [
+        "Documentation can drift from code.",
+        "Inclusion still signals some approval; the disclosure must be prominent."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-forward-compatible-strict-format",
+      "title": "Versioned formats validate recognized fields strictly; tolerate unknown members only where the contract grants it",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-30-web-diff-card.md",
+          "start": 16,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md",
+          "start": 144,
+          "end": 179,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A permissive reader that accepts typos or invalid values in fields the format defines turns producer bugs into silent behavior; an unversioned format cannot evolve. A blanket closed-schema rule is equally wrong: some formats explicitly promise forward compatibility and require readers to ignore members they do not define.",
+      "triggers": [
+        "A file/JSON/event schema is exchanged between components or ecosystems.",
+        "A consumer must tolerate future producers."
+      ],
+      "obligations": [
+        "Version the format and validate every defined field, value and discriminator strictly; reject defined-rule violations and unknown closed discriminator values (for example an unknown `source.type`).",
+        "Do not infer semantics from unknown members; ignore members the format does not define only where that format's contract explicitly grants forward compatibility.",
+        "Require exactly one representation for a concept; do not accept both optional aliases.",
+        "Reuse maintained parsers/validators for standard names/versions where possible.",
+        "Separate format definition from generation; a generator may change without changing the format.",
+        "A change existing readers would misinterpret requires a new format version; optional additions that readers can ignore do not.",
+        "Record the per-format tolerance decision instead of applying one global closed/open rule."
+      ],
+      "actors": [
+        "Schema owner",
+        "Producer",
+        "Consumer"
+      ],
+      "steps": [
+        "Define versioned schema.",
+        "Validate strictly.",
+        "Reject/normalize aliases.",
+        "Document compatibility.",
+        "Test unknown fields and version mismatch."
+      ],
+      "enforcement": {
+        "mode": "schema",
+        "implementation": "Per-format validator at the boundary: strict defined-field checks plus an explicit unknown-member policy.",
+        "trust": "The format contract states tolerance; no consumer-side guessing.",
+        "failure": "A defined-rule violation fails with a diagnostic; an unknown member is ignored only under an explicit forward-compatibility rule, otherwise it is rejected.",
+        "exceptions": [
+          "The web diff card returns the generic path for an unknown `card` value instead of guessing a diff.",
+          "The plugin-market reader ignores members the note does not define at every level while rejecting an unknown `source.type`."
+        ]
+      },
+      "applicability": [
+        "when: Configs, plugin indexes, event streams, message formats.",
+        "exceptions: Free-form user content is not schema-validated.",
+        "reactivation: Any new exchanged format needs a version and strictness decision."
+      ],
+      "relationships": [
+        "rationale-feature-3-machine-readable-contract",
+        "rationale-feature-3-required-not-optional"
+      ],
+      "migration": {
+        "strategy": "Keep or add a format version; validate defined fields strictly and record the unknown-member policy per format.",
+        "implementation": "Replace blanket unknown-field rejection with per-format rules; test defined-field violations, unknown discriminator values, and ignorable optional members.",
+        "requiredSupport": "A schema validator and a documented compatibility policy per format."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-forward-compatible-strict-format",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A current-version plugin-market index with valid defined fields parses; members the note does not define are dropped at every level.",
+          "A web diff card with an unknown `card` value renders the generic path, not a partial diff."
+        ],
+        "rejection": [
+          "A plugin-market index with an undeclared category/label/sort key, an unlisted dist-tag target, a duplicate name/version, or `format` other than 1 fails the whole index with a JSON-path diagnostic.",
+          "An unknown `source.type` is rejected; a typo in a defined field is not ignored."
+        ],
+        "recovery": [
+          "A change existing readers would misinterpret uses a new `format` value; an old reader reports the unsupported format rather than partially parsing.",
+          "An optional member added to format 1 is ignored by an existing reader and does not require a new version."
+        ]
+      },
+      "limitations": [
+        "Tolerance rules differ by format; a single cross-format closed-schema rule would reject the plugin-market reader's forward-compatibility contract.",
+        "Ignoring unknown members weakens typo detection in formats that grant it."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-preview-read-only",
+      "title": "Previews read; they never mutate the draft, source or activation state",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-10-composer-reference-previews.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md",
+          "start": 30,
+          "end": 50,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A preview that serializes the draft, submits it, fetches remote content on render or changes activation couples inspection to side effects.",
+      "triggers": [
+        "A UI offers hover/click preview of a file, skill, plan or remote resource.",
+        "The preview shares state with an editable composer."
+      ],
+      "obligations": [
+        "Clicking/hovering a preview must not serialize, submit or mutate the draft.",
+        "Preview data is transient discovery data; it is not added to durable messages or state.",
+        "Source-owned activation resolves the reference; the composer does not implement provider policy.",
+        "Do not load full skill bodies/remote content during discovery; fetch only on explicit preview.",
+        "A preview may be unavailable; show that state without substituting content."
+      ],
+      "actors": [
+        "Composer",
+        "Preview source",
+        "Provider"
+      ],
+      "steps": [
+        "Route the reference to its source owner.",
+        "Fetch metadata lazily.",
+        "Render without touching the draft.",
+        "Discard transient data on invalidation.",
+        "Test unchanged draft and no submit."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Read-only preview path; separate activation/serialization.",
+        "trust": "The source owner resolves; the composer only displays.",
+        "failure": "An invalid reference shows invalid; no draft mutation.",
+        "exceptions": [
+          "An explicit insert action is a separate command, not a preview."
+        ]
+      },
+      "applicability": [
+        "when: Composer references, file hovers, skill previews, plan inspection.",
+        "exceptions: A preview pane that intentionally edits a copy must state that it is an editor.",
+        "reactivation: Any new preview gesture needs the no-side-effect rule."
+      ],
+      "relationships": [
+        "rationale-feature-3-no-fabricated-coverage",
+        "rationale-feature-3-artifact-reference-store"
+      ],
+      "migration": {
+        "strategy": "Split preview from insertion and move resolution to the source owner.",
+        "implementation": "Add transient metadata, lazy fetch, invalidation, and draft-unchanged tests.",
+        "requiredSupport": "Source-owned reference resolution."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-preview-read-only",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Clicking a file chip previews it and leaves the draft byte-identical."
+        ],
+        "rejection": [
+          "Preview never submits or serializes the message.",
+          "Discovery does not load skill bodies."
+        ],
+        "recovery": [
+          "An uncached preview awaits the catalog; an invalidated reference is removed without touching the draft."
+        ]
+      },
+      "limitations": [
+        "Lazy previews can be slow on first click.",
+        "Transient preview data can be confused with durable content if not labeled."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-required-not-optional",
+      "title": "Make required facts required; exactly one representation",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-08-28-auto-review.md",
+          "start": 31,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Optional fields let a producer omit a fact the consumer needs, then a default silently invents it; two optional aliases force downstream branching.",
+      "triggers": [
+        "A schema or tool input has a fact that must always hold.",
+        "Two fields can express the same concept."
+      ],
+      "obligations": [
+        "Mark required facts required and fail when they are absent; do not substitute a default.",
+        "Represent one concept with exactly one field/shape; do not accept both query and queries, or both a boolean and a count.",
+        "Validation errors name the missing field; they are not swallowed into a generic failure.",
+        "A display-only value may be optional only if every consumer can render its absence explicitly.",
+        "Adoption guidance (not source-derived): adding a required field to an existing format needs a version/compatibility plan."
+      ],
+      "actors": [
+        "Schema/tool owner",
+        "Producer",
+        "Consumer"
+      ],
+      "steps": [
+        "Identify required facts.",
+        "Make them required in the schema.",
+        "Remove alias representations.",
+        "Test missing/empty cases.",
+        "Version breaking changes."
+      ],
+      "enforcement": {
+        "mode": "schema+runtime",
+        "implementation": "Required validation at the boundary; no fallback default.",
+        "trust": "The schema is the contract.",
+        "failure": "Missing required value fails with a diagnostic; execution does not proceed.",
+        "exceptions": [
+          "Backward-compatible optional additions may be allowed if absence is meaningful."
+        ]
+      },
+      "applicability": [
+        "when: Tool schemas, APIs, configs, manifests.",
+        "exceptions: Free-form metadata may be optional.",
+        "reactivation: Any new required fact needs schema enforcement."
+      ],
+      "relationships": [
+        "rationale-feature-3-forward-compatible-strict-format"
+      ],
+      "migration": {
+        "strategy": "Tighten schemas and migrate producers.",
+        "implementation": "Replace optional/aliases, add diagnostics, test old payloads.",
+        "requiredSupport": "Schema versioning and a producer update."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-required-not-optional",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A complete payload validates and executes."
+        ],
+        "rejection": [
+          "Missing required fields and both-alias payloads are rejected before side effects."
+        ],
+        "recovery": [
+          "A producer updated to the new schema succeeds; no consumer-side default is applied."
+        ]
+      },
+      "limitations": [
+        "Strict required fields break old clients; a staged rollout is needed."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-bounded-io",
+      "title": "Bound every read, fan-out and displayed payload",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md",
+          "start": 12,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md",
+          "start": 30,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md",
+          "start": 96,
+          "end": 130,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-24-fixed-rate-floor-one-minute.md",
+          "start": 1,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "An unbounded read, query fan-out or preview can consume memory/latency proportional to an untrusted corpus and hang the caller.",
+      "triggers": [
+        "A tool reads a file, index, search corpus, directory tree or plugin list.",
+        "A model can choose an array size or depth."
+      ],
+      "obligations": [
+        "Apply an explicit deployment-owned cap to entries, lines, bytes, pages and fan-out.",
+        "A cap must be visible in the tool description/prompt so the model can plan.",
+        "On cap overflow, return a bounded result with an explicit truncation marker, not a silently partial one.",
+        "Stream or page large content; do not materialize an unbounded body.",
+        "A preview cap and a reading cap may differ, but both are explicit constants.",
+        "Enforce a fixed-rate floor as one protocol constant: `MIN_EVERY_INTERVAL_SECONDS = 60` is read by the Host decoder, create/update validation and the tool description; the client keeps its own `MIN_INTERVAL_SECONDS = 60`, and a deployment cannot raise the protocol floor through configuration."
+      ],
+      "actors": [
+        "Tool owner",
+        "Deployment config",
+        "UI"
+      ],
+      "steps": [
+        "Choose bounds.",
+        "Enforce at the boundary.",
+        "Expose in schema/docs.",
+        "Mark truncation.",
+        "Test oversized inputs."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Hard caps in the tool/service; bounded preview components.",
+        "trust": "The service enforces; callers cannot opt into unbounded.",
+        "failure": "Oversized input is rejected or truncated with a marker.",
+        "exceptions": [
+          "An internal trusted pipeline may use a larger bound if it is still finite."
+        ]
+      },
+      "applicability": [
+        "when: File reads, directory listings, search, plugin indexes, previews.",
+        "exceptions: A local single-user tool may use a high bound but must not be infinite.",
+        "reactivation: Any new corpus-facing read needs a bound."
+      ],
+      "relationships": [
+        "rationale-feature-3-batch-all-or-nothing",
+        "rationale-feature-3-bounded-remote-recovery"
+      ],
+      "migration": {
+        "strategy": "Add configurable caps and truncation metadata.",
+        "implementation": "Enforce server-side, document defaults, test at the cap and above.",
+        "requiredSupport": "Config plumbing and bounded data structures."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-bounded-io",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A query within the cap returns complete results; an oversized array is rejected before fan-out.",
+          "A fixed-rate interval below 60 seconds is rejected by the Host decoder/create/update; `MIN_EVERY_INTERVAL_SECONDS = 60` is shared, and a deployment cannot raise the protocol floor through configuration."
+        ],
+        "rejection": [
+          "No request can cause an unbounded number of provider calls."
+        ],
+        "recovery": [
+          "A truncated preview offers an explicit expand path; the underlying read remains bounded."
+        ]
+      },
+      "limitations": [
+        "Caps can hide data the user wanted; the marker must be clear.",
+        "Choosing a cap is deployment-specific.",
+        "A deployment that needs a longer fixed-rate minimum must enforce it in the creating interface, not by raising the protocol constant."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-bounded-remote-recovery",
+      "title": "Bounded reconnect/retry with one outage budget and quiescent disposal",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md",
+          "start": 12,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md",
+          "start": 16,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md",
+          "start": 30,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md",
+          "start": 11,
+          "end": 27,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Unbounded reconnect storms, retry counters that reset on brief success, or disposal that only signals stop leave a resource flapping or leaking after the owner is gone.",
+      "triggers": [
+        "A remote connection, provider fetch or runtime download can fail transiently.",
+        "An owner can be disposed while an attempt is in flight."
+      ],
+      "obligations": [
+        "Use exponential backoff bounded by max delay and a single outage budget of consecutive failed attempts.",
+        "Do not reset the budget on a briefly successful connect; only a stable recovery resets it.",
+        "One queue serializes operations; each attempt uses a fresh transport/client generation.",
+        "On budget exhaustion, unregister/disable the resource and stop; do not loop forever.",
+        "Disposal flips a fence, cancels timers, closes the client, then awaits in-flight attempts and queues before releasing.",
+        "Fallback to a smaller/local form must be explicit; a failed remote must not fabricate success."
+      ],
+      "actors": [
+        "Connection supervisor",
+        "Provider adapter",
+        "Owner lifecycle"
+      ],
+      "steps": [
+        "Detect failure via events, not polling.",
+        "Back off within bounds.",
+        "Count one outage.",
+        "Exhaust to a disabled state.",
+        "Dispose quiescently.",
+        "Fallback explicitly."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Supervisor with generations, bounded backoff, outage budget, disposal fence.",
+        "trust": "The supervisor owns health; callers do not retry unbounded.",
+        "failure": "Exhaustion disables/unregisters and logs; disposal awaits quiescence.",
+        "exceptions": [
+          "A transport with its own reconnect (HTTP SSE) may be left to that owner."
+        ]
+      },
+      "applicability": [
+        "when: MCP connections, remote providers, downloads, streaming transports.",
+        "exceptions: A one-shot request with no persistent resource may simply fail.",
+        "reactivation: Any long-lived connection needs bounded recovery and disposal."
+      ],
+      "relationships": [
+        "rationale-feature-3-bounded-io",
+        "rationale-feature-3-artifact-reference-store"
+      ],
+      "migration": {
+        "strategy": "Add a supervisor with bounded policy and quiescent teardown.",
+        "implementation": "Serialize syncs, use generations, expose states, test crash loops and dispose races.",
+        "requiredSupport": "Config schema for backoff and a cancellable timer."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-bounded-remote-recovery",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A crashed stdio server is retried with delays doubling from `initialDelayMs` to `maxDelayMs`; one outage consumes at most `maxAttempts` consecutive failures."
+        ],
+        "rejection": [
+          "A crash loop exhausts the budget and stops instead of resetting on brief connects.",
+          "A late attempt after disposal cannot register tools."
+        ],
+        "recovery": [
+          "Budget resets only after stable recovery; fallback content is marked as fallback."
+        ]
+      },
+      "limitations": [
+        "Backoff delays recovery for a transient blip.",
+        "A permanently disabled server needs user action."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-batch-all-or-nothing",
+      "title": "Multi-item operations are all-or-nothing and fan out only within a bound",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md",
+          "start": 12,
+          "end": 36,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Returning partial success for a batched request lets callers believe all items completed, while unbounded fan-out multiplies cost and failure.",
+      "triggers": [
+        "One call accepts an array of queries/items.",
+        "The operation can be parallelized across a provider."
+      ],
+      "obligations": [
+        "If any item fails, discard successful siblings and return the failure; do not claim partial success unless the contract explicitly supports per-item results.",
+        "Wait for sibling cancellation to reach quiescence before returning.",
+        "Bound the array and the fan-out with one deployment-owned cap.",
+        "Keep the shared provider contract single-item; orchestration belongs in the consumer.",
+        "Deduplicate/label results by originating item so a combined result remains attributable."
+      ],
+      "actors": [
+        "Tool consumer",
+        "Provider",
+        "Deployment config"
+      ],
+      "steps": [
+        "Validate array and cap.",
+        "Fan out within the bound.",
+        "Join; on failure cancel siblings and discard.",
+        "Deduplicate/label.",
+        "Return one combined result."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Consumer-level orchestration with all-or-nothing join and bounded concurrency.",
+        "trust": "The consumer owns the batch semantics; providers stay simple.",
+        "failure": "Any failure fails the call; siblings are cancelled and awaited.",
+        "exceptions": [
+          "A contract that explicitly returns per-item outcomes may preserve successes, but must label them."
+        ]
+      },
+      "applicability": [
+        "when: Search queries, bulk mutations, batch fetches.",
+        "exceptions: Idempotent independent items may be retried individually by the caller.",
+        "reactivation: Any array input needs a batch semantics decision."
+      ],
+      "relationships": [
+        "rationale-feature-3-bounded-io",
+        "rationale-feature-3-ordered-commit-concurrency"
+      ],
+      "migration": {
+        "strategy": "Move orchestration into the consumer and define all-or-nothing.",
+        "implementation": "Add cap, cancellation quiescence, labeling, and tests for one failing item.",
+        "requiredSupport": "A concurrent search/mutation API."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-batch-all-or-nothing",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A batch within the cap returns combined labeled results."
+        ],
+        "rejection": [
+          "One failed item fails the whole call and no success is reported.",
+          "An array over the cap is rejected before provider calls."
+        ],
+        "recovery": [
+          "Sibling cancellation is awaited; a retry starts a fresh batch."
+        ]
+      },
+      "limitations": [
+        "All-or-nothing wastes successful work on one failure.",
+        "Fan-out bound may underuse available capacity."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-predecessor-lineage",
+      "title": "Record supersession lineage and preserve prior decisions",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-06-14-acp-multi-session.md",
+          "start": 1,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md",
+          "start": 1,
+          "end": 20,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A new note or decision silently replaces an earlier one; readers cannot tell which parts still hold, and old constraints vanish without an audit trail.",
+      "triggers": [
+        "A design changes an earlier decision.",
+        "A note is archived or superseded."
+      ],
+      "obligations": [
+        "Name the predecessor and state exactly which facts are superseded and which still hold.",
+        "Keep the predecessor readable; archive rather than rewrite history.",
+        "An update block records what later removed or changed a mechanism.",
+        "Do not silently rename a concept to avoid the lineage; migration notes are part of the change.",
+        "The current authority is the latest explicit decision, not an unmarked old note."
+      ],
+      "actors": [
+        "Note author",
+        "Reviewer",
+        "Future maintainer"
+      ],
+      "steps": [
+        "Identify the predecessor.",
+        "Write a supersession/update block.",
+        "State retained vs replaced facts.",
+        "Archive both.",
+        "Link from the current note."
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": "Note templates carry status/update/supersedes fields.",
+        "trust": "Documentation discipline, not runtime.",
+        "failure": "An unreferenced contradiction is a review defect; the newer note is not automatically authoritative without the block.",
+        "exceptions": [
+          "A purely additive note may have no predecessor."
+        ]
+      },
+      "applicability": [
+        "when: Agent Notes, ADRs, policy changes, migrations.",
+        "exceptions: A brand-new area with no prior decision.",
+        "reactivation: Any change to an existing decision needs lineage."
+      ],
+      "relationships": [
+        "rationale-feature-3-claims-disclosed"
+      ],
+      "migration": {
+        "strategy": "Add lineage blocks and link predecessors.",
+        "implementation": "Update templates; audit archived notes for unmarked supersession.",
+        "requiredSupport": "Stable note paths and a searchable archive."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-predecessor-lineage",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "The background-job completion note names its predecessor and states that it supersedes exactly the fact that completion never wakes an idle owner while keeping every other task-runtime decision.",
+          "The ACP note's line-9 blockquote records that it was written when ACP was an editor bridge and that the automation-only protocol removal left the multiplexing decision unchanged."
+        ],
+        "rejection": [
+          "A note that contradicts a predecessor without naming it is returned for revision; an update/supersedes block must name the predecessor and the fact it supersedes."
+        ],
+        "recovery": [
+          "A later note can restore a superseded fact explicitly, again with lineage."
+        ]
+      },
+      "limitations": [
+        "Lineage depends on author honesty.",
+        "Long chains are hard to read; the current note must summarize."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-experimental-gate-default-off",
+      "title": "Gate risky features behind one explicit, documented switch; the default is owner-decided",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-experimental-subcommand-gate.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-17-developer-tools-settings.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-20-developer-tools-default-on.md",
+          "start": 12,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md",
+          "start": 12,
+          "end": 20,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Experimental, privacy-affecting or complexity-adding features need one explicit, documented gate and a documented current default. A name prefix is not a gate, and a falsy env value must not enable an experimental command. Default-off cannot be assumed: developer tools moved from an initial default-off choice to a default-on decision, and the shared telemetry base defaults to FEEDBACK_ONLY, not DISABLED.",
+      "triggers": [
+        "A feature is unproven, privacy-sensitive or disrupts routine work.",
+        "A CLI/subcommand or UI surface can be toggled."
+      ],
+      "obligations": [
+        "Choose one explicit gate per feature and document its current default; do not infer the default from the mechanism name or from a superseded note.",
+        "For an experimental command, require a per-invocation `--experimental` flag or `DSH_EXPERIMENTAL=1`; `1` is the only enabling value, and a bare command fails with exit 1 naming both opt-ins.",
+        "For the developer-tools preference, resolve the accepted `ui-settings.enabled` value; the initial default-off was explicitly superseded by the default-on decision (`ui-developer-tools.enabled` schema default `true`), while a saved `false` wins.",
+        "For telemetry, preserve both defaults: shared base unset/empty `DSH_TELEMETRY_MODE` -> `FEEDBACK_ONLY`; plugin omitted `mode` -> `DISABLED`; non-empty `DSH_TELEMETRY_DISABLED` is the hard opt-out.",
+        "Gate on one owner; do not read process.env deep inside pure parsing.",
+        "Turning off hides/removes active content (remount), not just the control.",
+        "Stabilizing means deleting the gate, not renaming the command; preserve the historical superseded default explicitly rather than erasing it."
+      ],
+      "actors": [
+        "Feature owner",
+        "CLI/UI",
+        "Deployment"
+      ],
+      "steps": [
+        "Choose the gate owner and record the current default.",
+        "Check the gate before side effects.",
+        "Test bare, false, true and saved-preference paths.",
+        "Apply the shared setting to every surface that renders the feature.",
+        "Delete the gate on stabilization without renaming the command; keep predecessor links."
+      ],
+      "enforcement": {
+        "mode": "runtime+config",
+        "implementation": "Flag/env check for experimental commands; settings-owned developerTools preference; telemetry mode resolution at the base/plugin boundary.",
+        "trust": "The gate is explicit and documented, not a security boundary for untrusted users.",
+        "failure": "A bare experimental command or false value fails; a stored developer-tools `false` withholds capabilities; telemetry `FULL` is rejected and non-empty `DSH_TELEMETRY_DISABLED` opts out.",
+        "exceptions": [
+          "A feature required for the product to function cannot be gated off.",
+          "A safe diagnostic may default on if documented."
+        ]
+      },
+      "applicability": [
+        "when: Experimental commands, telemetry, developer tools, previews.",
+        "exceptions: A safe diagnostic that cannot affect data may default on if documented.",
+        "reactivation: Any new risky feature needs an explicit gate with a documented owner-decided default."
+      ],
+      "relationships": [
+        "rationale-feature-3-claims-disclosed",
+        "rationale-feature-3-scoped-enforcement"
+      ],
+      "migration": {
+        "strategy": "Introduce one documented gate per feature and record the owner-decided default; preserve superseded defaults explicitly.",
+        "implementation": "Check before side effects; test bare/false/true/saved-preference paths; apply shared settings; keep predecessor links.",
+        "requiredSupport": "Config/env parsing, a settings form, and a note template that records supersession."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-experimental-gate-default-off",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "`dsh meta --experimental` and `DSH_EXPERIMENTAL=1 dsh meta` run; `DSH_EXPERIMENTAL=0` and the bare command fail with exit 1 naming both opt-ins.",
+          "The `ui-developer-tools.enabled` Host schema defaults to `true`; after preference resolution the accepted `ui-settings.enabled` value is `true`; a saved `false` still withholds developer tools; the initial default-off note is preserved as superseded, not erased.",
+          "Unset/empty `DSH_TELEMETRY_MODE` resolves to `FEEDBACK_ONLY`; omitted plugin `mode` resolves to `DISABLED`; `FULL` is rejected."
+        ],
+        "rejection": [
+          "A falsy env value (`0`, `false`, empty) does not enable an experimental command; only `1` does.",
+          "A stored developer-tools `false` does not render scripted HTML/iframe content; turning off remounts/hides active content.",
+          "A telemetry configuration that treats FEEDBACK_ONLY as DISABLED, or claims universal default-off, fails this mechanism."
+        ],
+        "recovery": [
+          "Removing the gate on stabilization leaves the command name unchanged; a superseded default remains readable in its predecessor note."
+        ]
+      },
+      "limitations": [
+        "Env gating complicates reproducible scripts.",
+        "Users may set a global env and forget.",
+        "Defaults differ by owner: experimental commands are off, developer tools are on after preference resolution, and telemetry is FEEDBACK_ONLY at the base but DISABLED when the plugin mode is omitted; one blanket default-off rule is wrong."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-shared-presentation-defaults",
+      "title": "Share one presentation base and token set across surfaces",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-20-focus-ring-brand-primary.md",
+          "start": 12,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-18-settings-font-size-control.md",
+          "start": 1,
+          "end": 32,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Desktop and Web each define their own defaults, focus colors or geometry, so the same feature looks and behaves differently and fixes must be duplicated.",
+      "triggers": [
+        "Several renderers/surfaces present the same concept.",
+        "A design token (focus, radius, width) is introduced."
+      ],
+      "obligations": [
+        "Define one shared base/default and derive surface-specific choices from it.",
+        "Use one token per role (for example one keyboard-focus colour for every control) rather than per-component values.",
+        "A shared setting/preference applies to every surface that renders the feature; do not scope it to one host.",
+        "Deviations are explicit exceptions with a reason, not independent defaults.",
+        "Adoption guidance (not source-derived): string/copy defaults live in the shared i18n seat, not in each surface."
+      ],
+      "actors": [
+        "Design-system owner",
+        "Surface owners",
+        "i18n"
+      ],
+      "steps": [
+        "Identify the shared concept.",
+        "Define base/token.",
+        "Migrate surfaces.",
+        "Delete local copies.",
+        "Test parity."
+      ],
+      "enforcement": {
+        "mode": "architecture",
+        "implementation": "Shared tokens/base module imported by all surfaces.",
+        "trust": "None; consistency is structural.",
+        "failure": "A surface without the shared base is a review defect.",
+        "exceptions": [
+          "Platform constraints (for example native focus) may require a documented override."
+        ]
+      },
+      "applicability": [
+        "when: Web/Desktop/TUI/mobile surfaces sharing a feature.",
+        "exceptions: A platform-only control may have no counterpart.",
+        "reactivation: Any second renderer needs the shared base."
+      ],
+      "relationships": [
+        "rationale-feature-3-single-authority-geometry",
+        "rationale-feature-3-single-base-default"
+      ],
+      "migration": {
+        "strategy": "Extract tokens/base and replace local values.",
+        "implementation": "One PR per surface, parity tests, delete duplicates.",
+        "requiredSupport": "A shared UI package."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-shared-presentation-defaults",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "The model-input control renders one shared row with one shared default; a surface does not introduce a private selector default.",
+          "Every control reads the `--dsw-focus-ring-color` token; the focus stylesheet owns one colour and one standard 2px width, with dense tables/toolbars allowed 1px.",
+          "One settings-owned `ThemeSettingsSchema.fontSize` value (12–17, default 14) feeds the transcript and composer through `--dsh-content-font-size`."
+        ],
+        "rejection": [
+          "A surface that defines a private default for a shared role (model input, focus colour, font size) fails this mechanism.",
+          "A component-local focus colour instead of `--dsw-focus-ring-color`, or a private font-size default, is rejected."
+        ],
+        "recovery": [
+          "A token change propagates to all consumers on rebuild; a mapped settings value survives reload and applies live."
+        ]
+      },
+      "limitations": [
+        "Shared packages can become a dumping ground.",
+        "Platform differences still need exceptions."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-scoped-enforcement",
+      "title": "Enforce at the narrowest owner and keep scope explicit",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-17-developer-tools-settings.md",
+          "start": 12,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md",
+          "start": 11,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md",
+          "start": 12,
+          "end": 20,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "A control that hides UI without changing the underlying capability leaves active content running; a policy applied globally can break unrelated surfaces.",
+      "triggers": [
+        "A feature toggle, sandbox or permission affects only part of the system.",
+        "Disabling a view must also stop its side effects."
+      ],
+      "obligations": [
+        "Enforce at the owner of the capability (renderer, sandbox, provider), not only at the control.",
+        "Turning off must dispose/remount active content, not just hide a button.",
+        "Scope a setting/policy to the surfaces it actually governs; state the scope.",
+        "A per-session privacy/telemetry choice applies to that session; do not leak it to others.",
+        "A sandbox/permission mode names exactly what it allows and what it denies."
+      ],
+      "actors": [
+        "Capability owner",
+        "Settings",
+        "Security reviewer"
+      ],
+      "steps": [
+        "Identify the capability boundary.",
+        "Enforce there.",
+        "Dispose on off.",
+        "Document scope.",
+        "Test off-state side effects."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Owner-level checks/disposal; scoped config.",
+        "trust": "The owner enforces; the UI is not the boundary.",
+        "failure": "Off means no capability; active instances are torn down.",
+        "exceptions": [
+          "A cosmetic toggle may only hide if it has no side effects."
+        ]
+      },
+      "applicability": [
+        "when: Developer tools, HTML preview, telemetry, sandbox modes.",
+        "exceptions: Pure display toggles with no capability.",
+        "reactivation: Any new toggle needs a side-effect analysis."
+      ],
+      "relationships": [
+        "rationale-feature-3-experimental-gate-default-off",
+        "rationale-feature-3-layered-enforcement"
+      ],
+      "migration": {
+        "strategy": "Move enforcement to the owner and dispose on disable.",
+        "implementation": "Add remount/dispose logic, scope docs, tests for active content.",
+        "requiredSupport": "Lifecycle hooks in the renderer/sandbox."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-scoped-enforcement",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Disabling developer tools removes the active View/tab bar and disposes the iframe."
+        ],
+        "rejection": [
+          "A hidden but still-running script is a defect.",
+          "A session-scoped telemetry choice does not affect another session."
+        ],
+        "recovery": [
+          "Re-enabling reconstructs from current settings; no stale active content survives."
+        ]
+      },
+      "limitations": [
+        "Disposal can lose unsaved preview state.",
+        "Scoping adds configuration surface."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-single-base-default",
+      "title": "One shared base default when no surface overrides",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-01-shared-base-web-fetch-default.md",
+          "start": 14,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-31-web-default-search.md",
+          "start": 14,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-minimal-profiles-bare-two-tool-runtime.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Several compositions each define a fallback, so a new surface silently behaves differently and a fix must be applied repeatedly.",
+      "triggers": [
+        "A capability has a default that most compositions share.",
+        "Multiple deployment compositions exist."
+      ],
+      "obligations": [
+        "Put the default in one shared base composition/layer; surface compositions override only explicitly.",
+        "Do not duplicate the default in each composition; a missing override uses the base.",
+        "Name the precedence: surface > base > absent.",
+        "A change to the shared default is visible to all consumers; test at least one override and one inherited case."
+      ],
+      "actors": [
+        "Composition owner",
+        "Surface owner"
+      ],
+      "steps": [
+        "Extract the default.",
+        "Add base layer.",
+        "Make overrides explicit.",
+        "Test inheritance."
+      ],
+      "enforcement": {
+        "mode": "architecture",
+        "implementation": "Composition merge with one base default.",
+        "trust": "The loader owns precedence.",
+        "failure": "An absent override falls back to base; a conflicting duplicate is removed.",
+        "exceptions": [
+          "A composition that must not have the capability explicitly removes it."
+        ]
+      },
+      "applicability": [
+        "when: Plugin compositions, default search/fetch, feature defaults.",
+        "exceptions: A one-off deployment may override with a documented reason.",
+        "reactivation: Any second composition needs the base."
+      ],
+      "relationships": [
+        "rationale-feature-3-shared-presentation-defaults",
+        "rationale-feature-3-single-owner-contract"
+      ],
+      "migration": {
+        "strategy": "Move defaults into the shared base and delete local copies.",
+        "implementation": "Update compositions, document precedence, test inherited behavior.",
+        "requiredSupport": "A composition/merge system."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-single-base-default",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "A composition without an override gets the shared default."
+        ],
+        "rejection": [
+          "A duplicate local default is removed in review."
+        ],
+        "recovery": [
+          "Reverting an override restores the base default."
+        ]
+      },
+      "limitations": [
+        "A shared default can surprise a surface that wanted absence.",
+        "Merge precedence must be documented."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-maintained-protocol-owner",
+      "title": "Use the maintained protocol owner; do not fork or reimplement negotiation",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-09-12-mcp-sdk-protocol-negotiation.md",
+          "start": 12,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md",
+          "start": 12,
+          "end": 27,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Hand-rolled protocol negotiation or a forked SDK drifts from the standard, misses capabilities and multiplies maintenance.",
+      "triggers": [
+        "A client connects to an external protocol/server.",
+        "A version/capability handshake exists."
+      ],
+      "obligations": [
+        "Delegate connection, negotiation and transport lifecycle to the maintained SDK/library.",
+        "Keep the harness's own seam thin: config resolution, lifecycle, policy.",
+        "Do not reimplement version negotiation from scratch when the owner provides it.",
+        "A connection generation uses one protocol instance; do not reuse across transports.",
+        "Report unsupported capabilities explicitly rather than pretending."
+      ],
+      "actors": [
+        "Integration owner",
+        "SDK maintainer",
+        "Plugin"
+      ],
+      "steps": [
+        "Adopt the maintained client.",
+        "Own only lifecycle/config.",
+        "Handle capability errors.",
+        "Test negotiation against a real server."
+      ],
+      "enforcement": {
+        "mode": "architecture",
+        "implementation": "SDK client inside a supervisor; no parallel protocol code.",
+        "trust": "The SDK owns the wire; the harness owns lifecycle.",
+        "failure": "Negotiation failure is reported; no fallback protocol guess.",
+        "exceptions": [
+          "A protocol with no maintained client may require a first-party implementation, which then becomes the owner."
+        ]
+      },
+      "applicability": [
+        "when: MCP, LSP, DAP, provider SDKs.",
+        "exceptions: A tiny stable protocol may be implemented directly if fully specified and tested.",
+        "reactivation: Any new external protocol needs an owner decision."
+      ],
+      "relationships": [
+        "rationale-feature-3-bounded-remote-recovery",
+        "rationale-feature-3-first-party-rewrite"
+      ],
+      "migration": {
+        "strategy": "Replace hand-rolled negotiation with the SDK; keep a thin supervisor.",
+        "implementation": "Delete parallel code, add real-server tests.",
+        "requiredSupport": "The maintained library."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-maintained-protocol-owner",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "`dsh-mcp-client` uses the official `@modelcontextprotocol/client` SDK with SDK-owned protocol negotiation, discovery, list-change subscriptions, pagination, request headers, cancellation and output validation; the bridge calls high-level `listTools`/`callTool` and adds no parallel pagination implementation."
+        ],
+        "rejection": [
+          "Unsupported capabilities are reported, not emulated.",
+          "No second wire implementation exists."
+        ],
+        "recovery": [
+          "A failed negotiation surfaces an error; reconnect starts a fresh generation."
+        ]
+      },
+      "limitations": [
+        "SDK bugs become yours to work around.",
+        "SDK version upgrades can be breaking."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-diagnostic-reads",
+      "title": "Diagnostics observe without taking ownership or mutating state",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-24-session-inspector.md",
+          "start": 11,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "An inspector that subscribes as an owner, writes to the log or replays with side effects changes the system it is measuring.",
+      "triggers": [
+        "A debug/inspector/trace view reads live state.",
+        "A diagnostic tool needs history."
+      ],
+      "obligations": [
+        "Diagnostic views are read-only: no writes to the observed log/state, no ownership acquisition, no replay with side effects.",
+        "Use weak/lazy references and bounded reads so inspection does not keep resources alive.",
+        "A diagnostic fact must be labeled with its source and scope; do not present a partial view as complete.",
+        "Cancelling/closing the inspector does not cancel the observed work unless explicitly requested.",
+        "A diagnostic path must not become a second rendering/derivation authority."
+      ],
+      "actors": [
+        "Inspector",
+        "Runtime",
+        "Log"
+      ],
+      "steps": [
+        "Open a read-only view.",
+        "Read bounded facts.",
+        "Avoid ownership/subscriptions that mutate.",
+        "Close without side effects.",
+        "Label scope."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "Read-only APIs; no write handles; lazy references.",
+        "trust": "The inspector is outside the authority path.",
+        "failure": "A failed read shows unavailable; it does not repair or write.",
+        "exceptions": [
+          "The default-off `inspector-profile` optional bundle is an explicit exception: enabling it starts the NodeJS Inspector with local code execution and unredacted Host fetch capture (complete URL, headers, request/response bodies, status, timing, errors); closing the debugging window does not stop capture. Redaction is an adoption requirement, not source behavior."
+        ]
+      },
+      "applicability": [
+        "when: Session inspector, trajectory, diagnostics, trace viewers.",
+        "exceptions: A repair tool is not a diagnostic read and must be labeled.",
+        "reactivation: Any new inspector needs the read-only contract."
+      ],
+      "relationships": [
+        "rationale-feature-3-no-fabricated-coverage",
+        "rationale-feature-3-committed-state-only"
+      ],
+      "migration": {
+        "strategy": "Separate read APIs from write/ownership; add bounded lazy reads.",
+        "implementation": "Remove write handles, add scope labels, test no-side-effect.",
+        "requiredSupport": "A read-only projection of the log."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-diagnostic-reads",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "The Session Inspector registers no resource provider, Conversation header slot, composer, or product navigation API; Session Controller and Chat retain data ownership; only the selected table subscribes; the log uses the existing loaded window and pagination."
+        ],
+        "rejection": [
+          "Opening/closing the default Inspector does not change ownership or run state.",
+          "Enabling the default-off `inspector-profile` bundle starts the NodeJS Inspector and unredacted Host fetch capture without a debugging argument; closing the debugging window does not stop capture."
+        ],
+        "recovery": [
+          "A missing/partial record shows unavailable; no reconstruction write occurs."
+        ]
+      },
+      "limitations": [
+        "Read-only views may lag live state.",
+        "The opt-in `inspector-profile` bundle permits local code execution and unredacted Host fetch capture; it does not redact credentials, cookies, query values or payloads. A deployment must add redaction; the source does not."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-single-flow-owner",
+      "title": "One flow owns disclosure state and key semantics",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md",
+          "start": 14,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md",
+          "start": 20,
+          "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-09-14-composer-selection-keyboard.md",
+          "start": 16,
+          "end": 30,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Letting each child own its own disclosure/keyboard state loses it when a parent unmounts, and duplicated key handling makes Escape/Enter behave differently across surfaces.",
+      "triggers": [
+        "A flow has nested phases, disclosures or selection surfaces.",
+        "Several surfaces share keyboard conventions."
+      ],
+      "obligations": [
+        "Keep one owner for the flow's disclosure state, with a per-phase map that survives parent hide/restore.",
+        "Preserve the user's choice across ordinary updates; open only on a defined transition (clean→activity) and close on a defined completion.",
+        "Mirror the primary flow's keys consistently (for example Enter/Tab settle, Escape/Shift+Tab dismiss) across selection surfaces.",
+        "A user-dismissed hit stays dismissed for the same token/query until it changes.",
+        "Focus-aware completion: do not close content while focus is inside it.",
+        "Do not add a second store/setting/timer for the same flow."
+      ],
+      "actors": [
+        "Flow component",
+        "Child surfaces",
+        "Keyboard router"
+      ],
+      "steps": [
+        "Own state at the flow root.",
+        "Key child state by stable phase key.",
+        "Define transition rules.",
+        "Mirror keys.",
+        "Persist dismissal identity."
+      ],
+      "enforcement": {
+        "mode": "architecture+runtime",
+        "implementation": "Root-owned state map; shared key handling.",
+        "trust": "The flow owner is the single authority.",
+        "failure": "A child unmount does not discard state; an unknown key does nothing.",
+        "exceptions": [
+          "A standalone surface without a parent flow owns its own state."
+        ]
+      },
+      "applicability": [
+        "when: Workflow runs, background jobs, composer selection, disclosure panels.",
+        "exceptions: A trivial one-level disclosure may keep local state.",
+        "reactivation: Any nested flow needs an owner."
+      ],
+      "relationships": [
+        "rationale-feature-3-single-owner-contract",
+        "rationale-feature-3-complete-sequence-authority"
+      ],
+      "migration": {
+        "strategy": "Lift state to the flow owner and share key semantics.",
+        "implementation": "Add phase map, transition rules, dismissal identity, focus checks.",
+        "requiredSupport": "A stable phase key and keyboard event router."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-single-flow-owner",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "Hiding and reopening the outer flow restores each phase choice."
+        ],
+        "rejection": [
+          "An ordinary running update does not override a user's collapsed choice.",
+          "A dismissed hit does not reopen on the same query."
+        ],
+        "recovery": [
+          "A remount reconstructs state from current durable status; a removed phase drops its entry."
+        ]
+      },
+      "limitations": [
+        "Root-owned state grows with phases.",
+        "Key semantics must match each platform's expectations."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-first-party-rewrite",
+      "title": "Rewrite promoted third-party features as first-party code",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-25-promote-open-anywhere-plugin.md",
+          "start": 12,
+          "end": 31,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Vendoring a community plugin keeps its untested JavaScript, external version gates and foreign ownership; exempting it creates a second package class.",
+      "triggers": [
+        "A community/third-party feature is promoted into the product.",
+        "A plugin carries its own release/version compatibility gate."
+      ],
+      "obligations": [
+        "Rewrite the feature in the repository's own packages, following its typecheck, coverage, i18n and invariant gates.",
+        "Split ownership along existing host/client package seams; reuse shared utilities rather than vendoring lib/.",
+        "Delete external-version compatibility gates; a first-party package is versioned with the repository.",
+        "Keep the trust fence (origin/auth) around every new route.",
+        "Use the shared snapshot store for persisted choices; do not hand-roll storage.",
+        "A first-party rewrite must not preserve a parallel plugin path."
+      ],
+      "actors": [
+        "Feature owner",
+        "Platform reviewer",
+        "Security reviewer"
+      ],
+      "steps": [
+        "Map the third-party behavior.",
+        "Rewrite into owned packages.",
+        "Reuse shared primitives.",
+        "Remove the external gate and plugin dependency.",
+        "Apply standard gates and trust fences."
+      ],
+      "enforcement": {
+        "mode": "architecture+review",
+        "implementation": "First-party packages with standard checks; no exemption class.",
+        "trust": "The platform's trust fence and review gates, not the plugin's.",
+        "failure": "A vendored lib that fails gates is rejected; the plugin path is removed.",
+        "exceptions": [
+          "A genuinely external integration may remain a plugin if it cannot be owned, but must be labeled."
+        ]
+      },
+      "applicability": [
+        "when: Promoting a community plugin or vendored feature.",
+        "exceptions: A thin adapter to a maintained third-party SDK may remain, owned by the adapter.",
+        "reactivation: Any new promotion repeats the rewrite."
+      ],
+      "relationships": [
+        "rationale-feature-3-maintained-protocol-owner",
+        "rationale-feature-3-trust-boundary-per-surface"
+      ],
+      "migration": {
+        "strategy": "Rewrite rather than vendor; delete the plugin and its gates.",
+        "implementation": "Create host/client packages, reuse primitives, add trust fence, run standard gates.",
+        "requiredSupport": "Existing package seams and shared utilities."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-first-party-rewrite",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "The feature passes typecheck, coverage, i18n and invariant gates as a first-party package."
+        ],
+        "rejection": [
+          "A vendored lib/ with an exemption is rejected.",
+          "The external DSH-version gate no longer exists."
+        ],
+        "recovery": [
+          "If the rewrite regresses, the old plugin is not kept as a silent fallback; the defect is fixed in the owned code."
+        ]
+      },
+      "limitations": [
+        "Rewrite cost is real.",
+        "A community feature may depend on external services the product cannot own."
+      ]
+    },
+    {
+      "id": "rationale-feature-3-completion-delivery-lane",
+      "title": "Choose the completion delivery lane from owner state",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md",
+          "start": 20,
+          "end": 38,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-07-21-continuable-background-subagents.md",
+          "start": 1,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/feature/2026-08-11-background-first-continuable-delegation.md",
+          "start": 1,
+          "end": 46,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Completion delivered only by injection never reaches an idle owner; waking unconditionally can launder a user interrupt into a new turn and create a self-exciting wake chain.",
+      "triggers": [
+        "A background job, subagent or terminal completes while its owner may be busy, idle or cancelled.",
+        "A completion is delivered as a new turn or injected message."
+      ],
+      "obligations": [
+        "Select the lane from owner state: a busy owner is injected; an idle owner is woken with followup; no busy-polling or sleeping.",
+        "A cancelled turn is a user interrupt; never reopen it on the user behalf.",
+        "Waking is unbounded by default; an opt-in cap counts owner turns, not time; claiming a user-authored message restores the budget.",
+        "A quiet mode may restore the old injection lane for deterministic transcripts; it is explicit, not the default.",
+        "Delivery is a correctness rule with one owner; completion is not a mere notification.",
+        "The registry/ledger may move; the lane rule does not change with the implementation."
+      ],
+      "actors": [
+        "Task owner",
+        "Session driver",
+        "Completion-delivery ledger"
+      ],
+      "steps": [
+        "Classify owner state.",
+        "Inject for busy; wake with followup for idle.",
+        "Leave cancelled turns closed.",
+        "Apply an optional turn-count cap; restore on user message.",
+        "Use quiet explicitly for deterministic transcripts."
+      ],
+      "enforcement": {
+        "mode": "runtime",
+        "implementation": "A single delivery owner selects injection or wake from the live owner state; cancellation and cap are enforced before opening a turn.",
+        "trust": "The session driver owns turn state; the job registry cannot force a new turn.",
+        "failure": "A cancelled owner is not woken; cap exhaustion degrades to injection and waits for the next turn.",
+        "exceptions": [
+          "Quiet mode intentionally degrades to injection for deterministic transcripts."
+        ]
+      },
+      "applicability": [
+        "when: Background/continuable work, subagents, terminals, any asynchronous completion delivered to an agent owner.",
+        "exceptions: A one-shot foreground call has no completion lane.; A deliberately quiet mode may suppress wakeup.",
+        "reactivation: Any completions that can outlive the owner turn need a lane decision."
+      ],
+      "relationships": [
+        "rationale-feature-3-single-owner-contract",
+        "rationale-feature-3-single-flow-owner"
+      ],
+      "migration": {
+        "strategy": "Move delivery into one owner that reads live owner state; keep the registry as a ledger.",
+        "implementation": "Add busy/idle branch, cancellation guard, optional turn cap and explicit quiet mode; test wake of an idle owner and a cancelled turn.",
+        "requiredSupport": "A session driver that exposes running/idle/cancelled state and a followup wake primitive."
+      },
+      "reference": "references/rationale-feature-3.md#rationale-feature-3-completion-delivery-lane",
+      "verification": {
+        "evidence": "planned",
+        "positive": [
+          "An idle owner is woken and continues; a busy owner receives injection without a new turn."
+        ],
+        "rejection": [
+          "A cancelled turn is not reopened; a completion cannot busy-poll the owner."
+        ],
+        "recovery": [
+          "Cap exhaustion degrades to injection; a user message restores the wake budget; quiet mode is explicit."
+        ]
+      },
+      "limitations": [
+        "Waking creates turns and can be self-exciting; the cap is opt-in.",
+        "Quiet mode trades immediacy for deterministic transcripts.",
+        "The source later moved the reported bit/onJobDone ledger; the rule survives, implementation details did not."
+      ]
+    }
+  ]
+}

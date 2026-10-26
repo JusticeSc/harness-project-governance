@@ -1,0 +1,2887 @@
+{
+  "domain": "rationale-simplification-1",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "scope": "60 篇 simplification Agent Note 的全量正文（41 archived、5 implemented、5 proposed、4 rejected 的分配计数见 coverage）及其关联的当前实现、总规则与依赖政策。",
+  "mechanisms": [
+    {
+      "id": "rationale-simplification-1-simplification-owner-evidence-gate",
+      "title": "先证明“当前有主”，再删或加：所有权与证据门",
+      "sources": [
+        {
+          "path": "packages/AGENTS.md",
+          "start": 8,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 139,
+          "end": 143,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-06-20-fold-session-persistence-interface.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 1,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-12-prune-unused-skill-registry-api.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        }
+      ],
+      "problem": "“看起来没用”不是删除理由；“未来可能有人用”也不是保留理由。代码库同时存在无消费者表面和有意保留的稳定接缝，若没有统一的当前所有者/当前消费者证据，简化会退化为个人偏好，或把已记录的架构决定重新打开。",
+      "triggers": [
+        "准备删除抽象、状态机、配置项、防御性拷贝、兼容路径、公开方法或事件时",
+        "准备新增默认值、公开操作集、数据格式或引入外部概念时",
+        "有人以“未来插件/未来后端/未来 UI”为由要求保留或新增时",
+        "删除会触碰已在 implemented/archived Note 中记录的稳定接缝时"
+      ],
+      "obligations": [
+        "把每个待删/待增表面绑定到当前契约、当前生产消费者或明确的所有者；仅有测试、生成目录、文档或本 Note 自身不算消费者。",
+        "删除前先查该决定是否属于已记录的稳定接缝；若是，替换方案必须击败原记录的理由，而不是只引用本政策。",
+        "新增默认值/公开选择时给出当前消费者证据或相关先例；否则要求显式取值或推迟决定。",
+        "拒绝“保留但禁用/隐藏”作为逃避所有权问题的默认方案：要么保留有明确生命周期，要么删除。",
+        "把“已删除什么、消费者如何迁移、还剩什么风险”写回 Note/README，而不是只留在 PR 描述。"
+      ],
+      "actors": [
+        "改动作者",
+        "包所有者",
+        "评审者",
+        "CI/生成物门禁"
+      ],
+      "steps": [
+        "枚举待处理符号/事件/字段/配置的真实使用点，排除测试、生成物、文档和本 Note 的自我引用。",
+        "为每个保留项写出一句“谁在什么生命周期读它”；写不出则标记删除候选。",
+        "检查相关 Agent Note 的状态：implemented/archived 的稳定接缝默认不重开；proposed/rejected 不得当作既成事实。",
+        "选择删除、保留并记录例外、或先做显式契约；给出净删除量（实现+专属测试+文档）和残余语义。",
+        "落地后更新生成目录、消费者、README/JSDoc 与迁移说明，并在评审中复核“没有第二个来源”。"
+      ],
+      "enforcement": {
+        "mode": "review-gate-with-generated-evidence",
+        "implementation": "仓库级 AGENTS.md 的设计规则、包级 AGENTS.md、生成的 API/事件目录、精确符号搜索与消费者清单；Note 状态本身是权威边界。",
+        "trust": "搜索与目录能证明“仓库内没有可见调用者”，不能证明外部生态或未来需求；最终取舍仍是评审判断。",
+        "failure": "无所有者的表面继续累积，或删除后出现未迁移调用者/陈旧生成物；后者应由构建或精确搜索暴露。",
+        "exceptions": "持久化/审计事实、已承诺的扩展点、明确的部署策略可以构成“非 UI 消费者”；必须在 Note 中写出该消费者和失败后果。"
+      },
+      "applicability": "适用于任何准备做删除式简化、公开面收缩或新增默认值的仓库。对预发布项目最强；对已有外部兼容承诺的项目，必须把外部消费者显式列入证据，不能直接套用“仓库内零调用者”。",
+      "relationships": [
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-durable-audit-exception",
+        "rationale-simplification-1-event-and-field-surface-pruning",
+        "rationale-simplification-1-seam-role-and-payload-separation",
+        "rationale-simplification-1-dependency-adoption-evidence",
+        "rationale-simplification-1-pre-release-cutover-no-aliases",
+        "rationale-simplification-1-decision-record-lifecycle"
+      ],
+      "migration": {
+        "strategy": "evidence-first-delete-or-keep",
+        "implementation": "先建立消费者清单与 Note 状态表，再选择删除/保留；删除时同一提交迁移所有调用者并更新生成物。",
+        "requiredSupport": "精确符号搜索、生成目录、包所有者评审、回放/启动测试；外部 API 还需兼容性决策记录。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-simplification-owner-evidence-gate",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "对待删符号做全仓精确搜索，结果只剩声明、测试、生成目录和 Note；删除后构建与目录生成通过。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "新增默认值前能指出当前生产消费者或其失败场景；不能时改为必填/显式配置。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "仅以“未来可能有用”保留一个无当前消费者的公开方法；评审应要求删除或给出有期限的显式契约。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用本政策重开已记录的稳定接缝，却没有针对原 Note 理由的反证；评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除后发现遗漏调用者：恢复该消费者或补迁移，并在 Note 记录遗漏原因；不得用兼容别名长期遮住。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "仓库内搜索不能证明外部包、部署脚本或用户配置不存在；本机制要求把这类未知保留为未知，而不是写成“零消费者”。"
+    },
+    {
+      "id": "rationale-simplification-1-single-source-durable-truth",
+      "title": "持久事实只能有一个权威来源：折叠镜像与重复表示",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-06-20-collapse-trace-only-session-events.md",
+          "start": 1,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-06-20-remove-agent-boundary-mirror-events.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-02-remove-stream-chunk-mirror.md",
+          "start": 1,
+          "end": 48,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-remove-agent-steering-mirror.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-22-tui-titles-from-session-title-service.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": "packages/core/session/src/types.ts",
+          "start": 391,
+          "end": 399,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "同一持久事实同时存在于 session log 和另一条 live 事件流时，两个来源会漂移：生命周期变更要改两处，失败顺序变得不可判定，消费者必须选择信任哪一条。标题、边界、token 流和 steering 都出现过这种“为了便利再发一遍”的镜像。",
+      "triggers": [
+        "某事实已经写入 session log，却又通过 agent/*、ui/* 或本地状态再广播一次时",
+        "两个消费者对同一 durable fact 使用不同来源时",
+        "为了 UI 方便而复刻标题、usage、error、turn/step 边界或 token 流时",
+        "同一数据在内存里同时维护数组、map、链表或多份快照时"
+      ],
+      "obligations": [
+        "先指定唯一权威来源（通常是 session event/log）；其他表示必须是可重建缓存或纯投影，不得成为第二个可写事实。",
+        "删除镜像前确认该事实仍由权威事件携带；若事实会丢失，先把它并入承载事件，再删镜像。",
+        "live-only 信号只用于“尚未持久化、可能被取消”的信息（如入队通知）；一旦进入日志，就订阅日志。",
+        "消费者若需要 live 对象，用 id 从服务解析或保留自己已拥有的对象，不要要求第二个事件附带对象。",
+        "重复表示必须给出可重建证明和失效策略；否则按缺陷处理。"
+      ],
+      "actors": [
+        "事件/流所有者",
+        "会话日志所有者",
+        "UI 适配器",
+        "持久化/回放维护者"
+      ],
+      "steps": [
+        "画出事实的生命周期：产生、持久化、广播、消费、回放。",
+        "标出每个消费者实际读取的来源；找出同一事实的第二条写入/广播路径。",
+        "把必要载荷并入权威事件（例如 usage 并入 assistant/message，error 并入 turn/end），保留字段语义和快照。",
+        "删除镜像声明、emit、文档行、目录行和专属测试，迁移消费者到权威流。",
+        "用回放/快照/身份迁移证明旧记录仍可解释，新记录不再产生第二来源。"
+      ],
+      "enforcement": {
+        "mode": "search-and-replay",
+        "implementation": "事件声明/emit 的精确搜索、生成事件目录、回放与快照测试、身份迁移测试。",
+        "trust": "搜索能发现仓库内残留声明；回放能证明已记录事实可解释，不能证明所有外部订阅者已迁移。",
+        "failure": "残留 emit 或第二来源继续漂移；旧记录无法回放；消费者在边界处看到不一致顺序。",
+        "exceptions": "纯派生缓存、UI 临时状态、尚未持久化的入队信号可以保留，但必须能随时从权威来源重建且有明确失效点。"
+      },
+      "applicability": "适用于有 append-only 日志、事件溯源或单一状态所有者的系统。若系统本身就是多主复制，应先指定每个事实的权威分区，而不是机械删除所有第二表示。",
+      "relationships": [
+        "rationale-simplification-1-durable-audit-exception",
+        "rationale-simplification-1-event-and-field-surface-pruning",
+        "rationale-simplification-1-durable-data-generation-boundary",
+        "rationale-simplification-1-telemetry-no-duplicate-buffer",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates"
+      ],
+      "migration": {
+        "strategy": "fold-then-delete-with-replay-proof",
+        "implementation": "先把载荷并入权威事件，再删镜像/重复表示，最后用旧记录回放与新记录快照验证。",
+        "requiredSupport": "旧格式解码器、回放夹具、生成事件目录更新、消费者迁移清单。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-single-source-durable-truth",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "折叠后旧会话仍能回放，assistant/message 仍带 usage，turn/end 仍带 error step；新日志不再出现独立 usage/error 行。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "只订阅 session/event 的消费者能重建 turn/step 边界、token 流和标题，不依赖 agent 镜像。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除日志中的持久事实、只保留 live 流；在高保真回放/失败流场景应被拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "保留两个可写来源并以“消费者自己选一个”收尾；评审应要求单一权威或明确的主从失效协议。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "迁移后发现某消费者只能从已删镜像取得 live 对象：改为按 id 解析或保留自有对象，不恢复第二事实流。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "“权威来源”是设计选择，不是自动事实；本机制不能证明某个外部插件没有依赖已删事件，只能要求把这类未知写入迁移风险。"
+    },
+    {
+      "id": "rationale-simplification-1-durable-audit-exception",
+      "title": "审计与恢复事实可以没有 UI 消费者",
+      "sources": [
+        {
+          "path": ".agents/notes/rejected/simplification/2026-06-20-drop-durable-step-boundaries.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-06-20-collapse-trace-only-session-events.md",
+          "start": 1,
+          "end": 41,
+          "kind": "history"
+        },
+        {
+          "path": "packages/core/agent-loop/src/agent.ts",
+          "start": 358,
+          "end": 358,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/core/session/src/types.ts",
+          "start": 391,
+          "end": 399,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "“没有 UI 读取”经常被误当成“可以删除”。但 step/start、step/end 这类边界告诉恢复逻辑：模型请求是否开始、是否完成、进程是否在中间死亡。删掉它们会让日志少一个可判定的持久事实，崩溃修复只能从下一条事件反推。",
+      "triggers": [
+        "待删事件/字段只有测试、不变量或快照读取，没有 UI/业务读取时",
+        "该事实用于崩溃恢复、审计、重放、计费或跨进程交接时",
+        "为了“日志更简洁”准备合并边界事件时",
+        "消费者清点结果只有“测试/生成物”时"
+      ],
+      "obligations": [
+        "把 durable audit/replay/crash-repair 视为合法消费者，即使没有 UI 读取。",
+        "删除前问：没有这条记录，恢复/审计能否仍区分“未开始、已开始未完成、已完成、失败”？不能则保留。",
+        "若保留，说明它承载的具体事实、读取者和失败后果；不要用“以后可能有用”替代。",
+        "若确实要删，提供等价的恢复证明（下一条事件能否无歧义反推）并写入回放/崩溃测试。",
+        "不要为了统一而把不同生命周期的边界塞进一个通用事件；先证明语义等价。"
+      ],
+      "actors": [
+        "持久化所有者",
+        "崩溃恢复维护者",
+        "审计/计费消费者",
+        "评审者"
+      ],
+      "steps": [
+        "列出该边界事实的所有读取场景：UI、恢复、审计、测试、外部工具。",
+        "构造进程在边界中途死亡的场景，检查剩余日志是否仍可判定状态。",
+        "若不可判定，保留边界并把“审计/恢复消费者”写进 Note；若可判定，给出替代证明再删。",
+        "用崩溃恢复/回放测试固定判定逻辑，而不是只断言事件数量。"
+      ],
+      "enforcement": {
+        "mode": "review-and-crash-recovery-test",
+        "implementation": "崩溃恢复 e2e、回放夹具、持久化 schema/不变量；现有 step 边界仍在 agent-loop 中写入。",
+        "trust": "测试能证明已覆盖的崩溃点；不能证明所有部署的恢复策略。",
+        "failure": "恢复逻辑无法区分未开始与已开始未完成，或审计缺少关键时间点。",
+        "exceptions": "纯展示用的冗余事件仍可删除；只有承载不可重建事实的边界才受本例外保护。"
+      },
+      "applicability": "适用于 append-only 日志、任务恢复、计费/审计系统。对纯内存 UI 状态不适用；对可从事务日志完整重建的系统，应由恢复证明决定。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-durable-data-generation-boundary"
+      ],
+      "migration": {
+        "strategy": "retain-or-prove-equivalent-recovery",
+        "implementation": "保留边界并补恢复测试；或先实现等价判定再删除。",
+        "requiredSupport": "崩溃注入测试、旧日志回放、恢复状态机文档。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-durable-audit-exception",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "在 step 开始后、首条 chunk 前杀死进程；恢复逻辑仍能识别“已开始未完成”。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "审计查询能从日志区分完成、失败和中断的 step。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "以“UI 不读”为由删除 step/end，却没有等价恢复证明；评审应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "已删边界导致恢复歧义：先恢复边界或补等价标记，再重新回放历史。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制不是“所有事件都保留”的借口；它只保护不可从其他持久事实无歧义重建的审计/恢复信息。"
+    },
+    {
+      "id": "rationale-simplification-1-event-and-field-surface-pruning",
+      "title": "事件、字段、状态查询与惰性开关的消费者清点",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-drop-inert-request-knobs.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-drop-unconsumed-web-observation-surface.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-prune-write-only-fs-surface.md",
+          "start": 1,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-trim-acp-bridge-unreachable-surface.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-12-drop-unconsumed-skill-provider-events.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-12-prune-unused-web-seam-fields.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/simplification/2026-09-19-retire-prompt-registry-change-event.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        }
+      ],
+      "problem": "接口里常有一批“每个实现都填、每个请求都带、但没人读”的字段，以及“只为回滚顺序存在”的注册事件和“无人监听”的状态查询。它们扩大每个后端/适配器的契约，增加测试与文档负担，却没有任何行为收益。",
+      "triggers": [
+        "字段被所有实现填充，但生产代码只读其中一部分时",
+        "事件/状态方法只有测试、生成目录或本包监听时",
+        "请求级开关没有生产 setter，或适配器对非空值直接拒绝时",
+        "结果里回显调用方已经拥有的 provider/query/路径信息时",
+        "移除一个能力后，其注册事件/状态查询失去消费者时"
+      ],
+      "obligations": [
+        "逐字段/逐事件列出读取者；区分生产读取、测试读取、生成目录读取和“仅写入”。",
+        "删除只写字段时同步收缩 fake、schema、序列化、文档和测试；不要留下“兼容但无人读”的字段。",
+        "删除注册事件时保留真正的状态所有权：注册/注销直接改状态，缓存同步失效，查询按需读当前 map。",
+        "删除状态查询后，把调用方改为“执行成功或结构化选择错误”，而不是保留一个无人看的聚合状态。",
+        "对公开扩展事件，明确它是产品承诺还是内部通知；删除需处理外部监听者风险并记录。"
+      ],
+      "actors": [
+        "接口所有者",
+        "各后端/适配器维护者",
+        "事件目录维护者",
+        "评审者"
+      ],
+      "steps": [
+        "生成字段/事件使用矩阵，标注生产、测试、生成物、文档四类读取。",
+        "对每个候选删除项写出“删掉后哪个失败路径会变差”；无答案则删。",
+        "一次改完接口、实现、fake、序列化、目录、文档和测试，避免半删除状态。",
+        "对事件删除，补一个通过执行行为观察清理的 HMR/回滚测试，替代监听计数测试。",
+        "用精确搜索与生成目录确认旧拼写不再存活。"
+      ],
+      "enforcement": {
+        "mode": "generated-matrix-and-exact-search",
+        "implementation": "生成的事件/API 目录、生产者-消费者矩阵、字段使用搜索、HMR/回滚测试、快照。",
+        "trust": "矩阵能发现仓库内无消费者；不能证明第三方插件或部署脚本不依赖公开扩展。",
+        "failure": "旧字段/事件残留导致契约分叉；删除后回滚顺序或缓存失效出现回归。",
+        "exceptions": "公开扩展事件若有明确外部承诺，删除前需要版本化/弃用流程；纯内部事件可直接删。"
+      },
+      "applicability": "适用于内部接口、插件事件、配置 schema 和结果对象。对已承诺的外部 API，应使用弃用周期而非直接删除；本仓库的预发布姿态降低了这一门槛。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates",
+        "rationale-simplification-1-pre-release-cutover-no-aliases"
+      ],
+      "migration": {
+        "strategy": "delete-field-event-and-migrate-consumers",
+        "implementation": "同提交修改接口、实现、fake、目录、文档、测试；事件删除用行为测试替代监听计数。",
+        "requiredSupport": "生成目录、精确搜索、HMR 清理测试、回滚/缓存失效测试。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-event-and-field-surface-pruning",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "删除只写字段后 fake 与 schema 同步收缩，序列化输出和模型可见文本不变。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除 provider 变更事件后，注册/注销仍同步清缓存，按需查询返回当前集合。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留一个适配器必然拒绝的请求开关；端到端测试应证明它没有可用路径并被删除。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除公开扩展事件却没有记录外部监听风险；评审应要求风险说明或弃用路径。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除后发现某部署依赖该事件：恢复为有明确生命周期的通知，或提供迁移适配；不得静默忽略。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制依赖仓库内可见性；对发布到 npm 的公开 API，外部消费者不可见，必须用版本/弃用政策补足。"
+    },
+    {
+      "id": "rationale-simplification-1-seam-role-and-payload-separation",
+      "title": "服务定义、提供方、策略与消费者的角色分离",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-06-26-fsspec-style-fs-seam.md",
+          "start": 1,
+          "end": 131,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 10,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-06-20-fold-session-persistence-interface.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 1,
+          "end": 37,
+          "kind": "history"
+        },
+        {
+          "path": "packages/fs/fs/src/index.ts",
+          "start": 205,
+          "end": 287,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "一个抽象服务若同时承担提供方操作、模型可见工具语义、读取窗口策略和并发临界区，任何一层变化都要改同一个类。反过来，若只有一个提供方就拆出“服务定义包”，又会留下没有独立消费者的空接缝。",
+      "triggers": [
+        "一个服务同时做后端 I/O、模型格式化、策略判断或工具路由时",
+        "准备为“未来第二个后端”拆包，但当前只有一个完整实现时",
+        "消费者需要绕过策略直接调用底层能力时",
+        "删除/合并接缝会改变缓存、版本校验或并发语义时"
+      ],
+      "obligations": [
+        "按角色拆分：Service Definition 只定义提供方契约；Provider 实现存储/传输；Policy/Consumer 负责模型语义、授权和展示。",
+        "文本策略只消费provider已解码并校验的文本，不自行处理原始字节或分块解码。当前FileSystem可另外为图片/范围消费者提供有界readBytes/readByteRange；不能把文本策略分层误写成整个provider禁止字节方法。",
+        "并发关键区必须由拥有版本校验和写入的那一层闭合；策略层不得把 stale check 与 mutation 分开。",
+        "拆分必须有真实角色差异；只有一个提供方且无独立消费者时，优先保留单包并记录未来拆分条件。",
+        "直接使用底层服务必须明确绕过策略的后果（例如未观察导致 edit 拒绝），并在文档/错误码中暴露。"
+      ],
+      "actors": [
+        "接缝所有者",
+        "提供方实现者",
+        "策略/工具消费者",
+        "安全评审者"
+      ],
+      "steps": [
+        "列出该能力的所有角色与生命周期：谁定义、谁实现、谁决定策略、谁面向模型。",
+        "把模型格式化、窗口/观察策略从提供方移出；提供方只保留解析目标、元数据、读写和受保护的原子编辑。",
+        "把版本校验与写入放在同一临界区；读取窗口只记录观察，不替代写入时校验。",
+        "若只有一个提供方，先不拆包；把未来拆分的触发条件写入 Note。",
+        "用直接调用/绕过路径测试确认失败是显式且可诊断的。"
+      ],
+      "enforcement": {
+        "mode": "interface-review-and-bypass-test",
+        "implementation": "包级 AGENTS 的 Service Definition/Provider/Consumer 规则；文件系统方法的抽象声明；FS_NOT_OBSERVED 等显式错误；并发/版本测试。",
+        "trust": "类型和测试能证明声明边界；不能证明所有消费者都遵守策略，需评审追踪直接 ctx 调用。",
+        "failure": "策略被绕过、编辑覆盖未观察内容，或拆出无人使用的空接缝。",
+        "exceptions": "安全/审计接缝即使只有一个实现也可以独立，因为失败后果和测试面不同；必须说明独立理由。"
+      },
+      "applicability": "适用于文件系统、网络、持久化、模型提供方等多后端能力。对只有一个实现且无独立策略的简单工具，不应为了形式而拆包。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-service-consolidation-and-intent-api",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates"
+      ],
+      "migration": {
+        "strategy": "split-roles-or-keep-single-package",
+        "implementation": "先移出策略/格式化，再收缩提供方契约；单提供方场景保留单包并记录拆分条件。",
+        "requiredSupport": "消费者迁移、fake 收缩、并发/版本测试、绕过路径文档。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-seam-role-and-payload-separation",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "窗口读取后编辑未变化文件成功；未读取文件编辑返回 FS_NOT_OBSERVED；并发写入仍做版本校验。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "直接 ctx.fs 读取不产生观察事件，后续 edit 按文档拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只有一个提供方却拆出服务定义包，且没有独立消费者；应按“抽象早于消费者”拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "让文本观察策略自行读取原始字节并重复解码/二进制拒绝应被拒绝；独立图片或范围消费者使用provider的有界字节方法不属于该禁令。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "拆分后发现策略绕过导致数据覆盖：把校验移回提供方临界区，补回归测试。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "角色分离会增加包/层数；本机制不主张所有能力都拆四层，只主张每个角色有真实差异和消费者。"
+    },
+    {
+      "id": "rationale-simplification-1-service-consolidation-and-intent-api",
+      "title": "合并同一能力族，按调用意图暴露操作",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-26-merge-subagent-control-service.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-27-intent-named-subagent-continuation-operations.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-27-request-error-retry-action.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-30-private-agent-send.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-30-team-send-message-steer.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        }
+      ],
+      "problem": "同一能力族被拆成多个公开服务/方法时，每个调用方都要组合它们，公开面暴露的是实现机制而不是调用意图。另一极端是把所有路由参数塞进一个通用 send/resume，让调用方选择内部调度策略。",
+      "triggers": [
+        "每个 continuable 调用方都同时需要两个服务时",
+        "公开方法需要调用方提供只有内部管理器才能解析的 descriptor/activation/signal 时",
+        "多个方法只差调度策略/方向，却要求模型或调用方选择时",
+        "恢复决策通过一个只在窄窗口有效的公开命令回传时"
+      ],
+      "obligations": [
+        "先按调用意图命名：start、startContinuable、sendMessage、followup、steer、inject；不要暴露 resume 这类需要内部解析的机制。",
+        "合并后只保留一个公开服务键和一个错误分类；提供方能力通过可选钩子贡献，不获得生命周期权威。",
+        "把调度策略固定在操作语义里（例如 Team send 固定 Steer），不要给模型一个“quiet vs waking”的实现选择。",
+        "恢复决策通过 waterfall 的 typed action 返回；不要在 Agent 上保留可变 retry 窗口。",
+        "对确实需要不同生命周期的方向，保留明确命名，不用同一方法加布尔/枚举参数掩盖。"
+      ],
+      "actors": [
+        "服务所有者",
+        "调用方/模型工具作者",
+        "提供方实现者",
+        "评审者"
+      ],
+      "steps": [
+        "列出所有调用方的真实意图，而不是现有方法名。",
+        "划出一个能力族的公共生命周期；把内部 descriptor/authorization/activation 解析留在管理器。",
+        "用意图命名公开操作，并把方向/调度固定为操作语义。",
+        "合并错误类型和服务键；删除旧包/旧键/旧方法及其目录项。",
+        "用调用方迁移和失败分类测试证明：错误在最早可解析点暴露，而非运行时猜测。"
+      ],
+      "enforcement": {
+        "mode": "api-catalog-and-caller-review",
+        "implementation": "Cordis 服务目录、类型检查、调用方迁移、错误分类测试；公开 API 的生成目录会暴露残留旧键。",
+        "trust": "类型/目录能证明公开面收缩；不能证明外部调用方已迁移。",
+        "failure": "旧服务键/旧方法继续被外部使用；或合并后内部机制重新泄漏为公开参数。",
+        "exceptions": "若两个方向有独立授权、持久化或取消语义，保留两个操作比一个带模式参数更诚实。"
+      },
+      "applicability": "适用于内部服务平台、子代理、任务队列、消息路由。对需要稳定外部 SDK 的产品，合并/改名要走版本化弃用。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-seam-role-and-payload-separation",
+        "rationale-simplification-1-pre-release-cutover-no-aliases",
+        "rationale-simplification-1-team-direct-inbox"
+      ],
+      "migration": {
+        "strategy": "merge-service-and-rename-to-intent",
+        "implementation": "先建意图 API，迁移所有调用方，再删旧服务键/旧方法/旧包；错误分类保持单一。",
+        "requiredSupport": "服务目录更新、调用方迁移、错误映射测试、模型工具 schema 更新。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-service-consolidation-and-intent-api",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "continuable 调用方只注入一个 subagents 服务即可 start/startContinuable/sendMessage，provider resume 不再公开。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "request-error 监听者返回 {kind:'retry'} 后只产生一个重试 turn；取消后不再重试。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留公开 resume(descriptor,...) 让调用方构造内部数据；评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "保留 followup_task 作为 send_message 的别名；两个名字同一行为应删除一个。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "合并后某调用方需要独立取消/持久化语义：为其增加明确命名的操作，而不是恢复通用机制参数。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "合并会降低服务数量但提高单服务职责宽度；若两个能力族的生命周期确实独立，强行合并不符合本机制。"
+    },
+    {
+      "id": "rationale-simplification-1-single-owner-product-and-package-boundary",
+      "title": "一个产品角色一个所有者，一个消费者不单独拆包",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-fold-stdio-ui-helper.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-20-remove-stdio-and-echo-agents.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-03-explicit-config-dsh-entrypoint.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-04-remove-tui-package.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-09-remove-repository-plugin.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "apps/cli/src/args.ts",
+          "start": 4,
+          "end": 15,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "同一产品角色有多个入口（TUI、stdio、Echo、仓库插件路径）时，每个入口都携带自己的包、命令、测试、文档和兼容面。一个只有一个 app 消费者的 UI helper 被拆成独立包，也会制造 manifest、tsconfig、module graph 和 README 的机械表面。",
+      "triggers": [
+        "两个入口做同一件事，或一个入口只是另一个的 mock/教学版时",
+        "一个 helper 包只有一个真实 app 消费者时",
+        "准备为“外部消费者/未来复用”保留一个没有第二个消费者的包边界时",
+        "CLI 隐式选择一个产品，导致裸命令承载产品策略时"
+      ],
+      "obligations": [
+        "为每个产品角色指定唯一所有者；删除重复入口，而不是给每个入口加兼容模式。",
+        "只有出现第二个独立消费者时，才把 helper 提升为包；否则折叠进唯一 app。",
+        "入口必须显式：裸命令不能隐式选择产品；无入口的基座不能假装启动成功。",
+        "外部插件分发只保留一条路径（profile bundle），不要同时维护仓库清单与包管理器。",
+        "删除入口时同时删除其命令、leaf、SDK 接口、测试、文档和图节点，避免间接保留。"
+      ],
+      "actors": [
+        "产品所有者",
+        "CLI/入口维护者",
+        "包边界评审者",
+        "发布者"
+      ],
+      "steps": [
+        "列出每个用户可见角色和唯一入口；标记重复/教学/mock 入口。",
+        "对只有一个 app 消费者的 helper，评估折叠；对重复产品，评估删除。",
+        "把入口选择改成显式 profile/config，并让无入口的启动失败。",
+        "删除旧命令/包/leaf/SDK 接口/测试/文档/图节点，不留兼容别名。",
+        "用构建、启动和产品 e2e 证明剩余入口端到端可用。"
+      ],
+      "enforcement": {
+        "mode": "product-e2e-and-package-graph",
+        "implementation": "真实 app Loader/PTY/管道测试、包图与工作区清单、命令注册表、生成服务目录。",
+        "trust": "构建/启动能证明剩余入口可用；不能证明外部脚本不调用已删命令。",
+        "failure": "旧入口残留或通过别名间接保留；裸启动无入口却成功退出。",
+        "exceptions": "教学/mock 入口若被明确标记为非产品且有独立测试预算，可以保留；不得默认进入产品路径。"
+      },
+      "applicability": "适用于 CLI/应用/包边界治理。对必须长期支持多个外部入口的产品，应使用弃用而非直接删除；本仓库预发布姿态允许直接删除。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-pre-release-cutover-no-aliases",
+        "rationale-simplification-1-owner-local-layout-and-tests"
+      ],
+      "migration": {
+        "strategy": "delete-redundant-entrypoints-and-fold-single-consumer-packages",
+        "implementation": "先显式化入口，再删重复/单消费者包，最后用产品 e2e 固定剩余路径。",
+        "requiredSupport": "CLI/profile 文档、包图清理、启动 e2e、删除清单。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-single-owner-product-and-package-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "裸 dsh 无模式时是用法错误；显式 profile 启动成功；headless 管道输入产生一个结果并退出。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除重复 agent 后，交互与非交互各只有一个可运行 leaf，构建图无旧包。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为旧入口保留兼容别名但无独立消费者；评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "裸命令成功启动一个没有 agent/前门的空基座；应视为隐藏的缺失部署决定。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除入口后发现仍有真实用户路径：恢复该入口为显式命名产品，而不是重新引入隐式默认。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "产品角色会演化；本机制要求每次删除都重新确认“没有第二个真实消费者”，不能把一次删除当成永久结论。"
+    },
+    {
+      "id": "rationale-simplification-1-composition-overlay-single-level",
+      "title": "共享基座加单层覆盖，补丁不跨 include 边界",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-29-shared-base-config-overlays.md",
+          "start": 1,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 82,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 133,
+          "end": 136,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/src/args.ts",
+          "start": 4,
+          "end": 15,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "每个 surface 维护一棵完整配置树会产生大量重复行；把 overlay 嵌套成多级 include 又会让外层补丁在 Loader 的 include 边界被静默丢弃，个人覆盖变成 no-op。",
+      "triggers": [
+        "多个 surface 的配置有大量相同行时",
+        "准备用多层 include 复用配置时",
+        "一个 overlay 的 patch id 在当前 surface 不存在时",
+        "个人/部署 overlay 需要同时作用于多个 surface 时"
+      ],
+      "obligations": [
+        "共享部分只放在一个基座；每个 surface 只写自己不同的行和需要插入的行。",
+        "所有 overlay 作为兄弟 patch list 在同一个 include 层级应用；不要让 patch 跨 include 边界。",
+        "明确 patch 语义：整块 config 替换，不自动合并；每一行最终只应有一个 bundle 层加用户层。",
+        "缺失 id 的 patch 保持 no-op 是有意行为，不是错误；否则共享 overlay 会在不适用的 surface 上失败。",
+        "通过真实 Loader 启动检查 settled entries，而不是只读 YAML 断言。"
+      ],
+      "actors": [
+        "组合/配置所有者",
+        "surface 维护者",
+        "部署者",
+        "启动测试维护者"
+      ],
+      "steps": [
+        "把共享行收敛到基座，列出每个 surface 的差异行。",
+        "为每个 surface 建 patch list，并在同一 include 层应用基座与所有 overlay。",
+        "对每个 patch 明确目标 row id；接受“缺失即 no-op”的共享语义。",
+        "用真实 Loader 启动每个 surface，检查未加载行/重复注册/服务冲突。",
+        "把覆盖替换整块配置的限制写入 README，避免用户以为字段会合并。"
+      ],
+      "enforcement": {
+        "mode": "boot-through-real-loader",
+        "implementation": "profile/bundle 启动测试、settled entries 检查、配置合并门禁、文档中的覆盖限制。",
+        "trust": "启动测试能证明当前组合可加载；不能证明每个用户 overlay 的意图。",
+        "failure": "overlay 跨 include 被丢弃、个人 patch 静默 no-op、或两个 provider 注册同一服务导致启动失败。",
+        "exceptions": "需要不同默认值的 surface 应把设置放在自己的 bundle，而不是在共享基座里加条件分支。"
+      },
+      "applicability": "适用于多应用/多 profile 的配置组合。单应用仓库不需要为了形式拆基座；关键是避免重复树和多级 include 的静默丢失。",
+      "relationships": [
+        "rationale-simplification-1-single-owner-product-and-package-boundary",
+        "rationale-simplification-1-shipped-default-opt-in",
+        "rationale-simplification-1-default-roster-single-interface",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates"
+      ],
+      "migration": {
+        "strategy": "base-plus-sibling-patches",
+        "implementation": "抽取共享基座，surface 改为同层 patch list；删除嵌套 include 和完整复制树。",
+        "requiredSupport": "真实 Loader 启动测试、配置文档、用户 overlay 迁移说明。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-composition-overlay-single-level",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "每个 surface 通过真实 Loader 启动，settled entries 无未加载行；个人 overlay 能命中插入行。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "缺失 id 的共享 overlay 在不适用的 surface 上保持 no-op，启动不失败。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "三层 include 链导致外层 patch 被丢弃；启动测试应暴露并拒绝该组合。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "两个文件系统 provider 同时注册；profile 应拒绝加载。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "overlay 未生效：检查是否跨 include 或目标 row id 不存在；修正层级而非添加第二套配置。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "当前仓库已从 apps/cli/config 迁到 profile/bundle 模型；Note 中的具体路径是历史形态。可迁移的是“基座+同层覆盖+真实启动验证”，不是旧路径。"
+    },
+    {
+      "id": "rationale-simplification-1-shipped-default-opt-in",
+      "title": "可选、实验与诊断能力默认关闭，但保留包",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-03-omit-invariants-from-shipped-config.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-09-12-ralph-off-in-shipped-defaults.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": "packages/experimental/ralph-bundle/cordis.patch.yml",
+          "start": 1,
+          "end": 16,
+          "kind": "config"
+        },
+        {
+          "path": "packages/experimental/ralph-bundle/README.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/app-boot/src/profile.ts",
+          "start": 225,
+          "end": 225,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "默认组合里每多一个可选工具/诊断/第三方集成，所有用户都要下载并携带其 schema、依赖和失败面。把这些能力直接删除又会失去显式 opt-in 的合法消费者。",
+      "triggers": [
+        "某工具的描述自己就劝模型不要默认使用时",
+        "可选 provider 让每个生产安装都下载平台 CLI/大载荷时",
+        "开发诊断（不变量）只在测试/自定义部署需要时",
+        "实验 bundle 尚未有稳定性承诺时"
+      ],
+      "obligations": [
+        "默认组合只保留产品当前站得住的默认能力；可选/实验/诊断能力显式 opt-in。",
+        "优先“保留包、默认不挂载/disabled”，不要删除仍被显式组合使用的包。",
+        "disabled 行要能由用户 patch 重新启用；删除行会让用户无法通过 patch 恢复。",
+        "依赖闭包也要同步：基座不依赖可选 provider，否则“未挂载”仍会下载载荷。",
+        "把默认关闭的理由、恢复方式和依赖关系写进 bundle README/注释。"
+      ],
+      "actors": [
+        "产品所有者",
+        "bundle/组合所有者",
+        "发布/打包维护者",
+        "安全评审者"
+      ],
+      "steps": [
+        "列出默认组合的每个可选能力及其安装/ schema/失败成本。",
+        "选择“默认 disabled 保留 row”或“从基座移除、作为独立 bundle”，并说明用户如何恢复。",
+        "同步依赖闭包，确保未启用能力不进入生产安装。",
+        "用默认/opt-in 两组启动或工具目录测试固定差异。",
+        "记录实验状态和无稳定性承诺，避免用户误以为默认能力。"
+      ],
+      "enforcement": {
+        "mode": "default-catalog-and-install-closure-test",
+        "implementation": "默认工具目录 e2e、bundle 依赖检查、profile 启停测试、安装闭包/hygiene。",
+        "trust": "目录测试能证明默认组合；依赖检查能证明包未进入闭包，但不能证明用户配置不会启用。",
+        "failure": "默认会话出现未承诺工具；或可选 provider 仍被基座依赖导致下载。",
+        "exceptions": "安全/审计必需的默认能力不能因为“重”而关闭；判断标准是产品是否站得住，不是体积 alone。"
+      },
+      "applicability": "适用于插件化产品、桌面/CLI 组合和依赖闭包治理。对必须默认可用的安全能力不适用。",
+      "relationships": [
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-default-roster-single-interface",
+        "rationale-simplification-1-dependency-adoption-evidence",
+        "rationale-simplification-1-pre-release-cutover-no-aliases"
+      ],
+      "migration": {
+        "strategy": "default-off-retain-package-or-split-bundle",
+        "implementation": "默认行 disabled 或移出基座成为独立 bundle；同步依赖闭包和用户恢复文档。",
+        "requiredSupport": "默认/opt-in 目录测试、安装闭包检查、bundle README。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-shipped-default-opt-in",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "默认 Web/headless/sdk/acp 工具目录不含 ralph；显式 bundle 启用后出现。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "生产安装的依赖闭包不含 Codex/Claude Code provider 载荷；单独安装 bundle 后才出现。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "用一个默认 shipped preset 表达“默认关闭”；preset 一旦存在就会被所有用户发现，应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除 row 而不是 disabled，导致用户 patch 无法恢复；在需要 opt-in 的场景应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "用户启用可选 bundle 后启动失败：检查其依赖 row（如 ralph 需要 workflow engine）是否一并启用。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "当前 ralph 已迁到 experimental/ralph-bundle 且默认关闭，具体组合与 Note 写作时不同；应引用原则，不要把旧 base row 当成现状。"
+    },
+    {
+      "id": "rationale-simplification-1-default-roster-single-interface",
+      "title": "默认工具清单只保留一个重叠接口，但保留包供显式使用",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-10-default-presets-single-editor.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-09-03-minimal-profiles-persistent-shell-only.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-09-05-base-default-file-editor.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 54,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/web-app/presets/minimal.patch.yml",
+          "start": 12,
+          "end": 23,
+          "kind": "config"
+        },
+        {
+          "path": "apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts",
+          "start": 64,
+          "end": 68,
+          "kind": "test"
+        }
+      ],
+      "problem": "同一个默认组合同时挂载 read/write/edit 与 str_replace_editor，会让每个请求多一份重叠 schema，模型要在两个接口间选择；而 minimal 组合的核心契约又可能刻意只保留一个（shell 或 editor）。把包删除则会让显式用户失去合法能力。",
+      "triggers": [
+        "两个工具对普通文件检查/编辑能力重叠时",
+        "默认 preset 的工具目录出现重复 schema 时",
+        "minimal/自定义组合的工具清单被误当成全局默认时",
+        "准备通过“挂载但隐藏 schema”解决重叠时"
+      ],
+      "obligations": [
+        "默认组合只选一个文件编辑接口；共享 base 拥有默认选择，surface/minimal 可独立拥有自己的选择。",
+        "区分“默认不挂载”与“删除包”：包保留给显式 insert 的部署。",
+        "不要用 presentation/filter 隐藏已挂载能力；隐藏层会让能力随展示配置重新出现。",
+        "minimal 的单一接口契约由它自己的组合拥有，不要从 base 继承后再偷偷禁用。",
+        "用工具目录/模型请求断言默认与显式 opt-in 的差异。"
+      ],
+      "actors": [
+        "preset/base 所有者",
+        "工具包所有者",
+        "模型体验评审者",
+        "测试维护者"
+      ],
+      "steps": [
+        "列出默认组合中重叠的工具 schema 及其模型可见成本。",
+        "在 base 选定一个默认接口；minimal 独立声明自己的工具集。",
+        "从默认组合移除另一个工具的 row（不是只隐藏 schema），保留包和显式插入路径。",
+        "为默认、显式 insert、minimal 三种情况写工具目录/请求测试。",
+        "在 README 说明 opt-in 方法和 disabled row 的 patch 限制。"
+      ],
+      "enforcement": {
+        "mode": "tool-catalog-and-request-capture",
+        "implementation": "preset e2e、SDK/headless 请求捕获、工具目录快照、组合测试。",
+        "trust": "目录/请求能证明默认 schema；不能证明所有用户没有依赖旧默认。",
+        "failure": "默认请求带重复 schema，或 minimal 契约被 base 默认污染。",
+        "exceptions": "若两个接口服务不同模型能力（如结构化编辑 vs 通用写），可以同时保留，但必须说明不是重叠。"
+      },
+      "applicability": "适用于工具/插件 roster 设计。对单一用户自定义组合不强制；关键是默认组合的模型可见成本。",
+      "relationships": [
+        "rationale-simplification-1-shipped-default-opt-in",
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-simplification-owner-evidence-gate"
+      ],
+      "migration": {
+        "strategy": "remove-from-default-keep-package",
+        "implementation": "base/preset 删除重叠 row；显式用户用 insert 恢复；minimal 独立声明。",
+        "requiredSupport": "工具目录测试、请求捕获、README opt-in 说明。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-default-roster-single-interface",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "默认 SDK/headless 请求不含 str_replace_editor；显式 patch 后出现；minimal 只有其声明接口。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "base-backed 默认不含 editor row；自定义组合 insert 后可用。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "挂载 editor 但用展示过滤器隐藏；评审应拒绝，因为能力仍在组合中。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把包从发行中删除，导致显式用户无法使用；应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "用户需要 editor：在其 profile patch insert 工具与文件系统 provider；仅 disabled:false 不会创建不存在的 row。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "Note 36 写作时 minimal 还挂 editor；后续 Note 43/44 与当前 minimal patch 已改为 shell-only（仅保留 tool-fs 的 readImage）。这是历史漂移，不应把 Note 36 的 minimal 断言当现状。"
+    },
+    {
+      "id": "rationale-simplification-1-pre-release-cutover-no-aliases",
+      "title": "预发布期删除即完成迁移：不留兼容别名",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-20-remove-stdio-and-echo-agents.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-30-private-agent-send.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-03-explicit-config-dsh-entrypoint.md",
+          "start": 1,
+          "end": 46,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-04-remove-tui-package.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/simplification/2026-09-19-python-sdk-directional-client.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/simplification/2026-09-19-retire-prompt-registry-change-event.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        }
+      ],
+      "problem": "预发布代码库若为每次删除保留别名/兼容包/旧命令，会把一次性迁移成本永久化，并让新旧两条路径继续分叉。真正需要保留的是已提交的用户数据，不是旧代码形状。",
+      "triggers": [
+        "删除公开方法、事件、包、CLI 命令或配置键时",
+        "有人建议加一个兼容 alias/模式/包装包时",
+        "旧名称只被文档、测试或旧 Note 引用时",
+        "版本仍是 pre-release/0.x 且无外部稳定承诺时"
+      ],
+      "obligations": [
+        "同一提交迁移所有仓库内调用方并删除旧名称；不留 alias、兼容模式、re-export 或“deprecated”空壳。",
+        "在 Note/README 记录删除和迁移路径，让用户改代码，而不是让代码猜。",
+        "区分代码兼容与数据兼容：已提交日志/文件仍要能解码，旧 API 不必继续可用。",
+        "对外部公开 API，先确认是否已承诺稳定；未承诺则按本机制，已承诺则走版本化弃用。",
+        "删除后更新生成目录、命令注册表、文档和测试，确保旧拼写不再存活。"
+      ],
+      "actors": [
+        "改动作者",
+        "发布/兼容性所有者",
+        "文档维护者",
+        "评审者"
+      ],
+      "steps": [
+        "列出旧面所有仓库内调用方和外部承诺状态。",
+        "一次性迁移调用方到新面；删除旧声明/实现/命令/包。",
+        "更新生成目录、文档、示例和测试；把旧名称搜索作为验收。",
+        "对持久数据保留 decoder/migration，不把“能读旧日志”误当成“旧 API 兼容”。",
+        "在发布说明中写清破坏性变化和迁移动作。"
+      ],
+      "enforcement": {
+        "mode": "exact-search-and-build",
+        "implementation": "全仓精确搜索、类型检查、生成目录、CLI 命令表、发布说明；旧名称残留会使门禁/评审失败。",
+        "trust": "搜索/构建能证明仓库内迁移；不能证明外部用户已迁移。",
+        "failure": "旧别名继续存在，形成第二条路径；或删除后旧日志无法解码。",
+        "exceptions": "已承诺稳定的外部 API 需要弃用周期；安全关键错误码/协议字段可能需长期保留，但要有明确契约。"
+      },
+      "applicability": "适用于预发布/内部产品。对已发布且有外部消费者的 SDK、协议和配置，必须用版本化弃用，不能直接套用。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-durable-data-generation-boundary",
+        "rationale-simplification-1-single-owner-product-and-package-boundary",
+        "rationale-simplification-1-decision-record-lifecycle"
+      ],
+      "migration": {
+        "strategy": "hard-cutover-with-data-decoders",
+        "implementation": "删除旧代码面，迁移所有仓库调用方；旧数据用版本化 decoder/migration 保留。",
+        "requiredSupport": "精确搜索、构建/启动、生成目录、迁移文档、外部兼容性判断。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-pre-release-cutover-no-aliases",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "删除旧命令/包后，全仓搜索与构建无残留；新入口端到端可用。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "旧会话日志仍能通过固定 decoder 回放，尽管旧 API 已不存在。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为旧命令加兼容 alias，但没有独立消费者/期限；评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "以“预发布”为由删除旧日志 decoder；应拒绝，因为数据兼容与代码兼容不同。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除后发现遗漏仓库调用方：补迁移并增加精确搜索门禁；不长期保留别名。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "“预发布”不是无限许可；一旦有外部稳定承诺，本机制失效。外部生态是否依赖某 API 无法由仓库搜索证明，必须显式判断。"
+    },
+    {
+      "id": "rationale-simplification-1-durable-data-generation-boundary",
+      "title": "已提交日志世代可解码，但旧代码形状不自动兼容",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-12-simplify-session-log-representation.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-22-plan-specific-collaboration-state.md",
+          "start": 1,
+          "end": 72,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-27-persistence-export-and-pre-release-trims.md",
+          "start": 1,
+          "end": 47,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-26-team-direct-inbox.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": "packages/core/session/src/types.ts",
+          "start": 391,
+          "end": 399,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "简化持久化表示时，旧会话仍在磁盘上。删除旧事件/字段的写入路径很容易，但若连解码/迁移也删掉，用户历史会变成不可读；反过来，为了读旧数据保留旧 API/旧事件写入，又会让当前代码永久背两套形状。",
+      "triggers": [
+        "修改 session event schema、字段名、事件种类或序列化格式时",
+        "删除一个已发布/已写入的事件或字段时",
+        "引入新版本事件/格式时",
+        "准备用“兼容读取”作为保留旧代码的理由时"
+      ],
+      "obligations": [
+        "把“代码兼容”和“数据兼容”分开：旧 API 可删，已提交数据必须有 decoder 或版本化 migration。",
+        "迁移只能追加版本命名的后继，不得移动、覆盖或删除已提交世代；前驱不自动意味着回退/降级支持。",
+        "当前 parser 可以拒绝旧事件进入新日志，但读取旧日志的路径必须存在且被测试。",
+        "删除字段时保留必要的 legacy decode 映射；不要把旧字段重新引入当前事件模型。",
+        "用旧日志回放/种子验证/格式迁移测试固定边界，而不是只测新写入。"
+      ],
+      "actors": [
+        "持久化/schema 所有者",
+        "迁移作者",
+        "回放测试维护者",
+        "发布者"
+      ],
+      "steps": [
+        "列出受影响的已提交格式世代与读取入口。",
+        "决定当前写入形状；为旧世代添加/保留 decoder 或 append-only migration。",
+        "从当前代码删除旧写入路径/旧 API，但保留迁移所需的只读映射。",
+        "用旧日志回放、种子校验和跨版本迁移测试验证。",
+        "在格式/README 中写清支持的世代、拒绝行为和降级限制。"
+      ],
+      "enforcement": {
+        "mode": "replay-and-format-migration-test",
+        "implementation": "session-format 迁移包、旧日志回放夹具、种子校验、schema 版本常量。",
+        "trust": "回放测试能证明已收集样本；不能证明所有历史/外部日志。",
+        "failure": "旧会话无法打开，或当前日志混入旧形状导致 invariant 失败。",
+        "exceptions": "从未提交/仅测试产生的旧形状可以不保留；必须以真实发布/写入证据判断。"
+      },
+      "applicability": "适用于 append-only 日志、事件溯源、JSONL/SQLite 持久化。对纯缓存/可重建数据不适用。",
+      "relationships": [
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-durable-audit-exception",
+        "rationale-simplification-1-pre-release-cutover-no-aliases",
+        "rationale-simplification-1-activation-lifecycle-single-owner"
+      ],
+      "migration": {
+        "strategy": "append-versioned-migration-keep-decoders",
+        "implementation": "新增版本化迁移/解码；当前代码只写新形状；旧日志通过只读路径进入新模型。",
+        "requiredSupport": "旧日志样本、回放/迁移测试、格式文档、版本常量。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-durable-data-generation-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "旧 v0 日志能通过迁移进入当前模型；新日志只写当前形状；降级不支持时明确报错。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "当前 parser 拒绝 legacy event 进入新日志，但导出/读取旧日志仍成功。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "删除旧 decoder，只保留新格式写入；旧会话无法打开时应拒绝该迁移。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "为读旧日志重新引入旧事件写入路径；应拒绝，改用只读迁移。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "旧日志迁移失败：保留原始文件，报告具体世代/字段，不回写破坏性转换。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制不保证无限期支持所有历史格式；仓库可声明只支持固定世代。关键是明确边界并测试，而不是静默丢弃。"
+    },
+    {
+      "id": "rationale-simplification-1-dependency-adoption-evidence",
+      "title": "依赖替换的净删除、健康度与边界拟合",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 9,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-26-consolidate-gate-scripts-on-existing-deps.md",
+          "start": 1,
+          "end": 34,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-26-eventsource-parser-for-deepseek-sse.md",
+          "start": 1,
+          "end": 29,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-26-turndown-for-tool-web-html-markdown.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": "packages/llm/llm-deepseek/package.json",
+          "start": 47,
+          "end": 47,
+          "kind": "config"
+        },
+        {
+          "path": "packages/web/tool-web/package.json",
+          "start": 41,
+          "end": 42,
+          "kind": "config"
+        }
+      ],
+      "problem": "“避免新依赖”的直觉会让仓库手写 SSE、HTML→Markdown、fence 扫描器等成熟基础设施，增加专属测试和边缘 bug；反过来，为了删几行代码引入不健康/不拟合的包，只是把复杂度搬到边界。",
+      "triggers": [
+        "手写解析器/协议/转换器/并发池，而生态有成熟实现时",
+        "准备引入新运行时或开发依赖时",
+        "已有依赖/builtin 能覆盖同类门禁脚本时",
+        "包体积/单文件可执行闭包对依赖敏感时"
+      ],
+      "obligations": [
+        "净删除：依赖必须替换真实拥有的实现+专属测试+文档，不是只增加能力或未来可能性。",
+        "健康度：活跃维护、广泛使用、合理传递依赖；小而无维护的包不是简化。",
+        "边界拟合：包语义覆盖实际契约；仍需手写的残余语义计入成本。",
+        "尊重已记录的稳定接缝（schemastery、vendored Cordis、twin adapters 等）；替换需击败原理由。",
+        "量化打包/安装成本；对单文件可执行或安全敏感闭包，明确残余风险和排除项。",
+        "优先 builtin/已有依赖；不因一个 20 行删除就新增 devDep，除非达到同一证据门槛。"
+      ],
+      "actors": [
+        "改动作者",
+        "依赖/供应链所有者",
+        "打包/发布维护者",
+        "评审者"
+      ],
+      "steps": [
+        "列出被替换的手写代码、专属测试、文档和边缘 bug 成本。",
+        "评估候选包的维护、使用、传递依赖与许可证/供应链。",
+        "在真实边界上试接，列出仍需手写的残余语义和失败差异。",
+        "测量包体积/安装闭包；对可执行/安全敏感目标做排除或替代。",
+        "记录净删除与残余风险；若只是搬迁复杂度则放弃。"
+      ],
+      "enforcement": {
+        "mode": "dependency-review-and-measurement",
+        "implementation": "依赖政策 Note、lockfile/hygiene 检查、单文件闭包测量、适配器契约测试、供应链提案。",
+        "trust": "测试能证明替换后的行为；不能证明包的长期健康或供应链安全。",
+        "failure": "依赖引入后代码量未降、边缘行为回归，或包体积/攻击面超预算。",
+        "exceptions": "已记录的稳定接缝不因本政策重开；安全关键解析器即使只删少量代码也可能值得替换，但需单独论证。"
+      },
+      "applicability": "适用于通用基础设施与门禁脚本。对核心差异化逻辑、需要精确控制协议/安全边界的代码，应谨慎；不能用“有包”替代契约设计。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates",
+        "rationale-simplification-1-default-roster-single-interface"
+      ],
+      "migration": {
+        "strategy": "replace-with-measured-net-deletion",
+        "implementation": "先试接并量化，再删除手写实现/测试；保留协议 shim 和残余语义测试。",
+        "requiredSupport": "依赖审查、闭包测量、契约/快照测试、供应链扫描。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-dependency-adoption-evidence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "SSE 替换后只保留 [DONE]/STREAM_CLOSED shim，原有边界测试通过；依赖已在 lockfile 中。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "HTML→Markdown 替换后表格/图片/实体输出改善，快照更新且包体积在预算内。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "引入新包只为了减少 19 行 worker pool，且需求（确定性顺序/环境覆盖）包不满足；应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "用新依赖重开 vendored Cordis/schemastery 等已记录接缝，却无更强理由；评审拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "替换后出现协议边缘回归：保留包但恢复手写 shim 的显式错误/终止语义，补契约测试。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "依赖健康与供应链无法由一次评审证明；本机制要求把未知和残余风险写清，不能把“广泛使用”当成安全保证。"
+    },
+    {
+      "id": "rationale-simplification-1-generated-enforcement-and-stale-surface-gates",
+      "title": "用生成物、精确搜索与启动测试固定删除结果",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-06-20-remove-agent-boundary-mirror-events.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-04-drop-unconsumed-web-observation-surface.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-12-drop-unconsumed-skill-provider-events.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-29-shared-base-config-overlays.md",
+          "start": 1,
+          "end": 54,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-10-default-presets-single-editor.md",
+          "start": 1,
+          "end": 26,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-09-12-ralph-off-in-shipped-defaults.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        }
+      ],
+      "problem": "删除代码后，声明、生成目录、快照、命令表、配置行和文档仍可能保留旧名称。人工搜索容易漏，生成物又会继续把已删表面宣传给用户/模型；没有门禁时，删除只是“主路径不用”，不是完成。",
+      "triggers": [
+        "删除事件、服务键、工具、命令、包或配置行后",
+        "生成 API/事件/服务/组合目录后",
+        "更新模型可见工具清单或 preset 后",
+        "迁移配置组合/启动路径后"
+      ],
+      "obligations": [
+        "把旧名称的精确搜索作为验收，范围覆盖源码、测试、生成物、文档和配置。",
+        "更新生成目录/矩阵/图，并让生成检查在旧条目残留时失败。",
+        "用真实 Loader/启动测试验证组合，不只读 YAML 或类型。",
+        "用快照/回放验证模型可见输出和记录会话，不只测新路径。",
+        "删除的测试若只为旧表面存在，应一并删除；保留的测试必须验证行为而非旧名称。"
+      ],
+      "actors": [
+        "CI/门禁维护者",
+        "生成物所有者",
+        "改动作者",
+        "评审者"
+      ],
+      "steps": [
+        "确定旧表面的所有表示：声明、生成目录、快照、文档、配置、测试。",
+        "删除实现后跑精确名称搜索，逐项清理或解释保留。",
+        "重新生成目录并检查 diff；启动/回放/快照测试验证行为。",
+        "把“旧名称不得存活”写成可执行门禁或评审清单，避免下一个人重新引入。",
+        "记录哪些测试因旧表面删除而删除，避免用测试数量冒充覆盖。"
+      ],
+      "enforcement": {
+        "mode": "automated-generated-artifacts-and-search",
+        "implementation": "生成的 API/事件目录、组合图、preset 工具目录、精确搜索、Loader 启动、回放/快照。",
+        "trust": "自动化能证明已覆盖的名称/目录/启动路径；不能证明外部文档或用户配置。",
+        "failure": "旧事件/工具仍出现在目录或默认组合；生成检查不失败；启动组合含未加载行。",
+        "exceptions": "历史 Note/迁移文档会有意保留旧名称；搜索需排除这些记录，而不是删除历史。"
+      },
+      "applicability": "适用于有代码生成、目录、组合和快照的仓库。没有生成物的项目可用精确搜索+构建+启动替代。",
+      "relationships": [
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-event-and-field-surface-pruning",
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-default-roster-single-interface",
+        "rationale-simplification-1-pre-release-cutover-no-aliases"
+      ],
+      "migration": {
+        "strategy": "delete-then-regenerate-and-gate",
+        "implementation": "删除实现，清理生成物并重新生成，跑启动/回放；把旧名称搜索纳入门禁。",
+        "requiredSupport": "生成脚本、目录 diff、Loader/启动测试、回放夹具。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-generated-enforcement-and-stale-surface-gates",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "删除工具后默认 catalog 快照更新，旧名称在源码/生成物中为零；显式 opt-in 仍出现。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除事件后生成矩阵无该行；HMR/回滚行为测试通过。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "只删 emit 不删声明/目录；生成检查应失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "通过手改生成文件让检查通过，而源定义仍含旧表面；应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "生成目录残留旧条目：从源重新生成，而不是手工删除生成物。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "生成物/搜索只能覆盖仓库内可见表面；历史 Note、外部文档和用户配置可能仍提旧名称，需单独迁移说明。"
+    },
+    {
+      "id": "rationale-simplification-1-ui-affordance-honesty",
+      "title": "UI 只展示能履行的承诺，装饰不得污染复制/交互",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-27-copyable-transcript-no-gutter-bar.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-07-31-drop-user-message-edit-stub.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-06-user-bubbles-drop-the-branch-action.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-28-remove-hero-input-glow.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        }
+      ],
+      "problem": "没有 handler 的编辑按钮、在用户消息上几乎不可达的分支按钮、每行都带 gutter 的 transcript、以及越界装饰导致的横向滚动，都是 UI 对能力的虚假承诺或对主要任务（复制/阅读）的污染。",
+      "triggers": [
+        "控件可见但没有点击处理器/后端操作时",
+        "控件只在几乎不可达的状态下可用时",
+        "装饰/前缀会被终端/浏览器选中并进入剪贴板时",
+        "装饰越界迫使 overflow 裁剪，掩盖真实布局问题时"
+      ],
+      "obligations": [
+        "可见控件必须有可用操作，或明确标注为不可用并解释；不能用“灰掉+tooltip”假装能力存在。",
+        "移除控件时同步删除 prop、golden、aria 文案和 README 的误导描述；把缺失能力写进 Known Limitations。",
+        "复制区域的每行前缀必须为零；角色区分用不进入剪贴板的样式（标题/间距/颜色）。",
+        "装饰不得越界；不要用 overflow:hidden 掩盖没有所有者的 bleed，否则会隐藏下一个布局错误。",
+        "删除为装饰而存在的测试/裁剪时，保留一个能暴露未来越界的构造性约束。"
+      ],
+      "actors": [
+        "产品设计者",
+        "前端/UI 维护者",
+        "可访问性/测试维护者",
+        "评审者"
+      ],
+      "steps": [
+        "枚举每个可见控件的 handler 与失败路径；无 handler 的标记删除。",
+        "检查控件出现的状态是否真实可达；不可达的隐藏/删除。",
+        "检查复制路径：选中消息/代码块是否带装饰字符。",
+        "移除装饰及其专用裁剪/测试；用布局测试或构造约束替代。",
+        "更新 README Known Limitations 和 golden/aria 测试。"
+      ],
+      "enforcement": {
+        "mode": "ui-golden-and-manual-copy-check",
+        "implementation": "组件/golden/aria 测试、e2e 溢出场景、README Known Limitations；复制质量需人工/终端验证。",
+        "trust": "golden 能证明控件不存在/文本变化；不能完全证明真实终端/浏览器复制行为。",
+        "failure": "死控件继续误导用户；复制内容带前缀；布局越界被裁剪隐藏。",
+        "exceptions": "明确的禁用态可以保留，但必须在可达边界上且解释真实限制；不可达的禁用态不应保留。"
+      },
+      "applicability": "适用于 Web/TUI/CLI 输出等用户可见表面。对纯 API 不适用；对必须保留的品牌装饰，需证明不进入复制路径且不越界。",
+      "relationships": [
+        "rationale-simplification-1-single-owner-product-and-package-boundary",
+        "rationale-simplification-1-documentation-single-owner",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates"
+      ],
+      "migration": {
+        "strategy": "remove-dead-affordance-and-decoration",
+        "implementation": "删除控件/prop/golden/裁剪；把缺失能力写入限制；用布局约束替代防御性裁剪。",
+        "requiredSupport": "组件测试、e2e 溢出/复制检查、Known Limitations 文档。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-ui-affordance-honesty",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "消息区选中复制不含 gutter 字符；用户/steering 气泡不再出现 branch 控件。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除 glow 后 conversation column 不产生横向滚动；未来 bleed 会暴露而不是被 hidden 掩盖。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留无 handler 的编辑按钮并仅加 tooltip；评审应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "保留 overflow-x:hidden 作为“防御”但没有当前所有者；应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "删除装饰后布局出现真实溢出：修布局/约束，不恢复无主裁剪。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "视觉/产品判断不能被自动测试完全证明；本机制只固定可观察的控件、复制和布局约束。"
+    },
+    {
+      "id": "rationale-simplification-1-documentation-single-owner",
+      "title": "文档入口、定位与教程各有一个所有者",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-11-quickstart-documentation-home.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 177,
+          "end": 177,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 22,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "文档站首页重复产品定位/功能摘要，会与产品 landing page 形成第二套需要同步的叙事；根入口又多一次选择，读者到不了第一个可操作教程。另一面，同一事实散落在多份 README/指南会产生漂移。",
+      "triggers": [
+        "准备新增文档首页/landing/功能摘要时",
+        "同一安装/使用步骤出现在多个指南时",
+        "README 与 JSDoc 对同一契约重复描述时",
+        "文档站根路径不是可操作入口时"
+      ],
+      "obligations": [
+        "产品定位/功能摘要只由产品 landing page 拥有；文档根只负责导航到 quickstart。",
+        "每个事实一个 home：当前状态、限制、契约各写在一处，其他地方链接。",
+        "文档变更与代码同提交；README/JSDoc 跟随行为更新。",
+        "根路由用相对重定向，保留部署 base path；不要渲染第二张首页。",
+        "区分“当前事实”和“历史 Note”；历史记录不应被当成当前指南。"
+      ],
+      "actors": [
+        "文档所有者",
+        "产品营销/定位所有者",
+        "代码作者",
+        "评审者"
+      ],
+      "steps": [
+        "列出文档根、quickstart、产品 landing 的职责。",
+        "把根改为指向 quickstart 的重定向；删除重复 landing/摘要。",
+        "为每个事实指定唯一 home，其他位置改为链接。",
+        "更新投影/导航测试，确保两种语言根路径都到同一教程。",
+        "在代码变更中同步 README/JSDoc，避免文档滞后。"
+      ],
+      "enforcement": {
+        "mode": "doc-site-projection-test-and-review",
+        "implementation": "VitePress 投影测试、链接检查、README/JSDoc 契约检查、文档门禁。",
+        "trust": "投影测试能证明根路由/导航；不能证明文字准确性或产品定位一致性。",
+        "failure": "根路径仍渲染重复首页；同一事实在多个文档漂移；代码变了文档没变。",
+        "exceptions": "历史/迁移文档可以保留旧叙事，但必须标注历史，不得作为当前入口。"
+      },
+      "applicability": "适用于有独立文档站/多语言/多产品页的仓库。小仓库可只用 README，但同样应保持一个事实一个 home。",
+      "relationships": [
+        "rationale-simplification-1-ui-affordance-honesty",
+        "rationale-simplification-1-owner-local-layout-and-tests",
+        "rationale-simplification-1-decision-record-lifecycle"
+      ],
+      "migration": {
+        "strategy": "redirect-root-and-single-home",
+        "implementation": "根改重定向，删除重复 landing，事实收敛到唯一页面并链接。",
+        "requiredSupport": "投影/导航测试、链接检查、文档更新与代码同提交。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-documentation-single-owner",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "两种语言根路径都重定向到各自 quickstart；文档站不渲染第二张 landing。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "README/JSDoc 与当前行为一致；历史 Note 明确标注为历史。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留文档 hero 并人工同步产品文案；评审应要求删除或明确产品 landing 为唯一所有者。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "重定向在子路径部署失效：使用相对目标而非绝对根路径。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制不判断文案质量；它只规定入口与事实所有权。产品定位仍需产品所有者评审。"
+    },
+    {
+      "id": "rationale-simplification-1-owner-local-layout-and-tests",
+      "title": "路径即所有权：测试、夹具与指南就近放置",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-24-owner-local-profile-tests-and-guides.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 22,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/bundle/base/README.md",
+          "start": 96,
+          "end": 98,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "顶层 examples/ 把应用组合、跨包 profile 测试、包内 Loader 夹具和用户指南混在一起，导致一个 umbrella manifest 决定依赖解析，测试/文档位置看似“示例”，也让不支持的 demo 像产品。",
+      "triggers": [
+        "准备把测试夹具/指南/示例放到顶层 examples/ 时",
+        "一个 umbrella workspace manifest 只为让嵌套配置解析包时",
+        "包内测试依赖另一个包的夹具时",
+        "用户指南与包 README 对同一配置重复时"
+      ],
+      "obligations": [
+        "路径表达所有者：跨包 profile 测试放 CLI profile 测试目录；包内夹具放包 tests/fixtures；会话回放放 snapshots；用户指南放 docs/user；语言 SDK 示例放 SDK 目录。",
+        "不要用顶层 examples workspace 统一解析依赖；每个所有者声明自己的 manifest。",
+        "删除示例/指南/测试时不应改变无关包的依赖解析。",
+        "可运行用户指南必须链接实际 shipped 资产，不能链接仓库内任意 leaf。",
+        "包 README 的 Known Limitations 记录持久消费者缺口，普通清理留在 TODO/Note。"
+      ],
+      "actors": [
+        "包所有者",
+        "测试基础设施维护者",
+        "文档所有者",
+        "评审者"
+      ],
+      "steps": [
+        "按角色分类现有 examples：应用、跨包测试、包夹具、用户指南、SDK 示例。",
+        "把每类移到其所有者目录，并更新 manifest/链接。",
+        "删除顶层 umbrella manifest 和仅为解析存在的 workspace。",
+        "让 CI/文档从新位置发现测试/指南，验证无隐式全局依赖。",
+        "更新路径文档，使新位置可预测。"
+      ],
+      "enforcement": {
+        "mode": "layout-review-and-workspace-hygiene",
+        "implementation": "工作区/包图检查、测试发现、文档链接检查、hygiene。",
+        "trust": "构建/测试能证明新路径可运行；不能证明路径语义对所有贡献者直观。",
+        "failure": "测试/指南仍依赖顶层 umbrella；删除一个示例导致无关包解析失败。",
+        "exceptions": "真正的跨包集成测试可以集中，但必须由明确的集成所有者拥有，而不是“examples”。"
+      },
+      "applicability": "适用于 monorepo/多包仓库。单包项目不适用；关键是避免用一个全局目录掩盖所有权。",
+      "relationships": [
+        "rationale-simplification-1-single-owner-product-and-package-boundary",
+        "rationale-simplification-1-documentation-single-owner",
+        "rationale-simplification-1-generated-enforcement-and-stale-surface-gates"
+      ],
+      "migration": {
+        "strategy": "relocate-to-owner",
+        "implementation": "按角色迁移测试/夹具/指南，删除 umbrella manifest，更新发现路径。",
+        "requiredSupport": "工作区清单、测试发现、文档链接、hygiene。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-owner-local-layout-and-tests",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "CLI profile 测试从 apps/cli/tests 解析；包夹具从包 tests/fixtures 解析；删除任一指南不影响全局依赖。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "顶层无 examples/，用户指南链接 shipped overlay；Python 示例在 SDK 目录。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留 umbrella manifest 仅为模块解析；评审应要求各所有者声明依赖。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "迁移后测试找不到包：修该所有者的 manifest/路径，不恢复全局 examples。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "路径约定需要团队共识；本机制不能自动判断“哪个所有者”正确，需包/产品边界评审。"
+    },
+    {
+      "id": "rationale-simplification-1-telemetry-no-duplicate-buffer",
+      "title": "遥测不复制规范日志：按需回放已提交前缀",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-06-buffer-free-feedback-telemetry.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "反馈型遥测若在会话期间深拷贝/脱敏每条事件，直到用户反馈才上传，会为长会话保留无界副本；而规范 session log 已经按顺序保存了这些事实。",
+      "triggers": [
+        "遥测/分析需要在某个未来触发点上传历史时",
+        "准备在事件投影时缓存脱敏副本时",
+        "需要区分“捕获时策略”和“上传时策略”时",
+        "同一会话可能多次触发反馈/上传时"
+      ],
+      "obligations": [
+        "默认不注册会话/flush/操作事件监听器，不保留按事件数的副本。",
+        "触发时从规范日志读取指定序列边界内的前缀，按序深拷贝并运行当前脱敏策略；上传内容就是该前缀。",
+        "用对象键控的 handoff cursor 区分重复触发：同一对象只释放后缀，避免第二索引/重复上传。",
+        "明确边界：反馈事件已提交后监听器才运行，因此前缀包含反馈事件且不会包含后续后缀。",
+        "同步克隆/脱敏发生在非阻塞入队前；成本随未释放前缀增长，必须记录。"
+      ],
+      "actors": [
+        "遥测所有者",
+        "会话日志所有者",
+        "隐私/安全评审者",
+        "后端上传维护者"
+      ],
+      "steps": [
+        "确认规范日志是否已包含所需全部事实；若是，删除捕获期缓冲。",
+        "实现按需 captureSession(session, throughSeq?)：读前缀、拷贝、当前脱敏、入队。",
+        "用 handoff cursor 处理同一会话重复反馈，避免重复上传。",
+        "测试无反馈会话不增长遥测内存；反馈后上传内容等于日志前缀且含反馈事件。",
+        "记录脱敏策略变化的语义：上传时策略，不是捕获时快照。"
+      ],
+      "enforcement": {
+        "mode": "memory-behavior-and-privacy-test",
+        "implementation": "遥测单测、会话前缀/序列边界测试、脱敏策略测试、上传后端契约。",
+        "trust": "测试能证明前缀/去重行为；不能证明所有隐私策略在运行时都正确。",
+        "failure": "长会话无界内存；重复反馈重复上传；上传内容与规范日志不一致。",
+        "exceptions": "若需要“事件发生时的策略快照”或操作遥测，规范日志不足，需独立有界存储并明确保留策略。"
+      },
+      "applicability": "适用于以规范日志为事实源的遥测/审计。对必须记录日志之外的操作/性能事件的系统，需单独设计有界缓冲。",
+      "relationships": [
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-durable-data-generation-boundary"
+      ],
+      "migration": {
+        "strategy": "on-demand-prefix-capture",
+        "implementation": "删除捕获期副本，触发时读日志前缀并脱敏上传；cursor 去重。",
+        "requiredSupport": "序列边界、脱敏策略、上传契约、内存/重复触发测试。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-telemetry-no-duplicate-buffer",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "无反馈的长会话不保留按事件数增长的遥测副本；反馈后上传前缀含反馈事件且不含后续。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "同一会话两次反馈只上传新增后缀，不重复上传已释放前缀。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留事件引用/序号第二索引却没有必需行为；应拒绝，因为规范日志已提供顺序和身份。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "上传时脱敏策略变化导致历史内容不同：记录策略版本，必要时保留上传时快照而非捕获时副本。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制假设规范日志可被遥测读取且包含所需事实；若日志有保留/截断策略，前缀可能不完整，需单独处理。"
+    },
+    {
+      "id": "rationale-simplification-1-bounded-recurrence",
+      "title": "固定频率、最新一次、批处理：有界重复提醒",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-09-bounded-fixed-rate-schedule.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": "packages/schedule/schedule/README.md",
+          "start": 28,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/schedule/schedule/src/domain.ts",
+          "start": 33,
+          "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/schedule/schedule/src/domain.ts",
+          "start": 782,
+          "end": 823,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/schedule/schedule/src/domain.ts",
+          "start": 1357,
+          "end": 1387,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "把固定间隔和日历表达式做成一个通用 recurrence 子系统，会引入 Cron 语言、时区/tzdata、跨记录 gate、持久 gate 证据和错过区间重放；冷会话恢复时还可能按停机时长制造无界 model-turn backlog。",
+      "triggers": [
+        "产品只需要“每隔 N 秒提醒”时",
+        "准备引入 Cron/时区/复杂日历规则时",
+        "需要处理停机后错过的多次触发时",
+        "多个提醒同时到期时"
+      ],
+      "obligations": [
+        "按真实产品需求选择selector，不把历史精简决定当作永久禁令。08-09归档固定频率决定当时只保留Every且下限300秒；固定提交现行协议支持after_seconds/at/every_seconds/daily/weekly/cron，Every下限为60秒。",
+        "创建时存首个目标；每次 dispatch 存记录 id 和一个 wall-clock acceptedAt，用整数运算选最新对齐 occurrence 并推进到下一个。",
+        "不重放每个错过区间；只取最新一次，避免 backlog 随停机时间增长。",
+        "所有到期的 Every 记录进入一个 follow-up batch，按 target/creation 排序；每条只贡献一个 occurrence，同一 decision time。",
+        "due one-shot 优先于 recurrence batch；不要用一个全局 gate 让无关提醒互相延迟。",
+        "记录范围耗尽/无效规则/超出安全整数的拒绝行为。"
+      ],
+      "actors": [
+        "调度所有者",
+        "工具/模型接口作者",
+        "持久化维护者",
+        "测试维护者"
+      ],
+      "steps": [
+        "先核对目标当前支持的selector与日历合同；现行daily/weekly/cron不得按旧归档拒绝或删除。仅在目标真实合同只承诺固定间隔时保持最小selector集合，不把该条件扩张为通用Cron禁令。",
+        "定义最小间隔、创建锚点、acceptedAt 和整数推进规则。",
+        "实现 latest-only catch-up 与批量 dispatch；one-shot 优先。",
+        "用属性测试覆盖对齐、推进、范围耗尽；运行时测试覆盖批处理/无 backlog。",
+        "把不支持的选择器/时区行为显式拒绝，而不是静默近似。"
+      ],
+      "enforcement": {
+        "mode": "schema-and-property-test",
+        "implementation": "严格 decoder、域/属性测试、调度运行时测试、assembled Session 测试。",
+        "trust": "固定间隔的整数算术/边界与日历时区语义分属不同合同；历史不支持Cron的决定不是当前产品的时区保证，真实时钟与时区数据仍需各自验证。",
+        "failure": "错过区间产生 turn 风暴、无关提醒互相延迟、规则/时钟边界漂移。",
+        "exceptions": "已支持的daily/weekly/cron有显式IANA时区及各自日历语义，不能用每86400秒假装每日墙钟，也不能以旧归档为由删除现行支持。"
+      },
+      "applicability": "latest-only、固定锚点和有界批次适用于Every提醒；需要日历时按其独立当前合同实现，而非把整个产品缩成历史Every-only协议。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-single-source-durable-truth"
+      ],
+      "migration": {
+        "strategy": "narrow-selector-latest-only-batch",
+        "implementation": "保留Every整数推进、latest-only和有界批次/one-shot优先；只删除目标确实不再支持的语法或全局gate。现行支持的日历选择器须保持其明确语义和验证，不按历史删除清单盲删。",
+        "requiredSupport": "严格 schema、属性测试、调度运行时测试、迁移/拒绝说明。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-bounded-recurrence",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "停机很久后恢复只产生当前最新一次提醒，不按错过次数重放。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "多个overdue Every记录合并为一个batch，每条一个occurrence；one-shot优先。按现行协议，every_seconds=60通过，而59被frequency_too_high拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留全局 recurring gate 让无关提醒互相延迟；应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "重放每个错过 interval；应拒绝，因为 backlog 无界。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "区分非法时钟/间隔的显式失败与正常范围耗尽：最后有效occurrence没有可表示的下一目标时终止该记录；修正非法输入后重新验证，不伪造下一时间或反复重放。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "08-09归档保留固定率精简历史；当前实现已重新支持日历/时区。此迁移未执行目标调度器，不能从来源单测描述推断实际目标或真实时钟结果。"
+    },
+    {
+      "id": "rationale-simplification-1-one-send-one-turn",
+      "title": "一次发送至多一个回合，禁止隐式批处理",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-07-17-one-send-one-turn.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        }
+      ],
+      "problem": "两个独立 send 调用若因为同时在队列里被合并进一个 turn，turn 边界就取决于调度时序而非调用方意图；后一条消息甚至可能在前一 turn 关闭/检查点前运行。",
+      "triggers": [
+        "一个队列/驱动循环会把等待中的多条消息合并时",
+        "调用方用多次 send 表达独立工作单元时",
+        "需要可预测的 turn 边界/检查点顺序时",
+        "准备为了减少 model 调用而自动批处理时"
+      ],
+      "obligations": [
+        "每个成功 send 创建一个独立 FIFO 队列项；该项若运行，是所在 turn 的唯一普通消息。",
+        "保证是“至多一个 turn”而非“恰好一个”：项可能在开始前被丢弃。",
+        "插入前检查 agent 状态，接受已标识、深冻结的消息；splice 与 inbox 事件保留 MessageId，pending 可 replace/remove。",
+        "不要静默合并；未来批处理必须是显式、可测量、调用方可见的契约。",
+        "用同栈、相邻 microtask、不同生产者、重入回调测试边界。"
+      ],
+      "actors": [
+        "agent-loop 所有者",
+        "调用方/工具作者",
+        "持久化维护者",
+        "测试维护者"
+      ],
+      "steps": [
+        "把 send 的队列项建模为独立 FIFO 单元，带稳定 MessageId。",
+        "移除按“当前等待集合”合并的逻辑；每项单独 claim/checkpoint。",
+        "保留 pending 的 replace/remove 与取消语义。",
+        "测试多个生产者/时序下每个消息独立 turn；测 built-stdio 两次输入产生两个请求/边界。",
+        "记录代价：更多 model 请求/检查点；批处理需另立测量契约。"
+      ],
+      "enforcement": {
+        "mode": "property-and-e2e-test",
+        "implementation": "单元/属性测试、built-stdio e2e、turn 边界/请求计数断言。",
+        "trust": "测试能证明已覆盖的调度时序；不能证明所有外部驱动的并发行为。",
+        "failure": "消息被合并、后一条在前一 turn 检查点前运行、MessageId 丢失导致无法取消。",
+        "exceptions": "显式的 batch/queue API 可以有不同契约；普通 send 不应隐式批处理。"
+      },
+      "applicability": "适用于有队列/驱动循环的 agent/任务系统。对明确设计为批处理的 API 不适用；关键是默认 send 的语义可预测。",
+      "relationships": [
+        "rationale-simplification-1-service-consolidation-and-intent-api",
+        "rationale-simplification-1-team-direct-inbox",
+        "rationale-simplification-1-activation-lifecycle-single-owner"
+      ],
+      "migration": {
+        "strategy": "independent-fifo-items",
+        "implementation": "每个 send 独立队列项；删除合并逻辑；保留 MessageId/pending 操作。",
+        "requiredSupport": "属性/时序测试、built e2e、请求计数。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-one-send-one-turn",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "同栈/相邻 microtask/不同生产者发送 A、B，得到两个 FIFO turn 和两个 model 请求。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "built stdio 两行输入产生两个 turn 边界，B 在 A 检查点后运行。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为减少请求自动合并等待中的普通 send；应拒绝，除非有显式测量契约。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "队列积压：通过显式 batch API/背压处理，不恢复隐式合并。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制增加请求/检查点数量；在极端吞吐场景可能需要显式批处理，但不能以隐式方式改变普通 send 语义。"
+    },
+    {
+      "id": "rationale-simplification-1-automation-transport-boundary",
+      "title": "自动化协议不承担人类 UI",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.md",
+          "start": 1,
+          "end": 63,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 15,
+          "end": 15,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "一个自动化传输若同时翻译 durable events 成 editor cards、终端元数据、diff、plan、title、reasoning、commands、model/permission pickers 和人类 elicitation，就成为第二个交互产品 UI，耦合 UI 服务、持久化查询和编辑器约定。",
+      "triggers": [
+        "自动化协议开始承担展示/导航/编辑器卡片时",
+        "同一 transport 既要服务 agent/controller 又要服务人类 UI 时",
+        "能力广告（如图片）与实际 route 能力不一致时",
+        "准备把 token delta/结构化工具 UI 放进自动化协议时"
+      ],
+      "obligations": [
+        "自动化协议只保留标准控制：session 创建/列表/恢复/关闭、单 in-flight prompt、模型配置、MCP 挂载、已提交语义更新、取消、并发 session、一次性权限回答。",
+        "人类交互/展示由 TUI/Web 拥有；自动化传输不投影 tool cards、diff、plan、title、picker。",
+        "能力广告必须真实：只有 durable attachment store + 精确 provider/model 支持图片时才 advertise；每次 prompt 快照 route 并严格解码/保存。",
+        "自动化客户端接收 committed message/reasoning/generic tool/config/usage，而不是 token deltas 或结构化 UI。",
+        "协议边界外的 subagent backend 依赖该标准边界，不能偷偷依赖 UI 服务。"
+      ],
+      "actors": [
+        "协议所有者",
+        "自动化客户端/子代理后端",
+        "UI 所有者",
+        "安全/权限评审者"
+      ],
+      "steps": [
+        "把 ACP 的职责收缩到自动化控制与已提交事实。",
+        "删除 UI 投影、导航、picker、人类 elicitation 及其注入服务。",
+        "把图片等能力广告绑定到真实 route/attachment 能力。",
+        "用 keyless ACP 套件验证 record/refresh/replay/cancel/permission。",
+        "明确人类 UI 仍由 TUI/Web 提供，不在协议里做兼容层。"
+      ],
+      "enforcement": {
+        "mode": "protocol-contract-and-keyless-suite",
+        "implementation": "ACP 初始化/能力广告、keyless ACP 套件、已提交更新/取消/权限测试、包依赖检查。",
+        "trust": "协议测试能证明已覆盖控制；不能证明所有编辑器客户端行为。",
+        "failure": "自动化协议继续携带 UI 语义/编辑器依赖；能力广告与实际 route 不符。",
+        "exceptions": "标准协议要求的通用 tool 通知/权限仍可保留；它们不是产品 UI 卡片。"
+      },
+      "applicability": "适用于 ACP/MCP/JSON-RPC 等自动化传输。对人类 UI 协议（如完整编辑器前端）不适用；关键是不要把两者混成一个兼容层。",
+      "relationships": [
+        "rationale-simplification-1-single-owner-product-and-package-boundary",
+        "rationale-simplification-1-service-consolidation-and-intent-api",
+        "rationale-simplification-1-pre-release-cutover-no-aliases"
+      ],
+      "migration": {
+        "strategy": "narrow-to-automation-controls",
+        "implementation": "删除 UI 投影/注入，保留标准控制与 committed facts；图片能力按真实 route 广告。",
+        "requiredSupport": "协议契约、keyless 套件、依赖清理、客户端迁移说明。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-automation-transport-boundary",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "ACP 只发送 committed 更新；不发送 token delta；无图片 route 时不广告图片能力。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "取消/权限/并发 session 在 keyless 套件中通过；无 UI 服务注入。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留 editor tool cards/diff/plan 投影；应拒绝，因为它是第二个 UI。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "结构化广告图片但 route 不支持；应拒绝，广告必须真实。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "自动化客户端需要展示信息：由客户端从 committed 事实自行投影，不由协议携带 UI 约定。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制收缩协议能力，可能让依赖旧 UI 投影的客户端失效；预发布可接受，外部稳定协议需版本化。"
+    },
+    {
+      "id": "rationale-simplification-1-activation-lifecycle-single-owner",
+      "title": "一个激活一个句柄：创建、取消、结果与清理同属一个生命周期",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-17-unified-subagent-activations.md",
+          "start": 1,
+          "end": 49,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 9,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-09-nontransactional-loader.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        }
+      ],
+      "problem": "本地 one-shot、continuable、foreground、Job-backed 和外部分别拥有子创建、取消、结果捕获和清理，会产生多套生命周期；调用方要 await 结果时又可能被迫获得一个多 turn 协议或第二个 driver。",
+      "triggers": [
+        "同一子任务有多个执行路径/驱动时",
+        "调用方需要“等结果”但又不需要多轮续聊时",
+        "取消/清理/通知顺序在不同 provider 不一致时",
+        "准备为同步 workflow 保留一套 one-shot driver 时"
+      ],
+      "obligations": [
+        "每个 provider 通过一个 startActivation 入口；发布句柄暴露子身份、结果 promise 和该激活的 disposal。",
+        "调用方 signal 只取消尚未发布/创建的激活；已发布激活的取消走句柄。",
+        "结果 promise 在清理和通知之后 settle；本地结果等待 pending input/owned descendants 关闭准入。",
+        "结构化工具/schema/instructions/terminal guard 附着一个激活并在结束时关闭；cold resume 重建普通会话，不带旧 schema。",
+        "不要为同步 workflow 保留第二套 Agent 生命周期；一个生命周期同时提供 result 和 cancellation。"
+      ],
+      "actors": [
+        "子代理服务所有者",
+        "provider 实现者",
+        "workflow/工具调用方",
+        "测试维护者"
+      ],
+      "steps": [
+        "把创建/取消/结果/清理收敛到一个 activation 句柄。",
+        "让 local spawn/fork 只提供 prepareContinuable 数据，服务拥有 Agent 创建/驻留。",
+        "定义结果与 disposal 的顺序：清理/通知完成后 settle；取消只影响对应激活。",
+        "删除独立 in-process driver/one-shot 生命周期，迁移 workflow 到 activation result。",
+        "用继承、捕获、cold resume、取消、结果-清理顺序测试固定。"
+      ],
+      "enforcement": {
+        "mode": "lifecycle-and-order-test",
+        "implementation": "activation 单元/集成测试、workflow 收集测试、headless 子完成测试、取消/清理顺序断言。",
+        "trust": "测试能证明已覆盖顺序；不能证明所有外部 provider 的进程清理。",
+        "failure": "结果在清理前 settle、取消泄漏子进程、cold resume 带旧 schema、两套 driver 分叉。",
+        "exceptions": "外部 provider 不需要多 turn 续聊，但仍共享 activation 的取消/清理/结果契约；不能因此另起生命周期。"
+      },
+      "applicability": "适用于子代理/任务/工作流执行。对完全独立、无共享父生命周期的后台服务不适用。",
+      "relationships": [
+        "rationale-simplification-1-service-consolidation-and-intent-api",
+        "rationale-simplification-1-one-send-one-turn",
+        "rationale-simplification-1-non-transactional-loader-recovery"
+      ],
+      "migration": {
+        "strategy": "one-activation-handle",
+        "implementation": "合并创建/取消/结果/清理；删除独立 driver；workflow 改 await activation result。",
+        "requiredSupport": "provider 接口、workflow 迁移、顺序/取消测试。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-activation-lifecycle-single-owner",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "startActivation 返回句柄；结果在清理/通知后 settle；dispose 只影响该激活。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "cold resume 后子会话不带旧结构化 schema；workflow 同步收集结果无需第二 driver。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留独立 one-shot driver 仅为同步 await；应拒绝，activation 已能提供结果。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "结果 promise 在清理前 resolve；应拒绝，调用方会观察到未清理状态。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "取消失败/子进程泄漏：补 provider 清理路径和顺序测试，不恢复第二生命周期。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "统一生命周期可能增加句柄状态；若 provider 的创建/取消语义根本不同，应通过 provider 契约适配，而不是拆回多套调用方生命周期。"
+    },
+    {
+      "id": "rationale-simplification-1-non-transactional-loader-recovery",
+      "title": "非事务加载器：失败可见，不假装回滚",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-09-nontransactional-loader.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 9,
+          "end": 9,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "事务式配置重载能在插件失败时恢复旧 generation，但要求 Loader 拥有候选导入、生命周期 settle、回滚、option identity 和 Include 序列化，使 vendored 实现远离固定上游；应用启动和 patch 监听又隐式依赖该 settle。",
+      "triggers": [
+        "准备为配置/插件重载加入事务/自动回滚时",
+        "Loader 变更开始复制上游生命周期机制时",
+        "插件激活失败后调用方假设“await create 即成功”时",
+        "Include/parse 失败与插件运行失败需要区分时"
+      ],
+      "obligations": [
+        "解析/Include 校验失败可以在应用前拒绝；插件运行失败不自动回滚，可能留下部分树和 failed fiber。",
+        "Loader 急切应用 entry options；EntryGroup 并发启动兄弟并记录失败；EntryTree 等待未完成工作但不因 failed fiber 拒绝。",
+        "调用方若需要“激活成功”，必须在 settlement 后审计活动插件，不能只 await Loader.create()。",
+        "自动回滚需要独立未来决定和证据，不能作为默认承诺。",
+        "文档/测试必须暴露部分应用状态和失败报告，不把回滚写成保证。"
+      ],
+      "actors": [
+        "Loader/启动所有者",
+        "插件作者",
+        "运维/诊断",
+        "评审者"
+      ],
+      "steps": [
+        "明确 parse 失败与插件运行失败的边界。",
+        "移除事务候选/回滚/option identity 机制，保留急切应用与失败日志。",
+        "让调用方在 settlement 后审计活动插件；文档写清部分树可能保留。",
+        "补 live-patch 测试：失败被报告、无回滚、后续有效编辑可恢复。",
+        "把 vendored 修改逐项登记，避免“恢复上游”误删独立修复。"
+      ],
+      "enforcement": {
+        "mode": "failure-path-and-live-patch-test",
+        "implementation": "user-patches 测试、Loader 失败路径测试、vendor ledger、启动诊断。",
+        "trust": "测试能证明已覆盖的失败/恢复；不能证明所有插件在部分树中的行为。",
+        "failure": "调用方以为失败已回滚，继续使用半应用配置；failed fiber 被静默忽略。",
+        "exceptions": "解析失败仍应尽量在应用前拒绝；安全/数据完整性关键插件可在上层做补偿，但不是 Loader 自动回滚。"
+      },
+      "applicability": "适用于插件化 Loader/配置热重载。对必须强一致的部署编排，应在更高层用事务/健康检查，而不是假定 Loader 提供。",
+      "relationships": [
+        "rationale-simplification-1-activation-lifecycle-single-owner",
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-durable-audit-exception"
+      ],
+      "migration": {
+        "strategy": "revert-transaction-keep-eager-failure-visible",
+        "implementation": "移除事务回滚，保留 parse 拒绝/失败日志；调用方 settlement 后审计。",
+        "requiredSupport": "live-patch 失败测试、启动诊断、vendor ledger、文档。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-non-transactional-loader-recovery",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "插件激活失败后失败被报告、部分树保留；后续有效 patch 能恢复。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "parse/Include 失败在应用前拒绝；不产生半树。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "调用方只 await Loader.create() 就宣称插件已激活；应拒绝，必须审计。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "为回滚重开 vendored 生命周期机制却没有独立消费者证据；应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "失败后需要恢复：提交新的有效配置/重启，不假设旧 generation 仍在。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制接受部分应用状态，适合预发布/开发期；生产强一致场景需要上层补偿或独立事务设计。"
+    },
+    {
+      "id": "rationale-simplification-1-team-direct-inbox",
+      "title": "一个目标收件箱，不做第二发件箱",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-09-26-team-direct-inbox.md",
+          "start": 1,
+          "end": 27,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-30-team-send-message-steer.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": "packages/experimental/agent-team/src/types.ts",
+          "start": 129,
+          "end": 136,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/experimental/agent-team/src/index.ts",
+          "start": 140,
+          "end": 145,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Team 自己维护 outbox 会复制 Agent inbox 的所有权：第二套身份、ack、持久化检查点、重试顺序和 disposal wait。调用方真正需要的是一个明确 admission 结果，而目标 inbox 已提供锁、生命周期授权和冷恢复。",
+      "triggers": [
+        "Team/群组消息准备维护自己的待发队列时",
+        "需要 retry/ack/幂等/跨重启投递时",
+        "历史 mailbox 记录仍在日志中但不再投递时",
+        "跨 root/兄弟发送需要 sender 归属时"
+      ],
+      "obligations": [
+        "新发送直接走目标 inbox：live Lead Steer 或 host-only subagent Steer adapter；返回 accepted MessageId 或抛错。",
+        "接受遵循普通 Agent 持久化，不承诺模型处理/同步 flush；Team 不保留未接受意图、不跨重启重试、不去重显式重发。",
+        "历史 mailbox 记录仍可解码/投影以便旧 Lead 日志回放，但不再投递/ack。",
+        "sender 归属用现有 agent-message source + 成员名，不扩大公共 sibling 权限。",
+        "失败对调用方可见；不把“已入队”说成“已处理”。"
+      ],
+      "actors": [
+        "Team 服务所有者",
+        "Agent inbox 所有者",
+        "host 适配器",
+        "测试维护者"
+      ],
+      "steps": [
+        "删除 Team outbox/ack/重试状态，改为调用目标 inbox。",
+        "返回 accepted MessageId；定义失败/取消/冷恢复行为。",
+        "保留历史记录 decoder/projection，但禁止投递。",
+        "用 sender 归属/冷恢复/失败/取消/历史不回放测试固定。",
+        "在 README 标明 experimental 和无重试承诺。"
+      ],
+      "enforcement": {
+        "mode": "inbox-contract-and-history-test",
+        "implementation": "Team 测试、inbox 持久化、sender 归属、冷恢复、历史 decoder/projection。",
+        "trust": "测试能证明当前 inbox 行为；不能证明跨进程崩溃的所有边界。",
+        "failure": "第二套 ack/重试与 inbox 分叉；历史消息被误投递；sender 归属错误。",
+        "exceptions": "若产品需要 durable send-intent/重试保证，Agent inbox 无法满足时应独立设计，而不是复制一套隐式 outbox。"
+      },
+      "applicability": "适用于有现成目标收件箱/锁/生命周期授权的消息系统。对必须保证跨重启重试的业务消息，需要独立持久发件箱和幂等契约。",
+      "relationships": [
+        "rationale-simplification-1-service-consolidation-and-intent-api",
+        "rationale-simplification-1-one-send-one-turn",
+        "rationale-simplification-1-durable-data-generation-boundary"
+      ],
+      "migration": {
+        "strategy": "delegate-to-target-inbox",
+        "implementation": "删除 Team outbox，直接 inbox steer，返回 MessageId；历史只解码不投递。",
+        "requiredSupport": "inbox 契约、sender 归属、历史回放测试、README 限制。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-team-direct-inbox",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "新发送返回 accepted MessageId；失败抛错；重启后未接受消息不重试。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "历史 mailbox 记录可投影但不再投递；sender 归属保持实际成员。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留 Team outbox 的 ack/重试但无独立 durable-intent 需求；应拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把“已入队”写成“已处理”；应拒绝，admission 不等于模型处理。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "投递失败：调用方可见并决定重发；Team 不静默重试/去重。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本机制放弃跨重启重试/精确一次；需要这些保证的产品必须显式设计 durable intent，不能把 inbox admission 当成投递完成。"
+    },
+    {
+      "id": "rationale-simplification-1-copy-only-preset-authoring",
+      "title": "预设只复制文件，不通过浏览器传任意组合文本",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-08-08-copy-only-preset-authoring.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        }
+      ],
+      "problem": "Web 预设编辑器接受任意 YAML，并用 Loader 的 entryListSchema 做“形状检查”；该 dialect 含 !!js，所以形状检查过的文本仍可在下一次 mount 执行任意代码。编辑器本身又弱于用户自己的编辑器，还引入写入竞态。",
+      "triggers": [
+        "Web/远程界面允许编辑组合/配置文本时",
+        "用 schema 校验代替能力边界时",
+        "需要把 composition 文件路径/内容暴露给浏览器时",
+        "预设复制/编辑会与运行中 generation 竞争时"
+      ],
+      "obligations": [
+        "作者操作只接收两个 host 解析的 id（from/agentPreset）和可选显示名；路径/组合文本不跨浏览器 wire。",
+        "host 侧整目录复制，symlink 解引用，权限收紧到 owner-only（保留 owner-execute），元数据保留 description 但不保留源 name/order。",
+        "删除 write/editor/assertComposition；文件系统是唯一编辑器。",
+        "运行中 generation 用 mtime+size 检测文件变化并启动下一代，避免旧 generation 继续服务。",
+        "authoring 操作集只含 read/copy/openDocument/remove，均不接受文件系统目标；用完整 Host API 认证。"
+      ],
+      "actors": [
+        "预设/registry 所有者",
+        "Web/host API 作者",
+        "安全评审者",
+        "用户"
+      ],
+      "steps": [
+        "把 write 类操作改为 host 侧 copy（id→id），禁止路径/文本入参。",
+        "删除 YAML 编辑器与形状检查；把文件打开/编辑交给用户编辑器。",
+        "实现整目录复制、权限/元数据规则与 mtime+size generation 检测。",
+        "更新 Web UI/远程 API，只暴露 read/copy/openDocument/remove。",
+        "测试无路径/文本跨 wire、权限收紧、编辑后新 generation。"
+      ],
+      "enforcement": {
+        "mode": "host-api-capability-and-fs-test",
+        "implementation": "Host API 类型/认证、预设 registry 测试、文件权限/复制测试、Web e2e。",
+        "trust": "API 类型/测试能证明入参面；不能证明用户编辑器/OS 文件权限的所有边界。",
+        "failure": "浏览器可写任意组合/路径；!!js 代码在下一 mount 执行；编辑被旧 generation 忽略。",
+        "exceptions": "明确的本地 CLI/文件系统作者仍可直接编辑文件；本机制限制的是远程/浏览器能力。"
+      },
+      "applicability": "适用于 Web/远程配置编辑。对本地 CLI 文件编辑不适用；对需要结构化表单的场景，应提供受控字段而非任意 YAML。",
+      "relationships": [
+        "rationale-simplification-1-composition-overlay-single-level",
+        "rationale-simplification-1-shipped-default-opt-in",
+        "rationale-simplification-1-ui-affordance-honesty"
+      ],
+      "migration": {
+        "strategy": "copy-by-id-no-text-over-wire",
+        "implementation": "write→copy(id,id)，删除编辑器/assertComposition，host 文件操作+mtime generation。",
+        "requiredSupport": "Host API 认证/类型、权限测试、Web UI 迁移、generation 检测。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-copy-only-preset-authoring",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "copy 只接受 from/agentPreset/name；浏览器不发送路径/组合文本；复制后权限 owner-only。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "手工编辑 composition 后，下一 session 使用新 generation；旧 session 不被静默改写。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "保留任意 YAML 编辑器并依赖 entryListSchema 形状检查；应拒绝，因为 !!js 仍是代码。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "让浏览器传文件系统路径给 openDocument；应拒绝，路径由 host 解析。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "复制失败/权限错误：返回显式错误，不自动放宽权限；用户修正源目录后重试。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "Note 的具体 `agentPreset.copy/openDocument/remove` API 在固定提交的 preset registry 中未完全找到；应把它当历史实现原则，不要把旧方法名当现状。"
+    },
+    {
+      "id": "rationale-simplification-1-measured-micro-optimization",
+      "title": "热路径优化先测量，再避免无所有权缓存",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/simplification/2026-09-07-file-content-scan.md",
+          "start": 1,
+          "end": 33,
+          "kind": "history"
+        },
+        {
+          "path": "packages/llm/llm/src/content.ts",
+          "start": 136,
+          "end": 136,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 11,
+          "end": 11,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "每次模型 dispatch 都扫描完整消息内容找文件；递归 Array.some 回调在 profile 中有可测 self time。与此同时，弱负缓存需要证明所有后代不可变，浅冻结根不足；没有所有权证明的缓存会引入失效问题。",
+      "triggers": [
+        "profile 显示某纯遍历函数在热路径有显著 self time 时",
+        "准备为扫描/投影加缓存时",
+        "准备优化 image traversal/system prompt 但没有测量时",
+        "需要保留 early exit/嵌套/tool-role 语义时"
+      ],
+      "obligations": [
+        "先测量：profile/基准指出具体函数与成本；优化必须保留可观察语义。",
+        "优先局部算法改动（直接迭代/early exit），不引入全局状态或缓存。",
+        "缓存必须有不可变性证明/失效协议；浅冻结不够，不能缓存可变嵌套内容。",
+        "测试空/冻结/嵌套/后续变更数组，以及 tool-role/file-handle 投影。",
+        "不把未测量的相邻优化（image/system prompt）塞进同一改动。"
+      ],
+      "actors": [
+        "性能作者",
+        "LLM/请求所有者",
+        "评审者",
+        "基准维护者"
+      ],
+      "steps": [
+        "记录 profile 证据与受影响调用频率。",
+        "用直接迭代替代递归回调，保留 early exit/traversal/other block false。",
+        "删除/避免无所有权缓存；若需缓存，先证明不可变+失效。",
+        "跑内容/请求重构/恢复测试，确认模型可见文本与 Session 格式不变。",
+        "把未测量优化列为 out of scope，不顺手扩大。"
+      ],
+      "enforcement": {
+        "mode": "profile-evidence-and-semantic-test",
+        "implementation": "CPU profile/基准、内容单元测试、请求重构/恢复测试、review。",
+        "trust": "profile 能证明当前样本；不能保证其他负载/机器。",
+        "failure": "优化改变嵌套/tool-role 语义，或缓存读到已变更内容。",
+        "exceptions": "安全/正确性修复不需要性能证据；本机制只约束以“简化/提速”为名的改动。"
+      },
+      "applicability": "适用于热路径微优化。对清晰性重构不要求 profile；对缓存/全局状态始终要求所有权证明。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-single-source-durable-truth",
+        "rationale-simplification-1-dependency-adoption-evidence"
+      ],
+      "migration": {
+        "strategy": "measure-then-local-loop-rewrite",
+        "implementation": "直接迭代替代回调，保留语义；拒绝无所有权缓存。",
+        "requiredSupport": "profile、语义测试、请求重构/恢复测试。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-measured-micro-optimization",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "contentHasFile 直接迭代仍对空/嵌套/tool-role/文件块返回正确结果，early exit 保留。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "请求重构/恢复测试证明模型可见文本和 Session 格式未变。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "为扫描加弱负缓存但只浅冻结根；应拒绝，后代可变会导致错误 negative。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "优化后语义回归：回退到原遍历并保留 profile 记录，重新设计。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "微基准可能不代表真实负载；本机制只要求证据与语义保持，不保证优化在所有环境都有收益。"
+    },
+    {
+      "id": "rationale-simplification-1-decision-record-lifecycle",
+      "title": "记录状态决定权威：archived/implemented/proposed/rejected 不可混用",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/simplification/2026-07-17-one-send-one-turn.md",
+          "start": 1,
+          "end": 45,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/simplification/2026-09-19-config-only-hmr.md",
+          "start": 1,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/proposed/simplification/2026-09-19-prune-stream-visibility-helpers.md",
+          "start": 1,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-06-20-drop-durable-step-boundaries.md",
+          "start": 1,
+          "end": 32,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md",
+          "start": 1,
+          "end": 37,
+          "kind": "history"
+        }
+      ],
+      "problem": "Agent Note 同时承载已实现决定、历史记录、提案和否决。把 proposed 当成已实现、把 rejected 当成待办、或把 archived 的旧机制当成当前权威，会让迁移/简化基于错误前提。",
+      "triggers": [
+        "阅读 Agent Note 作为设计输入时",
+        "准备实施某 Note 的 Proposal 时",
+        "引用 archived Note 的路径/命令/API 时",
+        "发现 Note 与当前代码不一致时"
+      ],
+      "obligations": [
+        "先读 Status 与目录：implemented/archived 是已落地历史（archived 可能被后续决定取代）；proposed 未执行；rejected 是否决理由。",
+        "proposed 的 Acceptance/Risks 只能作为计划，不得宣称已实现或已有自动保证。",
+        "rejected 的正文用于理解反例/代价；不得把 Proposal 当待办，也不得把“What we give up”删掉。",
+        "archived 的具体路径/命令/API 可能过时；引用原则前用当前代码/README 复核。",
+        "当前代码与 Note 冲突时，当前代码是事实状态，Note 是历史/意图；把漂移写进迁移说明。"
+      ],
+      "actors": [
+        "所有读者/作者",
+        "评审者",
+        "迁移作者",
+        "文档维护者"
+      ],
+      "steps": [
+        "读 Note 顶部 Status/目录与相邻 Note 链接。",
+        "区分 Problem/Decision（历史）与 Proposal/Acceptance（计划）与 What we give up（否决代价）。",
+        "对 archived 的具体机制做当前代码/README 复核。",
+        "在迁移文档中引用原则时注明“历史 Note + 当前实现状态”。",
+        "发现 Note 与代码漂移时更新/补 Note，而不是静默按旧 Note 实施。"
+      ],
+      "enforcement": {
+        "mode": "review-and-note-status",
+        "implementation": "目录分层（archived/implemented/proposed/rejected）、Status 字段、Note 链接、评审阅读顺序。",
+        "trust": "目录/Status 是人工维护的元数据；不能自动证明内容与代码一致。",
+        "failure": "把 proposed 当已实现、把 rejected 当待办、按 archived 的旧 API 实施导致启动/构建失败。",
+        "exceptions": "同一 Note 可以部分 supersede 另一 Note；必须读链接和范围说明，不能只看标题/状态。"
+      },
+      "applicability": "适用于使用决策记录（ADR/Agent Note）的仓库。没有记录系统的项目可用 PR/issue 状态替代，但同样要区分已决/提案/否决。",
+      "relationships": [
+        "rationale-simplification-1-simplification-owner-evidence-gate",
+        "rationale-simplification-1-pre-release-cutover-no-aliases",
+        "rationale-simplification-1-documentation-single-owner"
+      ],
+      "migration": {
+        "strategy": "status-first-reading",
+        "implementation": "按目录/Status 读记录，proposed/rejected 不作权威；archived 具体机制复核当前代码。",
+        "requiredSupport": "Note 目录规范、Status 字段、链接维护、代码/文档同步。"
+      },
+      "reference": "references/rationale-simplification-1.md#rationale-simplification-1-decision-record-lifecycle",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "proposed 的 surface 在代码中仍存在，迁移不声称已删除；rejected 的 surface 仍存在且理由被保留。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "archived Note 的旧 CLI 与当前 profile 入口不一致时，以当前 args/profile 为准并记录漂移。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "把 proposed 的 Acceptance 当已实现门禁；应拒绝，必须实际执行后才宣称。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 rejected 的 Proposal 重新排期，却不处理“What we give up”；应拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "误按 archived 旧命令实施导致失败：读当前 CLI/README，更新迁移说明并修正实现。",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "Note 状态是人工维护的，可能滞后于代码；本机制要求把“状态声明”和“当前实现证据”分开，不能只信目录名。"
+    }
+  ]
+}

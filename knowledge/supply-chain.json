@@ -1,0 +1,4131 @@
+{
+  "domain": "supply-chain",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "supply-chain-workspace-topology",
+      "title": "工作区成员、包管理器、构建脚本与 release age 的锚定",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 1,
+          "end": 15,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 275,
+          "end": 275,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 31,
+          "end": 56,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 17,
+          "end": 24,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 57,
+          "end": 105,
+          "kind": "config"
+        },
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 227,
+          "end": 227,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 513,
+          "end": 515,
+          "kind": "test"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 96,
+          "end": 102,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 28,
+          "end": 36,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 1,
+          "end": 281,
+          "kind": "test"
+        }
+      ],
+      "problem": "工作区成员、包管理器版本、安装脚本许可和依赖冷却期分散在多个文件；任一漂移都会让干净安装、发布物或安全检查与本地状态不一致。",
+      "triggers": [
+        "新增/移动 workspace 成员",
+        "新增带生命周期脚本的依赖",
+        "调整 pnpm 版本或 Node 支持范围",
+        "需要豁免 release age",
+        "CI 安装与本地不一致"
+      ],
+      "obligations": [
+        "pnpm-workspace.yaml.packages 是 pnpm 的成员真源；package.json.workspaces 只服务读取它的脚本，两者差异必须是有意的并记录。",
+        "根 packageManager、devDependency pnpm 和 release-age 豁免三处版本必须一致。",
+        "每个安装/构建脚本必须在 allowBuilds 显式写 true 或 false；未列出脚本在 strict 模式下是安装错误。",
+        "release age 的每个豁免必须是精确包版本，不允许用范围或全局关闭；本仓库没有显式 minimumReleaseAge，24h 是 pnpm 11 默认（apps/desktop/packaging/README.md:227、scripts/local-bundle-registry.spec.ts:513-515），迁移到其他 pnpm 主版本必须重验。",
+        "CI 安装必须 --frozen-lockfile；发布安装另用 --ignore-scripts。",
+        "新增成员要同时考虑发布树、workspace 协议、版本家族和许可证扫描。",
+        "Official bundle catalog 必须等于 ON_DEMAND_BUNDLES；每个选中的成员必须非 private 且出现在 release member 索引中；workspaceNames 必须是全部 workspace 名称（而不只是选中包），从而把 repository-owned 的缺失请求判为本地 404 而不是上游重定向。"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "判定成员层级：vendor、packages/group/pkg、native、apps、benchmarks、website、python。",
+        "更新 pnpm-workspace 的 glob；需要时同步 package.json.workspaces 并记录各自消费者。",
+        "审查生命周期脚本，写入 allowBuilds 的 true/false。",
+        "需要固定传递依赖时加 overrides；需要 peer 例外时加 peerDependencyRules。",
+        "运行 pnpm install 更新 lockfile；提交并在干净环境验证 frozen install。",
+        "运行 constraints、package-dependencies 和发布相关 gate。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "pnpm-workspace.yaml 的 allowBuilds/overrides/peerDependencyRules",
+          "readWorkspaceManifests 读取 pnpm-workspace",
+          "constraints 检查发布树与 workspace 协议",
+          "CI frozen install"
+        ],
+        "trust": "安装脚本许可和 release age 由包管理器强制；两份成员清单是否同步、豁免是否仍必要由评审保证。",
+        "failure": "未允许脚本导致安装失败、lockfile 不同步、release-age 阻断、成员只在一份清单导致扫描漏项。",
+        "exceptions": [
+          "benchmarks 与 python/sdk-runtime 只在 pnpm 清单",
+          "native 在 package.json.workspaces 但被 notices 标为 dev-only",
+          "发布安装使用 --ignore-scripts"
+        ]
+      },
+      "applicability": "适用于 pnpm/Node 的 TypeScript monorepo；非 pnpm 目标需映射等价的 workspace、安装脚本许可和冷却期机制。",
+      "relationships": [
+        "supply-chain-workspace-protocol",
+        "supply-chain-node-manager-lock",
+        "supply-chain-vendor-sync",
+        "supply-chain-dependency-updates"
+      ],
+      "migration": {
+        "strategy": "先固定成员与包管理器，再逐项审查安装脚本和冷却豁免，最后接 CI。",
+        "implementation": [
+          "建立单一 workspace 成员清单或明确双清单消费者",
+          "固定 Node/pnpm 并设置 frozen install",
+          "建立 allowBuilds 白名单/拒绝表",
+          "把 release-age 豁免限制为精确版本"
+        ],
+        "requiredSupport": [
+          "包管理器支持 workspace 与安装脚本许可",
+          "CI 缓存与 lockfile",
+          "负责人审查原生构建"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-workspace-topology",
+      "verification": {
+        "positive": [
+          {
+            "check": "干净环境 frozen install 成功",
+            "evidence": "planned"
+          },
+          {
+            "check": "未允许的安装脚本没有执行",
+            "evidence": "planned"
+          },
+          {
+            "check": "constraints/package-dependencies 通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除 allowBuilds 条目后安装应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "使用非精确 release-age 豁免应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把缺失脚本加入 allowBuilds 后安装恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行安装或 gate；strictDepBuilds 默认值和 nodeLinker 行为未独立验证。"
+      },
+      "limitations": "未显式配置 nodeLinker 或 minimumReleaseAge；24h 是 pnpm 11 默认而非仓库字段；strictDepBuilds 默认值来自注释；两份成员清单不是自动同步。"
+    },
+    {
+      "id": "supply-chain-workspace-protocol",
+      "title": "workspace 协议、dsh/vendor 版本家族与 pnpm pack 替换",
+      "sources": [
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 600,
+          "end": 642,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.spec.ts",
+          "start": 35,
+          "end": 105,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 434,
+          "end": 446,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 573,
+          "end": 580,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 490,
+          "end": 500,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 813,
+          "end": 850,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 924,
+          "end": 959,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1008,
+          "end": 1028,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/release/pack.ts",
+          "start": 1,
+          "end": 108,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/bump.ts",
+          "start": 274,
+          "end": 345,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/bump.ts",
+          "start": 350,
+          "end": 416,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 345,
+          "end": 414,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 424,
+          "end": 470,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 40,
+          "end": 100,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/tarball.ts",
+          "start": 14,
+          "end": 57,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/benchmark-npm-resolution.ts",
+          "start": 171,
+          "end": 182,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/benchmark-npm-resolution.ts",
+          "start": 1,
+          "end": 170,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/benchmark-npm-resolution.ts",
+          "start": 183,
+          "end": 553,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 701,
+          "end": 820,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 291,
+          "end": 510,
+          "kind": "test"
+        }
+      ],
+      "problem": "手写 range 与 workspace 实际版本无关；pnpm pack 负责替换 workspace:，DSH family 要求 packed 内部图精确同版；dsh/vendor 两个 release family 与 native 独立工作流又可能版本错位。",
+      "triggers": [
+        "新增/升级 workspace 依赖",
+        "发布 dsh/vendor 新版本",
+        "新增/移动 release 成员",
+        "打包后发现范围或版本不一致",
+        "Desktop/runtime 安装补丁依赖"
+      ],
+      "obligations": [
+        "checkWorkspaceProtocol 覆盖所有 pnpm workspace 成员：@deepseek-ai/dsh* 必须 workspace:*；vendor/native 目标必须 workspace:~；其他 workspace 目标只要求 workspace: 前缀。",
+        "verify-package-dependencies.workspaceRange 只在 apps/*、packages/*/*、vendor/* 的 manifest 上运行；在它覆盖的范围内，所有非 dsh workspace 目标必须 workspace:~。范围外 constraints 仍允许 workspace:^。",
+        "两者是重叠范围上的分层，不是互斥规则；不要声称 workspace:^ 已被仓库全局退役。",
+        "pnpm pack 在发布时把 workspace:* 替换为精确版本、workspace:~ 替换为 ~版本、workspace:^ 替换为 ^版本；Harness 的 release/pack.ts 只调用 pnpm pack，不自己重写 range。",
+        "DSH family 的 validatePackedManifest 要求 packed dependencies/optionalDependencies/peerDependencies 中每个 @deepseek-ai/dsh* 的 range 等于成员版本；vendor family 只校验 identity/payload。",
+        "releaseFamily 只有 dsh 与 vendor：dsh 共享一个版本和 dsh-v tag；vendor 每包保留版本线并整族递增；native 由 node-addon-system-release.yml 单独发布，release:pack --family native 会抛 unknown release family。",
+        "所有 dsh 家族 manifest 的 version 必须等于根 version，包括 private 包；native/system/packages 的版本必须等于 native/system。",
+        "bump 后必须更新 lockfile；tag 由发布工作流在合并后使用，不由 bump 创建。"
+      ],
+      "actors": [
+        "改动作者",
+        "发布负责人",
+        "评审者"
+      ],
+      "steps": [
+        "确认目标是 dsh、vendor 还是 native；native 不走 releaseFamily，不要传 --family native。",
+        "确定 manifest 是否在 apps/packages/vendor；范围内按 dsh=workspace:*、其他=workspace:~ 写，范围外按 constraints 的 workspace: 前缀写。",
+        "新增/移动 release 成员时更新 family glob 与根版本；private DSH 包也要跟随版本。",
+        "运行 bump --dry-run 检查计划，再实际 bump 并审查根、所有 DSH 成员、private 包和 lockfile diff。",
+        "运行 constraints、package-dependencies 与 release:verify；检查 publish order、tag/private/version 条件。",
+        "用 release:pack 打包；确认 pnpm 已替换 workspace:，且 DSH packed 图精确等于成员版本。",
+        "把 dsh/vendor tarball 交给 packed install；若 tarball 仍有 workspace:，检查是否真的经过 pnpm pack。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "checkWorkspaceProtocol 按目标包族强制协议（dsh=* / vendor/native=~ / 其他=workspace: 前缀）",
+          "verify-package-dependencies.workspaceRange 在 apps/packages/vendor 强制 dsh=* / 其他=~",
+          "collectPackageDependencyViolations 校验 workspace range",
+          "release/pack 调用 pnpm pack 并校验 packed identity/payload",
+          "release/families 校验 DSH packed 版本图/tag/version baseline",
+          "release/bump 统一 dsh 版本并更新 lockfile"
+        ],
+        "trust": "协议、版本一致性和 packed identity 可自动拒绝；pnpm 的替换算法是外部实现，tag 操作和 family 语义需要工作流/人工保证。",
+        "failure": "workspace 协议错误、把分层规则误当全局禁令、版本漂移、packed DSH range 不精确、tag 与版本不符、把 native 当 release family。",
+        "exceptions": [
+          "dsh 使用 workspace:*；vendor/native 使用 workspace:~",
+          "普通 workspace 目标在 constraints 允许 workspace: 前缀；只有 dependency gate 范围内被收紧为 ~",
+          "native 不是 releaseFamily；由 node-addon-system-release.yml 单独发布",
+          "private dsh 包版本跟随根但不发布",
+          "apps/desktop、desktop-host、plugin-market-generator 不属于 standard dsh release"
+        ]
+      },
+      "applicability": "适用于多包 workspace 和 npm 发布；单包仓库可只保留版本/lockfile 部分。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-manifest-publication",
+        "supply-chain-release-consumer"
+      ],
+      "migration": {
+        "strategy": "先定义 dsh/vendor 家族与 native 独立通道，再统一版本/协议，最后用 pnpm pack + packed install 验证替换。",
+        "implementation": [
+          "枚举包族和 release 通道",
+          "写分层 workspace 协议检查",
+          "用 bump 统一 dsh 版本并接 lockfile",
+          "用 release:verify/packed install 验证 pnpm 替换"
+        ],
+        "requiredSupport": [
+          "pnpm 的 workspace 替换",
+          "git tag/发布工作流",
+          "release family 清单",
+          "native 独立发布工作流"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-workspace-protocol",
+      "verification": {
+        "positive": [
+          {
+            "check": "constraints 无协议/版本错误",
+            "evidence": "planned"
+          },
+          {
+            "check": "package-dependencies 对 apps/packages/vendor 的 workspace:~ 检查通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "release:verify 的 publish order/tag 覆盖 dsh 或 vendor 成员",
+            "evidence": "planned"
+          },
+          {
+            "check": "pnpm pack 产物中 DSH 内部 range 精确等于成员版本",
+            "evidence": "planned"
+          },
+          {
+            "check": "workspace:^ 在 gate 外的普通成员通过 constraints",
+            "evidence": "planned"
+          },
+          {
+            "check": "release:pack --family native 被拒绝为 unknown release family",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "vendor/native 目标写 workspace:* 应被 constraints 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "apps/packages/vendor 中非 dsh workspace 依赖写 workspace:^ 应被 verify-package-dependencies 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "DSH packed range 为 ^版本应被 family.validatePackedManifest 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "手工改版本导致 private dsh 漏改应被 constraints 发现",
+            "evidence": "planned"
+          },
+          {
+            "check": "tag 不匹配应被 release:verify 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "把 native 当 release family 应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "用 bump 重新生成版本/lockfile，或修正 workspace range 后重跑 gate",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 bump/constraints/package-dependencies/release:verify/pack；pnpm 替换规则来自官方 Workspace 文档，未实际观察 tarball；分层规则来自源码对照。"
+      },
+      "limitations": "未运行任何 gate。pnpm 的 workspace 替换规则未在本地执行验证；releaseFamily 只有 dsh/vendor，native 走独立工作流；dependency gate 仅覆盖 apps/packages/vendor，workspace:^ 在范围外合法；DSH packed 图精确同版是 family 检查，不是 pnpm 本身的要求。 另有 benchmark-only publishWorkspaceRange，不代表 release pack 重写范围。"
+    },
+    {
+      "id": "supply-chain-dependency-faces",
+      "title": "按源码使用事实推导 dependencies/devDependencies/optionalDependencies/peerDependencies",
+      "sources": [
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 59,
+          "end": 592,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 596,
+          "end": 655,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 656,
+          "end": 703,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 704,
+          "end": 823,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 824,
+          "end": 923,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 924,
+          "end": 1038,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/package-dependency-policy.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 208,
+          "end": 250,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 301,
+          "end": 344,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1008,
+          "end": 1038,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1062,
+          "end": 1134,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1,
+          "end": 207,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 345,
+          "end": 999,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1135,
+          "end": 1211,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1241,
+          "end": 1246,
+          "kind": "test"
+        }
+      ],
+      "problem": "把运行时依赖误放 devDependencies/peerDependencies，或把 peer 当普通依赖，会让消费者在安装/加载时才失败；仅靠人工审查无法覆盖大量包和 Host/Client 导出。重复安装时，除了共享 Cordis 和已评审的 duplicate-safe 包，跨副本的 class/instanceof 身份也会失效。",
+      "triggers": [
+        "新增源码 import",
+        "新增 Host/Client 入口",
+        "调整 peer 或 optional 语义",
+        "新增 Host runtime export",
+        "升级依赖版本",
+        "发布前检查",
+        "修红时考虑 --fix"
+      ],
+      "obligations": [
+        "包范围由 discoverPackageDependencyScope 分为 client-only、client-host、configured-host；clientFaceInclude/clientFaceExclude/hostPackages 不得重复、未知或互相冲突；packages/client 自动发现，不得被 include 重复或 exclude 排除；无 dsh.client 声明的包不能被 exclude。",
+        "源码事实：readWorkspacePackageManifests 读取 apps/*、packages/*/*、vendor/*（release 排除 experimental，policy 包含 experimental）；readHostBuildEntries 读取 package-local tsdown 的 host/client 面，跳过 browser platform 与 src/client/；readHostRuntimeUses 递归 Host 入口和生成的 typert.host；readAllSourceUses 扫描 src/**/*.{ts,tsx,mts,cts}。",
+        "先从源码使用事实推导期望段：普通源码使用 devDependencies；Host 运行时使用 dependencies；共享/必需服务 peer-dev；浏览器构建输入 devDependencies；client inject devDependencies；configurationOnlyDevDependencies devDependencies；existing non-Cordis peer devDependencies。",
+        "Host 运行时导入按精确 specifier#export 分类：safeHostDependencyExports 的精确导出可留 dependencies；peerRequiredHostExports 或 requiredServicePeers 的导出/服务必须 peer-dev；duplicateSafePackages 是已评审的重复安装安全集合，其导出不再分类；未分类/未使用/无界/交叉分类/非 workspace specifier 都失败。",
+        "peer-dev 必须恰好是 peerDependencies + devDependencies，range 相同，且不得有 peerDependenciesMeta；其他依赖必须恰好一段，并与期望段一致；workspace 依赖 range 必须符合 workspaceRange（dsh=workspace:*，其他=workspace:~）。",
+        "peerDependenciesMeta 每个键必须有对应 peer，不能有孤儿；根 devDependencies 必须提供 @types/react/@types/react-dom，任何 workspace 包不得声明它们。",
+        "policy 文件是人工评审点：新增 safeHostDependencyExports 默认禁止，必须明确人工评审并在 PR 描述中单列；新增条目会被精确 roster 测试与源码使用检查挑战。",
+        "--fix 只在 policyViolations 为空时修 policy-owned 关系；写前验证整批；修后刷新 lockfile 与 module graph；root type 包不会被 --fix 删除。",
+        "源码使用分类必须覆盖非静态导入形态：lazy require、dynamic import、side-effect import、export * 和重命名导出都算使用。",
+        "生成的 typert.host schema 直接进入 dependencies，且 --fix 不得为此读取或改写 lib；metadata-only typert 导出仍归 devDependencies；manifest 声明 Host Typert export 但 Host program（tsconfig.host）中找不到生成的模块时必须失败，不能当作无使用。",
+        "DefinitelyTyped 提供者只满足被擦除的类型引用；运行时 import 与 JSX 不能由 @types 包满足，包仍须自行声明 react/react-dom。"
+      ],
+      "actors": [
+        "包作者",
+        "Host/Client owner",
+        "policy owner",
+        "评审者"
+      ],
+      "steps": [
+        "判定包 role 与依赖由谁提供：本包、可选、宿主、仅构建/测试。",
+        "对 Host 运行时导入确认是共享服务/共享导出还是普通运行时依赖；查精确 specifier#export 的 policy 分类。",
+        "按期望段只写一段；peer-dev 写两段同 range 且不写 meta；required service 即使无 value import 也 peer-dev。",
+        "新增 Host export/duplicate-safe 包时先改 policy 并取得人工评审；不要用 --fix 绕过未分类。",
+        "运行 package-dependencies；先看错误再决定是否 --fix，并审查修复 diff 与 lockfile/module graph 变化。",
+        "运行 constraints、runtime-closure、packed install；对共享身份边做重复安装/peer 验证。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "readWorkspacePackageManifests + discoverPackageDependencyScope 角色/范围校验",
+          "collectRuntimeSourceExportUses 精确 import/re-export/require/lazy-require/JSX 事实",
+          "readHostBuildEntries 读取 tsdown host/client 面；readHostRuntimeUses 递归 Host 源与生成 typert",
+          "expectedPackageDependencies 推导期望段",
+          "collectHostDependencyExportPolicyViolations 校验 safe/peer/duplicate-safe 分类",
+          "collectPackageDependencyViolations 强制唯一段/peer-dev 形态/workspace range/peerMeta",
+          "collectRootTypePackageViolations 固定根 type 包",
+          "repairPackageDependencyManifest/fixPackageDependencies 只在 policy 通过后修 manifest"
+        ],
+        "trust": "依赖段、workspace range、Host 导出分类和 peer-dev 形态可自动拒绝；policy 条目的语义、duplicate-safe 是否真的安全、真实重复安装的运行时行为仍需人工/集成验证。",
+        "failure": "依赖段错误、peer-dev 缺一段/多 meta、workspace range 错误、孤立 peerMeta、根 type 包重复、Host 导出未分类/未使用/交叉分类、scope 配置重复/未知/冲突。",
+        "exceptions": [
+          "peer-dev 是唯一合法两段形态",
+          "optional peer 需单独策略，不能硬套 peer-dev",
+          "duplicateSafePackages 的完整 runtime surface 被认为可跨副本；其导出不能再进 safe/peer 分类",
+          "configured-host 的 browser build input 不会自动降到 devDependencies",
+          "benchmarks/python/native 不在 WORKSPACE_MANIFEST_GLOBS 内"
+        ]
+      },
+      "applicability": "适用于 TypeScript/Cordis 多包仓库；其他仓库可保留源码事实→期望段、peer-dev 唯一形态和 policy 人工评审，替换 Host 导出分类为实际注入模型。",
+      "relationships": [
+        "supply-chain-workspace-protocol",
+        "supply-chain-optional-deps",
+        "supply-chain-product-use",
+        "supply-chain-install-layout"
+      ],
+      "migration": {
+        "strategy": "先建立包角色/scope 与源码事实提取，再维护 policy 分类，最后接 --fix、重复安装和 packed install 验证。",
+        "implementation": [
+          "实现源码扫描与期望段推导",
+          "为 Host 导出建立 safe/peer-required/duplicate-safe 清单",
+          "把 peer-dev 的唯一形态写进评审规则",
+          "用 --fix 修 manifest 并审查 lockfile/module graph",
+          "用重复安装/共享 Cordis 与 packed install 验证"
+        ],
+        "requiredSupport": [
+          "TypeScript 编译器 API/项目配置",
+          "Host/Client 分层",
+          "policy owner",
+          "重复安装/消费者 fixture"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-dependency-faces",
+      "verification": {
+        "positive": [
+          {
+            "check": "package-dependencies 无错误，policy roster 与源码使用一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "根 type 包只在根 devDependencies，workspace 包不声明",
+            "evidence": "planned"
+          },
+          {
+            "check": "Host 运行时边全部为 safe/peer-required/duplicate-safe 分类",
+            "evidence": "planned"
+          },
+          {
+            "check": "peer-dev 边同时有同 range 的 peer 与 dev，无 peerMeta",
+            "evidence": "planned"
+          },
+          {
+            "check": "共享身份导出在重复安装下仍解析到同一实例",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 Host 运行时包只放 devDependencies 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "给 peer-dev 加 peerDependenciesMeta 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "包内声明 @types/react 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "未分类 Host 导出或 safe/peer 交叉分类应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "duplicate-safe 包再被 safe/peer 分类应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "workspace:^ 在 policy 覆盖包中应被 workspaceRange 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按错误把依赖移到期望段/补 policy 人工评审后恢复",
+            "evidence": "planned"
+          },
+          {
+            "check": "--fix 修 manifest 后 lockfile/module graph 只含预期变化",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 package-dependencies/--fix/重复安装；verify-package-dependencies.ts 1-1038 全读（含此前遗漏的 593-595、701-703），policy 语义与真实运行时行为仍需集成验证；synth 布局不等于真实安装。"
+      },
+      "limitations": "gate 只覆盖 apps/*、packages/*/*、vendor/*；benchmarks/python/native 不在扫描范围。Host tsdown 配置会被 import 求值；不执行真实运行时。duplicateSafePackages 是人工维护清单，不证明任意重复安装安全；--fix 只修 policy-owned 关系，不修 policy 例外。"
+    },
+    {
+      "id": "supply-chain-manifest-publication",
+      "title": "发布 manifest：release member、public/private、experimental/native、files 与 exports",
+      "sources": [
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 28,
+          "end": 36,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 37,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 62,
+          "end": 88,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 180,
+          "end": 250,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 261,
+          "end": 320,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 434,
+          "end": 549,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/publication-payload.ts",
+          "start": 1,
+          "end": 55,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/pack.ts",
+          "start": 22,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 91,
+          "end": 361,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 75,
+          "end": 113,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.spec.ts",
+          "start": 288,
+          "end": 475,
+          "kind": "test"
+        },
+        {
+          "path": "apps/cli/package.json",
+          "start": 5,
+          "end": 7,
+          "kind": "config"
+        },
+        {
+          "path": "apps/cli/package.json",
+          "start": 14,
+          "end": 19,
+          "kind": "config"
+        },
+        {
+          "path": "apps/cli/package.json",
+          "start": 165,
+          "end": 172,
+          "kind": "config"
+        }
+      ],
+      "problem": "发布 manifest 的 private/public、publishConfig、repository、files、exports 任何一项错误都会让 npm 拒绝、发布缺文件或把源码带进 tarball。",
+      "triggers": [
+        "新增公开包",
+        "包从 private 转 public",
+        "新增/移动导出或资源文件",
+        "新增原生包",
+        "打包后发现缺文件/多文件"
+      ],
+      "obligations": [
+        "release member 必须非 private、publishConfig.access=public、repository URL/directory 正确。",
+        "private 包必须 private:true、无 publishConfig；实验/普通 private 规则分别处理。",
+        "public experimental 必须有 publishConfig.access=public；private experimental 必须 private:true 且省略 publishConfig。",
+        "public native 包必须在 5 个 allowlist 中、publishConfig public、版本等于 native/system。",
+        "packages 下 dsh 包必须 type=module、main/types/根入口 exports['.'] 固定、Cordis peer+dev 同 range。checkWorkspaceManifest 只强制根入口，不代表包只能有 `.` 一个 subpath；标准 key set、files 推导和 verify-cordis-config 分别覆盖子路径的部分约束。",
+        "files 必须精确等于 expectedDshPackageFiles 推导结果；app 包使用 appPackageFiles 特例。",
+        "manifest.files 与 packed tarball 都不得含 src/ 或 map；唯一源文件 allowlist 是 node-addon-system 的 src/main.c、flock.c。",
+        "标准 export key set（.、./package.json、./src/*、./client、./types、./typert、./remote、./locale/*.json、./cordis.patch.yml）是文档/评审约束，不是自动 key-set gate。checkWorkspaceManifest 只强制 exports['.'].types/default；expectedDshPackageFiles 会读取 locale/icon 和特定 subpath 来推导 files，但不会拒绝集合外的键；verify-package-meta 只检查 locale/icon 资源，publint 是通用 package lint。新增键必须改 owning document 与 check 并获 owner 确认；在 check 实现前不要声称已自动强制执行。",
+        "expectedDshPackageFiles 的推导必须是精确闭包：manifest.icon 与 exports './icon'/'./search/icon'（string、{import,default} 或数组）贡献图标并按规范化路径去重；locale 只接受 key 以 './locale/' 或 './search/locale/' 开头且以 '.json' 结尾的 export，目标是 string 或 {default:string} 且同样以 .json 结尾；bundle patch 的 string 或 list 无条件贡献，不按包名 allowlist；无关 export、非 JSON、null 或 types-only 目标不得推断文件；缺文件时必须报告期望的 package.json files 集合。",
+        "以 bin 为入口的 public app 包（apps/cli：`dsh` → `lib/bin.js`）不需要根 `.` export；其 exports 只暴露 `./profile-boot`（types + default）、`./lib/*` 与 `./package.json`，files 仅 `lib/*.js` 与 `lib/types/*.d.ts`。"
+      ],
+      "actors": [
+        "包作者",
+        "发布负责人",
+        "评审者"
+      ],
+      "steps": [
+        "选目录并判定 release member/public/private/experimental/native。",
+        "写 private/publishConfig/repository/type/main/types/exports。",
+        "让 files 由 exports/bin/locale/icon/字段推导；必要时加 packageFileExtras 并写理由。",
+        "运行 constraints；构建后运行 package-meta/publint。",
+        "打包并检查 tarball 清单与 files 一致；运行 release:verify-packed-install。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "checkWorkspaceManifest 校验 private/public/publishConfig/repository/type/main/types/exports/files",
+          "expectedDshPackageFiles 推导发布文件",
+          "appPackageFiles 处理 app 特例",
+          "isForbiddenPublicationFile/validateTarballPayload 拒绝 src/map",
+          "release/pack 校验 packed identity/payload"
+        ],
+        "trust": "manifest 字段、files 精确列表和 tarball payload 可自动拒绝；标准 export key set 目前没有自动 allowlist 检查，只能靠评审/文档；发布文件是否‘应该’存在需要作者判断。",
+        "failure": "npm 拒绝 private/public、repository 不匹配、files 缺/多、源码/map 进入 tarball、packed identity 不一致、导出键超出标准集合（仅评审发现）。",
+        "exceptions": [
+          "vendored 包在 checkWorkspaceManifest 中跳过 manifest files 的 source/map 扫描；tarball 仍由 release pack 校验",
+          "app 包有独立 files 列表",
+          "node-addon-system 的 src 白名单",
+          "标准集合外的 export 键（./brand、./worker、./startup、./runner、./protocol 等）是待评审遗留，不是新先例"
+        ]
+      },
+      "applicability": "适用于 npm 发布的 TypeScript 包；非 npm 分发可替换 files/payload 规则，但应保留‘发布物精确清单’思想。",
+      "relationships": [
+        "supply-chain-workspace-protocol",
+        "supply-chain-esm-payload",
+        "supply-chain-packed-install"
+      ],
+      "migration": {
+        "strategy": "先分类，再固定 manifest 字段和 files 推导，最后用 tarball 安装验证。",
+        "implementation": [
+          "建立 release member/private/experimental/native 分类",
+          "让 files 从 manifest 推导并维护少量 extras",
+          "接入 constraints/package-meta/publint",
+          "用 packed install 检查真实清单",
+          "为标准 export key set 增加真正的 allowlist gate（源仓库没有找到）"
+        ],
+        "requiredSupport": [
+          "构建输出布局",
+          "npm pack 语义",
+          "发布文件清单 owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-manifest-publication",
+      "verification": {
+        "positive": [
+          {
+            "check": "constraints 无 manifest 错误",
+            "evidence": "planned"
+          },
+          {
+            "check": "files 与 tarball 清单一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "packed install 可加载入口",
+            "evidence": "planned"
+          },
+          {
+            "check": "tarball 无 src/map",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "private 包带 publishConfig 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "public 包 repository 不匹配应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "files 含 src 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "新增未文档化 export key 目前不会被 constraints 自动拒绝；迁移评审必须显式检查，不能伪造自动证据",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补齐/删除发布文件并更新推导后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未构建/打包；expectedDshPackageFiles 推导是硬编码维护点；标准 export key set 的自动检查在源仓库未找到，不能把文档声明当作已实现 gate。"
+      },
+      "limitations": "files 推导与 extras 是硬编码维护点；没有检查 export 目标文件是否真实存在（publint/package-meta 覆盖部分）；vendor 例外需要与 release 策略对齐；标准 export key set 没有自动 allowlist，新增键靠文档+评审，引用文档时不要声称 gate 会拒绝。checkWorkspaceManifest 只强制根入口 `.`；包可以有多个 subpath，不能把第 5.4 节的根入口检查误读成单入口限制。\n该 spec 只断言 checkWorkspaceManifest 计算的 files 列表，不证明实际 tarball 含这些文件。\n本读取只证明 manifest 文本；未运行 publint 或 pack，不能证明发布产物实际包含这些文件。"
+    },
+    {
+      "id": "supply-chain-package-paths",
+      "title": "包目录层级、文档/TypeScript 路径漂移与 tsconfig alias 生成",
+      "sources": [
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 549,
+          "end": 570,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-paths.ts",
+          "start": 1,
+          "end": 113,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-paths.spec.ts",
+          "start": 1,
+          "end": 73,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/gen-tsconfig-paths.ts",
+          "start": 1,
+          "end": 239,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-tsconfig-paths.spec.ts",
+          "start": 1,
+          "end": 96,
+          "kind": "test"
+        },
+        {
+          "path": "package.json",
+          "start": 100,
+          "end": 160,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.json",
+          "start": 1,
+          "end": 30,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.client.json",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.host.json",
+          "start": 1,
+          "end": 10,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.client.json",
+          "start": 1,
+          "end": 15,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.json",
+          "start": 207,
+          "end": 214,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.json",
+          "start": 333,
+          "end": 365,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.json",
+          "start": 366,
+          "end": 366,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.json",
+          "start": 560,
+          "end": 560,
+          "kind": "config"
+        }
+      ],
+      "problem": "包移动/重命名后，文档、Agent Note、AGENTS 或 TS/tsconfig 仍引用旧路径；或者 alias 只覆盖部分包，源码解析静默落到 lib 产物。",
+      "triggers": [
+        "移动或重命名 packages 下的包",
+        "拆分/合并 group",
+        "删除包",
+        "新增包名与目录名不一致的包",
+        "更新文档/注释中的包路径"
+      ],
+      "obligations": [
+        "包目录必须恰好 packages/<group>/<pkg> 两层；group 不得含 package.json。",
+        "移动包后更新 tsconfig base paths/project references、workspace 依赖、release glob、docs/AGENTS/notes。",
+        "运行 verify-package-paths：只报告缺失且 segment 命中真实包名的引用；glob/占位符/未来包不算。",
+        "持久化历史区域的旧路径由成对、顶格、非嵌套标记保护；标记畸形会重新严格检查。",
+        "gen-tsconfig-paths 只为 name === @deepseek-ai/dsh-<目录名> 且有 src/ 的包生成 alias；名字不一致的包必须手写 alias。",
+        "生成区由 BEGIN/END 标记限定；标记外 hand-written alias 不被覆盖；两个目录声明同一 specifier 会报错。",
+        "生成后必须检查 uncoveredPackages：没有 alias 的包会解析到 lib 产物，属于 gate 失败。",
+        "lib/ 未构建路径在已存在的 depth-two 包根下忽略；vendor/lib/归档 note 排除。",
+        "不得在 tsconfig.base.json 添加 include/files；tsconfig.host.json 与 tsconfig.client.json 必须保持为两个独立 typecheck 单元，迁移时重新评估 moduleResolution=bundler 是否仍适用。",
+        "`@deepseek-ai/dsh-*` 通配把包名映射到其 src；同一 group 内目录名唯一的 dsh 包不需要新增 paths 条目，但聚合 project references 仍必须显式添加。",
+        "生成区固定为 `// BEGIN generated package aliases — pnpm run gen-tsconfig-paths` 到 `// END generated package aliases`；标记内不得手写，标记外才允许带原因注释的手写 alias。",
+        "通配解析是 first-on-disk-wins，前提是包目录名在所有 group 间唯一；新增同名目录会破坏无歧义解析，必须先解决重名再生成。"
+      ],
+      "actors": [
+        "改动作者",
+        "文档 owner",
+        "评审者"
+      ],
+      "steps": [
+        "用 git mv 保留历史；确认目录层级与包名/目录名关系。",
+        "更新 tsconfig 生成区（能生成就运行 gen-tsconfig-paths，否则手写 alias）、references、依赖、发布清单、文档。",
+        "运行 verify-package-paths 与 verify-tsconfig-paths（gen-tsconfig-paths --check）。",
+        "运行 constraints 和构建/发布检查。",
+        "若引用是提案中的未来包，用占位符/明确标注让 gate 跳过；不要把历史区域标记当逃避检查的工具。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "checkHierarchyShape 强制两层结构",
+          "verify-package-paths 扫描文档/TS 的 packages/... 引用并保护合法历史区域",
+          "gen-tsconfig-paths 生成显式 alias、拒绝重复 specifier、检查未覆盖包",
+          "verify-tsconfig-paths = gen-tsconfig-paths --check"
+        ],
+        "trust": "层级、alias 字节和未覆盖包可自动拒绝；引用是否应指向未来包需要作者用占位符表达。",
+        "failure": "group 下出现 package.json、包嵌套过深、文档引用旧包、tsconfig 仍指向旧路径、名字不匹配包没有手写 alias、历史标记畸形。",
+        "exceptions": [
+          "vendor/ 与 lib/ 被排除",
+          "未构建 lib 路径在 depth-two 包根下忽略",
+          "提案/typo 不会被报为 drift",
+          "历史生成区域中的旧路径有意保留"
+        ]
+      },
+      "applicability": "适用于有文档和多包目录的仓库；单包仓库可省略路径漂移 gate。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-manifest-publication"
+      ],
+      "migration": {
+        "strategy": "先固定目录层级，再建立显式 alias 与引用更新清单，最后接路径 gate。",
+        "implementation": [
+          "写层级检查",
+          "把包路径引用纳入文档/TS 扫描",
+          "生成/检查 tsconfig alias",
+          "移动包时更新 tsconfig/发布清单",
+          "在 PR 中运行路径 gate"
+        ],
+        "requiredSupport": [
+          "文档/TS 扫描器",
+          "tsconfig paths 生成/检查",
+          "迁移清单"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-package-paths",
+      "verification": {
+        "positive": [
+          {
+            "check": "verify-package-paths 无 broken refs",
+            "evidence": "planned"
+          },
+          {
+            "check": "verify-tsconfig-paths 通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "所有 @deepseek-ai/dsh- 包都有 alias",
+            "evidence": "planned"
+          },
+          {
+            "check": "历史区域中的旧路径不被 report",
+            "evidence": "planned"
+          },
+          {
+            "check": "constraints 通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把包移到三层目录应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "文档保留旧包路径应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "名字不匹配包没有手写 alias 应被 uncoveredPackages 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "两个目录声明同一 specifier 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "历史标记缺失/行内/重复时旧路径应被 report",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "更新引用/移动目录/补 alias 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；verify-package-paths 1-113、gen-tsconfig-paths 1-239、两个 spec 全读；未单独逐行阅读标记解析实现。"
+      },
+      "limitations": "只覆盖文档/TS 和真实包名 segment；vendor/lib/归档 note 不覆盖；未来包需占位符；alias 生成只覆盖名字等于目录名的 dsh 包。既有补读声明现覆盖 tsconfig.base.json:1-563、host:1-538、client:1-157，不能沿用初始仅头部的读取界限，也不把这些声明当真实 compiler program/declaration merging 验证。\n本域已有 gen-tsconfig-paths.spec.ts:1-96 源码声明，但未运行生成器/spec或对照当前输出；不能认证 paths freshness。"
+    },
+    {
+      "id": "supply-chain-esm-payload",
+      "title": "ESM、exports、publint、NodeNext、顶层 await 与 package-meta",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 6,
+          "end": 6,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 82,
+          "end": 89,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 509,
+          "end": 545,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/publint-all.ts",
+          "start": 1,
+          "end": 245,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-node-next-types.ts",
+          "start": 1,
+          "end": 164,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 1,
+          "end": 110,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 140,
+          "end": 220,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-meta.ts",
+          "start": 1,
+          "end": 285,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "源码测试通过但发布包的 exports/types/相对导入/资源/locale 不可被外部 Node/TypeScript 消费者解析；顶层 await 又会让模块加载异步化并破坏同步 CJS worker 包装。",
+      "triggers": [
+        "新增/修改 exports",
+        "新增构建输出",
+        "新增 locale/icon/资源",
+        "升级 Node/TypeScript",
+        "发布前检查",
+        "新增 bin/worker"
+      ],
+      "obligations": [
+        "ESM：根与 dsh 包 type=module；只支持单个 . 入口；main/types/exports 固定。",
+        "禁止模块作用域 await/for await/await using；仅 bin 源与 shebang 文件排除。",
+        "publint 对 packages/*/* 的发布视图检查 error 和相对 import closure；浏览器格式误报精确过滤。",
+        "NodeNext 对 vendor+packages 的公开声明做临时消费者编译；声明相对导入必须有扩展名。",
+        "package-meta 检查 locale/icon/SVG/资源 exports/files；不读构建输出。",
+        "不要从 tsx 可达路径引入仅 CJS 的包（源文字规则，缺少独立 gate）。"
+      ],
+      "actors": [
+        "包作者",
+        "构建负责人",
+        "评审者"
+      ],
+      "steps": [
+        "写单个 . exports 和类型路径。",
+        "构建后用 publint 检查发布视图；补 files/相对导入。",
+        "用 NodeNext gate 编译公开声明；修扩展名/类型导出。",
+        "运行 package-meta 检查 locale/icon/files。",
+        "运行 no-TLA；把异步工作移入显式函数。",
+        "打包后在临时消费者 import 每个入口、驱动 bin。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "checkWorkspaceManifest 固定 type/main/types/exports",
+          "publint-all 检查发布视图/相对 import closure",
+          "verify-node-next-types 做 NodeNext 声明消费",
+          "verify-no-top-level-await 做 AST 扫描",
+          "verify-package-meta 检查 locale/icon/资源/files"
+        ],
+        "trust": "导出形态、publint error、NodeNext 编译、TLA 可自动拒绝；CJS-only 可达性和真实运行时加载靠构建/测试/评审。",
+        "failure": "publint error、相对 import 目标缺失、NodeNext 类型解析失败、TLA、locale/icon 未暴露、files 缺资源。",
+        "exceptions": [
+          "TLA 仅排除 shebang/bin 源",
+          "publint 只覆盖 packages/*/*",
+          "NodeNext 覆盖 vendor+packages 但不含 apps",
+          "package-meta 只对 dsh SVG 执行官方图形规范"
+        ]
+      },
+      "applicability": "适用于 ESM npm 包；CJS 目标可保留导出/发布视图检查，但 TLA/NodeNext 规则需替换。",
+      "relationships": [
+        "supply-chain-manifest-publication",
+        "supply-chain-optional-deps",
+        "supply-chain-packed-install"
+      ],
+      "migration": {
+        "strategy": "先固定导出形态，再接发布视图/类型消费/资源检查，最后用真实安装验证。",
+        "implementation": [
+          "写单入口 exports/types",
+          "把构建产物纳入 publint 视图",
+          "用 NodeNext 临时消费者编译声明",
+          "扫描 TLA",
+          "检查 locale/icon/files"
+        ],
+        "requiredSupport": [
+          "构建产物",
+          "TypeScript/publint 工具",
+          "locale/icon 资源 owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-esm-payload",
+      "verification": {
+        "positive": [
+          {
+            "check": "publint 无 error/closure",
+            "evidence": "planned"
+          },
+          {
+            "check": "NodeNext 临时消费者编译通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "no-TLA 零命中",
+            "evidence": "planned"
+          },
+          {
+            "check": "package-meta 通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "packed install 入口可加载",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "相对导入缺扩展名应被 NodeNext 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "模块作用域 await 应被 no-TLA 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "locale 未在 exports 暴露应被 package-meta 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修导出/构建/资源后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未构建或运行任何 gate；publint browser 误报规则未逐行阅读；CJS-only 约束没有独立自动检查。"
+      },
+      "limitations": "publint/package-meta 只覆盖 packages/*/*；NodeNext 自己软链 workspace，不证明安装；TLA 不覆盖 apps/vendor。"
+    },
+    {
+      "id": "supply-chain-optional-deps",
+      "title": "可选依赖：静态 value import 必须为零",
+      "sources": [
+        {
+          "path": "scripts/verify-optional-dependency-imports.ts",
+          "start": 1,
+          "end": 213,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/cli/tests/profiles/packed-installation.ts",
+          "start": 130,
+          "end": 190,
+          "kind": "test"
+        }
+      ],
+      "problem": "可选依赖在消费者安装中可能不存在；静态 import 会让缺失从‘能力不可用’升级为整个模块加载失败。",
+      "triggers": [
+        "把依赖加入 optionalDependencies",
+        "把 peer 标记 optional",
+        "新增/修改 import",
+        "发布前检查"
+      ],
+      "obligations": [
+        "optional 定义为 optionalDependencies 或带 peerDependenciesMeta.optional=true 的 peer。",
+        "发布的 packages/apps 源码不得静态加载 optional 依赖；仅 import type/类型命名导入可擦除。",
+        "import defer 仍会解析/链接模块，按加载处理；裸 import/namespace/值命名导入/re-export 都算加载。",
+        "动态 import 只是最后手段；真正需要该包的调用方必须处理缺失。",
+        "两个 compiler face 都要扫描；无法解析的符号按值处理。"
+      ],
+      "actors": [
+        "包作者",
+        "评审者",
+        "消费者测试 owner"
+      ],
+      "steps": [
+        "声明 optional；确认 peer meta 有对应 peer。",
+        "搜索静态 import，优先改 import type 或重构到函数内。",
+        "需要运行时可选时用动态 import 并写降级路径。",
+        "运行 verify-optional-dependency-imports。",
+        "在 packed install 中分别测试安装/不安装 optional 依赖。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "TypeScript bound Program 判断 value/type 绑定",
+          "importLoadsModule/exportLoadsModule 精确判断",
+          "两个 compiler face 扫描",
+          "packed install 的 ignoredOptionalDependencies fixture"
+        ],
+        "trust": "静态加载可自动拒绝；降级路径是否真正可用由测试/评审保证。",
+        "failure": "模块顶层静态加载 optional 包、import defer 被误判、缺少对应 peer 的 meta、打包器内联 optional 依赖。",
+        "exceptions": [
+          "只扫描 packages/*/*/src 与 apps/*/src，vendor 不在内",
+          "动态 import 是最后手段而非默认",
+          "optional peer 的静态导入仍禁止"
+        ]
+      },
+      "applicability": "适用于有可选原生/外部集成的包；没有 optional 依赖的仓库可省略。",
+      "relationships": [
+        "supply-chain-dependency-faces",
+        "supply-chain-esm-payload",
+        "supply-chain-packed-install"
+      ],
+      "migration": {
+        "strategy": "先声明 optional，再消除静态加载，最后用两种消费者验证。",
+        "implementation": [
+          "扫描静态 import",
+          "把类型导入改成 import type",
+          "把运行时使用移到函数/生命周期",
+          "建立缺失/存在两种安装测试"
+        ],
+        "requiredSupport": [
+          "TypeScript 编译器 API",
+          "消费者 fixture",
+          "降级路径 owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-optional-deps",
+      "verification": {
+        "positive": [
+          {
+            "check": "静态扫描零命中",
+            "evidence": "planned"
+          },
+          {
+            "check": "安装 optional 时功能正常",
+            "evidence": "planned"
+          },
+          {
+            "check": "不安装时降级/错误清晰",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "模块顶层 import optional 包应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "删掉 peer 但保留 meta 应被 constraints 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 import type/动态导入并补降级后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；源文件 213 行已读；未验证打包器内联行为。"
+      },
+      "limitations": "只覆盖发布源码，不覆盖 vendor/脚本；动态 import 的风险不在静态扫描内；真实降级需测试。"
+    },
+    {
+      "id": "supply-chain-vendor-sync",
+      "title": "vendored 框架同步、本地修改日志与 manifest 清单",
+      "sources": [
+        {
+          "path": "vendor/README.md",
+          "start": 1,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 15,
+          "end": 57,
+          "kind": "instruction"
+        },
+        {
+          "path": "vendor/README.md",
+          "start": 59,
+          "end": 73,
+          "kind": "history"
+        },
+        {
+          "path": "docs/rescope.md",
+          "start": 18,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "vendor/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 37,
+          "end": 47,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-vendor-manifest.sh",
+          "start": 1,
+          "end": 17,
+          "kind": "implementation"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 5,
+          "end": 33,
+          "kind": "config"
+        }
+      ],
+      "problem": "vendored 源码既承担框架发布又要保留本地修复；直接覆盖会丢修复，长期漂移又让上游同步不可审计。",
+      "triggers": [
+        "升级/同步 vendored 包",
+        "新增 vendored 包",
+        "上游修复与本地修改冲突",
+        "发布 vendored family"
+      ],
+      "obligations": [
+        "vendor/README.md 是目录、npm 名、上游名、版本、repo、commit 的权威清单。",
+        "同步先在上游 workspace 完成；复制 src/bin/README/LICENSE 后逐项重放本地修改。",
+        "每个本地修改必须记录原因、文件、行为差异和测试；上游已修复的条目要删除并更新日志。",
+        "新增包要补 package.json/tsconfig/README 表/release family；带原生脚本要进 allowBuilds。",
+        "同步后更新 lockfile、notices、rescope 映射和翻译配对。",
+        "pre-commit 的 vendor manifest guard 只在 staged 变更命中 vendor/<pkg>/src/** 或 bin.js 时要求同批 stage vendor/README.md；它不校验日志内容，也不覆盖 package.json/tsconfig 等其他 vendor 文件。",
+        "上游 README 要求同步后实际运行 npm run test、pnpm run build，并检查 git diff -U0 vendor/<pkg>；这些是人工步骤，不是自动 gate。"
+      ],
+      "actors": [
+        "vendor owner",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "记录上游 commit/版本。",
+        "复制上游文件，保留本仓库 manifest 字段。",
+        "按本地修改日志逐项重放并 diff。",
+        "更新 README 表和日志。",
+        "stage 改动后运行 bash scripts/check-vendor-manifest.sh（或依赖 pre-commit），再运行 rescope/constraints/tests/build；仓库没有 verify-vendor-manifest 的 package script。",
+        "打包 vendored family 并在临时消费者安装。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "vendor/README.md 清单与同步流程",
+          "lefthook pre-commit vendor manifest guard（staged src/bin.js 必须同时 stage vendor/README.md）",
+          "workspaceGlobs 中 vendor 的发布检查",
+          "release:pack --family vendor",
+          "rescope-vendor:check"
+        ],
+        "trust": "pre-commit guard 只验证 vendor/<pkg>/src/** 或 bin.js 变更时 vendor/README.md 同批 staged；它不校验 README 内容，也不覆盖 package.json/tsconfig 等其他文件。清单完整性、版本/commit 对应关系、本地修改是否仍必要以及上游行为差异都需要人工审查。",
+        "failure": "上游覆盖本地修复、清单版本/目录不匹配、未登记目录、notices 漏项、vendor tarball 不可安装。",
+        "exceptions": [
+          "vendor/AGENTS 说只改构建问题，但 README 记录行为修改；需明确政策",
+          "vendor 在 manifest files 检查中豁免 source/map，但 tarball 仍校验"
+        ]
+      },
+      "applicability": "适用于源码 vendoring 的 monorepo；不 vendoring 的仓库应删除该机制而不是保留空清单。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-vendor-rescope",
+        "supply-chain-vendor-patches",
+        "supply-chain-manifest-publication"
+      ],
+      "migration": {
+        "strategy": "先建立可审计清单和本地修改日志，再固定同步流程，最后接发布验证。",
+        "implementation": [
+          "建立 vendor manifest 表",
+          "逐项记录本地修改/测试",
+          "同步时按清单重放",
+          "接 rescope/notices/release 验证"
+        ],
+        "requiredSupport": [
+          "上游仓库访问",
+          "本地修改 owner",
+          "vendor manifest gate"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-vendor-sync",
+      "verification": {
+        "positive": [
+          {
+            "check": "manifest 表与目录/包名/版本一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "本地修改逐项 diff 为空",
+            "evidence": "planned"
+          },
+          {
+            "check": "vendor tarball 可安装",
+            "evidence": "planned"
+          },
+          {
+            "check": "notices 更新",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "未登记目录应被 manifest gate 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "同步覆盖本地修复应被 diff/评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "恢复本地修改并更新 README 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未同步/运行 gate；vendor/README.md 1-73 全读，check-vendor-manifest.sh 1-17 与 lefthook.yml 5-33 全读；未逐条验证每个本地修改与上游行为差异。"
+      },
+      "limitations": "本地修改日志是自然语言，难自动校验；vendor/AGENTS 与 README 存在张力；pre-commit guard 只检查 README 是否同批 staged，不验证内容；仓库没有 verify-vendor-manifest package script。"
+    },
+    {
+      "id": "supply-chain-vendor-rescope",
+      "title": "vendored 包重命名：token 替换、exact edits 与 post-state 检查",
+      "sources": [
+        {
+          "path": "scripts/rescope-vendor.ts",
+          "start": 1,
+          "end": 661,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/rescope.md",
+          "start": 1,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 88,
+          "end": 89,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "vendored 包复制上游后仍保留上游 scope/name；手工替换容易漏掉导入、注释、JSDoc、manifest、产品 id 或文档，反向恢复也可能丢信息。",
+      "triggers": [
+        "新增/重命名 vendored 包",
+        "同步上游后名字变化",
+        "文档/注释引用旧 scope",
+        "发布前检查"
+      ],
+      "obligations": [
+        "脚本内 RENAMES 与 docs/rescope.md 是 9 个目录/上游名/本地名的映射；两处必须同步。",
+        "无模式运行是 dry-run；--apply 才写；--check 断言 post-state（无残留、exact edits 已落地、postconditions 命中、再次 apply 为 no-op）；--reverse 必须与 --apply/--check 组合。",
+        "通用替换只改被引号或 name: 完整包围的 token，含旧名/subpath；Markdown fenced code 全改，docs/ prose 改，其他 prose 保留历史。",
+        "EXACT_EDITS 覆盖无法 token 化的站点，每个带精确命中次数；命中数不符/移动/重复会让整次运行失败且不写文件。",
+        "GENERIC_SKIPS 保护 schemastery Symbol、cordis preset/product id、cordis/* 事件域、目录名等；不要随意扩大 skip 掩盖残留。",
+        "排除脚本自身、Agent Note、snapshots、docs/rescope、i18n、pnpm-lock、dependency-catalog lock、vendor 上游 README/LICENSE 和非文本扩展。",
+        "apply 后必须 pnpm install、gen-third-party-notices、重新录制双语配对，再跑 check/manifest/constraints/packed install。"
+      ],
+      "actors": [
+        "vendor owner",
+        "评审者"
+      ],
+      "steps": [
+        "在 RENAMES 与 docs/rescope.md 同时新增/更新映射。",
+        "先跑无模式 pnpm run rescope-vendor，检查分类计数和 exact edits。",
+        "新增无法 token 化的站点时补 EXACT_EDITS/POSTCONDITIONS，不要手工改半状态。",
+        "运行 pnpm run rescope-vendor -- --apply（或 tsx scripts/rescope-vendor.ts --apply）。",
+        "按提示 pnpm install、gen-third-party-notices、重新录制双语配对。",
+        "运行 rescope-vendor:check、verify-vendor-manifest、constraints、测试和 packed install。",
+        "回退用 --apply --reverse，再重做 install/notices/pairing；不要只 reverse 一部分。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "RENAMES 与 docs/rescope.md 的 9 项映射",
+          "token 替换 + GENERIC_SKIPS + EXACT_EDITS + POSTCONDITIONS",
+          "--apply/--check/--reverse 与整次失败不写文件",
+          "hygiene 中的 rescope-vendor:check"
+        ],
+        "trust": "残留、exact edit 命中数、postcondition 和幂等性可自动拒绝；产品 id/历史 prose/上游意图是否被正确排除需要评审。",
+        "failure": "旧 scope 残留、过度替换产品 id/文档、映射不同步、exact edit 站点移动、lockfile 意外变化、reverse 半应用。",
+        "exceptions": [
+          "非 docs/ 的 prose 保留历史",
+          "vendor 上游 README/LICENSE 不改",
+          "docs/rescope.md 同时列两名",
+          "--check 不在 ci-static"
+        ]
+      },
+      "applicability": "适用于 vendor 包重命名；不 vendoring 的仓库不需要。",
+      "relationships": [
+        "supply-chain-vendor-sync",
+        "supply-chain-workspace-topology"
+      ],
+      "migration": {
+        "strategy": "先写双射映射与 exact edits，再 dry-run/apply，最后用 post-state check 和消费者验证。",
+        "implementation": [
+          "建立映射表",
+          "实现 apply/reverse/check",
+          "补 exact edits/postconditions",
+          "接 hygiene",
+          "更新文档/lockfile/notices"
+        ],
+        "requiredSupport": [
+          "准确的上游名/本地名映射",
+          "fixture 验证 reverse",
+          "文档 skip 规则"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-vendor-rescope",
+      "verification": {
+        "positive": [
+          {
+            "check": "dry-run 的分类计数符合预期",
+            "evidence": "planned"
+          },
+          {
+            "check": "--apply 后 --check 无残留且 exact edits/postconditions 全落地",
+            "evidence": "planned"
+          },
+          {
+            "check": "manifest/lockfile/notices 一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "反向 apply 后可恢复并再次通过 check",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "旧 scope 的完整 token 导入残留应被 check 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "exact edit 命中数变化/站点移动应让运行失败且不写文件",
+            "evidence": "planned"
+          },
+          {
+            "check": "产品 preset id 被误改应被 GENERIC_SKIPS/fixture 发现",
+            "evidence": "planned"
+          },
+          {
+            "check": "历史 prose 被误改应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按失败 id 修 EXACT_EDITS/skip，或 --apply --reverse 后重做 install/notices/pairing",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 dry-run/apply/reverse/check 或 fixture；全 661 行只做静态阅读。"
+      },
+      "limitations": "未执行任何模式；exact edit 的源码站点未逐条在目标文件验证；reverse 的实际文件结果未观测；非 docs/ prose 的保留策略可能让可执行示例漏改。"
+    },
+    {
+      "id": "supply-chain-vendor-patches",
+      "title": "外部补丁：精确版本、Desktop 分类与发布验证",
+      "sources": [
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 108,
+          "end": 116,
+          "kind": "config"
+        },
+        {
+          "path": "patches/@earendil-works__pi-ai@1.1.0.patch",
+          "start": 1,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/@electron__osx-sign@1.3.3.patch",
+          "start": 1,
+          "end": 26,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/@fortune-sheet__core@1.0.4.patch",
+          "start": 1,
+          "end": 76,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/@fortune-sheet__react@1.0.4.patch",
+          "start": 1,
+          "end": 138,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/@yao-pkg__pkg@6.21.0.patch",
+          "start": 1,
+          "end": 134,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/app-builder-lib@26.17.0.patch",
+          "start": 1,
+          "end": 27,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/exceljs@4.4.0.patch",
+          "start": 1,
+          "end": 806,
+          "kind": "implementation"
+        },
+        {
+          "path": "patches/node-pty@1.2.0-beta.15.patch",
+          "start": 1,
+          "end": 45,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/runtime-patch-policy.ts",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/prepare-runtime-patches.ts",
+          "start": 1,
+          "end": 124,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 261,
+          "end": 265,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/cli/tests/profiles/packed-installation.ts",
+          "start": 130,
+          "end": 190,
+          "kind": "test"
+        }
+      ],
+      "problem": "补丁按精确版本匹配；升级后旧补丁会静默不适用或在消费者/Desktop 安装中失效，导致 workspace 与发布物行为分叉。",
+      "triggers": [
+        "升级被补丁的包",
+        "新增/移除补丁",
+        "Desktop runtime 打包",
+        "发布含补丁依赖的 tarball"
+      ],
+      "obligations": [
+        "每个补丁在 patchedDependencies 中以精确包版本注册；升级后重新生成，不重用旧版本键。",
+        "Desktop 的每个 workspace 补丁都必须在 DESKTOP_RUNTIME_PATCHES 中显式分类为 shared/workspace-only/runtime-only，并写 reason；漏项/过期项直接失败。",
+        "shared 复用根 patch 字节并要求 sha256 等于根 lockfile；runtime-only 使用仓库内独立文件；workspace-only 不进入 Desktop runtime。",
+        "prepareRuntimePatches 只写临时 project，写 allowUnusedPatches:false；依赖 override 单独声明（当前 pi-ai ^1.1.0 -> 1.1.0）。",
+        "verifyRuntimePatches 检查 runtime 依赖存在、staged bytes/hash、lockfile hash、workspace-only 未进入 runtime、解析版本匹配。",
+        "补丁 diff 只含必要修复；补丁可能改 dist/lib 发布文件；消费者安装不一定包含 patches/，要验证实际行为。",
+        "生产不要用 allowUnusedPatches:true；该值只在 packed-install fixture 出现。",
+        "补丁原因/上游 issue/移除版本不是源仓库字段；迁移时应另建 patches/README.md。"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "升级时先跑 frozen install，确认旧 patch 是否仍应用；不要静默复用版本键。",
+        "pnpm patch <pkg>@<version> 修改后 patch-commit；更新 patches/ 与精确 patchedDependencies。",
+        "为 workspace 补丁更新 Desktop policy 的 scope/reason；新增 runtime-only 时给仓库内 path。",
+        "审查 diff，确认只改预期上游发布文件；必要时更新 notices。",
+        "frozen install + 受影响测试；Desktop 打包运行 prepare/verifyRuntimePatches。",
+        "用 packed install/真实消费者验证补丁效果，再发布。",
+        "记录上游修复版本、负责人、验证测试和移除条件。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "pnpm patchedDependencies 精确版本匹配与 frozen install",
+          "DESKTOP_RUNTIME_PATCHES 全量分类 + prepareRuntimePatches",
+          "verifyRuntimePatches 的字节/hash/版本/workspace-only 检查",
+          "packed install/消费者测试",
+          "Desktop 写 allowUnusedPatches:false"
+        ],
+        "trust": "补丁应用、Desktop 分类/哈希和 runtime 进入可自动拒绝；补丁是否仍必要、消费者是否真正得到效果需要测试/评审。",
+        "failure": "升级后补丁不适用、未分类/过期 Desktop 决策、shared hash 不匹配、workspace-only 进入 runtime、消费者安装未带补丁、allowUnusedPatches 静默忽略、补丁夹带无关改动。",
+        "exceptions": [
+          "allowUnusedPatches:true 仅在 packed fixture",
+          "workspace-only 故意不进入 Desktop runtime",
+          "runtime-only 补丁可不在根 patchedDependencies",
+          "补丁不改变许可证但可能改变分发文件"
+        ]
+      },
+      "applicability": "适用于需要 patch 外部依赖的仓库；无 patch 可省略。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-licenses-notices",
+        "supply-chain-packed-install",
+        "supply-chain-python-runtime"
+      ],
+      "migration": {
+        "strategy": "先登记精确版本和 Desktop 范围，再建立重新生成/移除流程，最后用消费者验证。",
+        "implementation": [
+          "为每个 patch 写原因/上游 issue/移除条件",
+          "升级时重新生成",
+          "Desktop policy 分类与 runtime 校验",
+          "在 packed install 中断言补丁效果",
+          "生产禁用 allowUnusedPatches"
+        ],
+        "requiredSupport": [
+          "补丁 owner",
+          "pnpm patch 工作流",
+          "Desktop 打包流程",
+          "消费者 fixture"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-vendor-patches",
+      "verification": {
+        "positive": [
+          {
+            "check": "frozen install 成功且补丁应用",
+            "evidence": "planned"
+          },
+          {
+            "check": "Desktop policy 覆盖全部 workspace patch 且无 stale",
+            "evidence": "planned"
+          },
+          {
+            "check": "prepare/verifyRuntimePatches 的 hash/版本/workspace-only 检查通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "受影响测试与 packed install 通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "升级版本后沿用旧补丁键应失败/报 unused",
+            "evidence": "planned"
+          },
+          {
+            "check": "漏分类或过期 Desktop 决策应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "shared patch hash 不等于根 lockfile 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "workspace-only 包进入 runtime 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "生产 allowUnusedPatches:true 应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新生成 patch/更新版本键/修 policy 后重跑安装与消费者测试",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行安装/patch 应用/Desktop 打包/消费者测试；8 个 patch 按 hunk/关键 diff 阅读，exceljs 未逐行。"
+      },
+      "limitations": "补丁原因与移除条件未记录；补丁可能在消费者安装中失效；allowUnusedPatches 的风险未被自动检查；Desktop reason 不是完整 patch 意图。"
+    },
+    {
+      "id": "supply-chain-licenses-notices",
+      "title": "许可证策略、第三方 notices 生成与分发披露",
+      "sources": [
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 1,
+          "end": 99,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 100,
+          "end": 424,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 425,
+          "end": 545,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 549,
+          "end": 628,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 632,
+          "end": 706,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 721,
+          "end": 870,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.spec.ts",
+          "start": 1,
+          "end": 471,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-dsh-package-licenses.ts",
+          "start": 1,
+          "end": 89,
+          "kind": "implementation"
+        },
+        {
+          "path": "LICENSE",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "start": 1,
+          "end": 304,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/gen-third-party-notices.ts",
+          "start": 741,
+          "end": 745,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "依赖/版本/vendored/patch/Python 变化后 notices 过期，或 runtime 依赖出现未批准的许可证，会造成披露缺失/合规风险。",
+      "triggers": [
+        "新增/升级/删除依赖",
+        "同步 vendored 包",
+        "新增/移除 patch",
+        "新增 DSH/Python 包",
+        "发布前检查"
+      ],
+      "obligations": [
+        "notices 必须由生成器从 pnpm workspace manifests、vendor README、python/*/pyproject.toml、primary-runtime lock、patch 列表和 browser externals 生成。",
+        "workspace manifest 集合由 pnpm-workspace 派生且至少 100 个；路径统一为 /；少于阈值直接失败。",
+        "vendor 目录是必须披露的集合：每个有 package.json 的 vendor 目录必须有表行，表行必须对应目录，且所有 vendored license 必须 MIT。",
+        "Python 直接依赖和 primary-runtime 的 pythonPackages 都必须出现在 PYTHON_METADATA；未知/冲突/重复名称直接失败。",
+        "runtime 包许可证必须通过 fail-closed 的 permissive 集合（MIT/MIT-CMU/ISC/BSD-2/BSD-3/Apache-2.0/0BSD/Unlicense/CC0/BlueOak/Python-2.0/PSF-2.0）；OR 一支、AND 全支，未知/exception/失败一律 false。",
+        "非 permissive runtime 只允许精确 owner 授权：@anthropic-ai/claude-agent-sdk 或 @deepseek-ai/libreoffice-kit* 且 MPL-2.0；授权不把条款重分类为 permissive。",
+        "dev-only 非 permissive 只生成说明，不自动获得分发许可；DEV_ONLY_AREAS 为根、test-support、test-support/client-runtime、website、native。",
+        "所有 @deepseek-ai/dsh* 包 license 必须 MIT；根 LICENSE 是 MIT。",
+        "--check 比较提交字节；verify-third-party-notices 是 --check；spec/test lane 断言 freshness 与输入分支。",
+        "生成器只披露直接依赖；完整 npm 闭包在 pnpm-lock，Python 闭包在 python/sdk/uv.lock；不做法律审计。",
+        "“complete notices” 只是生成器 JSDoc 的措辞（scripts/gen-third-party-notices.ts:742 “Render the complete notices document”），不是完整传递闭包 license/NOTICE 汇编；当前 THIRD_PARTY_NOTICES.md 明写 direct dependencies（第 8 行），完整 npm 闭包只指向 lock（第 10 行），不包含逐包 license 正文；--check 只验证生成字节，不验证法律完整性。"
+      ],
+      "actors": [
+        "改动作者",
+        "license owner",
+        "评审者"
+      ],
+      "steps": [
+        "更新依赖/版本/vendor/Python/patch。",
+        "pnpm install（生成器读 installed store），运行 gen-third-party-notices。",
+        "审查 diff：包名/版本/许可证/归属/vendored upstream/Python/patch。",
+        "运行 verify-third-party-notices 与 verify-dsh-package-licenses。",
+        "新许可证先看 isPermissive；runtime 非 permissive 需精确 owner 授权或替换依赖。",
+        "发布前检查 tarball 的 LICENSE/notice 文件。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "gen-third-party-notices 多输入生成/--check",
+          "assertRuntimeLicenses fail-closed + 精确 owner 授权",
+          "vendor 表/目录/MIT 一致性检查",
+          "Python metadata/lock 完整性检查",
+          "verify-dsh-package-licenses",
+          "gen-third-party-notices.spec.ts 在 test lane"
+        ],
+        "trust": "生成字节、vendored/Python 输入、runtime permissive 和 DSH license 字段可自动拒绝；许可证兼容性/归属正确性/法律义务不能自动证明。",
+        "failure": "notices stale、DSH license 非 MIT、vendored 表/目录/MIT 不一致、Python metadata 缺失、runtime 非 permissive、browser 包未声明、license/repo 无法解析。",
+        "exceptions": [
+          "dev-only 非 permissive 只说明",
+          "native 是 dev-only 但可能有实际分发二进制",
+          "Claude SDK/LibreOffice 精确身份授权",
+          "生成器不读 wheel/不做法律判断"
+        ]
+      },
+      "applicability": "适用于 npm + Python/vendored/patch 的仓库；纯 npm 仓库可裁剪 Python 段。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-vendor-sync",
+        "supply-chain-vendor-patches",
+        "supply-chain-python-runtime"
+      ],
+      "migration": {
+        "strategy": "先固定输入和分层，再生成/检查，最后人工审法律义务。",
+        "implementation": [
+          "列出所有依赖来源",
+          "实现生成器与 --check",
+          "把 license 检查接 lane",
+          "为 vendored/Python/特殊 SDK 建披露段"
+        ],
+        "requiredSupport": [
+          "已安装 store",
+          "Python lock/pyproject",
+          "license owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-licenses-notices",
+      "verification": {
+        "positive": [
+          {
+            "check": "verify-third-party-notices 通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "所有 DSH 包 MIT",
+            "evidence": "planned"
+          },
+          {
+            "check": "notices 包含 vendored/Python/patch/Claude/LibreOffice",
+            "evidence": "planned"
+          },
+          {
+            "check": "permissive SPDX OR/AND 分支符合策略",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删依赖但不重生成 notices 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "DSH 包非 MIT 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "vendor 目录无表行或非 MIT 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "Python 未知 distribution 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "runtime 非 permissive 且无 owner 授权应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "browser 包无 workspace 声明应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重新生成 notices/补 metadata/替换依赖或记录 owner 授权后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行生成器/测试；generator 870 行分段全读，spec 1-471 全读，THIRD_PARTY_NOTICES.md 1-304 全读；未运行 --check，且全读不等于法律审计。"
+      },
+      "limitations": "license 字段可能错误；生成器只披露直接依赖；当前 THIRD_PARTY_NOTICES.md 不含完整传递闭包的逐包 license/NOTICE 正文，不能称为完整法律 notices；“complete notices document” 只是 render JSDoc 的措辞；native 的 dev-only 分层可能漏掉实际分发；permissive 检查是仓库策略，不是法律意见；未运行生成器。"
+    },
+    {
+      "id": "supply-chain-runtime-closure",
+      "title": "可执行部署 manifest 的运行时闭包（preset 插件与 workspace peer）",
+      "sources": [
+        {
+          "path": "scripts/verify-runtime-closure.ts",
+          "start": 1,
+          "end": 130,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-runtime-closure.ts",
+          "start": 131,
+          "end": 237,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "单可执行/Python 部署的 manifest 缺少某个 shipped preset 插件或必需 workspace peer 时，只有到 Cordis 加载时才失败。",
+      "triggers": [
+        "新增/重命名 agent preset",
+        "新增 runtime 可达插件",
+        "改变 workspace peer 的 optional 性",
+        "发布部署产物"
+      ],
+      "obligations": [
+        "runtime manifest 的 dependencies 必须包含每个 active preset plugin（workspace:）。",
+        "沿 runtime manifest 可达的 workspace 包，非 optional workspace peer 必须被 runtime manifest 直接以 workspace: 提供。",
+        "preset 为空、platforms 为空直接失败；平台 disabled 只识别简单 process.platform 比较。",
+        "gate 通过后用 packed install 驱动真实入口。",
+        "检查按每个 shipped target 运行：linux-*→linux、macos-*→darwin、win-*→win32；未知 target 直接失败；每个 target 的每个 preset 的 active 插件都必须在 runtime manifest dependencies 中以 workspace: 出现，错误同时报告 preset->plugin 与 target 集合。",
+        "active 插件遍历要进入 group config 子项，并跳过 boolean 或简单 process.platform 比较的 disabled；裸 specifier 提取忽略相对/绝对/URL，保留 @scope/name；workspace 闭包清点 packages/*/*/package.json 与 vendor/*/package.json，错误链渲染 runtime -> ... -> package。"
+      ],
+      "actors": [
+        "runtime owner",
+        "preset owner",
+        "发布负责人"
+      ],
+      "steps": [
+        "定位 runtime manifest 与 platforms。",
+        "把缺失插件/peer 加入 runtime dependencies（workspace:）。",
+        "检查平台 disabled 条件。",
+        "运行 verify-runtime-closure。",
+        "打包并在临时消费者驱动 CLI/preset。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "verify-runtime-closure 读取 runtime manifest/platforms/presets",
+          "沿 workspace dependencies/optionalDependencies 遍历",
+          "非 optional peer 缺失报错"
+        ],
+        "trust": "manifest/preset/peer 关系可自动检查；运行时实际加载、平台二进制和 Python import 仍需 packed install/测试。",
+        "failure": "preset 插件缺失、peer 缺失、平台条件误判、preset/platform 列表为空。",
+        "exceptions": [
+          "只覆盖 python/sdk-runtime，不是全仓 production graph",
+          "optional peer 跳过",
+          "平台 disabled 只支持简单表达式"
+        ]
+      },
+      "applicability": "适用于单可执行/离线部署；没有部署 manifest 的仓库可省略。",
+      "relationships": [
+        "supply-chain-dependency-faces",
+        "supply-chain-packed-install",
+        "supply-chain-default-product-isolation",
+        "supply-chain-python-runtime"
+      ],
+      "migration": {
+        "strategy": "先建立部署 manifest 与 preset 清单，再接闭包 gate，最后用真实入口验证。",
+        "implementation": [
+          "列出 runtime 直接依赖",
+          "把 preset active plugins 以 workspace: 声明",
+          "补必需 peer",
+          "接 gate 与 packed install"
+        ],
+        "requiredSupport": [
+          "runtime manifest/platform 清单",
+          "preset owner",
+          "packed install fixture"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-runtime-closure",
+      "verification": {
+        "positive": [
+          {
+            "check": "gate 无 failure",
+            "evidence": "planned"
+          },
+          {
+            "check": "packed install 驱动入口并加载 presets",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "删除 preset 插件依赖应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "非 optional peer 缺失应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 runtime dependencies 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；只读 1-130，未逐行读辅助函数；不验证 Python 实际 import。"
+      },
+      "limitations": "只覆盖 runtime manifest 可达的 workspace 包；不检查 devDependency 泄漏；平台条件识别有限。"
+    },
+    {
+      "id": "supply-chain-install-layout",
+      "title": "两个不兼容 DSH release 的 npm 物理安装布局",
+      "sources": [
+        {
+          "path": "scripts/verify-npm-install-layout.ts",
+          "start": 1,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 80,
+          "end": 88,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/verify-npm-install-layout.ts",
+          "start": 129,
+          "end": 217,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "两个不兼容的 DSH 版本同时安装时，npm 的 hoisting 可能把内部边解析到错误版本，或复制多份 Cordis，导致运行时混用。",
+      "triggers": [
+        "发布新 DSH 版本",
+        "新增 DSH 包/内部依赖边",
+        "改变 Cordis peer/依赖形态",
+        "release dependency job"
+      ],
+      "obligations": [
+        "用合成 registry 构造两个 DSH 版本（0.1.0 嵌套 alias、0.2.0 根），外部依赖不变。",
+        "断言内部 DSH 边解析到同一版本、两个版本包集合相同、只有一个根 Cordis、React 不进入 DSH-only 消费者。",
+        "optional/optional peer 缺失允许；普通依赖/peer 缺失报错。",
+        "解析预算为 packagesPerVersion × internalEdges ≤ 875000；超出需测量并改常量。",
+        "archiveRequests 必须为 0（metadata-only 解析）。",
+        "assertDualDshInstallLayout 还断言恰好一份 @deepseek-ai/cordis 位于 node_modules/@deepseek-ai/cordis；两个 DSH release 共享这一份，且各自内部 DSH 边解析到自己版本。",
+        "该证据是合成 registry/metadata-only 解析，不是真实安装：它不证明 tarball、bin、exports 或 npm 缓存行为。"
+      ],
+      "actors": [
+        "发布负责人",
+        "依赖图 owner",
+        "评审者"
+      ],
+      "steps": [
+        "运行 verify-npm-install-layout。",
+        "检查两个版本/内部边/预算输出。",
+        "若新增 DSH 包/边，评估预算。",
+        "再运行 packed install 验证真实 tarball。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "verify-npm-install-layout 合成双版本 registry/npm 解析",
+          "assertDualDshInstallLayout 校验放置/边/Cordis/React",
+          "assertResolutionWorkBudget 限制图规模",
+          "release.yml dependency job 运行",
+          "assertDualDshInstallLayout 检查 exactly one shared Cordis"
+        ],
+        "trust": "布局/边/预算可自动拒绝；npm 版本行为和真实 tarball 内容不在该 gate 内。",
+        "failure": "内部边解析到另一版本、包集合不对称、多份 Cordis、React 进入消费者、超预算。",
+        "exceptions": [
+          "metadata-only，不下载 archive",
+          "optional peer 可缺",
+          "React 是浏览器构建输入，不是 DSH-only 消费者依赖"
+        ]
+      },
+      "applicability": "适用于多 release 共存的 npm 包；单版本仓库可省略。",
+      "relationships": [
+        "supply-chain-workspace-protocol",
+        "supply-chain-packed-install",
+        "supply-chain-release-consumer"
+      ],
+      "migration": {
+        "strategy": "先固定合成双版本测试，再设预算，最后与真实 packed install 组合。",
+        "implementation": [
+          "实现合成 registry",
+          "断言内部边/共享 Cordis/包集合",
+          "设解析预算",
+          "接 release dependency job"
+        ],
+        "requiredSupport": [
+          "npm 解析器/registry 索引",
+          "版本基线",
+          "预算测量数据"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-install-layout",
+      "verification": {
+        "positive": [
+          {
+            "check": "gate 输出两个版本/内部边/预算且无错误",
+            "evidence": "planned"
+          },
+          {
+            "check": "恰好一份 Cordis 位于根 node_modules",
+            "evidence": "planned"
+          },
+          {
+            "check": "packed install 通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "内部边指向另一版本应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "出现两份 Cordis 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "超预算应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修依赖图/预算后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；275 行已读；共享 Cordis 是 metadata-only 断言，不是真实安装证据。"
+      },
+      "limitations": "合成 registry 不等于真实 registry；不验证 tarball/bin/exports；预算常量依赖测量主机；共享 Cordis 只是 lockfile 布局断言。"
+    },
+    {
+      "id": "supply-chain-packed-install",
+      "title": "Packed tarball：pnpm 替换、真实安装与发布边界",
+      "sources": [
+        {
+          "path": "scripts/release/pack.ts",
+          "start": 1,
+          "end": 108,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 40,
+          "end": 100,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify-packed-install.ts",
+          "start": 1,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/installed-product-isolation.ts",
+          "start": 18,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/publish.ts",
+          "start": 1,
+          "end": 235,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 404,
+          "end": 470,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/tarball.ts",
+          "start": 14,
+          "end": 57,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 282,
+          "end": 290,
+          "kind": "test"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 1,
+          "end": 180,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-publish.yml",
+          "start": 1,
+          "end": 131,
+          "kind": "config"
+        },
+        {
+          "path": "apps/cli/tests/profiles/packed-installation.ts",
+          "start": 1,
+          "end": 129,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 1,
+          "end": 387,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 471,
+          "end": 700,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 701,
+          "end": 820,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 1,
+          "end": 281,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 291,
+          "end": 510,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 518,
+          "end": 559,
+          "kind": "test"
+        }
+      ],
+      "problem": "workspace 构建/测试通过，但 tarball 缺文件、workspace: 未替换、安装布局错误、entry 无法启动或 registry 已有不同内容；发布步骤若重新 build 还会让上传字节与验证字节不一致。",
+      "triggers": [
+        "发布新版本",
+        "修改 files/exports/bin",
+        "新增/移除 optional 依赖",
+        "registry 已有同版本",
+        "发布失败恢复"
+      ],
+      "obligations": [
+        "pack 是无凭据发布边界：同一 commit 产出全部 tarball，写 publish-order，校验 payload/packed identity。",
+        "release/pack 调用 pnpm pack；pnpm 负责 workspace:* -> 精确版本、workspace:~ -> ~版本、workspace:^ -> ^版本；Harness 不自己重写。",
+        "DSH family 的 packed DSH 依赖 range 必须精确等于成员版本；vendor family 只校验 identity/payload。",
+        "发布前 verify：publish order 完整、成员非 private、ref 是 family tag、tag 匹配版本。",
+        "packed install 必须在仓库外临时消费者安装 file: tarball，驱动 entry，检查 optional 缺失/存在和实验包隔离。",
+        "发布只使用已验证 tarball 目录；publish job 不重新 build；release-publish 的 pack job 会从当前 tree 重新构建。",
+        "registry 已存在同版本时比较 integrity：相同跳过，不同失败；不要覆盖。",
+        "dsh 只上传 dist/npm；vendor 由独立 vendor workflow 发布；vendor/landlock tarball 可仅用于 dsh 验证。",
+        "The installed test tree must be checked with realpath containment, including dangling .bin shims, and workspace dependency links must be captured without following targets and asserted byte-identical before/after.",
+        "The installed child environment strips credential-like variables, proxy settings, NODE_OPTIONS and NODE_PATH, pins harness home/agents home/telemetry/CI, and runs package operations with an explicit timeout plus timedOut/signal/exit-code assertions.",
+        "An idle composition profile must exclude platform-native packages and test-only workspace dependencies; the fixture is a Web-test precondition, not evidence of a real consumer publish or install.",
+        "本地 on-demand bundle registry 的 catalog 根必须非空、互不重复、是 workspace 成员且为公开 release member；闭包沿 dependencies/optionalDependencies/必需 peerDependencies 递归，optional peer 跳过；必需边指向本机不兼容的成员时直接失败并给出依赖路径，可选边保留在 foreignTargets 让 pnpm 读取元数据并自行跳过。",
+        "打包产物必须包含声明的 main 与所有 dsh.bundle.patch，且必须是公开 release member；声明的 main 文件或任一 dsh.bundle.patch 缺失、残留 workspace:/file:/link:/portal: 范围、或本地提供的依赖版本不满足 packed 范围（semver includePrerelease）都使打包失败。",
+        "registry 只绑定 127.0.0.1，并为每次运行生成新命名空间：只接受 GET/HEAD（其它 405）；格式错误、越出命名空间、路径穿越以及 repository-owned 但不在闭包内的包返回 404；仅非 repository-owned 的包重定向到上游（302，保留路径）；tarball 返回归档字节且 HEAD 无 body；packument 的 dist-tags 至少含 latest，time 等于 packedAt；未知版本 404；close 后停止监听，新连接失败。",
+        "bundle-registry.json 是完成标记：schemaVersion 1，含 buildId、source{commit,dirty,dshVersion}、entries、workspaceNames 与按名排序的 packages{name,version,file,bytes,integrity}；只在完整成功后以 0600 写入。",
+        "调用 pnpm 时仅当 npm_execpath 是 pnpm 的 JS entrypoint（路径含 pnpm 且以 .js/.mjs/.cjs 结尾）才直接使用，否则回退到 workspace pnpm 命令，避免把 npm/yarn 的生命周期变量当成 pnpm。",
+        "同版本重建必须能通过保留的 store 安装新 tarball；pnpm 11 用 minimumReleaseAgeExclude 记录本地包而不是伪造发布时间；同版本新 URL 触发 ERR_PNPM_TARBALL_URL_MISMATCH 时，恢复步骤是 pnpm clean --lockfile 后重装。"
+      ],
+      "actors": [
+        "发布负责人",
+        "pack owner",
+        "registry owner",
+        "评审者"
+      ],
+      "steps": [
+        "build 发布 profile。",
+        "release:pack --family dsh|vendor 生成 tarball/publish-order；确认 pnpm 已替换 workspace:。",
+        "把 vendor/landlock tarball 作为额外 --from 传给 dsh packed install。",
+        "release:verify-packed-install 安装并驱动 entry。",
+        "发布工作流 pack job 重新构建/验证/上传；publish job 下载后不再 build。",
+        "发布后核对 integrity；坏包 deprecate。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "release/pack 调用 pnpm pack + payload/identity 校验",
+          "DSH family packed 版本图检查",
+          "release/verify 的 order/tag/private 检查",
+          "release/verify-packed-install 临时消费者安装/entry/隔离",
+          "release/publish registry integrity/重试",
+          "release-publish 只上传 dist/npm"
+        ],
+        "trust": "tarball 安装/entry/隔离/DSH 精确图/integrity 可自动拒绝；tag/环境/registry 权限依赖工作流和人工操作。",
+        "failure": "缺文件、entry 启动失败、optional 缺失未降级、实验包泄漏、workspace 协议残留、DSH range 不精确、registry integrity 不同、发布重新 build。",
+        "exceptions": [
+          "release.yml packed install 不安装部分平台 native 包",
+          "vendor tarball 在 dsh 发布中仅验证",
+          "apps/desktop 不走 npm",
+          "vendor 由独立 workflow 发布"
+        ]
+      },
+      "applicability": "适用于 npm 发布；非 npm 分发可复用“验证字节与发布字节同一”的思想。",
+      "relationships": [
+        "supply-chain-manifest-publication",
+        "supply-chain-install-layout",
+        "supply-chain-release-consumer"
+      ],
+      "migration": {
+        "strategy": "先分离 verify/pack/publish，再用真实临时消费者验证，最后接 registry integrity。",
+        "implementation": [
+          "实现无凭据 pack",
+          "依赖 pnpm 的 workspace 替换并校验 DSH 图",
+          "实现临时消费者安装/entry 检查",
+          "把 vendor/landlock 作为验证输入",
+          "发布只上传已验证目录",
+          "接 integrity"
+        ],
+        "requiredSupport": [
+          "tarball fixture",
+          "npm cache 隔离",
+          "registry 访问/凭据"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-packed-install",
+      "verification": {
+        "positive": [
+          {
+            "check": "packed install 零错误",
+            "evidence": "planned"
+          },
+          {
+            "check": "entry/bin 可运行",
+            "evidence": "planned"
+          },
+          {
+            "check": "optional 两种路径通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "DSH packed 依赖 range 精确等于成员版本",
+            "evidence": "planned"
+          },
+          {
+            "check": "registry integrity 一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "tarball 缺 entry 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "实验包进入安装图应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "workspace: 残留应失败或暴露非 pnpm pack 产物",
+            "evidence": "planned"
+          },
+          {
+            "check": "DSH packed range 为 ^版本应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "registry 已有不同内容应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修 files/依赖/构建后重新 pack；已发布版本只能 deprecate/发新版",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未发布/运行；pack 1-108、publish 1-235、verify-packed 1-126 全读；pnpm 替换规则来自官方文档，未实际观察 tarball。"
+      },
+      "limitations": "平台 native 包覆盖不全；publish 的 registry 重试/partial 状态只读源码；发布环境的 reviewer/token 远端配置未验证；pnpm pack 替换未本地执行。；This fixture proves packing and relocation isolation for the test lane only. It does not prove registry publication, real consumer installation or platform installation parity.\n本地 registry 是开发传输层，不改发布路径；测试使用合成 tarball 与本地 pnpm，不证明打包应用内 Plugin Manager 的交互，也不证明真实 npm registry 的行为。",
+      "notes": [
+        "源",
+        "码",
+        "与",
+        " ",
+        "s",
+        "p",
+        "e",
+        "c",
+        " ",
+        "审",
+        "阅",
+        "，",
+        "未",
+        "执",
+        "行",
+        " ",
+        "p",
+        "n",
+        "p",
+        "m",
+        "、",
+        "r",
+        "e",
+        "g",
+        "i",
+        "s",
+        "t",
+        "r",
+        "y",
+        " ",
+        "或",
+        "安",
+        "装",
+        "。"
+      ]
+    },
+    {
+      "id": "supply-chain-dependency-catalog",
+      "title": "消费者依赖目录：记录并校验 @deepseek-ai/dsh@latest 的 npm 解析树",
+      "sources": [
+        {
+          "path": "scripts/gen-dependency-catalog.ts",
+          "start": 1,
+          "end": 180,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-dependency-catalog.ts",
+          "start": 180,
+          "end": 304,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 100,
+          "end": 160,
+          "kind": "config"
+        }
+      ],
+      "problem": "文档/发布说明中的消费者依赖树与真实 npm 解析脱节；手工维护版本表会过期，且 workspace lock 不能代表外部消费者看到的 hoisted 树。",
+      "triggers": [
+        "更新 dsh 发布版本",
+        "依赖升级",
+        "文档依赖目录刷新",
+        "检查公开消费者解析"
+      ],
+      "obligations": [
+        "记录 npm lockfile v3（消费者只依赖 @deepseek-ai/dsh@latest），所有包来自公共 registry、无 link、hoisted。",
+        "目录去重为 name+version，保留安装位置/optional/peer/os/cpu/libc。",
+        "--check 逐字节比较生成的 docs/dependency-catalog.json；--refresh 才访问 npm 并重建记录。",
+        "这不是 workspace 版本一致性 gate；版本统一用 constraints/package-dependencies。"
+      ],
+      "actors": [
+        "文档 owner",
+        "发布负责人",
+        "评审者"
+      ],
+      "steps": [
+        "需要刷新时在隔离环境运行 --refresh。",
+        "审查 lock/metadata：公共 registry、hoisted、无 link。",
+        "重生成目录并运行 --check。",
+        "在 PR 中只跑 --check，不在离线 lane 跑 --refresh。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "collectDependencies 校验 lockfile v3/公共 registry/唯一消费者依赖/hoisted",
+          "deduplicateDependencies 合并版本保留安装信息",
+          "--check 字节比较",
+          "--refresh 临时 npm 安装"
+        ],
+        "trust": "目录字节和记录结构可自动校验；记录是否代表当前发布/registry 状态需要刷新与评审。",
+        "failure": "lockfile 非 v3、私有 registry/link、消费者声明多余依赖、目录 stale、metadata 不匹配。",
+        "exceptions": [
+          "--refresh 需要网络/外部 npm",
+          "--check 离线只读记录",
+          "换环境会产生 capturedAt/npm/node metadata diff"
+        ]
+      },
+      "applicability": "适用于需要公开消费者依赖目录的项目；不需要可删除。",
+      "relationships": [
+        "supply-chain-dependency-updates",
+        "supply-chain-release-consumer"
+      ],
+      "migration": {
+        "strategy": "先固定记录输入与隔离 npm 环境，再生成/检查，最后把 refresh 作为显式维护操作。",
+        "implementation": [
+          "实现 lock 校验/去重",
+          "隔离 npm 配置/cache",
+          "把 --check 接 doc lane",
+          "定期 refresh 并审查 diff"
+        ],
+        "requiredSupport": [
+          "公共 npm 访问",
+          "隔离 npm 环境",
+          "文档目录 owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-dependency-catalog",
+      "verification": {
+        "positive": [
+          {
+            "check": "verify-dependency-catalog 输出 matches",
+            "evidence": "planned"
+          },
+          {
+            "check": "目录 diff 只含预期版本/平台变化",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "私有 registry/link 记录应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "stale 目录应被 --check 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "重生成/必要时 refresh 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；304 行读了 1-180、180-304 的关键部分；未逐行核对 docs JSON。"
+      },
+      "limitations": "不验证 tarball 可安装/入口；只反映记录时点的 npm 解析；refresh 依赖网络和 registry。"
+    },
+    {
+      "id": "supply-chain-product-use",
+      "title": "每个维护包必须有默认/可选产品角色或显式政策",
+      "sources": [
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 1,
+          "end": 100,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 100,
+          "end": 317,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/product-package-policy.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 364,
+          "end": 380,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "仓库里存在没有任何产品装配可达的包，或包已经默认可达但政策仍声称 optional；前者是死代码/发布负担，后者是过期规则。",
+      "triggers": [
+        "新增非实验包",
+        "包从默认组合移除",
+        "调整 profile/optional bundle",
+        "调整包角色政策",
+        "发布前检查"
+      ],
+      "obligations": [
+        "非实验 packages/*/* 必须被 default 或 optional 产品组合可达，或在 PRODUCT_PACKAGE_POLICY 有 category+非空 reason。",
+        "政策类别限定：optional/test/sdk/build/web-distribution/declarations；目录必须符合类别约束。",
+        "stale 政策失败：声明 optional 但已默认可达；声明 web-distribution 但不可达；目录不存在/在 experimental。",
+        "源码导入必须解析到 workspace 源码；动态挂载必须是字面量声明。",
+        "新包要更新 profile/bundle 或政策，并补 tsconfig paths。"
+      ],
+      "actors": [
+        "包作者",
+        "产品 owner",
+        "评审者"
+      ],
+      "steps": [
+        "判定包应默认/可选/非运行时角色。",
+        "挂到 profile/bundle 或在 policy 写 category+reason。",
+        "补 tsconfig paths/字面量动态挂载。",
+        "运行 verify-product-use。",
+        "与 default-product-isolation 一起跑。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "verifyProductUse 从 profiles/optional bundles/source imports 构建可达性",
+          "PRODUCT_PACKAGE_POLICY 的 category+reason 校验",
+          "stale policy 检查",
+          "run-gates ci-static 运行"
+        ],
+        "trust": "可达性和 stale policy 可自动检查；category/reason 的合理性需要评审。",
+        "failure": "无产品使用、stale policy、非法 category、未解析 workspace 导入、未知 dsh 包、动态挂载非字面量。",
+        "exceptions": [
+          "web-distribution 不要求默认可达",
+          "test 必须在 test-support 目录",
+          "vendor 包不要求 policy"
+        ]
+      },
+      "applicability": "适用于有产品装配/插件组合的 monorepo；单包仓库可省略。",
+      "relationships": [
+        "supply-chain-default-product-isolation",
+        "supply-chain-experimental-policy",
+        "supply-chain-manifest-publication"
+      ],
+      "migration": {
+        "strategy": "先建立产品组合与角色清单，再接可达性 gate，最后与默认隔离联合验证。",
+        "implementation": [
+          "列出 default/optional 组合",
+          "为每个非运行时包写 category+reason",
+          "补源码 paths",
+          "接 gate"
+        ],
+        "requiredSupport": [
+          "产品组合定义",
+          "policy owner",
+          "源码解析配置"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-product-use",
+      "verification": {
+        "positive": [
+          {
+            "check": "verify-product-use 无 failure",
+            "evidence": "planned"
+          },
+          {
+            "check": "default/optional 包计数合理",
+            "evidence": "planned"
+          },
+          {
+            "check": "无 stale policy",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "新增无角色包应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "已默认可达仍写 optional 政策应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "挂载/更新政策后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；317 行已读；只做静态分析，不能发现任意字符串/服务发现加载。"
+      },
+      "limitations": "依赖源码/配置静态分析；web-distribution 例外；vendor 不要求 policy。"
+    },
+    {
+      "id": "supply-chain-default-product-isolation",
+      "title": "默认产品安装/源码/配置不得包含实验包",
+      "sources": [
+        {
+          "path": "scripts/verify-default-product-isolation.ts",
+          "start": 1,
+          "end": 180,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-default-product-isolation.ts",
+          "start": 180,
+          "end": 413,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/installed-product-isolation.ts",
+          "start": 18,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 364,
+          "end": 380,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "实验包被默认 profile/依赖/配置/安装图带入，会让实验能力成为每个用户的默认攻击面/支持负担。",
+      "triggers": [
+        "新增实验包",
+        "调整 default bundle",
+        "新增 optional bundle",
+        "修改 apps/cli 依赖",
+        "发布前检查"
+      ],
+      "obligations": [
+        "默认 bundles 必须有 dsh.bundle.patch，不能同时是 optional。",
+        "optional bundles 必须是 apps/cli runtime dependency，且有 bundle patch/icon/locale 导出；不能是 default。",
+        "默认依赖图不得出现实验包；唯一例外是 apps/cli.dependencies 中的 optional bundles。",
+        "扫描源码、bundle patch、config tree、preset、web entry；安装后从 entry 实际依赖图再检查。",
+        "外部 libreoffice-kit 是允许特例。"
+      ],
+      "actors": [
+        "产品 owner",
+        "实验包 owner",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "判定实验能力是否默认关闭。",
+        "默认 profile 不挂实验包；需要随产品安装则放 OPTIONAL_BUNDLES 并补元数据。",
+        "检查 apps/cli 依赖段/其他包依赖/peer。",
+        "运行 verify-default-product-isolation。",
+        "打包后运行 verify-packed-install，安装图检查。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "verifyDefaultProductIsolation 扫描默认 roots/组合/源码/配置",
+          "installed-product-isolation 扫描安装图",
+          "run-gates ci-static 运行"
+        ],
+        "trust": "默认/安装图的实验边可自动拒绝；optional bundle 的展示元数据和用户体验需要评审/测试。",
+        "failure": "默认组合含实验包、optional bundle 缺 patch/icon/locale、optional bundle 同时是 default、安装图实验别名。",
+        "exceptions": [
+          "apps/cli.dependencies 的 optional bundles 是唯一实验 runtime 边",
+          "libreoffice-kit 外部特例",
+          "web preview 不在默认检查"
+        ]
+      },
+      "applicability": "适用于有默认产品/实验插件的仓库；无实验包可省略。",
+      "relationships": [
+        "supply-chain-experimental-policy",
+        "supply-chain-product-use",
+        "supply-chain-packed-install"
+      ],
+      "migration": {
+        "strategy": "先明确默认/可选边界，再补 optional bundle 元数据，最后用安装图验证。",
+        "implementation": [
+          "列默认/可选 bundle",
+          "禁止默认实验依赖",
+          "补 optional bundle patch/icon/locale",
+          "接静态+安装图 gate"
+        ],
+        "requiredSupport": [
+          "产品组合 owner",
+          "安装 fixture",
+          "实验包命名政策"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-default-product-isolation",
+      "verification": {
+        "positive": [
+          {
+            "check": "default isolation 零 failure",
+            "evidence": "planned"
+          },
+          {
+            "check": "optional bundle 元数据完整",
+            "evidence": "planned"
+          },
+          {
+            "check": "安装图无实验包",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "默认 profile 挂实验包应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "optional bundle 缺 icon/locale 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "实验包通过 peer 进入应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "移除默认边/补 optional 元数据后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；413 行已读；安装图检查只读 18-73。"
+      },
+      "limitations": "不检查 vendor 内部实验引用；安装图只从 entry runtime sections 出发；web preview 例外。"
+    },
+    {
+      "id": "supply-chain-experimental-policy",
+      "title": "实验包命名、发布可见性与依赖隔离",
+      "sources": [
+        {
+          "path": "scripts/experimental-package-policy.ts",
+          "start": 1,
+          "end": 67,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 361,
+          "end": 410,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 592,
+          "end": 609,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/installed-product-isolation.ts",
+          "start": 18,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.spec.ts",
+          "start": 106,
+          "end": 258,
+          "kind": "test"
+        }
+      ],
+      "problem": "实验包如果没有统一命名/发布规则，会被误当作稳定 API；如果被稳定包依赖，实验能力会变成隐式必装。",
+      "triggers": [
+        "新增实验包",
+        "保留旧 npm 名",
+        "实验包转公开/私有",
+        "稳定包需要实验能力",
+        "发布前检查"
+      ],
+      "obligations": [
+        "实验身份：dsh-experimental- 前缀或 11 个保留名且位于声明目录。",
+        "公开实验包必须 publishConfig.access=public 且非 private；私有实验包必须 private:true 且省略 publishConfig。",
+        "保留名恰好一个 owner 在声明目录。",
+        "standard release member + runtime 的 runtime sections 不得引用实验包；唯一例外是 apps/cli.dependencies 的 OPTIONAL_BUNDLES；peer 不允许。",
+        "npm: 别名/workspace: 别名也会被识别；安装图再次拒绝实验包。"
+      ],
+      "actors": [
+        "实验包 owner",
+        "产品 owner",
+        "评审者"
+      ],
+      "steps": [
+        "判定实验/稳定身份和公开性。",
+        "写前缀或保留名映射；写 private/publishConfig。",
+        "禁止稳定包依赖实验包；需要随产品安装则放 optional bundle。",
+        "运行 constraints 与 default isolation。",
+        "打包后运行安装图检查。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "checkExperimentalManifest 命名/发布字段",
+          "checkExperimentalNameExceptions 唯一 owner",
+          "checkExperimentalDependencyIsolation runtime 边",
+          "installed-product-isolation 安装图"
+        ],
+        "trust": "命名/发布字段/owner/runtime 边可自动拒绝；实验包是否成熟、是否应转正需要评审。",
+        "failure": "命名不符、私有实验包带 publishConfig、保留名重复/移动、稳定包依赖实验包、peer 实验边、别名绕过。",
+        "exceptions": [
+          "PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES 当前为空",
+          "optional bundle 必须放 apps/cli.dependencies，不能 peer",
+          "安装图允许 entry optional bundle 但要求已安装"
+        ]
+      },
+      "applicability": "适用于有实验/稳定分层的仓库；无实验包可省略。",
+      "relationships": [
+        "supply-chain-default-product-isolation",
+        "supply-chain-product-use",
+        "supply-chain-manifest-publication"
+      ],
+      "migration": {
+        "strategy": "先固定命名/发布规则，再禁止稳定依赖，最后用安装图验证。",
+        "implementation": [
+          "建立实验命名/保留名表",
+          "写 public/private 规则",
+          "禁止稳定 runtime 实验边",
+          "接 constraints/installed graph"
+        ],
+        "requiredSupport": [
+          "实验包 owner",
+          "release family 排除规则",
+          "安装 fixture"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-experimental-policy",
+      "verification": {
+        "positive": [
+          {
+            "check": "constraints 无实验规则错误",
+            "evidence": "planned"
+          },
+          {
+            "check": "保留名唯一",
+            "evidence": "planned"
+          },
+          {
+            "check": "default isolation/安装图无实验泄漏",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "稳定包依赖实验包应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "私有实验包带 publishConfig 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "保留名重复应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改依赖/发布字段/目录后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；命名规则来自 361-410，依赖隔离来自 592-609；安装图只读 18-63。"
+      },
+      "limitations": "实验成熟度/转正没有自动判据；安装图只从 entry 出发；PRIVATE 列表未来可能变化。"
+    },
+    {
+      "id": "supply-chain-config-source-ownership",
+      "title": "shipped Cordis 配置中的内联凭据/端点禁令",
+      "sources": [
+        {
+          "path": "scripts/verify-config-source-ownership.ts",
+          "start": 1,
+          "end": 56,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-config-source-ownership.spec.ts",
+          "start": 17,
+          "end": 30,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-config-source-ownership.spec.ts",
+          "start": 1,
+          "end": 16,
+          "kind": "test"
+        }
+      ],
+      "problem": "在 shipped bundle patch/preset 中把 apiKey/baseURL/authToken/headers 直接内联为 !!js 环境读取，会绕过 adapter 的 ctx.credentials 与端点环境快照，导致凭据来源不可审计。",
+      "triggers": [
+        "修改 shipped Cordis 配置",
+        "新增 bundle patch/preset",
+        "新增 adapter 配置",
+        "配置文档/示例更新"
+      ],
+      "obligations": [
+        "shipped 配置 glob：apps/*/config/**/*.yml、packages/*/*/cordis.patch.yml、packages/*/*/presets/*.patch.yml、python/*/src/**/cordis.yml。",
+        "拒绝单行 apiKey|baseURL|apiKeyEnv|authToken|headers 后跟 : !!js 的形式。",
+        "凭据用 apiKeyEnv 经 ctx.credentials；端点用环境快照；不要内联。",
+        "这不是通用配置单一来源/schema 一致性检查。"
+      ],
+      "actors": [
+        "adapter owner",
+        "配置 owner",
+        "评审者"
+      ],
+      "steps": [
+        "把凭据改为 apiKeyEnv 引用。",
+        "把端点解析移入 adapter/环境快照。",
+        "运行 verify-config-source-ownership。",
+        "检查多行/锚点等可能绕过形式。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "collectConfigSourceOwnershipViolations 正则扫描 shipped config",
+          "run-gates 的 docSyncLeafGates 运行；ci-static/ci-primary 展开该函数，hygiene 不跑"
+        ],
+        "trust": "单行内联形式可自动拒绝；多行/锚点/运行时旁路需要评审/其他检查。",
+        "failure": "命中内联凭据/端点、配置来源绕过 ladder、配置文档与实际 schema 不一致。",
+        "exceptions": [
+          "只覆盖单行形式，不做完整 YAML 分析",
+          "hygiene lane 不运行；PR ci-static/ci-primary 通过 docSyncLeafGates 会运行，不能笼统说只在 doc-sync 跑",
+          "多行/锚点可能绕过"
+        ]
+      },
+      "applicability": "适用于有 shipped Cordis 配置的仓库；无配置系统可省略。",
+      "relationships": [
+        "supply-chain-secrets",
+        "supply-chain-launch-environment",
+        "supply-chain-default-product-isolation"
+      ],
+      "migration": {
+        "strategy": "先禁用内联，再把凭据/端点迁到 ladder，最后用配置文档/测试覆盖。",
+        "implementation": [
+          "实现窄正则 gate",
+          "把凭据改为 apiKeyEnv",
+          "端点走环境快照",
+          "加入 PR/doc lane 并补多行检查"
+        ],
+        "requiredSupport": [
+          "配置 owner",
+          "adapter/credential ladder",
+          "YAML 解析器（如需扩展）"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-config-source",
+      "verification": {
+        "positive": [
+          {
+            "check": "gate 无命中",
+            "evidence": "planned"
+          },
+          {
+            "check": "凭据配置只通过 apiKeyEnv/ctx.credentials",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "内联 baseURL: !!js 应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "内联 apiKey: !!js 应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改为 apiKeyEnv/环境快照后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；56 行已读；只做窄检查，没有通用配置来源 gate。"
+      },
+      "limitations": "只检查单行形式；不做完整 YAML 分析；不检查业务代码 process.env。hygiene 不运行，但 ci-static/ci-primary 的 docSyncLeafGates 会运行；不要把它说成仅 doc-sync 或 PR 不阻塞。"
+    },
+    {
+      "id": "supply-chain-secrets",
+      "title": "发布凭据的最小暴露与 OIDC/provenance",
+      "sources": [
+        {
+          "path": ".github/workflows/release-publish.yml",
+          "start": 80,
+          "end": 131,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-vendor-publish.yml",
+          "start": 80,
+          "end": 126,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/node-addon-system-release.yml",
+          "start": 150,
+          "end": 188,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/python-release.yml",
+          "start": 185,
+          "end": 248,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/release/publish.ts",
+          "start": 124,
+          "end": 200,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "不同发布通道使用不同凭据路径：dsh/vendor npm 用受保护 environment + NPM_TOKEN，native 同时声明 id-token:write 与可选 token fallback，PyPI 用 OIDC 但关闭公开 attestation。把任一通道的做法当成通用 OIDC 会掩盖长期 token 暴露或错误权限。",
+      "triggers": [
+        "配置 dsh/vendor npm 发布",
+        "配置 native npm 发布",
+        "配置 PyPI 发布",
+        "轮换 NPM_TOKEN",
+        "新增发布 job",
+        "审计日志/仓库 secret"
+      ],
+      "obligations": [
+        "dsh/vendor npm：publish job 使用 environment npm-publish、permissions contents:read、NODE_AUTH_TOKEN=NPM_TOKEN；checkout persist-credentials:false；安装 frozen+ignore-scripts；不重新 build；npm publish 不加 --access；源脚本没有 --provenance。",
+        "native npm：environment npm-publish、permissions contents:read+id-token:write；NPM_TOKEN 仅在非空时作为 NODE_AUTH_TOKEN fallback；发布走 scripts/publish-release.mjs；OIDC 是否实际被 npm 采用未验证。",
+        "PyPI：environment pypi-runtime/pypi、permissions id-token:write、pypa/gh-action-pypi-publish；发布前 sha256sum -c SHA256SUMS；显式 attestations:false（公开 attestation 会暴露私有仓库）。",
+        "release/publish.ts 逐包比较 registry integrity：不存在才发布；相同跳过；不同失败；重试前重读 registry，避免 E409 已落盘。",
+        "不在仓库/日志/聊天中放 token；NPM_TOKEN 只在 publish job/environment 注入；dsh/vendor 没有 OIDC，不能声称已有 provenance。",
+        "配置凭据走 apiKeyEnv/ctx.credentials，端点走环境快照；shipped config 不内联 apiKey/baseURL/authToken/headers: !!js。"
+      ],
+      "actors": [
+        "发布负责人",
+        "security owner",
+        "native/PyPI 发布 owner",
+        "评审者"
+      ],
+      "steps": [
+        "先选通道：dsh/vendor npm、native npm、PyPI。",
+        "按通道配置 environment、permissions、secret/OIDC；dsh/vendor 需要 NPM_TOKEN，native 有 id-token+可选 fallback，PyPI 用 OIDC。",
+        "发布 job 只 checkout+install 发布脚本；checkout persist-credentials:false；install --frozen-lockfile --ignore-scripts；不重新 build。",
+        "dsh/vendor 不加 --access；如目标要求 provenance，显式加 id-token/--provenance 并验证 registry 支持。",
+        "发布后核对 integrity；失败重试前先看 registry；已发布不同内容只能 bump/deprecate。",
+        "检查日志/命令输出无 token 回显；轮换/撤销流程就绪。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "release-publish/release-vendor-publish 的 environment+contents:read+NPM_TOKEN",
+          "node-addon-system-release 的 id-token:write+可选 NPM_TOKEN fallback",
+          "python-release 的 id-token:write+pypa/gh-action-pypi-publish+attestations:false",
+          "release/publish.ts 的 registry integrity 检查与重试",
+          "config-source-ownership 的窄凭据/端点检查"
+        ],
+        "trust": "工作流配置可限制暴露面；实际 environment/reviewer/secret 权限在仓库外，无法由文档证明。dsh/vendor 的 token 安全依赖仓库设置与轮换。",
+        "failure": "token 泄漏、长期 PAT、日志回显、错误地把 dsh/vendor 当成 OIDC、缺少 id-token、发布重新 build、registry integrity 不同。",
+        "exceptions": [
+          "NODE_AUTH_TOKEN 在 publish job 环境变量中是允许的；setup-node 会写 npm 认证配置，源工作流没有显式清理步骤",
+          "native 的 NPM_TOKEN 是 fallback，不是唯一路径",
+          "PyPI attestations:false 是有意的私有仓库可见性取舍"
+        ]
+      },
+      "applicability": "适用于多通道发布（npm + PyPI/native）；单通道目标只需保留对应分支，但不能把源仓库的 token/oidc 选择当成通用最佳实践。",
+      "relationships": [
+        "supply-chain-config-source-ownership",
+        "supply-chain-release-consumer",
+        "supply-chain-packed-install"
+      ],
+      "migration": {
+        "strategy": "先按通道列出凭据路径，再收紧 environment/permissions，最后加轮换与 integrity/日志检查。",
+        "implementation": [
+          "为 dsh/vendor 配 environment+NPM_TOKEN 轮换",
+          "为 native 配 id-token+可选 fallback",
+          "为 PyPI 配 OIDC+attestations 决策",
+          "发布脚本只消费已验证 tarball；不重新 build",
+          "加 secret 扫描/日志检查"
+        ],
+        "requiredSupport": [
+          "GitHub Environment",
+          "npm registry token 或 trusted publishing",
+          "PyPI OIDC",
+          "轮换 owner"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-secrets",
+      "verification": {
+        "positive": [
+          {
+            "check": "dsh/vendor 日志/仓库无 token，environment 限制 publish job",
+            "evidence": "planned"
+          },
+          {
+            "check": "native/PyPI 的 id-token 权限存在",
+            "evidence": "planned"
+          },
+          {
+            "check": "registry integrity 一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "PyPI SHA256SUMS 校验通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把 dsh/vendor 描述成 OIDC provenance 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "在日志 echo token 应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "长期 PAT 绕过 environment 应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "npm publish 加 --access 覆盖 manifest 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "revoke/rotate token 并修复注入后恢复；已发布不同内容只能 bump/deprecate",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未验证实际 Environment/secret 配置；未扫描 git 历史；未运行任何发布；native OIDC 是否真正被 npm 采用未验证；dsh/vendor 没有 provenance。"
+      },
+      "limitations": "不同通道的凭据模式不同，不能一概说 OIDC。dsh/vendor 使用 NPM_TOKEN；native 有 id-token 与可选 fallback；PyPI 用 OIDC 但关闭公开 attestation。实际 environment/reviewer/secret 权限在仓库外，文档不能证明。setup-node 写认证配置，源工作流无显式清理步骤。"
+    },
+    {
+      "id": "supply-chain-dependency-updates",
+      "title": "Dependabot 节奏、vendor 排除与 release age 双层策略",
+      "sources": [
+        {
+          "path": ".github/dependabot.yml",
+          "start": 1,
+          "end": 38,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 57,
+          "end": 105,
+          "kind": "config"
+        }
+      ],
+      "problem": "依赖更新要么长期不更新，要么一次涌入大量 PR；vendor 被 registry 更新会破坏同步；release age 与 PR cooldown 被混淆会导致过早安装。",
+      "triggers": [
+        "日常依赖更新",
+        "安全更新",
+        "升级 workspace 依赖",
+        "vendor 同步"
+      ],
+      "obligations": [
+        "Dependabot 覆盖 npm（排除 vendor）、uv（python/sdk）、github-actions；每天 04:00 Asia/Shanghai；cooldown 30 天。",
+        "更新仍要过 pnpm 24h release age；豁免必须精确版本。",
+        "每个 PR 要跑 constraints/package-dependencies/runtime-closure/build/相关测试，并更新 notices。",
+        "vendor 不走 Dependabot；走 vendor-sync。"
+      ],
+      "actors": [
+        "依赖 owner",
+        "评审者",
+        "发布负责人"
+      ],
+      "steps": [
+        "查看 PR，读 changelog/breaking changes。",
+        "确认 release age/cooldown 和 allowBuilds。",
+        "本地安装/gate/测试。",
+        "更新 notices；检查 lockfile 传递依赖。",
+        "合并；发布依赖走 release 流程。",
+        "每月清理过期豁免/override/patch。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "Dependabot 配置/定时/cooldown/标签",
+          "pnpm minimumReleaseAgeExclude",
+          "CI gate"
+        ],
+        "trust": "Dependabot 只负责开 PR；合并质量和 release age 合规靠 gate/评审。",
+        "failure": "PR 过多、release age 阻断、vendor 被错误更新、lockfile 引入未审查构建脚本。",
+        "exceptions": [
+          "vendor 排除",
+          "uv 只覆盖 python/sdk",
+          "没有 groups/limit/reviewers"
+        ]
+      },
+      "applicability": "适用于 GitHub + npm/uv 仓库；其他平台需映射等价更新机器人。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-vendor-sync",
+        "supply-chain-licenses-notices"
+      ],
+      "migration": {
+        "strategy": "先明确更新节奏和排除项，再建立每个 PR 的 gate 清单，最后定期清理豁免。",
+        "implementation": [
+          "配置 Dependabot 生态/排除/cooldown",
+          "把 release age 设为精确豁免",
+          "建立 PR 检查清单",
+          "每月清理过期条目"
+        ],
+        "requiredSupport": [
+          "依赖 owner",
+          "CI gate",
+          "notices 生成器"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-dependency-updates",
+      "verification": {
+        "positive": [
+          {
+            "check": "依赖 PR 通过 gate",
+            "evidence": "planned"
+          },
+          {
+            "check": "lockfile diff 可解释",
+            "evidence": "planned"
+          },
+          {
+            "check": "notices 更新",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "vendor 目录被 Dependabot 更新应被排除",
+            "evidence": "planned"
+          },
+          {
+            "check": "全局关闭 release age 应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补豁免/更新依赖后恢复；过期豁免删除",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未查看实际 Dependabot PR；未验证 cron/时区。"
+      },
+      "limitations": "没有 groups/PR limit/reviewers；uv 只覆盖一个目录；cooldown 与 release age 是不同层。"
+    },
+    {
+      "id": "supply-chain-node-manager-lock",
+      "title": "Node、pnpm 与 lockfile 的版本锚定",
+      "sources": [
+        {
+          "path": "package.json",
+          "start": 1,
+          "end": 10,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 275,
+          "end": 275,
+          "kind": "config"
+        },
+        {
+          "path": "pnpm-workspace.yaml",
+          "start": 105,
+          "end": 105,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "start": 96,
+          "end": 102,
+          "kind": "config"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 27,
+          "end": 31,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "本地/CI/发布使用不同 Node/pnpm，或 lockfile 未同步，会导致安装解析、原生构建和发布物不一致。",
+      "triggers": [
+        "新仓库初始化",
+        "升级 Node/pnpm",
+        "修改解析相关配置",
+        "CI/发布环境变化"
+      ],
+      "obligations": [
+        "engines.node 明确支持范围；packageManager 固定 pnpm；devDependency pnpm 与豁免一致。",
+        "提交 lockfile；CI/发布 frozen install；发布安装 --ignore-scripts。",
+        "overrides/peerDependencyRules/allowBuilds/release age/patchedDependencies 变化必须更新 lockfile。",
+        "升级 pnpm 同时改三处锚；升级 Node 同时改 engines/CI matrix/native 构建。"
+      ],
+      "actors": [
+        "维护者",
+        "CI owner",
+        "发布负责人"
+      ],
+      "steps": [
+        "写 engines/packageManager。",
+        "修改解析配置后 pnpm install --lockfile-only 并审查。",
+        "CI 用 --frozen-lockfile。",
+        "升级 pnpm/Node 时一次性更新锚点和 CI。",
+        "干净环境验证安装。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "engines/packageManager/devDependency pnpm",
+          "frozen lockfile CI",
+          "--ignore-scripts 发布安装"
+        ],
+        "trust": "版本字段/frozen install 可自动失败；CI matrix 与本地默认是否一致需要维护。",
+        "failure": "Node/pnpm 漂移、lockfile 不同步、安装脚本未审查、发布安装执行脚本。",
+        "exceptions": [
+          "engines 允许两个大版本但 CI 可能只跑一个",
+          "--ignore-scripts 仅发布安装",
+          "nodeLinker 未显式配置"
+        ]
+      },
+      "applicability": "适用于 Node/pnpm 仓库；其他工具链映射等价版本锚。",
+      "relationships": [
+        "supply-chain-workspace-topology",
+        "supply-chain-workspace-protocol"
+      ],
+      "migration": {
+        "strategy": "先固定版本锚，再 frozen install，最后把升级流程写成清单。",
+        "implementation": [
+          "写 engines/packageManager/devDependency",
+          "提交 lockfile 并 frozen install",
+          "升级时同步锚点/CI",
+          "验证最低/最高 Node"
+        ],
+        "requiredSupport": [
+          "Corepack/包管理器",
+          "CI matrix",
+          "lockfile"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-node-manager-lock",
+      "verification": {
+        "positive": [
+          {
+            "check": "干净环境 frozen install 成功",
+            "evidence": "planned"
+          },
+          {
+            "check": "CI 版本与 packageManager 一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "不提交 lockfile 应被 frozen install 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "Node 低于 engines 应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "同步 lockfile/升级版本后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行；CI Node setup 未逐行阅读；Node 22.19 行为未验证。"
+      },
+      "limitations": "engines 支持范围与 CI 实际矩阵可能不一致；nodeLinker 依赖默认；Corepack 环境差异。"
+    },
+    {
+      "id": "supply-chain-release-consumer",
+      "title": "verify → pack → publish：dsh/vendor 双通道",
+      "sources": [
+        {
+          "path": "scripts/release/pack.ts",
+          "start": 1,
+          "end": 108,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 40,
+          "end": 100,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify-packed-install.ts",
+          "start": 1,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/publish.ts",
+          "start": 1,
+          "end": 235,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 1,
+          "end": 180,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-publish.yml",
+          "start": 1,
+          "end": 131,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-vendor-publish.yml",
+          "start": 1,
+          "end": 126,
+          "kind": "config"
+        }
+      ],
+      "problem": "把发布当成都复用预演 artifact、或在 publish 阶段重新构建/跳过验证，会让消费者拿到的字节与验证字节不一致；dsh 与 vendor 的双通道也容易混淆。",
+      "triggers": [
+        "发布 dsh/vendor 新版本",
+        "pack artifact 上传/下载",
+        "registry 已有同版本",
+        "发布失败恢复",
+        "tag 创建/匹配"
+      ],
+      "obligations": [
+        "release.yml 是 dsh 的 PR/push 预演：只 verify/pack/packed-install 并上传 dsh artifact，不发布；vendor/landlock tarball 仅供验证。",
+        "release-publish.yml 是 dsh 手动发布：pack job 从当前 tree 重新构建/打包/验证并上传；publish job 下载 artifact、不 build、以 NPM_TOKEN 发布 dist/npm。",
+        "release-vendor-publish.yml 是 vendor 手动发布：独立验证/打包/发布 dist/npm-vendor；不要把 vendor tarball 当成 dsh 发布的一部分。",
+        "publish 前 verify family/tag/version/private；tag 必须已存在，不能由 publish 临时创建。",
+        "release/publish 逐包检查 registry integrity：不存在发布、相同跳过、不同失败；对 transient 错误最多重试 4 次，每次重读 registry；显式 dist-tag 先校验占用。",
+        "源码没有 --provenance；provenance/attestation 是额外增强，不是源保证。",
+        "坏包 deprecate，不删除/重用版本。"
+      ],
+      "actors": [
+        "发布负责人",
+        "release owner",
+        "评审者"
+      ],
+      "steps": [
+        "PR 中完成依赖/包变更，release.yml 通过。",
+        "合并后确认 family tag 已存在；触发 dsh 或 vendor 的 publish workflow（vendor 可选 dist-tag）。",
+        "pack job 重新构建/打包，packed install 通过后上传 artifact。",
+        "publish job 下载 artifact，不 build，调用 release:publish。",
+        "发布后核对 registry integrity 与 artifact；provenance 只有额外实现后才检查。",
+        "失败/坏包：停止或 deprecate，发修复版本。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "release.yml verify/pack/upload（不发布）",
+          "release-publish/release-vendor-publish 的两段式 pack/publish",
+          "release/pack 无凭据边界",
+          "release/publish integrity/重试/dist-tag 检查",
+          "installed-product-isolation"
+        ],
+        "trust": "pack job 的构建/验证和 publish job 的 artifact 消费可由工作流保证；environment reviewer/tag 限制、registry 权限和 provenance 需远端配置/额外实现。",
+        "failure": "把 publish 当复用 PR artifact、publish job 重新 build、跳过 packed install、tag 不匹配、registry 覆盖、vendor/dsh 通道混淆。",
+        "exceptions": [
+          "dsh 只发布 dist/npm；vendor/landlock 仅验证",
+          "vendor 由独立 workflow 发布",
+          "apps/desktop 不走 npm",
+          "源码不生成 provenance"
+        ]
+      },
+      "applicability": "适用于 npm 发布；非 npm 分发可保留验证字节=发布字节的边界。",
+      "relationships": [
+        "supply-chain-packed-install",
+        "supply-chain-install-layout",
+        "supply-chain-secrets",
+        "supply-chain-python-runtime"
+      ],
+      "migration": {
+        "strategy": "先拆分 dsh/vendor 的 pack/publish，再让 publish 只消费已验证 artifact，最后接 tag/integrity。",
+        "implementation": [
+          "release.yml 只验证/上传",
+          "publish workflow 的 pack job 重建并验证",
+          "publish job 只发布 artifact",
+          "tag/integrity gate",
+          "可选 provenance"
+        ],
+        "requiredSupport": [
+          "artifact 存储",
+          "registry 权限",
+          "release owner",
+          "environment 审批"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-release-consumer",
+      "verification": {
+        "positive": [
+          {
+            "check": "registry 包可安装",
+            "evidence": "planned"
+          },
+          {
+            "check": "artifact 与 registry integrity 一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "tag/版本匹配",
+            "evidence": "planned"
+          },
+          {
+            "check": "packed install 在 pack job 通过",
+            "evidence": "planned"
+          },
+          {
+            "check": "dsh/vendor 各自发布自己的 artifact",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "publish job 重新 build 应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "tag 不匹配/不存在应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "registry 已有不同内容应失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "把 vendor tarball 当 dsh 发布物应失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "停止发布，修版本/构建；已发布坏包 deprecate",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未发布；三个 workflow 与 publish.ts 1-235 全读；environment reviewer/allowed-tag 远端配置未验证。"
+      },
+      "limitations": "tag/registry 权限和 environment 配置未验证；部分平台 native 包覆盖不全；坏包恢复依赖 registry 行为；provenance 未实现。"
+    },
+    {
+      "id": "supply-chain-python-runtime",
+      "title": "Python SDK runtime wheel：平台标签、锁定下载资源与双阶段 PyPI 发布",
+      "sources": [
+        {
+          "path": "python/sdk/pyproject.toml",
+          "start": 1,
+          "end": 39,
+          "kind": "implementation"
+        },
+        {
+          "path": "python/sdk/uv.lock",
+          "start": 1,
+          "end": 45,
+          "kind": "config"
+        },
+        {
+          "path": "python/sdk-runtime/pyproject.toml",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": "python/sdk-runtime/package.json",
+          "start": 1,
+          "end": 164,
+          "kind": "config"
+        },
+        {
+          "path": "python/sdk-runtime/platforms.json",
+          "start": 1,
+          "end": 22,
+          "kind": "config"
+        },
+        {
+          "path": "python/sdk-runtime/hatch_build.py",
+          "start": 1,
+          "end": 108,
+          "kind": "implementation"
+        },
+        {
+          "path": "python/sdk-runtime/runtime-bootstrap.mjs",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "python/sdk-runtime/src/deepseek_harness_runtime/_resources.py",
+          "start": 1,
+          "end": 121,
+          "kind": "implementation"
+        },
+        {
+          "path": "python/sdk-runtime/README.md",
+          "start": 1,
+          "end": 69,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/primary-runtime/lock.json",
+          "start": 1,
+          "end": 180,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/primary-runtime/prepare.ts",
+          "start": 1,
+          "end": 287,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/primary-runtime/prepare.spec.ts",
+          "start": 1,
+          "end": 169,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/primary-runtime/prune-python-tests.ts",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-python-release.py",
+          "start": 1,
+          "end": 295,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 27,
+          "end": 43,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 167,
+          "end": 172,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 197,
+          "end": 235,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 256,
+          "end": 338,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 340,
+          "end": 384,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 417,
+          "end": 423,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 480,
+          "end": 519,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 600,
+          "end": 622,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk-staging.ts",
+          "start": 1,
+          "end": 103,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk-office.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/build-exe-for-python-sdk-resources.ts",
+          "start": 1,
+          "end": 17,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/python-release.yml",
+          "start": 1,
+          "end": 248,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/python-runtime-download.spec.ts",
+          "start": 1,
+          "end": 135,
+          "kind": "test"
+        },
+        {
+          "path": "python/development.md",
+          "start": 7,
+          "end": 17,
+          "kind": "instruction"
+        },
+        {
+          "path": "python/development.md",
+          "start": 92,
+          "end": 98,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Python SDK 的 wheel 需要自带可执行的 dsh runtime，但 Python/Node/Office 资源在运行时显式下载；没有平台 tag、payload 白名单、资源 hash 和两阶段发布，wheel 可能装错平台、缺 sidecar、混入 sdist、静默下载或覆盖已发布的 immutable runtime。",
+      "triggers": [
+        "新增或移动 Python SDK/runtime wheel 平台",
+        "升级 primary-runtime lock 里的 Node、Python、wheels 或 pnpm",
+        "发布 Python SDK/runtime 到 PyPI，或修改 runtime pin",
+        "消费者报平台 tag、缺失 sidecar、资源缓存或安装失败"
+      ],
+      "obligations": [
+        "runtime wheel 必须 wheel-only，平台 tag/executable/sidecar 与 platforms.json 完全一致；不发布 sdist 或 Windows arm64。",
+        "SDK wheel 必须是 py3-none-any、不得含 runtime payload，并精确依赖同版本 deepseek-harness-runtime-bin。",
+        "每个 wheel 不得超过 100000000 字节；WHEEL Name/Version/Tag/License-Expression/License-File 必须由构建脚本复核。",
+        "runtime wheel 必须携带 LICENSE + THIRD_PARTY_NOTICES.md；SDK wheel 携带 LICENSE。",
+        "Python/Node/Office 资源必须由 primary-runtime lock 或 pnpm-lock 固定版本与 SHA-256/SHA-512 integrity，下载后核对 identity；不得在 import 或普通启动时隐式下载。",
+        "runtime 与 SDK 分两个 publish job，先 runtime 后 SDK；只允许 manual tag/repository/enable 三项同时满足时发布。",
+        "runtime closure 必须先通过 verify-runtime-closure；deploy staging 必须 symlink-free，闭包内 patch 仍须可用。",
+        "平台可执行文件是构建产物，不提交到 git；每个 target 在原生架构构建。`--skip-build` 仅在所需 `lib/` 已存在时使用；构建把选定 carrier 同步到 `python/sdk-runtime/`（Windows 产出 `.exe` 与 `-rg.exe`，macOS 还需匹配的 spawn helper）。",
+        "发布候选必须先用 `publish=false` 运行 `Release (Python)`：构建六个 wheel、在 Python 3.10 与 3.14 安装 Linux release set、核对精确文件名与 metadata、执行 PyPI 默认单文件大小限制，并保留一个带 SHA-256 的聚合 artifact；该 run 无 registry credential，不能进入 publication job。",
+        "公开 PyPI 发布只从配置的私有 automation repository 运行：`PYPI_PUBLISHER_REPOSITORY` 必须等于该仓库自身 owner/name，`PUBLIC_PYPI_RELEASE_ENABLED=false` 除非有意发布；`publish=true` 还要求匹配的 `python-v*` tag 与受保护的 `pypi-runtime` / `pypi` environment 分别批准 runtime/SDK 作业；公开 attestation 关闭以免泄露私有 publisher 身份。"
+      ],
+      "actors": [
+        "Python release owner",
+        "runtime/desktop packaging owner",
+        "SDK owner",
+        "security/release approver",
+        "CI workflow"
+      ],
+      "steps": [
+        "更新 python/sdk/uv.lock、scripts/primary-runtime/lock.json、platforms.json，并确认 lock.targets 与平台一一对应。",
+        "在目标架构构建 runtime wheel，设置 DSH_RUNTIME_PLATFORM_TAG；运行 verify-runtime-closure，确认 payload 是 executable + rg + spawn-helper + resources。",
+        "构建 SDK wheel；确认 py3-none-any、无 runtime payload、Requires-Dist 精确 pin 同版本 runtime，license 文件正确。",
+        "在干净 venv 安装 SDK + 目标 runtime wheel，跑 sdk-default/sdk-mcp；核对六个 wheel 文件名、100MB 上限、twine 和 SHA256SUMS。",
+        "手动触发 python-release.yml，从 python-v<version> tag 发布；先 publish-runtime，再 publish-sdk。",
+        "运行显式资源下载 smoke：不下载时无缓存；下载失败清理 staging；并发只产生一个 complete 目录；identity 不匹配则拒绝。"
+      ],
+      "enforcement": {
+        "mode": "automatic",
+        "implementation": [
+          "build-python-release.py 的 stage/verify wheel",
+          "hatch_build.py 的 wheel-only/平台/payload 校验",
+          "python-release.yml 的文件名/大小/tag/hash/两阶段发布",
+          "runtime-bootstrap.mjs 与 _resources.py 的 identity/cache 校验",
+          "primary-runtime/prepare.ts 的 SHA-256/512、package identity 与 payload digest",
+          "build-exe-for-python-sdk.ts 的 verify-runtime-closure 与 deploy staging"
+        ],
+        "trust": "wheel 内容、平台、hash 和发布先后由脚本/工作流强制；PyPI environment/reviewer、真实 registry 行为和下载 URL 可达性不由源码保证。",
+        "failure": "错误平台/缺文件/超 100MB/缺 license/hash 不匹配/错误 runtime pin 会使构建或发布失败；下载失败会清理 staging 并保持缓存未完成，可安全重试。",
+        "exceptions": [
+          "dev-only runtime/node carrier 不进入 wheel/sdist",
+          "生产 deploy 允许闭包外未使用 patch，闭包内 patch 仍须应用",
+          "只发布已声明平台；无 Windows arm64",
+          "允许显式 DSH_RESOURCE_CACHE/DSH_OFFICE_SIDECAR 覆盖；两者都必须是绝对路径，自动发现 Office 缓存时才额外要求 complete=identity。"
+        ]
+      },
+      "applicability": "适用于同时发布 Python SDK 与平台 runtime wheel 的仓库。纯 Python 包可只采用 wheel 元数据、许可证和 hash 规则；平台 tag、closure deploy 和资源锁需按目标运行时替换。示例 Python/Node/pnpm 版本必须参数化。",
+      "relationships": [
+        "supply-chain-release-consumer",
+        "supply-chain-licenses-notices",
+        "supply-chain-vendor-patches",
+        "supply-chain-runtime-closure",
+        "supply-chain-secrets"
+      ],
+      "migration": {
+        "strategy": "先把 runtime 资源锁、平台映射和 wheel 构建校验固定，再做 symlink-free closure 与两阶段发布，最后用干净 venv 和显式下载 smoke 验证。",
+        "implementation": [
+          "建立 platforms.json 与每个目标的 payload 白名单",
+          "建立 lock.json/uv.lock 的版本与 hash",
+          "让构建脚本复核 WHEEL/许可证/100MB/runtime pin",
+          "把 verify-runtime-closure 放在构建前",
+          "拆 publish-runtime 与 publish-sdk，并校验 SHA256SUMS",
+          "实现显式下载的 identity/complete/cache 原子发布"
+        ],
+        "requiredSupport": [
+          "Python/Node 构建环境与目标架构 runner",
+          "PyPI trusted publishing/environment",
+          "资源 URL 与 hash 的可信来源",
+          "目标平台 Office/Python 资源"
+        ]
+      },
+      "reference": "references/supply-chain.md#sc-python-runtime",
+      "verification": {
+        "positive": [
+          {
+            "check": "为五个平台构建 runtime wheel，断言文件名、py3-none-<tag>、executable/-rg/-spawn-helper/resources 与 platforms.json 一致。",
+            "evidence": "planned"
+          },
+          {
+            "check": "构建 SDK wheel，断言 py3-none-any、无 runtime payload、Requires-Dist 精确包含 runtime==version。",
+            "evidence": "planned"
+          },
+          {
+            "check": "运行 python-release validate：六个 wheel 文件名、100MB 上限、twine check、SHA256SUMS，再按 runtime→SDK 顺序发布。",
+            "evidence": "planned"
+          },
+          {
+            "check": "在干净 venv 安装 SDK + 目标 runtime wheel，跑 sdk-default/sdk-mcp；显式下载 primary/office 后检查 complete/identity。",
+            "evidence": "planned"
+          },
+          {
+            "check": "篡改 primary-runtime lock 的 Node/wheel/pnpm 版本或 hash，断言 payload identity 变化且下载/解包失败。",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "runtime sdist、错误平台 tag、缺 sidecar、多文件/少文件、非可执行文件必须被 hatch_build/build-python-release 拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "check": "SDK wheel 含 runtime payload、缺精确 runtime pin、SDK 缺 LICENSE 或 runtime 缺 THIRD_PARTY_NOTICES.md、超过 100MB 必须失败。",
+            "evidence": "planned"
+          },
+          {
+            "check": "非 manual、非 python-v<version> tag、非 publisher repository 或 PUBLIC_PYPI_RELEASE_ENABLED!=true 时 publish 必须跳过/失败。",
+            "evidence": "planned"
+          },
+          {
+            "check": "非法 DSH_RUNTIME_DOWNLOAD、非绝对 DSH_RESOURCE_CACHE、identity 非 64-hex、hash 不匹配、缺 complete 标记必须拒绝。",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除半成品 staging/cache 后显式重试；runtime 已发布而 SDK 失败时只重跑 publish-sdk，不覆盖 runtime。",
+            "evidence": "planned"
+          }
+        ],
+        "note": "未运行 uv build、wheel 安装、twine check、Python workflow 或真实 PyPI 发布；PyPI environment/reviewer 和下载 URL 可达性未验证。uv.lock 原1-45声明已由既有46-419补读扩展，本批只复读1-18及UV项目调用来源；生成的解析版本/来源/hash数据不是手写政策，也不证明锁一致性或frozen执行。"
+      },
+      "limitations": "未执行构建/发布；具体 Node/Python/pnpm 版本和 wheel hash 是源快照示例；build-exe-for-python-sdk.ts 本域仍只声明关键段，Release另有1-622声明，不能把peer声明冒充本批完整新读；真实 PyPI immutable/attestation 与远程 environment 配置未验证。\n静态源码/文档与已定义workflow流程不证明workflow实际执行、environment reviewer或PyPI远端效果。"
+    }
+  ]
+}

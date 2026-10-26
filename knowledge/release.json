@@ -1,0 +1,4243 @@
+{
+  "domain": "release",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "release-three-sequence-model",
+      "title": "三条独立 npm 发布序列与本地版本落库",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-08-10-npm-release-sequences.md",
+          "start": 1,
+          "end": 186,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 1,
+          "end": 495,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/bump.ts",
+          "start": 1,
+          "end": 416,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-12-publish-all-experimental-packages.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "packages/experimental/README.md",
+          "start": 1,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/experimental-package-policy.ts",
+          "start": 1,
+          "end": 67,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.spec.ts",
+          "start": 409,
+          "end": 458,
+          "kind": "test"
+        }
+      ],
+      "problem": "仓库有 dsh、vendor、native 三组发布节奏、版本基线和构建要求完全不同的包。若强行用一条流水线，每次产品发布都会重发框架和原生二进制；若把版本交给 CI 生成，tag、审批和可追溯性会互相纠缠。",
+      "triggers": [
+        "准备发布 dsh、vendor 或 native 包",
+        "新增一个可发布包或新的发布家族",
+        "决定版本号由本地命令还是 CI 写入",
+        "出现 tag 与包版本不一致"
+      ],
+      "obligations": [
+        "三条序列不共享版本、触发和等待关系；发布一条不得重发另外两条",
+        "dsh 公开集、私有 dsh 包和 workspace root 共用一个版本；vendor 每包独立；native 自有版本线",
+        "版本由本地 bump 命令写入 manifest 和 lockfile 并提交，CI 只检查和上传，不写仓库",
+        "tag 由人工在合并后创建；tag 只保留版本与提交，不证明发布成功",
+        "dsh tag 为 dsh-v<version>；vendor 为 vendor-<unscoped-name>-v<version>；native 为 node-addon-system-v<version>",
+        "dsh alpha/canary 映射同名 dist-tag，其他预发布映射 next；vendor 预发布默认 next，稳定版 latest",
+        "vendor bump 按 manifest 与最新 tag 的 release numbers 选较高基线；仅当 tag 是预发布，且其 numbers 高于 manifest、或 numbers 相同且 manifest 也为预发布时复用基线 numbers；其余 patch+1，再按请求追加预发布标识；预演不消耗对应稳定号",
+        "最新 tag 用源仓 compareVersions 选择：同 release numbers 下 stable 高于 prerelease；预发布字段按数值/字典序比较，数字低于非数字，前缀相同则短列表较低（如 alpha < canary < rc < stable）；不能用 git 的 refname 版本排序代替",
+        "当前所有 packages/experimental/ 包都在 dsh family 与本地 npm baseline 发布；manifest 省略 private 并设 publishConfig.access: public，私有 denylist 当前为空；实验命名、opt-in 组合、依赖隔离与支持限制不变"
+      ],
+      "actors": [
+        "发布者",
+        "版本管理员",
+        "release manager",
+        "CI"
+      ],
+      "steps": [
+        "确定要发布的 family 和它的成员发现规则",
+        "在本地运行对应 bump 命令，写入所有目标 manifest 与 pnpm-lock.yaml",
+        "审查版本、依赖范围与 dist-tag，提交到 master",
+        "人工创建该 family 的 tag 并 push，确认指向 bump 提交",
+        "从该 tag 手工 dispatch 对应发布工作流，完成 environment 审批",
+        "发布后逐包核对 registry；不把 tag 存在当成发布完成"
+      ],
+      "enforcement": {
+        "mode": "script-plus-workflow-structure",
+        "implementation": "scripts/release/bump.ts 写版本；families.ts 定义成员/版本/tag；release.yml 与 release-*.yml 只在 PR/master 打包，发布只在 workflow_dispatch；verify.ts 在 RELEASE_PUBLISH=true 时检查 tag 精确匹配",
+        "trust": "版本落库与 tag 检查是自动的；tag 创建者是否遵守合并后打 tag、发布者是否核对 registry，依赖人工流程",
+        "failure": "版本写错会导致 verify 拒绝；tag 不匹配会在上传前失败；tag 已存在但发布失败不会自动回滚，必须重跑并核对",
+        "exceptions": "当前 experimental 包全部公开（PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES 为空），但公开不等于产品支持承诺；实验包仍受命名/opt-in/依赖隔离/支持边界约束；private 包只跟随 dsh 版本，不发布也不打 tag"
+      },
+      "applicability": "适用于有多个独立版本线、需要无凭据预演与人工发布分离的 monorepo。单包仓库可退化为一条序列；若采用 CI 生成版本，必须重新设计 tag/审批/可追溯性。",
+      "relationships": [
+        "related: release-publish-order-payload; release-npm-manual-publish; release-npm-registry-idempotency",
+        "crossDomain: 自动化域拥有 workflow runner/并发/缓存; 工程规范域拥有 workspace 版本一致性"
+      ],
+      "migration": {
+        "strategy": "先按版本基线和发布节奏拆家族，再决定版本来源；不要先写一个带 family 分支的大工作流",
+        "implementation": "为每个家族实现 ReleaseFamily 等价的成员发现、版本校验、tag 命名和 dist-tag 策略；本地 bump 写版本并提交；发布工作流只从 tag dispatch",
+        "requiredSupport": [
+          "可发布的包清单与 private 例外清单",
+          "本地 bump 命令",
+          "tag 保护/命名规范",
+          "registry 凭据或 OIDC"
+        ]
+      },
+      "reference": "references/release.md#npm-sequences",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "只 bump dsh 并发布，vendor/native 的 registry 版本不变",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "从正确 tag dispatch，verify 打印完整成员与版本并通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "从非 tag 或错误前缀 dispatch 时在上传前失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh 成员版本不一致时 verify 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "发布中断后从同一 tag 重跑，只补缺失包并跳过一致包",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源内没有平台侧 required reviewers/tag 策略；真实发布未执行。tag 与 registry 的漂移由 release manager 承担，不是自动保证。"
+    },
+    {
+      "id": "release-publish-order-payload",
+      "title": "发布顺序：安装边绝对、peer 边可丢弃但必须报告；payload 按家族分策",
+      "sources": [
+        {
+          "path": "scripts/release/families.ts",
+          "start": 93,
+          "end": 438,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/publication-payload.ts",
+          "start": 1,
+          "end": 55,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 1,
+          "end": 110,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/tarball.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/process.ts",
+          "start": 1,
+          "end": 129,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 26,
+          "end": 35,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/families.spec.ts",
+          "start": 254,
+          "end": 267,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/release/families.spec.ts",
+          "start": 372,
+          "end": 385,
+          "kind": "test"
+        }
+      ],
+      "problem": "如果发布顺序任意，部分发布可能让已上传的包依赖尚未上传的包，消费者会安装失败。若把所有 peer 边当硬约束，兄弟包互相 peer 形成的环会让发布永远无法开始。",
+      "triggers": [
+        "新增/删除包依赖",
+        "新增 peerDependencies 或 optionalDependencies",
+        "发布顺序变化或出现安装边环",
+        "审查 npm tarball 中是否混入源文件/map"
+      ],
+      "obligations": [
+        "dependencies/optionalDependencies 是绝对边，消费者必须在依赖之后发布；安装边成环直接失败",
+        "peerDependencies 只用于排序；会与安装边矛盾或成环的 peer 边丢弃，但必须逐个打印 dropped edge",
+        "最终顺序逐条检查所有安装边都在消费者之前；混合 peer/安装环导致无法满足时失败",
+        "平局按包名排序，保证确定性",
+        "dsh 的 @deepseek-ai/dsh 必须先发布 Official on-demand bundles",
+        "每个 Official on-demand prerequisite 都必须存在于当前 dsh 公开发布 family；缺失时 publishOrder 拒绝，不静默跳过；provider 反向声明 dsh peer 时仍先发布 provider，并把该反向 peer 边加入 dropped list",
+        "devDependencies 不参与发布排序；排序器只读取 dependencies/optionalDependencies 作为绝对安装边、peerDependencies 作为可丢弃的排序边，不推定打包会删除 devDependencies 字段",
+        "dsh tarball 拒绝 src、src/**、*.d.ts.map、*.js.map；vendor 保留上游 src",
+        "packed manifest 的 name/version 必须与源一致；dsh 的 @deepseek-ai/dsh* 范围必须精确等于本版本"
+      ],
+      "actors": [
+        "包维护者",
+        "发布者",
+        "评审者"
+      ],
+      "steps": [
+        "发现 family 成员，跳过 private，拒绝 workspace root 和重复包名",
+        "解析 install/optional/peer 边，先单独检查安装边无环",
+        "按确定顺序拓扑排序；遇到 peer 矛盾/环时记录 dropped edge 并继续",
+        "逐条校验安装边顺序；不满足则失败",
+        "打包后校验 payload 与 packed manifest",
+        "在 PR 上打印完整顺序和所有 dropped edge，供评审比较"
+      ],
+      "enforcement": {
+        "mode": "automatic-script",
+        "implementation": "families.publishOrder 做拓扑和环检测；verify.ts 在构建前调用；release:pack 写 publish-order.txt 并只按该文件发布",
+        "trust": "脚本是自动的；dropped peer edge 是否可接受仍需人评审，因为脚本只能保证安装边",
+        "failure": "安装边环、顺序覆盖不全、payload 违规、packed 身份/范围不符都会在 pack/publish 前失败",
+        "exceptions": "vendor 的 src 是 export map 明确需要的，不能套用 dsh 的 source 拒绝政策"
+      },
+      "applicability": "适用于多包 monorepo 的顺序发布。若 registry 不支持 integrity 查询或包管理器对 peer 的处理不同，peer 丢弃规则需要重新验证。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model",
+        "related: release-npm-rehearsal; release-npm-registry-idempotency",
+        "crossDomain: 供应链域拥有依赖范围政策; 文档域拥有包 README 说明"
+      ],
+      "migration": {
+        "strategy": "把顺序算法做成纯函数并单测；不要在工作流 YAML 里手工维护顺序",
+        "implementation": "实现成员发现、安装边强约束、peer 边可丢弃并记录、最终安装边校验；payload 按 family 策略函数区分",
+        "requiredSupport": [
+          "可解析的 workspace manifest",
+          "包名/版本基线规则",
+          "tarball 读取工具"
+        ]
+      },
+      "reference": "references/release.md#publish-order",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "正常依赖图输出确定顺序，每包在依赖之后",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh tarball 不含 src/map，vendor 保留 src 且可被 import",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "构造安装边环时 verify 失败并指出路径",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh tarball 混入 src 时 pack 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "移除冲突 peer 边后重新生成顺序，已发布前缀仍自洽",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "peer 边丢弃是策略选择，不证明 npm 消费者不会因未满足 peer 报警；脚本不分析运行时按名挂载的插件（源用 publication prerequisites 处理 dsh 的情况）。"
+    },
+    {
+      "id": "release-workspace-version-ranges",
+      "title": "dsh 家族版本一致性、workspace 协议范围与静态约束门",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-09-03-workspace-version-coherence-gate.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-22-workspace-release-ranges.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 407,
+          "end": 427,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 573,
+          "end": 644,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.spec.ts",
+          "start": 51,
+          "end": 100,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.spec.ts",
+          "start": 259,
+          "end": 287,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 373,
+          "end": 375,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 789,
+          "end": 795,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 1,
+          "end": 110,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "dsh 发布序列、私有 dsh 包和 workspace root 共用一个版本，但 apps/、实验包和根 manifest 曾不在静态检查范围内；新增成员若带着旧版本合入，只有发布 lane 的 verifyVersions 才会失败，而该 lane 只检查自己的快照。同时，手写 semver 范围在 pnpm pack 时不会被替换，可能发布一个不存在的版本；vendor/native 的补丁发布又需要可独立升级。",
+      "triggers": [
+        "新增或移动一个 workspace 包、apps 成员或根 manifest",
+        "执行 dsh/vendor/native 的版本 bump",
+        "修改依赖 section 或 workspace 引用范围",
+        "准备发布 lane 的 pack/verify"
+      ],
+      "obligations": [
+        "任何被扫描的 workspace manifest，只要名字是 @deepseek-ai/dsh 或 @deepseek-ai/dsh-*，版本必须等于 workspace root 的版本；按名字判定，目录位置不能豁免",
+        "该边界覆盖 packages/ 的可发布、私有与实验成员、apps/ 以及根 manifest，并让 vendor 与 native 留在各自版本线",
+        "root version 必须是 X.Y.Z 或带预发布段的 X.Y.Z-<prerelease>",
+        "workspace 内依赖目标决定范围：dsh 目标必须 workspace:*；vendor/ 或 native/system 家族目标必须 workspace:~；其他 workspace 目标必须使用 workspace: 协议",
+        "不能用目录位置豁免范围规则；DSH peer 因 workspace:* 要求匹配版本，vendor/native 的 ~ 范围允许补丁但仍要求同一 minor",
+        "vendor/native 的补丁发布必须保持面向消费者的 API 与二进制接口；本地 workspace 链接与 lockfile 解析不被范围转换改变",
+        "constraints 必须在零构建静态 lane（ci-static、ci-primary、hygiene）和发布 lane 运行；发布 lane 的 verifyVersions 仍是版本成员集的一致检查"
+      ],
+      "actors": [
+        "包维护者",
+        "版本管理员",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "新增包或 bump 时，先确认它的发布家族与版本线",
+        "若属于 dsh 家族，在本地 bump 中同步 root 与所有 @deepseek-ai/dsh* manifest",
+        "为 workspace 依赖选择按目标而非消费者决定的范围：dsh 用 workspace:*，vendor/native 用 workspace:~",
+        "运行 pnpm run constraints，读取具体 manifest 的版本/范围错误并修正",
+        "在 PR 上让静态 lane 通过；发布 lane 的 verifyVersions 再检查发布成员集",
+        "发布前确认 vendor/native 补丁没有破坏 API 或二进制接口"
+      ],
+      "enforcement": {
+        "mode": "automatic-static-gate-plus-release-check",
+        "implementation": "check-workspace-constraints.ts 的 checkDshFamilyVersion 按包名比较 root 版本；checkWorkspaceProtocol 按依赖目标校验 workspace:*、workspace:~ 与其他 workspace: 引用；run-gates 在 ci-static/ci-primary/hygiene 注册 constraints；release/verify.ts 在发布 lane 再校验成员版本",
+        "trust": "版本/范围规则本身是自动的；发布成员集是否完整、vendor/native 的 API/二进制兼容是否真实，仍依赖发布评审和真实补丁测试",
+        "failure": "版本漂移会让 constraints 在 PR/主分支静态 lane 失败并指出 manifest、期望版本和实际版本；范围错误会指出 section、依赖名、期望范围与实际范围；发布 lane 的 verifyVersions 还会在成员集不一致时失败",
+        "exceptions": "vendor 框架与 Landlock 序列保留自己的版本线与范围；实验包若属于 dsh 名字仍受版本规则约束，但按实验包政策单独处理可见性/发布；workspace: 协议之外的第三方依赖不受此规则约束"
+      },
+      "applicability": "适用于共享产品版本、又混有独立 vendor/native 发布线的 pnpm monorepo。若版本由 CI 生成、或包管理器不支持 workspace: 替换，必须重新设计版本落库与打包替换，不能直接照搬。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model",
+        "related: release-publish-order-payload; release-published-dependency-faces",
+        "crossDomain: 工程规范域拥有 workspace 约束、包层级与 manifest 形状; 供应链域拥有实验包隔离、依赖选择与依赖范围政策"
+      ],
+      "migration": {
+        "strategy": "先把“哪些 manifest 属于哪个版本线”写成按名字判定的单一规则，再把范围规则按依赖目标写成纯函数；不要按目录散落检查",
+        "implementation": "实现 checkDshFamilyVersion 与 checkWorkspaceProtocol 等纯函数；在静态 gate 注册 constraints；保留 release lane 的成员集校验；bump 同步 root 与所有家族成员",
+        "requiredSupport": [
+          "可读取的 pnpm-workspace.yaml 与所有 manifest",
+          "本地 bump 命令",
+          "静态 CI gate 注册",
+          "发布 lane 的成员发现与 verifyVersions"
+        ]
+      },
+      "reference": "references/release.md#workspace-version-ranges",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "所有 dsh 家族 manifest 等于 root 版本时 constraints 通过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh 目标用 workspace:*、vendor/native 目标用 workspace:~ 时范围检查通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "apps/ 或私有 dsh 包版本漂移时静态 lane 失败并命名该 manifest",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh 目标写成 workspace:~ 或 vendor 目标写成 workspace:* 时范围检查失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "root 版本不是规范 semver 时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修正 manifest 版本或范围后重新运行 constraints 并进入正常 bump/release 流程",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "静态 gate 只观察本次触发时的快照，不能阻止 stale-base merge；强制 base 最新或 merge queue 是仓库设置层的补充保护，不在本仓库脚本内。源内测试证明规则分支，但未执行真实发布；vendor/native 的 API/二进制兼容只能由真实补丁测试与评审证明。"
+    },
+    {
+      "id": "release-published-dependency-faces",
+      "title": "发布依赖面：Client/Host 分类、Cordis peer 与双版本安装布局",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-08-26-published-dependency-faces.md",
+          "start": 1,
+          "end": 97,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/package-dependency-policy.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 157,
+          "end": 212,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 593,
+          "end": 659,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 694,
+          "end": 749,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 807,
+          "end": 853,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 967,
+          "end": 1038,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-npm-install-layout.ts",
+          "start": 1,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 80,
+          "end": 88,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 373,
+          "end": 375,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 789,
+          "end": 795,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md",
+          "start": 1,
+          "end": 50,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md",
+          "start": 1,
+          "end": 40,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1,
+          "end": 207,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 345,
+          "end": 999,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1039,
+          "end": 1061,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1135,
+          "end": 1211,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1241,
+          "end": 1246,
+          "kind": "test"
+        }
+      ],
+      "problem": "把浏览器 bundle、Host 入口、共享 TypeScript 声明和 Cordis 注入元数据都编码成 npm peer，会让 npm 反复遍历深而收敛的 peer 路径，安装成本高；按目录或按一个统一规则扁平化，又会错误改变共享实例语义或把 Host 运行时依赖降成 devDependency。发布前若只看 source import，tarball 仍可能带着错误的 section 和 peer relay。",
+      "triggers": [
+        "新增或修改 dsh.client 声明、Client 目录或 Host 入口",
+        "新增 Host 运行时值导入、类型导入、re-export 或 dsh.client.inject",
+        "改变 dependencies/devDependencies/peerDependencies/optionalDependencies",
+        "准备 Release (dsh) 的 pack/publish"
+      ],
+      "obligations": [
+        "依赖 section 由发布面（Client/Host）决定：packages/client/ 与声明 dsh.client 的包为 Client/Host；仅 \"./client\" 导出不构成依赖策略选择；实验包与发布包使用完全相同的规则，没有 group 级豁免",
+        "每个被覆盖的 Host 运行时 workspace 导出必须归入 duplicateSafePackages、safeHostDependencyExports 或 peerRequiredHostExports 之一；未分类导出阻断 --fix",
+        "同一导出不能同时出现在 safe 与 peer-required 表；表项必须是当前源码实际使用的 workspace 包和导出，不能有无用、重复或未知项",
+        "@deepseek-ai/cordis 必须同时出现在匹配的 peerDependencies 与 devDependencies；peer-required 的 Host 包也必须在两个 section 使用同一范围",
+        "dsh 目标用 workspace:*，vendor/native 目标用 workspace:~；workspace 运行时依赖不得停留在 peerDependenciesMeta 的无匹配条目",
+        "Host 运行时值导入归 dependencies；Client bundle、类型导入、module augmentation、dsh.client.inject 与既有 metadata-only peer 归 devDependencies",
+        "--fix 只可在零 policy violation 时写 manifest；修复后刷新 pnpm-lock.yaml、生成两种语言的 module graph 与配对记录",
+        "Release 发布前运行 verify-package-dependencies 与 verify-npm-install-layout：后者用两个互不兼容的 DSH 版本构造 synthetic consumer，要求 DSH 同名包按版本隔离、两个 release 的包集合相等、每个 DSH release 只有一个 Cordis 安装、无 react/react-dom、无 archive 下载；npm 只生成 package lock",
+        "双版本布局的解析工作量不得超过 MAX_RESOLUTION_WORK_UNITS（当前 875000 个 work unit）；新增 peer relay 必须重新测量并显式提高预算",
+        "可选平台包在本地索引不可用时报告但不失败；未知可选包不能掩盖真实 DSH 边解析错误",
+        "检查范围读取 packages/*/*/package.json（含 experimental）；Host 面还会从 tsdown.config.ts 的 host/client 构建入口识别 worker/child-process 入口，不靠源码模式猜测"
+      ],
+      "actors": [
+        "包维护者",
+        "依赖策略评审者",
+        "Release workflow",
+        "发布者"
+      ],
+      "steps": [
+        "用 verify-package-dependencies（不带 --fix）读取选择、section、workspace range 与 peer metadata 违规",
+        "对每个新 Host 运行时导出，在 package-dependency-policy.ts 选择一种分类：整包 duplicate-safe、精确 export safe，或整包 peer-required",
+        "确认 Client/Host 面：packages/client/ 与 dsh.client；用 include/exclude/hostPackages 处理已评审例外",
+        "在零违规后运行 --fix 生成 manifest、刷新 lockfile 与 module graph，并审阅 diff",
+        "运行 verify-npm-install-layout，检查双 release 隔离、Cordis 单实例、包集合相等与工作预算",
+        "在 Release (dsh) 的 pack job 中让两个 gate 先通过，再打包"
+      ],
+      "enforcement": {
+        "mode": "automatic-policy-verifier-plus-deterministic-layout-probe",
+        "implementation": "verify-package-dependencies.ts 读源码与 manifest，校验 scope、导出分类、依赖 section、workspace range 和 peer metadata；--fix 仅在零 policy violation 时写 manifest、刷新 lockfile 与 module graph；verify-npm-install-layout.ts 用本地 metadata-only registry 构造 0.1.0/0.2.0 两个 DSH release，调用 npm 生成 package lock 后断言隔离与预算；release.yml 在 pack 前运行两者；实验包同样纳入 packages/*/* 的选择，Host worker/子进程入口通过 tsdown 配置读取",
+        "trust": "源码分类和清单/布局检查是自动的；某个导出是否真的可跨安装共享、某个 peer 是否可丢，必须人工评审并在策略表中显式登记；布局探针是确定性的包路径/版本检查，不证明运行时插件加载成功，也不设置 CI wall-clock 性能承诺",
+        "failure": "未知/未分类导出、错误 section、范围不符、重复或无效策略项会使 gate 非零退出；有 policy violation 时 --fix 不写任何 manifest；双版本探针发现跨 release 解析、额外 Cordis、包集合不等、react 输入或超预算时失败",
+        "exceptions": "clientFaceInclude/clientFaceExclude 记录已评审的 Client 面例外；hostPackages 记录受控扁平化的 Host 包；duplicateSafePackages 允许整包运行时入口；safeHostDependencyExports 只允许列出的导出；peerRequiredHostExports 保留整包 peer 边；无法获得的 optional platform package 在本地索引中报告但不失败"
+      },
+      "applicability": "适用于多包 pnpm monorepo，尤其是 Client/Host 双面包、Cordis 插件运行时和自动安装 peer 的 npm 发布。若 registry 不支持 metadata-only 解析、或包管理器不自动安装 peer，分类规则和布局探针必须重新验证；不能把本策略直接用于独立组装的 TypeScript 消费者。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model; release-workspace-version-ranges",
+        "related: release-publish-order-payload; release-npm-rehearsal; release-npm-registry-idempotency",
+        "crossDomain: 供应链域拥有依赖选择、实验包隔离与依赖升级政策; 工程规范域拥有 manifest 形状、包层级与 module graph 生成; 测试域拥有 resolver 基准与布局探针测试"
+      ],
+      "migration": {
+        "strategy": "先把 Client/Host 发布面与依赖 section 分类写成可审阅的显式策略，再用纯函数生成期望 section；布局探针作为独立的确定性检查，不要把它变成 release-time 性能阈值",
+        "implementation": "实现 scope 发现、Host 导出分类、expectedPackageDependencies、manifest 校验与受限 --fix；实现双 DSH release registry 与 assertDualDshInstallLayout；在 Release (dsh) 的 pack 前调用两个 gate",
+        "requiredSupport": [
+          "可解析的 workspace manifests 与源码 AST",
+          "显式的 include/exclude/host/export 分类表",
+          "pnpm lockfile 与 module graph 生成器",
+          "本地 metadata-only registry 与 npm 子进程预算/超时"
+        ]
+      },
+      "reference": "references/release.md#published-dependency-faces",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "一个合法 Client/Host 包在只读检查中通过，Cordis 保持 peer+dev，Host 运行时边进入 dependencies",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "双 DSH 版本布局保持同名包隔离、包集合相等且只有一个 Cordis 安装",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "未分类 Host 运行时导出使 gate 失败且 --fix 不写 manifest",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dsh 目标使用非 workspace:* 或 peer-required 包只出现在一个 section 时失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "双版本布局出现跨 release 解析、react 输入、额外 Cordis 或超预算时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补充/修正显式分类后重新运行 gate，再执行 --fix 并审阅 manifest/lockfile/module graph diff",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "策略表是人工评审的显式决策，不是自动推导的运行时语义；布局探针只验证 npm 的包路径/版本解析，不证明客户端插件实际加载、也不证明 tarball 在真实 registry 上的安装体验。源内基准和探针未在本次审计执行；MAX_RESOLUTION_WORK_UNITS 是参考主机测量值，换机器/registry 需重新标定。 实验包纳入后，公开实验 manifest 的浏览器/类型关系只留在 devDependencies，独立从 npm 安装这些包的用户会收到较少的 peer 提示；verifier 看不到 tsdown banner 注入的导入；读取每个 Host 包的 tsdown 配置会让 gate 依赖这些配置模块的导入副作用。"
+    },
+    {
+      "id": "release-npm-rehearsal",
+      "title": "无凭据 pack 预演、跨家族验证与 packed-install 隔离探针",
+      "sources": [
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 1,
+          "end": 180,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-vendor.yml",
+          "start": 1,
+          "end": 107,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/release/verify-packed-install.ts",
+          "start": 1,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/installed-product-isolation.ts",
+          "start": 1,
+          "end": 73,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-10-npm-release-sequences.md",
+          "start": 111,
+          "end": 140,
+          "kind": "history"
+        }
+      ],
+      "problem": "发布前的构建若接触 registry 凭据，PR 会变成高风险写入面；若只做 workspace 测试，缺文件、错误的 files 选择和未发布的跨家族依赖都可能在用户安装时才暴露。",
+      "triggers": [
+        "PR 修改发布路径或包 manifest",
+        "准备发布前确认 release set 仍可打包",
+        "排查 packed 安装缺文件/依赖解析失败"
+      ],
+      "obligations": [
+        "pack 在 pull_request 与 master push 上运行，权限只有 contents: read，不接触 registry 凭据",
+        "checkout 使用 fetch-depth: 0，因为 release 脚本读 tag；persist-credentials: false",
+        "先 release:verify 再 build；安装边环在写 tarball 前失败",
+        "pack 把整个 family 打到一个目录并写发布顺序；PR 预演可用并发，正式发布保持串行",
+        "dsh 验证额外打包 vendor 与 Landlock entry，但不发布它们",
+        "packed-install 只从 --from 安装所有 tarball，外部依赖才走 registry；临时 consumer 隔离 cache/HOME，删除 NODE_OPTIONS/NODE_PATH",
+        "用 plain Node 驱动安装后的 dsh --version，并验证默认产品图不含 experimental 包",
+        "packed-install 只证明 files 完整与范围可解析，不证明交互行为"
+      ],
+      "actors": [
+        "PR 作者",
+        "CI",
+        "发布者",
+        "评审者"
+      ],
+      "steps": [
+        "checkout 完整历史且不持久化凭据",
+        "pnpm install --frozen-lockfile",
+        "release:verify --family dsh 或 vendor",
+        "构建 official 产物",
+        "release:pack 到独立目录并写 publish-order.txt",
+        "按需打包 vendor/Landlock 供验证",
+        "release:verify-packed-install 用临时 consumer 安装并驱动入口",
+        "只上传本 family 的 tarball artifact"
+      ],
+      "enforcement": {
+        "mode": "ci-structure-plus-script",
+        "implementation": "release.yml/release-vendor.yml 的权限、触发和 job 顺序；verify-packed-install 的隔离环境与入口驱动；installed-product-isolation 的 experimental 拒绝",
+        "trust": "CI 自动执行；但 PR 是否 required、失败是否阻断合并取决于分支保护，仓库外配置",
+        "failure": "任何 pack/verify/install 失败都会使 job 失败；跨家族 peer 未打包会在安装时暴露",
+        "exceptions": "packed-install 使用 --omit=optional，因为 Landlock 平台包需要 musl 逐架构构建；只打包 entry"
+      },
+      "applicability": "适用于多包 monorepo 的发布预演。若目标 registry 私有、无法从临时 consumer 解析外部依赖，需要预置镜像或离线 cache。",
+      "relationships": [
+        "dependsOn: release-publish-order-payload",
+        "related: release-npm-manual-publish; release-npm-registry-idempotency",
+        "crossDomain: 自动化域拥有 runner/缓存; 测试域拥有测试选择"
+      ],
+      "migration": {
+        "strategy": "把“可打包”和“已发布”分成两个信任级别；PR 只证明前者",
+        "implementation": "PR 上无凭据 pack + 临时 consumer 安装 + 入口版本探针；跨家族依赖用本地 pack 目录验证；只上传本家族 artifact",
+        "requiredSupport": [
+          "可离线安装的 tarball 集合",
+          "隔离临时目录",
+          "入口可执行文件"
+        ]
+      },
+      "reference": "references/release.md#npm-rehearsal",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "PR 上 pack 全家族并安装成功，dsh --version 与包版本一致",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "跨家族 bump 未发布时，vendor tarball 从本地 --from 解析",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "漏打包 peer 依赖时 packed-install 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "默认产品图包含 experimental 包时隔离检查失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修正 files/依赖后重新 pack，临时 consumer 删除且不污染工作区",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "不证明真实 registry 安装、交互行为、安装后升级；PR required 状态取决于分支保护。"
+    },
+    {
+      "id": "release-rehearsal-runner-trust",
+      "title": "发布预演在持久 Linux runner 上的信任边界与隔离",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/process/2026-09-06-release-rehearsal-selfhosted.md",
+          "start": 1,
+          "end": 28,
+          "kind": "history"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "start": 1,
+          "end": 180,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-vendor.yml",
+          "start": 1,
+          "end": 107,
+          "kind": "config"
+        }
+      ],
+      "problem": "发布预演不需要 npm/API 凭据，但如果在持久共享 host 上运行任意 PR 代码，或复用未清理的 checkout，会把不可信代码引入持久信任域，并让 packed-payload 证明退化为旧工作区/旧构建输出。",
+      "triggers": [
+        "把 release/pack 预演路由到 self-hosted Linux",
+        "启用或关闭 DSH_CI_FAILOVER_LINUX",
+        "修改 release.yml 或 release-vendor.yml 的 runner/cleanup 步骤"
+      ],
+      "obligations": [
+        "只有 writer-controlled 仓库变量 DSH_CI_FAILOVER_LINUX=selfhosted 才选择自托管 Linux 池；其余情况回退 ubuntu-24.04",
+        "自托管选择要求 canonical repository 与非 Dependabot actor，且只接受 master push 或同仓、非 fork、作者非 Dependabot 的 PR",
+        "manual workflow_dispatch 始终使用 ubuntu-24.04；所有被拒绝的上下文也使用 hosted runner",
+        "runner labels 为 [self-hosted, linux, x64, vm-backup]；注册共享一台 VM，不假设独立机器容量",
+        "Node 编译缓存、node-gyp header、pnpm setup 目标都放在 runner 私有临时卷，并用 run/attempt/job 限定 pnpm 目标；TMPDIR 指向 runner.temp",
+        "持久 pnpm store 留在 checkout 清理之外；只有 hosted runner 恢复远程 store cache；预演 workflow 不保存远程 cache",
+        "checkout 在 immutable install/现有 build 前显式清理 ignored 与 untracked 输出；完整 tag 历史、pack 并发、依赖检查、tarball 验证与 artifact retention 保持不变",
+        "packed-install verifier 在 checkout 外创建新 consumer，删除继承的 Node resolution hook，并在 finally 删除 consumer；暖 pnpm store 不能替代 workspace link 或旧构建产物",
+        "两个 manual publish workflow 保持完全 hosted，不获得凭据或 registry 变更"
+      ],
+      "actors": [
+        "CI 维护者",
+        "仓库 writer",
+        "发布者",
+        "安全评审者"
+      ],
+      "steps": [
+        "确认 DSH_CI_FAILOVER_LINUX 的值与 canonical repo/actor/event 条件",
+        "让预演 job 在自托管池上使用 runner.temp 与隔离 pnpm store",
+        "checkout 后先清理 ignored/untracked 输出，再 frozen install 与 build",
+        "pack 到独立目录，再在 checkout 外创建临时 consumer 做 packed-install",
+        "失败/取消时依赖 runner 清理与 finally 删除 consumer；不要把暖 store 当成 payload 证据",
+        "manual dispatch 或不可信上下文自动回 hosted，不做自动健康探测"
+      ],
+      "enforcement": {
+        "mode": "workflow-selector-plus-isolation-structure",
+        "implementation": "release.yml/release-vendor.yml 的事件/actor/repository 条件、runner label、TMPDIR/缓存/pnpm store 限定、checkout 清理与 packed-install finally；测试 spec 固定 selector 与负例",
+        "trust": "路由条件与清理步骤是自动的；共享 VM 的容量竞争、仓库 writer 是否把可信代码放入持久信任域，仍由运维/评审承担；不是自动 runner 健康检测或 failover",
+        "failure": "缺少/错误变量、非 canonical repo、Dependabot/fork/非 master push/手动 dispatch 都会回 hosted；自托管上未清理的 checkout 或继承的 Node hook 会让 packed-install 失败或污染后续 job",
+        "exceptions": "故意保留 hosted 回退，不自动迁移已排队 job；持久 pnpm store 可复用，但不能替代 tarball payload；发布 workflow 永远 hosted"
+      },
+      "applicability": "适用于把无凭据 release rehearsal 放到持久 self-hosted runner 的仓库。若 runner 不共享 VM、或平台没有 writer-controlled repository variable，需要重新设计信任条件与清理边界。",
+      "relationships": [
+        "dependsOn: release-npm-rehearsal",
+        "related: release-npm-manual-publish; release-other-delivery",
+        "crossDomain: 自动化域拥有 runner 路由、缓存、并发与事件信任; 安全域拥有持久 host 信任域"
+      ],
+      "migration": {
+        "strategy": "先把 hosted 作为默认与回退，再把 self-hosted 选择限制到 writer-controlled 变量和可信事件；隔离临时目录/缓存，不把持久 store 当成 payload 证明",
+        "implementation": "实现事件/actor/repository 条件与 runner label；checkout 清理；runner.temp 缓存与 pnpm store；packed-install consumer 在 checkout 外并在 finally 删除；publish workflow 保持 hosted",
+        "requiredSupport": [
+          "self-hosted Linux runner 池与标签",
+          "writer-controlled repository variable",
+          "runner 私有临时卷",
+          "packed-install 临时 consumer"
+        ]
+      },
+      "reference": "references/release.md#rehearsal-runner-trust",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "master push 或同仓非 fork、非 Dependabot PR 在变量启用时选择 self-hosted，且 pack/packed-install 成功",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "packed-install 在 checkout 外创建 consumer 并在结束后删除，工作区无残留",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "fork/Dependabot/其他仓库/非 master push/手动 dispatch 选择 hosted 而非 self-hosted",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "未清理 ignored/untracked 输出或继承 Node hook 时 packed-install 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "取消/失败后由 runner 清理临时卷与 consumer；重新排队时从干净 checkout 开始",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "selector 测试不等于真实 release build/packed-install 执行；共享 VM 仍可能与其他可信 job 竞争，仓库 writer 对进入持久信任域的代码负责；没有自动 runner 健康检测或已排队 job 的 failover。"
+    },
+    {
+      "id": "release-npm-manual-publish",
+      "title": "manual-only 发布、tag 精确校验与 npm-publish 人工审批",
+      "sources": [
+        {
+          "path": ".github/workflows/release-publish.yml",
+          "start": 1,
+          "end": 131,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/release-vendor-publish.yml",
+          "start": 1,
+          "end": 126,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/release/verify.ts",
+          "start": 45,
+          "end": 110,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/publish.ts",
+          "start": 122,
+          "end": 235,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-10-npm-release-sequences.md",
+          "start": 111,
+          "end": 140,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/ci-workflow.spec.ts",
+          "start": 1401,
+          "end": 1515,
+          "kind": "test"
+        }
+      ],
+      "problem": "若发布随 push/tag 自动触发，PR 或误推 tag 可能直接写 registry；若发布与打包共用可写凭据，预演阶段就暴露 token。发布还必须能从仓库状态精确重放，而不是相信 PR artifact。",
+      "triggers": [
+        "准备正式发布 npm 包",
+        "审查发布工作流为何不在 PR check 中",
+        "tag 与成员版本不一致",
+        "需要重跑失败发布"
+      ],
+      "obligations": [
+        "发布工作流只有 workflow_dispatch，不监听 pull_request/push，永不出现在 PR check",
+        "发布从 family 的 tag 手工触发；RELEASE_PUBLISH=true 时 verify 要求 GITHUB_REF 是 tag、前缀正确、tag 精确等于某成员版本",
+        "发布前所有成员必须非 private",
+        "发布 job 重新 checkout + 安装 + 下载 pack job 的 artifact；不构建，上传的正是本次 dispatch 的 pack 字节",
+        "publish job 使用 environment: npm-publish；concurrency.group=Release-publish 且 cancel-in-progress: false",
+        "registry 凭据只在 publish job；pack job 无凭据",
+        "发布顺序由 publish-order.txt 决定，不能从 tag 猜测发布集合"
+      ],
+      "actors": [
+        "release manager",
+        "审批人",
+        "CI",
+        "npm registry 管理员"
+      ],
+      "steps": [
+        "确认 tag 指向 bump 提交，且成员版本与 tag 一致",
+        "从 tag dispatch release-publish.yml 或 release-vendor-publish.yml",
+        "pack job 以 RELEASE_PUBLISH=true verify，重新构建并 pack，跑 packed-install",
+        "在 npm-publish environment 完成人工审批",
+        "publish job 仅下载 artifact 并逐包发布",
+        "核对 registry 与 dist-tags"
+      ],
+      "enforcement": {
+        "mode": "workflow-trigger-plus-environment-plus-script",
+        "implementation": "workflow_dispatch-only 触发；verify.ts 的 tag/private 检查；environment npm-publish；pack/publish 分离",
+        "trust": "触发与 tag 检查自动；required reviewers、允许 tag、environment secret 是 GitHub 仓库外配置，源码不能证明",
+        "failure": "非 tag/错误前缀/版本不匹配在 pack 前失败；environment 未批准 publish 不运行；artifact 缺失则 publish 失败",
+        "exceptions": "vendor 工作流可选 dist-tag 覆盖；覆盖必须通过未占用/同版本预检"
+      },
+      "applicability": "适用于需要人工审批的 registry 发布。若组织要求 tag push 自动发布，必须用受保护 tag + 自动 environment 规则重新论证，不能直接去掉 workflow_dispatch-only。",
+      "relationships": [
+        "dependsOn: release-npm-rehearsal",
+        "related: release-npm-registry-idempotency; release-three-sequence-model",
+        "crossDomain: 自动化域拥有 concurrency/runner; 安全域拥有凭据管理"
+      ],
+      "migration": {
+        "strategy": "保持“无凭据 pack”与“有凭据 publish”两个 job/两个信任级别；审批放在 environment，不放在脚本",
+        "implementation": "workflow_dispatch-only；tag 前缀+版本精确校验；pack 重新构建；publish 下载 artifact；npm-publish environment + 全局 registry 写锁",
+        "requiredSupport": [
+          "tag 保护",
+          "environment required reviewers",
+          "registry token/OIDC",
+          "artifact 保留策略"
+        ]
+      },
+      "reference": "references/release.md#npm-rehearsal",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "从正确 tag dispatch 并在审批后发布，registry 逐包一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "从分支或错误 tag dispatch 时 verify 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "未审批时 publish job 不执行",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "发布中断后重跑同一 tag，跳过已一致包",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "审批真实性依赖 GitHub environment API/UI；源码只能证明引用。NPM_TOKEN 与 OIDC 的实际信任模式未在仓库内证明。"
+    },
+    {
+      "id": "release-npm-registry-idempotency",
+      "title": "注册表三态、重试前重读、dist-tag 预检与部分发布前缀",
+      "sources": [
+        {
+          "path": "scripts/release/publish.ts",
+          "start": 1,
+          "end": 235,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-10-npm-release-sequences.md",
+          "start": 96,
+          "end": 125,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/release/families.ts",
+          "start": 288,
+          "end": 374,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "npm 对已存在版本永久拒绝；一次失败后重跑若直接重发，会被误判为永久失败。另一面，只看版本是否存在会漏掉“版本没变但字节变了”的静默错误。",
+      "triggers": [
+        "发布中断或重跑",
+        "registry 返回 E409/5xx/超时",
+        "同版本 integrity 不一致",
+        "显式 dist-tag 已被占用"
+      ],
+      "obligations": [
+        "逐包查询 npm view <name>@<version> dist.integrity",
+        "不存在则发布；存在且 integrity 等于本地 sha512 则跳过；存在但不同则失败并提示 bump",
+        "每次发布尝试至少间隔 2 秒；最多 4 次；退避 2/4/8 秒",
+        "只对 E409/E429/E500/E502/E503/E504/ETIMEDOUT/ECONNRESET/EAI_AGAIN 重试",
+        "每次重试前重读 registry；报告失败但已落地且 integrity 一致算成功",
+        "显式 dist-tag 必须非空、不以 - 开头、无需 URI 编码、不是 semver range",
+        "发布前整批检查：tag 未占用，或已指向本版本；否则整批拒绝",
+        "不传 --access，使用每包 publishConfig"
+      ],
+      "actors": [
+        "发布脚本",
+        "release manager",
+        "registry"
+      ],
+      "steps": [
+        "读取 publish-order.txt，逐包读取 packed identity",
+        "若有显式 dist-tag，先整批 verifyDistTag",
+        "对每个包查询 registry state",
+        "present+一致则跳过；present+不同则失败；absent 则 publish",
+        "publish 失败时重读 registry；transient 则 backoff 重试",
+        "汇总 published/skipped 数"
+      ],
+      "enforcement": {
+        "mode": "automatic-script",
+        "implementation": "publish.ts 的三态、重试、integrity 与 dist-tag 检查；publish-order.txt 保证中断只留前缀",
+        "trust": "脚本自动；registry 的最终状态和外部发布者行为不可控；dist-tag 检查不是原子预留",
+        "failure": "integrity 不同立即失败；永久错误不重试；dist-tag 冲突整批拒绝",
+        "exceptions": "构建不可复现时 integrity 比较会误报；源 Note 明确该假设尚未测量"
+      },
+      "applicability": "适用于支持 integrity 查询的 npm 兼容 registry。私有 registry 若不返回 dist.integrity，需要改用逐文件 hash 或 registry 特定 API。",
+      "relationships": [
+        "dependsOn: release-npm-manual-publish",
+        "related: release-publish-order-payload; release-three-sequence-model",
+        "crossDomain: 供应链域拥有可复现构建"
+      ],
+      "migration": {
+        "strategy": "把“已发布”判断做成 registry 状态机，不用版本列表猜",
+        "implementation": "三态 + 重试前重读 + 逐包 integrity + 整批 dist-tag 预检 + publish-order.txt 前缀恢复",
+        "requiredSupport": [
+          "registry integrity API",
+          "稳定 tarball hash",
+          "发布锁"
+        ]
+      },
+      "reference": "references/release.md#npm-registry",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "同一 artifact 重跑，所有包 skipped 且不产生新版本",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "E409 后重读发现已落地，继续而非失败",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "同版本不同 integrity 时失败并提示 bump",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "dist-tag 指向别的版本时整批上传前失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "部分发布后重跑只补缺失包，已上传前缀保持可安装",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "不原子预留 dist-tag；依赖字节可复现；重跑旧稳定 artifact 可能把 latest 移回旧版；未执行真实 registry 实验。"
+    },
+    {
+      "id": "release-native-addon",
+      "title": "native/system 全平台 prebuild、多 Node 字节级测试与 provenance 发布",
+      "sources": [
+        {
+          "path": ".github/workflows/node-addon-system-release.yml",
+          "start": 1,
+          "end": 188,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/node-addon-system.yml",
+          "start": 1,
+          "end": 170,
+          "kind": "config"
+        },
+        {
+          "path": "native/system/scripts/verify-release.mjs",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "native/system/scripts/publish-release.mjs",
+          "start": 1,
+          "end": 165,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "原生 addon 需要每个 OS/架构各构建一次，并在多个 Node ABI 上验证同一批字节；若每个 Node 重新构建，测试的就不是发布产物。Landlock 这类内核能力若在不支持的内核上 skip，会制造假绿。",
+      "triggers": [
+        "修改 native/system 包",
+        "准备 node-addon-system 发布",
+        "新增平台/Node 版本支持",
+        "Landlock 测试失败或被跳过"
+      ],
+      "obligations": [
+        "CI 在 native/system/** 等路径的 PR/master push 上运行；发布工作流只有 workflow_dispatch",
+        "每平台构建一次，然后用同一批二进制测试 Node 24、20、22、26",
+        "Linux musl addon 在 alpine 容器中无编译器测试",
+        "Landlock Linux leg 设 NALR_REQUIRE_LANDLOCK=1，未启用内核失败而非 skip",
+        "pack 前 verify 所有已发布包共用一个版本；publish=true 时 tag 必须是 node-addon-system-v<version> 且版本一致",
+        "下载并组装所有 prebuild，verify 格式/架构，pack 后安装验证",
+        "publish 只在输入 publish=true 时运行，environment npm-publish，id-token: write，逐包按 registry 决定",
+        "publish-release 读取 publish-order，但按 tarball 内 name/version 查 registry：absent 发布、同 integrity 跳过、不同 integrity 失败；预发布用 next，稳定版不传 tag，不传 --access",
+        "transient registry 错误最多 4 次，间隔 2/4/8 秒；每次重试前重读；写失败但 registry 已同 integrity 视为落地；只对确认 transient 重试"
+      ],
+      "actors": [
+        "native 维护者",
+        "发布者",
+        "审批人",
+        "CI"
+      ],
+      "steps": [
+        "PR 触发 matrix/native CI，全平台构建并跑测试",
+        "bump native 版本并提交，人工打 node-addon-system-v<version> tag",
+        "dispatch node-addon-system-release.yml，publish=true",
+        "pack job verify 版本/tag、下载 prebuild、组装、验证、打包、安装",
+        "在 npm-publish 审批",
+        "publish job 逐包发布/跳过",
+        "核对 registry 与 provenance"
+      ],
+      "enforcement": {
+        "mode": "ci-matrix-plus-script-plus-environment",
+        "implementation": "node-addon-system.yml 的多 Node/容器矩阵；release 工作流的 prebuild 组装与 verify；verify-release.mjs 的版本/tag 检查；npm-publish environment",
+        "trust": "矩阵与脚本自动；npm provenance/OIDC 与 environment 审批在平台侧，仓库只能证明引用",
+        "failure": "tag/版本不一致、缺 prebuild、格式/架构错误、packed install 失败、Landlock 未启用都会阻断",
+        "exceptions": "预发布版本的 dist-tag 策略由脚本/工作流决定；源没有统一覆盖说明"
+      },
+      "applicability": "适用于需要多平台原生二进制的 Node 包。若目标平台不支持 musl 或 Landlock，需要显式记录不可发布，而不是关闭断言。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model",
+        "related: release-npm-registry-idempotency; release-npm-manual-publish; release-native-artifact-assembly",
+        "crossDomain: 自动化域拥有 runner 矩阵; 测试域拥有原生测试策略"
+      ],
+      "migration": {
+        "strategy": "构建一次、测试多 ABI；发布包和 CI 测试包必须是同一 artifact",
+        "implementation": "matrix 生成 prebuild；每平台 build+native tests；release 下载全部 prebuild、assemble、verify、pack、install；publish 用 registry 状态机",
+        "requiredSupport": [
+          "各平台 runner",
+          "musl 工具链",
+          "prebuild artifact 保留",
+          "npm OIDC/provenance"
+        ]
+      },
+      "reference": "references/release.md#native",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "同一批二进制在 Node 20/22/24/26 与 alpine 容器通过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "tag 与包版本一致时 pack/publish 成功",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "tag 版本不匹配时 verify 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "Landlock 未启用时 Linux leg 失败而非 skip",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "registry 已有同版本不同 integrity 时 publish 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "缺某平台 prebuild 时重新构建该 artifact，不改 tag",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "部分发布后同 tag 重跑，同 integrity 跳过、从缺失包继续",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "已读 publish-release.mjs；其 tag/dist-tag 占用/git 历史校验仍由 pack job/workflow 承担；provenance 是否真实启用取决于 registry；真实发布未执行。prebuild 矩阵/组装/packed-install 预演由 release-native-artifact-assembly 单独审计，仍未执行。"
+    },
+    {
+      "id": "release-native-artifact-assembly",
+      "title": "native 发布的平台矩阵、prebuild 组装、按序打包与 packed-install 预演",
+      "sources": [
+        {
+          "path": ".github/workflows/node-addon-system-release.yml",
+          "start": 1,
+          "end": 188,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/node-addon-system.yml",
+          "start": 1,
+          "end": 170,
+          "kind": "config"
+        },
+        {
+          "path": "native/system/scripts/github-matrix.mjs",
+          "start": 1,
+          "end": 69,
+          "kind": "implementation"
+        },
+        {
+          "path": "native/system/scripts/assemble-prebuilds.mjs",
+          "start": 1,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "native/system/scripts/pack-release.mjs",
+          "start": 1,
+          "end": 118,
+          "kind": "implementation"
+        },
+        {
+          "path": "native/system/scripts/verify-packed-install.mjs",
+          "start": 1,
+          "end": 238,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "原生 addon 的发布矩阵若在 workflow 手写，会与 packages/<name>/prebuilds.json 漂移；下载 artifact 后若只复制不验证，缺失/错架构的二进制会被打包；pack 后若不做仓库外安装和已安装入口验证，测试的可能不是 registry 将收到的字节。",
+      "triggers": [
+        "新增/删除 native 平台包或 prebuilds.json",
+        "准备 node-addon-system GitHub Release 与 npm 发布",
+        "per-architecture CI leg 打包",
+        "修改 native pack/publish 脚本"
+      ],
+      "obligations": [
+        "packages/<name>/prebuilds.json 是平台矩阵唯一真源；GitHub runner 固定映射 linux-x64→ubuntu-24.04、linux-arm64→ubuntu-24.04-arm、darwin-x64→macos-15-intel、darwin-arm64→macos-latest；未知平台必须失败，不静默跳过",
+        "assemble-prebuilds 先清空每个平台包的 bin/；每个下载目录必须精确映射为 prebuild-<package>，否则失败；复制后按 prebuilds.json 验证每个声明二进制的存在、格式与原生架构；static-musl 二进制补 0755",
+        "pack-release 先平台包、后 entry 包，按该顺序写 publish-order.txt；平台包用 npm pack、entry 用 pnpm pack；每个预期 tarball 必须存在，否则失败",
+        "GITHUB_ACTIONS=true 时 GITHUB_REPOSITORY 必须是 owner/repo；GITHUB_SERVER_URL 必须是纯 HTTPS origin（无 userinfo/path/query/hash）；这些元数据只投影到临时 staging 的 manifest，源 manifest 保持公开 source home，staging 最终删除",
+        "--current-platform-only 只允许每架构 CI leg 使用：只打包本机平台包与 entry；全量发布路径仍要求所有平台 tarball",
+        "verify-packed-install 校验 packed entry 的 optionalDependencies 名称集合恰好等于全部平台包；每个 packed manifest 禁止 preinstall/install/postinstall/prepare，且依赖中不得残留 workspace: 范围",
+        "在仓库外创建临时 consumer，仅从本地 tarball 执行 npm install --offline；本机平台二进制逐文件 SHA-256 必须等于 workspace 构建的字节；Linux 主机若矩阵无对应平台包直接失败",
+        "驱动已安装 entry（不是源码）验证包导出边界、launcherPath 绝对且位于平台包内、Landlock probe；Linux 在可用内核上做真实“拒绝写 + 允许写”世界证明；NALR_REQUIRE_LANDLOCK=1 时 probe=unusable 必须失败；非 Linux 验证无 launcher 且 probe=unusable",
+        "POSIX 主机验证 flock 排他、第二个句柄 EAGAIN、关闭后释放；临时 consumer/驱动/lock 目录最终删除"
+      ],
+      "actors": [
+        "native 维护者",
+        "CI",
+        "发布者",
+        "release manager"
+      ],
+      "steps": [
+        "在 packages/<name>/prebuilds.json 声明平台与二进制；matrix 从该文件生成 CI/Release 行",
+        "各平台构建 leg 上传 prebuild-<package> artifact",
+        "release job 下载全部 prebuild，assemble 到 packages/*/bin，并按声明验证",
+        "pack-release 按平台→entry 顺序生成 tarball 与 publish-order.txt",
+        "verify-packed-install 做载荷、optionalDependencies、仓库外离线安装、byte-pin、已安装入口与 flock/Landlock 验证",
+        "只有上述通过后才允许进入发布 job"
+      ],
+      "enforcement": {
+        "mode": "ci-matrix-plus-pack-scripts-plus-install-rehearsal",
+        "implementation": "github-matrix.mjs 从 prebuilds.json 派生矩阵；assemble-prebuilds.mjs 映射并验证；pack-release.mjs 排序并 pack；verify-packed-install.mjs 隔离安装和运行时探测",
+        "trust": "矩阵、组装、打包与安装预演在 CI/脚本内自动；原生 runner、内核 Landlock 能力、registry 实际消费不在仓库内证明",
+        "failure": "未知平台、缺失/额外 artifact、声明二进制缺失或架构不符、tarball 缺失、packed lifecycle/workspace 范围、optionalDependencies 集合不符、离线安装、byte-pin、入口、Landlock 或 flock 断言失败都会阻断",
+        "exceptions": "per-arch CI leg 可以只存在本机平台 tarball；非 Linux 不做 Landlock world-proof，但仍要证明 launcher 不存在且 probe=unusable"
+      },
+      "applicability": "适用于多平台预编译 npm 包。若没有原生二进制，可删除 byte-pin/Landlock 部分，但 artifact 覆盖、可选依赖集合、仓库外离线安装与“驱动已安装入口”仍适用。",
+      "relationships": [
+        "dependsOn: release-native-addon",
+        "related: release-npm-rehearsal; release-npm-manual-publish",
+        "crossDomain: 自动化域拥有 runner 矩阵与 artifact 传递; 测试域拥有原生/内核证据策略"
+      ],
+      "migration": {
+        "strategy": "把平台清单做成单一机器真源，并把“构建产物=发布字节”做成可执行预演",
+        "implementation": "prebuilds.json→matrix；下载 artifact→assemble→verify；pack 顺序文件；仓库外离线安装+byte-pin+已安装入口+能力探测",
+        "requiredSupport": [
+          "各平台原生 runner",
+          "prebuild artifact 保留",
+          "本地 tarball 离线安装环境",
+          "Landlock/flock 可用性探测"
+        ]
+      },
+      "reference": "references/release.md#native",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "矩阵、prebuild 组装、按序 pack 与 packed-install 全流程通过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "本机平台二进制 byte-pin 一致，已安装入口通过 Landlock/flock 检查",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺平台 artifact、声明二进制缺失/错架构、packed lifecycle 或 optionalDependencies 集合不符时失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "NLAR_REQUIRE_LANDLOCK=1 且 probe=unusable 时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "只重缺平台的构建 leg 并重新 assemble；不改已发布 tarball/版本",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "这组 helper 只做了源码审阅，未执行；repo.mjs 的 verifyPlatformBinaries 实现未单独审计；byte-pin 只覆盖本机平台，其他平台由各自 CI leg 证明；不证明 registry 安装后的真实消费者行为。"
+    },
+    {
+      "id": "release-python-pypi",
+      "title": "六个 Python wheel 的构建自检、环境变量授权与双 environment 顺序发布",
+      "sources": [
+        {
+          "path": ".github/workflows/python-release.yml",
+          "start": 1,
+          "end": 248,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-python-sdk.yml",
+          "start": 1,
+          "end": 512,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/build-python-release.py",
+          "start": 1,
+          "end": 295,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 802,
+          "end": 893,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 1077,
+          "end": 1138,
+          "kind": "test"
+        },
+        {
+          "path": ".agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-08-11-python-publication-workflow.md",
+          "start": 1,
+          "end": 52,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md",
+          "start": 1,
+          "end": 25,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 1,
+          "end": 801,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 894,
+          "end": 1076,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/smoke-python-runtime.py",
+          "start": 1139,
+          "end": 3110,
+          "kind": "test"
+        }
+      ],
+      "problem": "Python 发布同时包含平台 runtime wheel 和纯 Python SDK wheel；若版本拼写、文件名、平台标签或上传顺序错误，runtime 已发布后 SDK 失败会留下不可覆盖的半发布状态。public attestation 还可能暴露私有 publisher repository。",
+      "triggers": [
+        "准备发布 Python SDK/runtime",
+        "修改 Python 版本或平台支持",
+        "PyPI runtime 已上传但 SDK 失败",
+        "配置 public PyPI 发布开关"
+      ],
+      "obligations": [
+        "build job 固定五个目标并 release=true，产出六个 wheel",
+        "每个 wheel 构建后自检：平台清单每项恰有 tag/executable；runtime 文件名集合精确；SDK/runtime license 文件精确；SDK 只有一条 runtime==version pin",
+        "wheel 必须 ≤100000000 字节；WHEEL Tag 恰一个预期值；METADATA Version/Name/License-Expression=MIT/License-File 精确；runtime payload 文件集合精确且 validate_downloads 通过；POSIX 可执行位保留；SDK 无 runtime 文件",
+        "wheel 版本用 PEP 440 拼写；tag 用仓库版本拼写 python-v<repository-version>",
+        "publish=true 时必须设置 PYPI_PUBLISHER_REPOSITORY 且等于 github.repository",
+        "publish=true 时必须 PUBLIC_PYPI_RELEASE_ENABLED=true",
+        "publish=true 时 ref 必须是 tag 且名为 python-v<repository-version>",
+        "validate 精确比对六个 wheel 名，且每个 <100000000 字节",
+        "twine check；生成 SHA256SUMS；上传 artifact",
+        "publish-runtime 使用 pypi-runtime environment，先发布 runtime wheels",
+        "publish-sdk 依赖 runtime，使用 pypi environment，再发布 SDK wheel",
+        "两个 publish job 都校验 SHA256SUMS；attestations: false，避免暴露私有 publisher repository",
+        "发布前的行为证据必须来自安装后的 wheel：新建 venv、cwd 在仓库外、清空 PYTHONPATH 与 DSH_RUNTIME_MODE；拒绝非 venv、源码/editable 导入、SDK/runtime 版本不等、SDK 未精确 pin runtime、可执行文件在 runtime wheel 外或不在 distribution records 中；身份检查在首个模型请求前完成",
+        "keyless 场景使用本地 SSE MockModel；真实 API 场景只在可信同仓 PR 与 master push 运行，DEEPSEEK_API_KEY_EXTERNAL 只映射到 preflight 与 live step，preflight 为空即失败；fork/Dependabot 跳过密钥步骤，禁止 pull_request_target 执行不可信代码",
+        "Windows x64 的 Python runtime 构建固定使用 hosted windows-2025；DSH_CI_FAILOVER_WINDOWS=selfhosted 只重定向 native Windows job，不重定向 Python runtime",
+        "publication job 不 checkout 源码、不重建 wheel；消费同一次 validate 产生的 aggregate artifact，先校验 SHA256SUMS，再 runtime 全部上传，最后 SDK",
+        "Hatchling 固定 1.30.1，因为 Twine 6.2.0 拒绝其后续版本的 Core Metadata 2.5；升级必须同时验证 metadata 与 Twine",
+        "安装后 wheel/black-box 场景矩阵必须覆盖：default、custom native+ptc、minimal（含 in-history prompt update）、dynamic-tools 追加、fs-search、spawn-node 无 PKG_EXECPATH、MCP stdio 慢 tools/list、外部 profile plugin（dsh plugin --profile sdk add file:<dir>）、advanced snapshot native+ptc（job/feedback/subagent/workflow/image offload/denial）、restart 隔离、resume 只追加、scheduler 恢复（completed/failed/unstarted 工具配对）、authoring skill 替换/禁用、Office 侧车后端和 packaged runner。",
+        "持久化证据：Session JSONL 文件名/版本与头及源码中唯一的 SESSION_FORMAT_VERSION 字面量一致；zstd 日志必须以 28b52ffd magic 开头；SDK job 事件、session.event 通知与 parent durable log 的 job 记录一致；snapshot 同时固定 SDK events/notifications、模型请求与 durable log，比较先应用文档化的格式元数据规范化，只有显式 --update-snapshots 才写回；失败 turn 经 safe_turn_end 投影而不是输出原始 turn。"
+      ],
+      "actors": [
+        "Python 维护者",
+        "发布者",
+        "审批人",
+        "PyPI"
+      ],
+      "steps": [
+        "bump 根版本并提交，人工创建 python-v<repository-version> tag",
+        "dispatch python-release.yml，publish=true",
+        "build 五个目标、六个 wheel；每个 wheel 经 build-python-release.py 自检；python-compat 在 3.10/3.14 测试",
+        "validate 检查环境变量、repo、tag、文件名、大小、twine、哈希",
+        "在 pypi-runtime 审批并发布 runtime",
+        "在 pypi 审批并发布 SDK",
+        "核对 PyPI 文件与 SHA256SUMS"
+      ],
+      "enforcement": {
+        "mode": "workflow-gates-plus-environment",
+        "implementation": "仓库变量/ref/tag/repo 检查；精确 wheel 清单与大小；twine；SHA256SUMS；两个 environment 的依赖顺序",
+        "trust": "仓库内检查自动；PUBLIC_PYPI_RELEASE_ENABLED、publisher repo、environment reviewers 是仓库/平台外配置",
+        "failure": "缺变量、repo 不匹配、ref/tag 不符、wheel 缺失/超大、twine 失败、哈希失败都会阻断",
+        "exceptions": "attestations: false 是刻意策略；OIDC 仍开启"
+      },
+      "applicability": "适用于 PyPI 多平台 wheel 发布。若使用私有 PyPI 或 TestPyPI，需重新设计 environment、trusted publisher 和 attestation 策略。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model; release-python-executable-builder",
+        "related: release-npm-manual-publish; release-other-delivery",
+        "crossDomain: 自动化域拥有 runner; 供应链域拥有 Python 构建; 测试域拥有 Python keyless blackbox：testing-python-sdk-keyless-blackbox"
+      ],
+      "migration": {
+        "strategy": "先固定 wheel 清单和命名，再拆 runtime/SDK 两段发布；SDK 必须依赖 runtime",
+        "implementation": "单 build 产六 wheel；validate 做 repo/ref/tag/文件名/大小/twine/hash；pypi-runtime 先、pypi 后；attestations 按公开/私有策略选择",
+        "requiredSupport": [
+          "PyPI trusted publisher/OIDC",
+          "两个 environment",
+          "twine",
+          "平台 wheel 构建链"
+        ]
+      },
+      "reference": "references/release.md#python",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "六个 wheel 精确匹配并在两个 environment 顺序上传",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "单个 wheel 通过 Tag/METADATA/license/runtime payload/validate_downloads 自检",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 PUBLIC_PYPI_RELEASE_ENABLED 或 repo 不匹配时 validate 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "wheel 名多/少/超大时 validate 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "平台清单字段不精确、wheel Tag/license/payload 不符时构建脚本失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "runtime 成功、SDK 失败时只重跑 publish-sdk",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "已读 build-python-release.py，但其自检依赖的 uv/平台构建链未执行；PyPI trusted publisher/attestation 实际配置不可见；真实上传未执行。executable 生成链由 release-python-executable-builder 单独审计，也未执行。 已安装 wheel 的黑盒与 live API 证据未在本次审计执行；exact wheel/SDK identity、fork/Dependabot 跳过、trusted publisher 与 environment reviewers 均为源码/配置审阅，不是运行证据。\n场景矩阵是源码审阅，未执行；它不证明真实 provider、平台二进制或 Office 转换器在目标机可用。"
+    },
+    {
+      "id": "release-python-executable-builder",
+      "title": "Python runtime 可执行文件的构建准入、staging 闭包、侧车与资源身份",
+      "sources": [
+        {
+          "path": "scripts/build-exe-for-python-sdk.ts",
+          "start": 1,
+          "end": 622,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-python-sdk.yml",
+          "start": 1,
+          "end": 512,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/python-release.yml",
+          "start": 25,
+          "end": 44,
+          "kind": "config"
+        }
+      ],
+      "problem": "Python wheel 只是容器；真正运行的是 pkg/SEA 生成的可执行文件和它旁边的 Node carrier、ripgrep、node-pty 与资源目录。若 target 拼写、host 约束、deploy 闭包、staging symlink 或侧车缺失未被拒绝，wheel 会安装成功但运行时失败。",
+      "triggers": [
+        "构建 Python runtime wheel 的 executable",
+        "新增 Node major/平台/架构",
+        "修改 pkg/deploy/资源布局",
+        "wheel 安装后启动失败或缺侧车"
+      ],
+      "obligations": [
+        "--targets 必须匹配 <nodeRange>-<platform>-<arch>；nodeRange 必须 node<major>；platform 仅 linux/macos/win；arch 仅 x64/arm64；Windows 仅 x64；空列表、重复 platform-arch 都失败",
+        "未给 --targets 时只构建 host（默认 node24）；host 平台/架构不支持时失败",
+        "--skip-build 与 --build-artifacts 互斥；--dry-run 只打印命令/文件变更，不执行构建、deploy 或文件修改",
+        "构建前先运行 verify-runtime-closure；正常构建运行 pnpm run build，--build-artifacts 运行 build:artifacts",
+        "staging 若包含 repo root 必须拒绝清空；deploy 使用 --legacy --prod、hoisted、auto-install-peers=false、link-workspace-packages=true、hoist-workspace-packages=false",
+        "deploy 后即使失败也要恢复开发依赖（install --offline --frozen-lockfile --prod=false --ignore-scripts）；随后恢复 legacy hoists、materialize staged links、去重 workspace 包，最终必须 symlink-free",
+        "注入 pkg 的 bin 与 assets/ignore；检查 staged bootstrap 存在；捆绑 primary-runtime/office-sidecar helper 并立即导入验证；任何缺失都在 pack 前失败",
+        "pkg --sea 每次只接受一个 target；每个 target 必须产出预期 executable，否则失败",
+        "ripgrep 必须按目标平台/架构复制到 executable 旁（Windows 为 rg.exe），并 chmod 0755；缺失直接失败",
+        "macOS 还必须有 node-pty spawn-helper，复制为 <product>-spawn-helper 并 chmod 0755；Linux 复制 pty.node，Windows 解析对应 addon",
+        "资源目录写 downloads.json，identity=SHA-256(version,target,office archives,pnpm archive,primaryLock)；Office skills 复制到资源目录",
+        "Linux/Windows 必须在目标 host 上构建（target 与 host platform/arch 相等）；Windows 额外只允许 x64；macOS 代码没有同等 host 断言，不能据此声称任意交叉构建",
+        "构建失败、deploy 未产生 staged package、staging bootstrap/ripgrep/spawn-helper 缺失、产品缺失都使命令非零退出"
+      ],
+      "actors": [
+        "Python/SDK 维护者",
+        "CI",
+        "发布者"
+      ],
+      "steps": [
+        "选择 targets 或使用 host 默认；确认 --skip-build 时 lib/ 已由同一提交构建",
+        "verify-runtime-closure，然后 build/build:artifacts",
+        "deploy 到 Python runtime node carrier，恢复开发依赖并materialize/symlink-free",
+        "inject pkg config，bundle helper 并验证 staged bootstrap",
+        "逐 target pkg --sea，复制 ripgrep、node-pty 侧车与资源目录",
+        "把 executable/资源同步到 python/sdk-runtime/src/.../runtime，再由 build-python-release.py 装 wheel"
+      ],
+      "enforcement": {
+        "mode": "script-admission-plus-build-pipeline",
+        "implementation": "Target.parse/BuildCli 校验；SingleExeBuild 顺序执行 closure/build/deploy/inject/pack/sync；host 断言与侧车存在性检查",
+        "trust": "脚本在 CI 或本机自动执行；lib/ 是否来自同一提交、资源下载内容与真实运行时行为不由脚本独立证明",
+        "failure": "非法 target、标志冲突、staging 含 repo、deploy 缺 staged package、bootstrap/ripgrep/spawn-helper 缺失、pkg 无产品、Linux/Windows host 不符都会非零退出",
+        "exceptions": "--skip-build 允许复用已有 lib/；macOS 无显式 host 断言；--dry-run 只用于检查计划"
+      },
+      "applicability": "适用于把 Node 应用打成单文件 executable 并随 Python wheel 分发的项目。若不用 pkg/SEA，target 语法和 --sea 可替换，但 staging 闭包、侧车、host 约束与产物存在性检查应保留。",
+      "relationships": [
+        "related: release-python-pypi; release-three-sequence-model",
+        "crossDomain: 自动化域拥有 runner 与 artifact; 供应链域拥有 executable 构建/签名; 测试域拥有 Python keyless blackbox"
+      ],
+      "migration": {
+        "strategy": "把 target 解析、staging 清理、deploy 后恢复、侧车复制和产品存在性都做成显式失败，不用 shell 拼接兜底",
+        "implementation": "Target/BuildCli 准入；closure/build/deploy/inject/pack/sync 单管道；ripgrep/spawn-helper/资源身份；host 断言",
+        "requiredSupport": [
+          "Node 24+ 与 pkg --sea",
+          "pnpm deploy legacy",
+          "平台 pty/ripgrep 构件",
+          "Office/pnpm 资源归档"
+        ]
+      },
+      "reference": "references/release.md#python",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "合法 target 完成 closure/build/deploy/inject/pack/sync，产物与侧车齐全",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "生成的 executable 被 build-python-release.py 装入 wheel 并通过 keyless blackbox",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "非法/重复 target、staging 含 repo、缺 staged package/bootstrap/ripgrep/spawn-helper 或 Linux/Windows host 不符时失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "--skip-build 与 --build-artifacts 同时出现时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "删除失败产物后从 closure 重新构建；不复用不完整 staging",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "builder 未执行；--skip-build 复用已有 lib/ 时无法从脚本证明来自同一提交，需要 CI 顺序或人工记录补足；macOS 无 host 断言，不能推断交叉构建能力；未审计 executable-packaging/pty 子模块的全部实现。"
+    },
+    {
+      "id": "release-desktop-version-artifacts",
+      "title": "Desktop 三目标、构建版本规则、completion record 与上传计划",
+      "sources": [
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 86,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-build-version.mjs",
+          "start": 1,
+          "end": 104,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-upload-plan.ts",
+          "start": 1,
+          "end": 294,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-release-tag.ts",
+          "start": 25,
+          "end": 80,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/macos-package.yml",
+          "start": 1,
+          "end": 142,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/windows-package.yml",
+          "start": 1,
+          "end": 167,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-09-09-desktop-build-release-validation.md",
+          "start": 1,
+          "end": 24,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-21-desktop-build-version-as-input.md",
+          "start": 1,
+          "end": 38,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/archived/process/2026-09-16-desktop-release-version-derivation.md",
+          "start": 1,
+          "end": 30,
+          "kind": "history"
+        }
+      ],
+      "problem": "Desktop 的构建版本可能不同于 manifest 产品版本；测试 feed 需要可排序的多次构建，生产 feed 只能接受稳定版。上传前若只检查“文件存在”，损坏的 DMG/EXE、错误 feed、版本不匹配会直接进入更新通道。",
+      "triggers": [
+        "构建/发布 Desktop 安装包",
+        "选择 production 或 test preset",
+        "上传前验证 feed/产物",
+        "生产 tag 命名"
+      ],
+      "obligations": [
+        "macOS/Windows 打包 workflow 只 workflow_dispatch；production source 只能是 master 或匹配产品版本的 dsh-v* tag，tag 必须等于 checkout；test 允许仓库内分支/tag；SHA/PR ref 拒绝；源码必须含 PACKAGE_VERSION_MODE 适配",
+        "只支持 mac-arm64、mac-x64、win-x64 三目标",
+        "生产版本使用 manifest 版本，必须等于 dsh 版本；测试构建追加日期+序号",
+        "构建版本不能带 build metadata；必须扩展产品版本；稳定基座的测试后缀以 test 开头",
+        "生产 tag 为 desktop-v<version>",
+        "completion record 必须 schemaVersion=1、target/channel/environment/publicUrl 匹配配置",
+        "latest feed 只能接受稳定版本",
+        "feed 元数据必须恰好一个 target 文件；version 等于构建版本",
+        "更新文件、blockmap、DMG/EXE 必须存在、非空、size/SHA-512 匹配",
+        "macOS 上传 DMG+ZIP+ZIP blockmap；Windows 上传 EXE+EXE blockmap；feed 元数据最后",
+        "macOS skip_notarization 与 Windows unsigned 只是内部调试开关，不能进入 test/production 或自动更新；package artifact 按 mode/signature/version/run/attempt 保留在 checkout 外，concurrency 按 OS 串行且不取消",
+        "Desktop shell 与 runtime descriptor 一起安装：descriptor schema、shell version、platform/arch、Host protocol version、Node/pnpm semver 由打包验证器校验；启动只读取 profile 准备需要的字段，Host ready 消息仍校验 protocol，不要仅因 descriptor 的 release schema/target/Host protocol 不同或 Node/pnpm 非 semver 就在启动时拒绝",
+        "Desktop 的发布版本是参数而不是 manifest 改写：--build-version 指定版本，--build-version auto 提议当天下一个序号，值经 extraMetadata/feed/upload validation 作为同一输入；manifest 保持产品版本，打包不修改 tracked files",
+        "每个产物记录 dshBuildCommit 与 dshBuildDirty；生产上传成功后由操作者把打包 commit 打成 desktop-v<version> tag，修改过的 checkout 不打 tag；测试/本地构建刻意不打 tag；upload 从 completion record 读取已发布版本"
+      ],
+      "actors": [
+        "Desktop 打包者",
+        "发布者",
+        "评审者"
+      ],
+      "steps": [
+        "选择 preset、source ref、version mode、update channel，确认签名/公证开关；手动 dispatch 打包",
+        "选择 preset，确定产品版本与构建版本",
+        "打包并生成 completion record 和 update metadata",
+        "读取根/Desktop manifest，校验版本一致",
+        "校验 completion record 与目标配置",
+        "校验 feed 的 version 与 files",
+        "校验每个 artifact 的 size/SHA-512",
+        "生成有序 artifact 列表，feed 最后",
+        "用 --build-version（或 auto）选择一个版本，不运行 release:dsh 改写整个 workspace；打包后检查产物 manifest 的 dshBuildCommit/dshBuildDirty",
+        "生产 upload 成功后按输出命令创建 desktop-v<version> tag；dirty 构建不得打 tag"
+      ],
+      "enforcement": {
+        "mode": "automatic-script",
+        "implementation": "validateDesktopBuildVersion；createDesktopUploadPlan；completion record 校验；feed/hash/size 校验",
+        "trust": "本地/CI 自动；artifact 是否来自受信任打包仍取决于打包链和签名",
+        "failure": "版本不扩展、带 metadata、latest 收到 prerelease、record/feed 不匹配、文件缺失/哈希不符都会在网络上传播前失败",
+        "exceptions": "测试构建可以带日期/序号；unsigned/test 构建可存在，但不能进生产 feed"
+      },
+      "applicability": "适用于 Electron 自动更新发布。若使用其他 updater/feed 格式，需要替换 metadata 与哈希校验，但“先验证后上传、feed 最后”的原则可保留。",
+      "relationships": [
+        "related: release-desktop-signed-publish; release-desktop-qualification; release-desktop-retention",
+        "crossDomain: 工程规范域拥有版本一致性; 测试域拥有 Desktop 打包测试"
+      ],
+      "migration": {
+        "strategy": "把版本规则做成纯函数；上传计划只消费已完成的打包记录",
+        "implementation": "实现产品/构建版本校验、completion record、feed 单文件、size/SHA-512、有序 artifact 列表",
+        "requiredSupport": [
+          "固定 target 列表",
+          "打包 completion record",
+          "feed 生成器",
+          "SHA-512 工具"
+        ]
+      },
+      "reference": "references/release.md#desktop-version",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "合法测试版本上传计划包含正确文件且 feed 最后",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "latest 收到 prerelease 或 build metadata 时失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "feed 哈希/大小不匹配时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "重新打包生成一致 record/feed 后计划通过",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行真实打包/上传；completion record 的写入端只做了源码审阅；feed 格式细节依赖 electron-updater；desktop-ci-version/retain/store 已由 release-desktop-retention 单独审计，仍未执行。 Desktop 启动期 release 兼容比较已被打包期验证取代；源 note 明确该取舍不能证明已安装可执行文件字节与 descriptor 一致，重新引入启动期比较需要具体安装故障证据。 版本作为参数后，打包树保持干净，但 auto 模式会访问目标 bucket（--check 也会），列表超时/部分结果会退回本地输出目录；生产上传成功后写 tag 是操作者命令，不在上传事务内。"
+    },
+    {
+      "id": "release-desktop-package-selection",
+      "title": "Desktop 发布只接受精确成功的打包 run/attempt 并路由回原 runner",
+      "sources": [
+        {
+          "path": ".github/workflows/desktop-publish.yml",
+          "start": 1,
+          "end": 154,
+          "kind": "config"
+        },
+        {
+          "path": "apps/desktop/scripts/preflight-desktop-publish.mjs",
+          "start": 1,
+          "end": 47,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/resolve-desktop-publish-ci.ts",
+          "start": 1,
+          "end": 68,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish-route.ts",
+          "start": 1,
+          "end": 70,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/resolve-retained-desktop-publish-ci.ts",
+          "start": 1,
+          "end": 52,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "发布桌面应用时，如果按“最新成功 run”或 artifact 名称猜测，可能把失败 attempt、其他 workflow、PR 构建或错误机器上的包提升为发布候选；retained manifest 与 GitHub 证据不绑定也会让审批摘要失去意义。",
+      "triggers": [
+        "dispatch desktop-publish.yml",
+        "选择 package_run_id/attempt",
+        "增加发布 runner 或 label",
+        "审批前核对包来源"
+      ],
+      "obligations": [
+        "desktop-publish 必须从 master dispatch；package_run_id 必须是正整数，attempt 为空时只读取一次最新 attempt，之后失败不回退到旧 attempt",
+        "preflight 分页读取该 run artifacts，只接受名字以 -<run_id>-<attempt> 结尾者；名字以 windows-x64-unsigned- 或 macos-arm64-unnotarized-debug- 开头直接拒绝并给出资格诊断",
+        "resolve-desktop-publish-ci 要求 run 为 completed/success/workflow_dispatch、path 精确为 macos-package.yml 或 windows-package.yml、repository 全等；恰好一个名为 package 且成功的 job 带 runner_name",
+        "管理员维护的 runner→label 表必须存在对应 runner、target 与 workflow 匹配，所有 label 必须唯一；不得用调用者提供的自由文本 label",
+        "resolve-retained-desktop-publish-ci 要求本机 RUNNER_NAME 等于 selection；retained manifest 的 run/attempt/source commit/workflow commit/target/qualification 必须与 route 全等",
+        "source commit 必须存在；sourceRef 为分支时 compare 状态必须是 ahead 或 identical；为 dsh-v* tag 时 tag 的 sha 必须等于 commit",
+        "qualification 拒绝 unsigned/unnotarized；Windows 必须 signed，macOS 必须 notarized",
+        "desktop-<preset> environment 必须存在至少一条 required_reviewers 且 reviewer 数 >0；检查不验证具体 reviewer 身份、是否 prevent self-review，也不读取批准时间",
+        "retained package 必须通过 verifyRetainedDesktopRelease 重新 hash；不能只信上传目录存在"
+      ],
+      "actors": [
+        "Desktop 发布者",
+        "runner 管理员",
+        "审批人",
+        "GitHub Actions"
+      ],
+      "steps": [
+        "在 master dispatch，指定 package_run_id 与可选 attempt",
+        "preflight 解析精确 attempt/artifacts，拒绝 debug 命名",
+        "resolver 读取 run/jobs，选出唯一成功的 package job 与 runner",
+        "retained resolver 在本机核对 manifest、sourceRef/commit、qualification 与唯一 label",
+        "输出 selection/approval 输入，进入 prepare 与 environment 审批"
+      ],
+      "enforcement": {
+        "mode": "workflow-dispatch-plus-api-validation-plus-manifest-binding",
+        "implementation": "desktop-publish.yml 的 master 检查；preflight 的 artifact 名过滤；resolve-* 的 zod schema、jobs 唯一性与 retained manifest 全等；environment required_reviewers 存在性检查",
+        "trust": "GitHub API/gh 和 workflow 自动；runner 映射表、environment reviewer 身份与 GitHub 权限在平台/机器侧，仓库不能证明",
+        "failure": "非 master、非法 id/attempt、失败/错误 workflow/仓库、多个或缺失 package job、label 重复/缺失、retained manifest 不匹配、sourceRef 不可 compare、qualification 不符、environment 无 reviewer 都阻断",
+        "exceptions": "preflight 的 artifact 名只用于拒绝，不用于授权；真正的授权仍是 retained inventory + 签名 + 审批摘要"
+      },
+      "applicability": "适用于由 self-hosted 机器打包、再由原机器发布的桌面应用。若发布不需要回到原机器，可简化路由，但仍应绑定精确 run/attempt、成功 job 与 manifest。",
+      "relationships": [
+        "dependsOn: release-desktop-version-artifacts",
+        "related: release-desktop-signed-publish; release-desktop-retention",
+        "crossDomain: 自动化域拥有 runner 拓扑与 workflow 事件; 协作域拥有 environment 审批语义"
+      ],
+      "migration": {
+        "strategy": "把“选择哪个包”做成独立、可审计的 API+manifest 绑定，不让发布脚本接受可伪造的路径或最新成功 run",
+        "implementation": "master-only dispatch；精确 run/attempt；jobs 唯一成功 package；runner 唯一 label；retained manifest 全等；sourceRef/commit 关系；qualification 与 reviewer 存在性",
+        "requiredSupport": [
+          "GitHub Actions API 访问",
+          "原始 self-hosted runner 与唯一 label",
+          "retained release store",
+          "desktop-* environment"
+        ]
+      },
+      "reference": "references/release.md#desktop-publish",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "合法 run/attempt 被解析为唯一成功 package job 与原 runner，retained manifest 全等",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "失败/其他 workflow/其他仓库/多 package job/重复 label/unsigned 包被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "retained manifest 与 route 或 sourceRef/commit 不符时拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "选择新的成功 run/attempt 并重新打包；不回退到旧 attempt",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "GitHub API/gh 路径未执行；runner→label 映射与 environment reviewer 配置在仓库外；resolver 只检查 required_reviewers 存在，不核对身份/self-review/批准时间。"
+    },
+    {
+      "id": "release-desktop-retention",
+      "title": "Desktop 构建版本解析与 retained package 的原子不可变存储",
+      "sources": [
+        {
+          "path": ".github/workflows/macos-package.yml",
+          "start": 1,
+          "end": 142,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/windows-package.yml",
+          "start": 1,
+          "end": 167,
+          "kind": "config"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-ci-version.mjs",
+          "start": 1,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/retain-desktop-ci.ts",
+          "start": 1,
+          "end": 79,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-release-store.ts",
+          "start": 1,
+          "end": 145,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/prepare-macos-ci.mjs",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/prepare-windows-ci.mjs",
+          "start": 1,
+          "end": 28,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 86,
+          "end": 140,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "桌面打包成功不等于发布候选可用：构建版本可能因 run/attempt 缺失或 channel 规则而非法；unsigned/unnotarized 包可能被误当成完整 feed；runner checkout 会被清理，普通复制也可能留下半写 attempt 或被后续构建覆盖。",
+      "triggers": [
+        "手动 dispatch macOS/Windows package workflow",
+        "选择 version_mode/channel/preset",
+        "保留 package artifact 供之后发布",
+        "重跑同一 run/attempt",
+        "审计 retained manifest"
+      ],
+      "obligations": [
+        "version mode 缺省时 production→product、其他→auto；显式模式只能是 product/auto/manual，其他值失败",
+        "manual 必须有 PACKAGE_BUILD_VERSION 且不能是 auto；auto 要求 GITHUB_RUN_NUMBER 与 GITHUB_RUN_ATTEMPT 都是正整数字符串；生成版本为 <product-prefix><UTC-date>.<run>.<attempt>",
+        "latest channel 的候选版本不得含 -，因此 prerelease 只能走 nightly/test；所有模式最终过 validateDesktopBuildVersion(candidate, productVersion)",
+        "prepare-macos/prepare-windows 必须从 Actions 运行，要求 machine preset，校验平台 signing/notarization 选择，输出 version 与 artifacts/mode，并把机器 secret 加入 ::add-mask::",
+        "retainDesktopCi 要求 preset 为 test/production；Windows PACKAGE_SIGNING 只能 signed/unsigned；macOS PACKAGE_SKIP_NOTARIZATION 只能 true/false；由选择推导 qualification",
+        "retained source 必须记录 repository/run/attempt/commit/workflow commit/sourceRef/channel/runnerName/target/preset/productVersion/version/testReleaseId/qualification；production sourceRef schema 只接受 master 或 dsh-v*",
+        "只保留显式文件清单：signed/notarized 才含 blockmap、build record、update metadata；unsigned/unnotarized 只含安装包；不读取签名 secret",
+        "retainDesktopRelease 只接受绝对 releases root 下的正 runId/attempt；文件清单非空、名字安全、无重复、无 manifest.json；每个源文件必须是普通文件且非空",
+        "复制前 lstat/fingerprint，复制后再次 SHA-512+size 对比；源在复制中变化即失败；每个 attempt 先 mkdir .lock，目标已存在拒绝，绝不覆盖",
+        "写入 .retaining-* 临时目录，manifest 用 wx/flush 写，成功后 rename 原子暴露；finally 删除 staging/lock",
+        "verifyRetainedDesktopRelease 重新解析 strict manifest，核对 run/attempt、文件无重复，并逐文件重算 hash；缺失、符号链接、被改动都拒绝",
+        "完成后写 GITHUB_OUTPUT directory 与 step summary；unsigned/unnotarized 带发布资格错误和内部调试警告"
+      ],
+      "actors": [
+        "Desktop 打包者",
+        "CI",
+        "发布者",
+        "runner 管理员"
+      ],
+      "steps": [
+        "选择 preset、source ref、version mode/channel、签名/公证选择，手动 dispatch",
+        "prepare helper 解析并校验版本与机器环境，输出 artifacts/mode",
+        "workflow 构建包并生成 completion record/update metadata",
+        "retainDesktopCi 组装显式清单，retainDesktopRelease 复制、校验、原子 rename",
+        "输出 retained directory；发布时由 resolver 读取并重新 hash"
+      ],
+      "enforcement": {
+        "mode": "workflow-plus-version-schema-plus-atomic-filesystem-store",
+        "implementation": "desktop-ci-version 的模式/正整数/latest 稳定版校验；retainDesktopCi 的 preset/qualification/显式清单；desktop-release-store 的 source schema、指纹、lock、wx manifest、rename、verify 重 hash",
+        "trust": "版本/保留脚本自动；机器目录、签名密钥、实际构建完整性由 runner 与打包链负责，仓库不能证明",
+        "failure": "非法模式/版本、run/attempt 非正整数、latest 收到 prerelease、preset/signing 选择不符、sourceRef 生产不合规、空/重复/保留文件名、非普通文件、复制中变化、attempt 已存在、manifest/hash 不符都失败",
+        "exceptions": "unsigned/unnotarized 包可被保留用于内部调试，但 retain 会写发布资格错误；同一 attempt 永不覆盖，重试必须新 run/attempt"
+      },
+      "applicability": "适用于在一次性 runner 上构建、之后由人工/发布工作流消费的桌面安装包。若不保留跨 run 产物，可缩减 store，但仍需版本准入、显式清单和原子写入。",
+      "relationships": [
+        "dependsOn: release-desktop-version-artifacts",
+        "related: release-desktop-package-selection; release-desktop-signed-publish",
+        "crossDomain: 自动化域拥有 runner/checkout 生命周期; 安全域拥有签名密钥隔离"
+      ],
+      "migration": {
+        "strategy": "把“构建版本”做成纯函数，把“保留”做成显式清单+指纹+原子目录，不用覆盖式复制",
+        "implementation": "version mode/preset/channel 校验；retain 显式文件；source schema；lock+staging+rename；verify 重 hash",
+        "requiredSupport": [
+          "绝对机器 releases 目录",
+          "GITHUB_RUN_* 身份",
+          "签名/公证选择",
+          "持久化磁盘"
+        ]
+      },
+      "reference": "references/release.md#desktop-retention",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "合法 preset/version/channel 生成可验证的 retained attempt，manifest 重 hash 通过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "现有 attempt 不被覆盖，新 attempt 通过原子 rename 暴露",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "非法版本模式、run/attempt 非正整数、latest prerelease、错误 signing/preset、重复/缺失/符号链接/变化文件被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "unsigned/unnotarized 可用于调试但发布资格检查失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "失败后清理 .retaining-*，用新 run/attempt 重新打包；不删除/覆盖旧 attempt",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行真实打包/保留；retainDesktopCi 的 artifact 路径与真实 electron-builder 输出未逐项核对；文件系统原子性依赖同一卷 rename 语义；未证明多机并发写同一 releases root 的安全性。"
+    },
+    {
+      "id": "release-desktop-signed-publish",
+      "title": "Desktop 签名验证、审批摘要、channel 锁、不可变对象与 feed-last 发布",
+      "sources": [
+        {
+          "path": ".github/workflows/desktop-publish.yml",
+          "start": 1,
+          "end": 154,
+          "kind": "config"
+        },
+        {
+          "path": "apps/desktop/scripts/verify-retained-desktop.ts",
+          "start": 1,
+          "end": 44,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish.ts",
+          "start": 1,
+          "end": 132,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish-record.ts",
+          "start": 1,
+          "end": 110,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/publish-desktop-ci.ts",
+          "start": 1,
+          "end": 129,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/resolve-retained-desktop-publish-ci.ts",
+          "start": 1,
+          "end": 52,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/rollback-desktop-channel.ts",
+          "start": 1,
+          "end": 60,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-rollback.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish-config.ts",
+          "start": 1,
+          "end": 46,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish-cos.ts",
+          "start": 1,
+          "end": 81,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/desktop-publish-qualification.mjs",
+          "start": 1,
+          "end": 15,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 164,
+          "end": 209,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/windows-signing/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/verify-macos-signature.mjs",
+          "start": 1,
+          "end": 214,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/windows-signature-cache.mjs",
+          "start": 1,
+          "end": 220,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/windows-signature-cache.d.mts",
+          "start": 1,
+          "end": 76,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/sign-primary-runtime.ts",
+          "start": 52,
+          "end": 93,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/windows-runtime-signature.mjs",
+          "start": 118,
+          "end": 147,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "Desktop 更新一旦写入 feed，用户会自动安装；未签名/调试包、被替换的对象、或 feed 先于二进制写入都会造成不可逆的分发事故。并发发布同一 channel 还会互相覆盖。",
+      "triggers": [
+        "发布 Desktop 安装包到 test 或 production",
+        "签名配置/证书/token 变化",
+        "上传中断、feed 写失败、tag 失败",
+        "同一 channel 并发发布"
+      ],
+      "obligations": [
+        "Desktop 发布只能从 master dispatch，不能从 PR/tag",
+        "preflight 解析精确 package run/attempt；拒绝名字含 unsigned 或 unnotarized-debug 的 artifact",
+        "prepare 与 publish 都在无上传凭据下跑 --check；approval 摘要在 publish 再次校验",
+        "production 使用 desktop-production environment；其他使用 desktop-test",
+        "resolver 要求 dispatch 机器与 selection 一致；source commit 存在；非 dsh tag 的 sourceRef 必须在分支上 ahead/identical；dsh tag 必须指向同一 commit；desktop-<preset> 必须至少一条 required_reviewers 且 reviewer 数>0；不证明具体 reviewer 身份",
+        "prepare 要求 retained manifest 与 route 全等；unsigned/unnotarized 一律拒绝；Windows 必须 signed、macOS 必须 notarized；approval=sha256(manifest+plan)，publish 必须匹配 DESKTOP_APPROVED_PACKAGE",
+        "--check 不读上传凭据、不访问 COS；--publish 在生产环境先要求 tag token，之后才读上传凭据",
+        "生产 Windows 必须 signed + 签名配置；生产 macOS 必须 signed + 签名配置",
+        "Windows 验证 Authenticode 签名者/时间戳；macOS 验证 DMG 和 ZIP 内 App 的 notarization/stapled ticket，ZIP 路径必须安全",
+        "channel lock 按 bucket+channel 串行；已存在锁拒绝，不自动夺取；锁目录含 owner.json，崩溃留下的锁需人工检查，无 TTL/自动恢复",
+        "每个对象先读远端；immutable 二进制禁止覆盖；上传后 read-back 比较 size/SHA-512",
+        "所有二进制成功后才写 feed；feed 是唯一允许覆盖的 channel metadata",
+        "production 上传成功后才打 desktop-v<version> tag；tag 失败返回 published-tag-pending，不重传",
+        "发布记录 durable、无凭据；journal 在 checkout 外，result.json 只写一次；tag-only recovery 只认带换行的 feeds-complete，不校验 result 终态",
+        "rollback 必须匹配原成功 publication 的 operation/result、route、repository、destination；只改 feed，不改二进制、不动 tag；当前 feed version 必须等于 --expected-version；无 --execute 只 preview；preview 后写前重读，每个 feed read-back",
+        "COS 桶必须关闭 versioning，代码不查询桶配置；channel metadata 读取上限 1 MiB；只有 NoSuchKey 视为缺失；二进制 put 带 x-cos-forbid-overwrite:true；超时 900s",
+        "macOS 断言不是单次 codesign：--deep --strict 后要求精确 Authority=Developer ID Application:<identity> 与 TeamIdentifier=<team>；notarized app 还要 stapler validate + spctl execute；DMG 还要 stapler validate + spctl install；嵌入 runtime 用 CSC_KEYCHAIN/--timestamp/--options runtime 签名，并要求 timestamp 与 hardened runtime",
+        "运行时签名缓存以未签名输入 SHA-256 与 policy identity 生成 version 1 条目键；调用方固定顺序对公共证书、SignTool、windows-sign.cmd、windows-sign.mjs、windows-timestamp.mjs 的文件摘要再取摘要作为 identity，不含安装路径或 PIN；缓存拒绝非 SHA-256 或 nested 签名配置",
+        "命中必须校验 version/key/inputDigest/identity/signedDigest 与 payload 摘要；恢复先复制到目标同目录 staging，再验 signed digest、Windows Valid、时间戳及配置 thumbprint，目标输入未变才 rename；坏条目或信任检查失败即停止，不修复、不回退硬件签名",
+        "普通签名请求经 pending 链串行执行；第一次拒绝后该链保持拒绝，不自动重试后续硬件签名；新签名验签后才以 .publish-* staging、排他且 flush 的记录写入和 rename 发布；有效并发条目保留，损坏条目拒绝；restore 绕过 pending，恢复并发由调用方在 stage 锁下调度",
+        "迁移逐条校验记录和 payload 摘要、拒绝同源同目标、保留有效已有条目且源不变；维护只检查条目命名、恰好两份普通非链接文件，不解析记录或重算摘要/签名，--clear 先 rename retire；无按年龄失效或自动容量淘汰。目录所有权/DACL/固定盘与 stage 锁由相邻模块承担；缓存不是不可信远程分发格式，命中不证明包内容、安装或生产发布"
+      ],
+      "actors": [
+        "Desktop 发布者",
+        "审批人",
+        "签名操作员",
+        "release manager"
+      ],
+      "steps": [
+        "在 master 上用 production preset 成功打包",
+        "dispatch desktop-publish.yml，指定 run id/attempt",
+        "route 校验 master/run/artifact 名称；prepare 解析并 --check",
+        "在对应 environment 审批 approval 摘要",
+        "publish 再次 --check，获取短时 tag token（仅 production）",
+        "按计划先传二进制并 read-back，再写 feed",
+        "生产成功后打 tag；失败记录 pending 并给恢复命令",
+        "若同 attempt 已有 feeds-complete，只补 tag；需要回退时用 rollback --execute 只恢复 feed，并以 --expected-version 拒绝意外现状",
+        "上传 publication audit artifact"
+      ],
+      "enforcement": {
+        "mode": "workflow-plus-script-plus-platform",
+        "implementation": "desktop-publish.yml 的 master/preflight/environment/approval；resolver 的 runner/source/environment 检查；publish-desktop-ci 的 qualification/approval digest/凭据顺序；desktop-publish 的锁/对象/read-back/feed 顺序；publish-record 的 journal/feeds-complete 恢复；desktop-rollback 的历史对象校验/feed-only 恢复；COS 的精确 key/overwrite prevention；windows-signature-cache.mjs 的 policy identity、条目/恢复重验、串行签名与原子发布",
+        "trust": "脚本和 workflow 自动；真实签名硬件、COS 凭据/桶 versioning、environment reviewers、GitHub App 权限在机器/平台侧，仓库不能证明",
+        "failure": "非 master、debug artifact、签名缺失/错误、approval 不匹配、锁占用或 stale、对象字节不符、feed 写失败、journal 与 route 不匹配、rollback feed 版本不符都会阻断或留下待恢复状态",
+        "exceptions": "test preset 可用 desktop-test；unsigned/test 构建可存在但不能进任何 publication environment；tag 失败不回滚已上传产物；rollback 永不改 tag"
+      },
+      "applicability": "适用于 Electron/COS 更新发布。若使用 S3/其他对象存储，需要替换锁、overwrite prevention 和 read-back，但 feed-last 与签名验证原则保留。",
+      "relationships": [
+        "dependsOn: release-desktop-version-artifacts",
+        "related: release-desktop-qualification; release-desktop-package-selection; release-desktop-retention",
+        "crossDomain: 自动化域拥有 self-hosted runner; 安全域拥有签名/凭据; 供应链域拥有产物完整性"
+      ],
+      "migration": {
+        "strategy": "把“本地验证/审批摘要”和“有凭据上传”分开；上传顺序固定为二进制→验证→feed→tag",
+        "implementation": "master-only + preflight + prepare/publish 两次 check + environment + channel lock + immutable put/read-back + feed last + tag pending",
+        "requiredSupport": [
+          "签名证书/token",
+          "对象存储凭据",
+          "GitHub App tag token",
+          "self-hosted 平台 runner",
+          "environment 审批"
+        ]
+      },
+      "reference": "references/release.md#desktop-publish",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "生产签名包通过验证，二进制先传、feed 后写、tag 成功",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "rollback 预检匹配成功记录，preview 不改远端，--execute 只恢复 feed 并 read-back",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "unsigned/debug artifact 在 preflight 被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "并发同 channel 第二个发布被锁拒绝；stale 锁需人工检查",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "approval 摘要不匹配、操作记录/route/expected-version 不匹配时拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "上传中断后同 attempt 重跑，跳过已一致对象并完成 feed",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "tag 失败返回 published-tag-pending；仅 feeds-complete 时按 recovery 命令补齐",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "回滚后 feed 恢复 read-back 一致且 tag 未移动；部分写入仅有 journal/result 记录，不自动重建",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "真实签名/COS/审批未执行；锁的 stale 处理是人工且无自动恢复；tag-only recovery 只认 feeds-complete，不校验 result 或当前 feed；COS 桶 versioning/禁止覆盖依赖外部配置，代码不查询；publication record 的并发边界只源码审阅；macOS 签名、Windows 签名缓存/真实硬件签名及并发恢复/发布未执行；缓存信任同账户进程与 Windows trust 服务。"
+    },
+    {
+      "id": "release-desktop-qualification",
+      "title": "Desktop 安装升级资格与显式未验证清单",
+      "sources": [
+        {
+          "path": "apps/desktop/tests/README.md",
+          "start": 1,
+          "end": 88,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/tests/installed-update/README.md",
+          "start": 1,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/packaging/README.md",
+          "start": 164,
+          "end": 279,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/installed-update-distribution.ts",
+          "start": 1,
+          "end": 74,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/installed-update-packaging.ts",
+          "start": 112,
+          "end": 115,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/verify-installed-update-package.ts",
+          "start": 55,
+          "end": 101,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "工作流成功、下载成功或窗口测试通过都不等于安装器可执行、已安装版本可升级、数据可保留。若把这些当成发布就绪，会把未验证的升级路径推给用户。",
+      "triggers": [
+        "声称 Desktop 包已可发布",
+        "执行安装升级验证",
+        "签名/更新/策略行为变化",
+        "审查 Desktop 的 open verification"
+      ],
+      "obligations": [
+        "本地 updater 测试不执行安装器；下载字节不是安装包",
+        "synthetic feed/signature runner 不证明已安装版本兼容",
+        "安装升级必须由操作员用两个递增测试版本、真实签名 installer、固定测试 feed 完成",
+        "证据必须包含 URL、UTC 时间、HTTP 状态、feed body/hash、截图、journal 快照",
+        "journal inspector 退出 0 只表示 milestone 有序；recordedFlow complete 不是整体验收",
+        "安装 v1 -> 404 feed -> 同版本 feed -> v2 feed -> 故障注入 -> 显式重试 -> 安装确认 -> 自动重启 -> 数据保留",
+        "失败即停；不得删证据/清 cache/覆盖失败批次；干净重试新建 run",
+        "已签名 Windows/macOS 安装升级、自动重启、数据保留仍需操作员证据",
+        "资格 builder 成功后调用 distribution planner 并写 artifact-files.json，同时记录 packageVerification:pending、installerExecuted:false、published:false；package verification 在提取/签名/内容检查后重新 plan 并与 inputs.json 比较，当前材料变化即失败；两者不执行安装器或发布"
+      ],
+      "actors": [
+        "操作员",
+        "QA",
+        "release manager"
+      ],
+      "steps": [
+        "准备两个递增测试版本和共享/隔离 runtime",
+        "验证 installer 的真实归档身份、签名、feed、运行时",
+        "安装 v1 并记录 started/workspace-ready",
+        "测试 404 feed 与同版本 feed",
+        "发布 v2，测试可用性与手动下载",
+        "只中断测试应用传输，记录失败与重试",
+        "移除故障，显式重试到 ready",
+        "安装确认、自动重启、核对 v2 与数据",
+        "保存 journal/截图/feed 证据并保持 operatorAcceptance pending"
+      ],
+      "enforcement": {
+        "mode": "manual-procedure",
+        "implementation": "installed-update README 的操作员序列与证据表；tests README 的 open verification 清单",
+        "trust": "完全依赖操作员；没有自动 gate 能替代安装/重启/数据保留",
+        "failure": "任一步失败即停止；签名失败不重试，feed 不匹配不下载，故障影响远程控制时只恢复自有改动",
+        "exceptions": "测试版本是合成材料，不是 npm 发布；本地 unsigned/debug 构建可做部分测试但不能作为发布证据"
+      },
+      "applicability": "适用于需要安装器升级的桌面应用。若产品无自动更新，可缩减 feed 场景，但安装/启动/数据保留仍需等价验证。",
+      "relationships": [
+        "dependsOn: release-desktop-signed-publish",
+        "related: release-desktop-version-artifacts; release-desktop-test-publication; release-desktop-network-fault",
+        "crossDomain: 测试域拥有 Desktop 测试策略; 文档域拥有测试记录"
+      ],
+      "migration": {
+        "strategy": "把自动化证据与生产就绪分开；保留 open verification 列表",
+        "implementation": "维护安装升级操作员清单、固定测试 feed/版本分配器、journal inspector、证据模板；在发布评审中逐项签署",
+        "requiredSupport": [
+          "真实签名 installer",
+          "隔离测试网络/feed",
+          "安装环境",
+          "journal/截图留存"
+        ]
+      },
+      "reference": "references/release.md#desktop-qualification",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "v1->v2 安装升级完成，自动重启且会话/设置保留",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "404 feed 显示失败而非 no updates；同版本 feed 不下载",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "传输中断后不自动重试、不安装",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "移除故障后显式重试到 ready，再单独确认安装",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源明确列出大量未验证项；本参考未执行任何安装/签名；不能把清单存在当成验证完成。测试 feed 与网络故障程序由 release-desktop-test-publication/release-desktop-network-fault 单独审计，仍未执行。"
+    },
+    {
+      "id": "release-desktop-test-publication",
+      "title": "测试 feed 的二进制上传/feed 发布分离、TTY 确认与 receipt 复用",
+      "sources": [
+        {
+          "path": "apps/desktop/tests/installed-update/publication/README.md",
+          "start": 1,
+          "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/installed-update-publication.ts",
+          "start": 1,
+          "end": 217,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/publish-installed-update.ts",
+          "start": 1,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/installed-update-distribution.ts",
+          "start": 1,
+          "end": 74,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "安装资格需要真实 test feed，但若让一个命令既上传二进制又发布 feed，或让发布复用未验证的 receipt，可能把半套文件暴露给 updater；测试凭据误用还可能写到生产桶。",
+      "triggers": [
+        "为 Desktop 安装升级准备测试 feed",
+        "上传 v1/v2 installer 或 blockmap",
+        "发布/替换 channel feed",
+        "审计 publication record 或 alreadyPublished"
+      ],
+      "obligations": [
+        "upload-binaries 只上传 installer/blockmap，不发布 feed；publish-feed 只发布 feed；默认无 --execute 只生成本地 plan，不发起网络请求",
+        "--execute 必须有交互式 TTY，操作员逐字输入 UPLOAD <version> <run-id> 或 PUBLISH <version> <run-id>；不匹配拒绝",
+        "v2 feed 必须提供原安装应用的 dsh-update-qualification/<run-id>/journals 目录；没有 journal 不能发布 successor",
+        "凭据只从机器 .env.windows 的 DOWNLOAD_TEST_* 读取；只有 secret id/key 进入客户端，不写入命令/记录；只允许 test bucket 与固定私有 qualification 路径",
+        "upload-binaries 必须先查询 bucket versioning，且只有明确“未启用且未暂停”才允许写；查询被拒/未知不等于允许",
+        "publish-feed 必须复用成功的 upload-binaries receipt；不重复查询 versioning，也不重新下载二进制",
+        "每个对象先读 origin；已存在且字节一致则回读并跳过，字节不同失败；二进制 PUT 带 forbid-overwrite",
+        "首次 feed 必须不存在或含精确 v1 字节；v2 feed 覆盖前后必须读到精确 v1，并重新验证 v1 startup journal 与本地 inputs 未变",
+        "每次写后做 public read-back（size+SHA-512）；feed 写后还要读回公共 URL；SDK 写入无自动重试，超时不证明服务端未落盘",
+        "verifiedInstalledUpdateDistribution 在无凭据/无网络下检查 receipt schema/run/version/stage/passed、appId/version、installer signature valid+timestamped+updaterVerificationInvoked、signature SHA-512/inputs manifest hash 与当前 distribution 全等；receipt 路径必须匹配 check-*/result.json",
+        "publication.lock 是 material 目录内空目录锁，只排除同机同目录并发；feed 读改写不是原子 CAS，只允许一个 publisher",
+        "保存 operation-* 的 plan/stage/result 与 feed body；alreadyPublished 只表示对既有目标 feed 的对账，不是新发布；失败即停并保留部分记录",
+        "version 查询总 deadline 30 秒；对象读/PUT 总 deadline 15 分钟；到期中止 HTTP 并等待关闭后再释放锁",
+        "只读 distribution planner 只接受 qualification run 的版本，要求 nightly.yml 精确描述该版本与唯一 installer；installer/blockmap 必须存在非空；feed filename/可选 path 必须匹配固定 Windows 文件名，size/SHA-512 与 installer 一致，可选 releaseDate 可解析；feed body 从验证值与固定目的地重建",
+        "planner 固定标记 verified:file-integrity-only、publicationAuthorized:false，不证明签名、应用身份、包内容、启动或发布授权；verifiedInstalledUpdateDistribution 会重新调用 planner，再比较成功 package-verification receipt、inputs.distribution 与 inputs.manifestSha512。二进制写前、feed 写前再次重验，successor 的前态 feed 另由原版本 planner 重建；任何不一致停止发布"
+      ],
+      "actors": [
+        "QA/操作员",
+        "Desktop 发布者",
+        "COS 管理员"
+      ],
+      "steps": [
+        "生成 upload-binaries plan，核对版本/run/bucket/对象",
+        "在 TTY 输入 UPLOAD 确认，上传二进制并逐对象 read-back",
+        "复用 receipt 生成 publish-feed plan",
+        "v1 首次发布或 v2 successor：提供 journals，确认精确前态",
+        "TTY 输入 PUBLISH，写 feed 并公共 read-back",
+        "保存 records；失败时只检查/重试受影响阶段，不绕过确认"
+      ],
+      "enforcement": {
+        "mode": "script-plus-manual-tty-confirmation",
+        "implementation": "installed-update-publication.ts 的 receipt/版本/前态/对象/feed/read-back 检查；publish-installed-update.ts 的 TTY 确认；publication README 的操作员规则",
+        "trust": "脚本自动校验 receipt/对象；COS 桶 versioning、公共读、测试凭据与实际 updater 消费依赖平台/操作员",
+        "failure": "versioning 未明确关闭、receipt 不匹配、对象字节不同、首次 feed 非空、v2 前态/journal 不匹配、无 TTY/确认不匹配、read-back 不一致都阻断",
+        "exceptions": "只针对 test qualification 桶/路径；不是生产 Desktop publisher，也不执行安装器"
+      },
+      "applicability": "适用于需要手工准备测试更新 feed 的桌面项目。若没有独立测试桶，必须隔离路径和凭据，不能复用生产 publisher。",
+      "relationships": [
+        "dependsOn: release-desktop-qualification",
+        "related: release-desktop-signed-publish; release-desktop-network-fault",
+        "crossDomain: 安全域拥有测试凭据/桶策略; 自动化域拥有对象存储传输"
+      ],
+      "migration": {
+        "strategy": "把二进制上传与 feed 切换拆成两个可审计阶段，默认只计划，执行必须人工确认",
+        "implementation": "receipt 复用；versioning 查询；origin 读取/forbid-overwrite/read-back；v1/v2 前态与 journal；lock；记录",
+        "requiredSupport": [
+          "独立 test COS 桶",
+          "DOWNLOAD_TEST_* 凭据",
+          "交互式 TTY",
+          "updater receipt/journal"
+        ]
+      },
+      "reference": "references/release.md#desktop-test-publication",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "upload-binaries 与 publish-feed 分阶段完成，receipt 复用且 read-back 一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "无 TTY/确认不匹配、versioning 未知、receipt/前态/journal 不符、对象字节不同时拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "失败后保留 records；确认远端状态后再单独授权重试，不自动重试 SDK 写入",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "源明确标注这些是 pending manual steps；2026-09-14 只读探针成功，GetBucketVersioning 返回 403，未尝试 PUT；真实 COS 写入、跨机器并发、CDN 与安装器消费未验证。"
+    },
+    {
+      "id": "release-desktop-network-fault",
+      "title": "仅限测试应用的 Windows 网络故障注入、所有权与恢复",
+      "sources": [
+        {
+          "path": "apps/desktop/tests/installed-update/network/README.md",
+          "start": 1,
+          "end": 58,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/desktop/scripts/prepare-installed-update-network.ts",
+          "start": 1,
+          "end": 62,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/installed-update-network.ps1",
+          "start": 1,
+          "end": 89,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "更新故障恢复需要真实网络中断，但防火墙规则会跨重启保留；若按任意 exe 或模糊规则注入，可能影响非测试应用/系统流量，或留下无法识别/删除的规则。",
+      "triggers": [
+        "测试 Desktop updater 的网络失败/恢复",
+        "准备 network-fault plan",
+        "执行 Block/Restore/Status",
+        "测试后清理防火墙规则"
+      ],
+      "obligations": [
+        "必须先从 v1 成功 package receipt 生成 plan；receipt 的 application signature valid/timestamped/updaterVerificationInvoked、SHA-512 为 86 字符 base64",
+        "executable 必须绝对路径、文件名精确 <productName>.exe、普通文件、realpath 不在 material run 内、当前 SHA-512 等于 receipt",
+        "prepare 只以 wx 写 network-fault/plan.json；plan 记录 runId、executable、十六进制 hash、DSH-Update-Qualification-<runId> 规则名、manifest/receipt 路径与 networkChanged:false；不改变网络",
+        "PowerShell 默认 Status 只读；Block/Restore 必须交互式确认",
+        "解析 plan 前校验 schema、24 位十六进制 runId、规则名、128 位十六进制 SHA-512、盘符绝对路径、文件名与全路径规范化；不符失败",
+        "只按精确规则名在 PersistentStore 查找；多于一条要求人工检查",
+        "已有规则必须同时匹配 ownership description、Outbound、Block、单一 application filter、精确 program path；否则视为外来规则不修改",
+        "Block 确认前再次确认规则不存在、exe hash 未变；确认后再检查，创建 program-specific、Profile Any、Enabled True、PersistentStore 出站阻断规则并确认 enabled",
+        "blocked-rule-present 记录 trafficInterruptionVerified:false；规则存在不等于流量被有效阻断",
+        "Restore 只删除 exact owned rule；不存在是安全 no-op；删除后再查，仍存在即失败；rule-absent 记录 downloadRecoveryVerified:false",
+        "失败不自动重试、不静默删规则；每次调用写新的 records/<id>/events.jsonl 并 flush",
+        "规则跨重启保留；测试期间必须保持应用打开并观察到失败与实际恢复；绝不能带测试规则安装更新"
+      ],
+      "actors": [
+        "QA/操作员",
+        "Windows 管理员",
+        "Desktop 发布者"
+      ],
+      "steps": [
+        "用 v1 receipt 生成 plan，核对 exe/hash/规则名",
+        "Status 确认目标规则不存在/唯一",
+        "Block 并确认规则 owned/enabled；观察真实下载失败",
+        "保持应用打开，记录失败与 journal",
+        "Restore 精确删除规则，Status 确认 absent",
+        "操作员显式重试并观察下载恢复，保存 records；最后确认没有残留规则"
+      ],
+      "enforcement": {
+        "mode": "manual-powershell-with-strict-plan-and-owned-rule-checks",
+        "implementation": "prepare 的 receipt/realpath/hash 校验；PowerShell 的 schema/normalized path/owned rule/confirm/recheck/record 逻辑",
+        "trust": "操作员确认与 Windows 防火墙状态；脚本只能证明规则存在/删除，不能证明真实流量被阻断或恢复",
+        "failure": "plan/receipt 不符、runId/hash/路径/规则名非法、外来/重复规则、exe 变化、删除后仍存在都失败；失败不自动清理",
+        "exceptions": "仅 Windows test application；Block 后流量未验证、Restore 后下载未验证都记录为 false，必须由操作员观察补足"
+      },
+      "applicability": "适用于需要在 Windows 上验证桌面更新失败/恢复的项目。若没有测试专用应用/规则名，不应进行系统级网络注入。",
+      "relationships": [
+        "dependsOn: release-desktop-test-publication; release-desktop-qualification",
+        "related: release-desktop-signed-publish",
+        "crossDomain: 安全域拥有主机防火墙/权限策略; 测试域拥有安装升级证据"
+      ],
+      "migration": {
+        "strategy": "把网络故障变成“plan→显式 Block→观察→精确 Restore→观察”的操作员程序，不做通用网络开关",
+        "implementation": "receipt 绑定 exe/hash；plan schema；PersistentStore owned rule；确认/recheck；events 记录；跨重启提醒",
+        "requiredSupport": [
+          "Windows 测试应用与 receipt",
+          "管理员权限",
+          "交互式 shell",
+          "可观察的下载失败/恢复"
+        ]
+      },
+      "reference": "references/release.md#desktop-network-fault",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "owned 规则创建/删除成功，期间观察到真实下载失败，恢复后观察到下载成功",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "foreign/重复规则、exe hash 变化、路径/receipt 不符时不修改网络",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "Restore 精确删除 owned rule；失败则人工检查，不静默删除外来规则",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本地 plan 校验与 PowerShell 控制流只有 inert tests；真实防火墙规则、实际流量中断/恢复、跨重启行为未执行；规则存在不能替代流量证据。"
+    },
+    {
+      "id": "release-other-delivery",
+      "title": "SSH helper draft release、文档站点 tag-only 部署、PR 预览与 GitLab tag 流水线",
+      "sources": [
+        {
+          "path": ".github/workflows/publish-ssh-helper.yml",
+          "start": 1,
+          "end": 101,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-exe-for-ssh-helper.yml",
+          "start": 1,
+          "end": 127,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/docs-pages.yml",
+          "start": 1,
+          "end": 93,
+          "kind": "config"
+        },
+        {
+          "path": ".github/workflows/build-preview-cloudflare.yml",
+          "start": 1,
+          "end": 170,
+          "kind": "config"
+        },
+        {
+          "path": ".gitlab-ci.yml",
+          "start": 1,
+          "end": 191,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/ssh-helper/release.ts",
+          "start": 1,
+          "end": 76,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/ssh-helper/artifact.ts",
+          "start": 1,
+          "end": 88,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-ssh-helper-artifact.ts",
+          "start": 1,
+          "end": 167,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "并非所有交付都是 registry 发布。SSH helper 需要可校验的 GitHub Release；文档站点必须只呈现已发布快照；PR 预览不能携带生产凭据；GitLab 镜像必须 tag-only 并串行写共享产物。把这些混成一条发布链会扩大凭据面或让 PR 变成发布事件。",
+      "triggers": [
+        "发布 SSH helper",
+        "部署文档站点",
+        "配置 PR 预览",
+        "维护 GitLab 镜像/交付"
+      ],
+      "obligations": [
+        "SSH helper 构建四个 target 的 archive；release.ts 要求每个 archive 的 sha256、manifest target/version/commit 完全匹配且 dirty=false，逐文件 digest/mode，runtime report 含核心 check，Linux 还要求 ssh/landlock 报告，macOS 要求 restrictedWorker，并生成 SHA256SUMS",
+        "SSH helper 用 gh release create --verify-tag --draft 创建 draft，若已存在则 upload；不自动发布 draft",
+        "docs-pages 只 workflow_dispatch，不监听 PR/push；只接受 dsh-v* tag；使用 github-pages environment",
+        "docs-pages 用 DOCS_REPOSITORY_REF=master 生成源码链接；内容来自 tag",
+        "PR 预览部署到 Cloudflare preview 目标，不改变发布 tag/feed；是否复用生产 token/项目必须单独核对",
+        "GitLab 流水线只在 CI_COMMIT_TAG 匹配 dsh-v* 时创建；MR 不运行；bundle 用 resource_group 串行"
+      ],
+      "actors": [
+        "SSH helper 维护者",
+        "文档维护者",
+        "预览维护者",
+        "GitLab 维护者",
+        "审批人"
+      ],
+      "steps": [
+        "SSH：构建四平台 archive + checksums，dispatch publish，验证 checksum，创建 draft，人工检查后发布",
+        "文档：从 dsh-v* tag dispatch，构建，链接检查，github-pages 审批，部署",
+        "预览：PR 触发独立构建/部署，验证 URL，不写生产",
+        "GitLab：打 dsh-v* tag，pipeline 创建，dist:check，bundle 串行"
+      ],
+      "enforcement": {
+        "mode": "workflow-trigger-plus-script-plus-platform-settings",
+        "implementation": "各工作流的 on/permissions/environment/job 步骤；SSH checksum；docs tag 限制；GitLab rules/resource_group",
+        "trust": "仓库内触发与 checksum 自动；draft release 人工发布、docs environment、GitLab protected tag/variables 在平台侧",
+        "failure": "release.ts 证据校验失败阻断；docs ref 非 tag 失败；GitLab 非 tag 不建 pipeline；预览失败不影响生产",
+        "exceptions": "文档源码链接指向 master 而不是 tag；预览不是发布证据"
+      },
+      "applicability": "适用于多交付通道的仓库。若没有 GitHub Releases/GitLab，需替换为等价 draft/审批机制，但 checksum 与 tag-only 原则保留。",
+      "relationships": [
+        "dependsOn: release-three-sequence-model",
+        "related: release-npm-manual-publish; release-desktop-signed-publish",
+        "crossDomain: 文档域拥有 docs 构建/链接; 自动化域拥有 runner/并发"
+      ],
+      "migration": {
+        "strategy": "按交付物拆分触发与凭据；不要让 PR 预览复用生产 token",
+        "implementation": "SSH draft release + checksum；docs tag-only + environment；preview 独立项目；GitLab tag rules + resource_group",
+        "requiredSupport": [
+          "GitHub Release 权限",
+          "docs 构建",
+          "预览项目 token",
+          "GitLab protected tag/runner"
+        ]
+      },
+      "reference": "references/release.md#other-delivery",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "SSH release.ts 验证通过并创建 draft；docs 从 tag 成功部署",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "docs 从分支 dispatch 时被 release:verify 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "GitLab MR 不创建发布 pipeline",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "draft 检查失败时重新构建并替换 draft，不重复创建",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "GitLab protected tags/variables/environments、GitHub docs/preview environments 均不可见；SSH draft 的人工发布步骤未自动化。"
+    },
+    {
+      "id": "release-session-authority",
+      "title": "Session writer、finalized、released、evidenceTag 四个权威分离",
+      "sources": [
+        {
+          "path": "docs/session-format-status.md",
+          "start": 1,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-10-session-log-version-mechanism.md",
+          "start": 1,
+          "end": 42,
+          "kind": "history"
+        },
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 162,
+          "end": 300,
+          "kind": "test"
+        }
+      ],
+      "problem": "代码里的当前版本、已接受的兼容基线、已发布的格式和某个产品 tag 是四个不同事实。若用单一 released 布尔或分支状态表示，开发中的格式会被误认为已发布，或已发布格式被开发主干覆盖。",
+      "triggers": [
+        "判断某个 Session 格式是否已发布",
+        "更新 release record",
+        "比较旧 checkout 与新分支",
+        "宣布格式 unreleased"
+      ],
+      "obligations": [
+        "SESSION_FORMAT_VERSION 是唯一手写 writer 数字；catalog generator 据此检查相邻迁移",
+        "latestFinalizedVersion + finalized/vN.json 表示已接受兼容基线，不表示发布",
+        "latestReleasedVersion + evidenceTag 表示已发布格式；evidenceTag 的 tagged writer 必须具有该值",
+        "release status 由 writer 与已验证 release record 比较得出，不维护单独 released 布尔",
+        "alpha/beta/RC 产品发布也建立已发布义务；GitHub prerelease 标志不使数据可丢弃",
+        "缺失 release record 不是未发布证据",
+        "实现 bump 时不要提前更新 record；首次发布更高格式后同一次双语更新推进 record/evidenceTag/writer path",
+        "后续同格式发布不改 record；开发主干不得降低 record"
+      ],
+      "actors": [
+        "Session 维护者",
+        "release manager",
+        "文档维护者"
+      ],
+      "steps": [
+        "读 SESSION_FORMAT_VERSION 确定 checkout writer",
+        "读 latestFinalizedVersion 确定已接受基线",
+        "读 latestReleasedVersion/evidenceTag 确定已发布格式",
+        "用 git show <evidenceTag>:<writer path> 核对 tagged writer",
+        "发布后更新 record；发布前只改代码/catalog",
+        "跑 doc-standard 与 catalog 检查"
+      ],
+      "enforcement": {
+        "mode": "documented-authority-plus-keyless-check",
+        "implementation": "SESSION_FORMAT_VERSION；catalog generator；session-format-status record；doc-standard.spec.ts 的结构/双语/顺序检查",
+        "trust": "本地记录一致性可自动检查；发布真实性、evidenceTag 新鲜度需 release operator 联网/查 tag",
+        "failure": "record 版本超过 writer、双语不一致、evidence tag/path 不一致会被 doc-standard 拒绝；record 滞后不会被 keyless 检查发现",
+        "exceptions": "finalized 不冻结未来兼容新增；release record 不因同一格式的后续发布而变化"
+      },
+      "applicability": "适用于任何带持久化格式版本的产品。若没有独立发布记录，至少要把 writer 与发布事实分开，不能用分支 HEAD 代替。",
+      "relationships": [
+        "related: release-session-migrations; release-persistence-records; release-persistence-format-archive; release-persistence-release-archive",
+        "crossDomain: 文档域拥有 doc-standard/双语; 发布域拥有 npm release 流程"
+      ],
+      "migration": {
+        "strategy": "先定义四个事实各自权威，再写检查；不要把“已发布”压成一个布尔",
+        "implementation": "writer 常量 + finalized checkpoint + released record + evidenceTag；发布后人工更新；keyless 一致性门",
+        "requiredSupport": [
+          "稳定 writer 常量",
+          "finalized/released 记录",
+          "tag 可查询",
+          "双语配对"
+        ]
+      },
+      "reference": "references/release.md#session-authority",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "writer=released 时判定已发布；writer>released 时判定未记录",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "evidenceTag 的 writer 与 record 相等",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "record 版本高于 checkout writer 时 doc-standard 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "发布后补齐 record/evidenceTag，writer 不变",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "doc-standard 不联网、不证明 record 最新；evidenceTag 真实性未在本次提取中核对。"
+    },
+    {
+      "id": "release-session-migrations",
+      "title": "相邻迁移、V3→V4 具名转换、严格恢复、代际不可变与“不 fallback/不 downgrade”",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md",
+          "start": 1,
+          "end": 251,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/gen-session-format-catalog.ts",
+          "start": 1,
+          "end": 261,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 1,
+          "end": 153,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session/session-format-v3-to-v4/README.md",
+          "start": 1,
+          "end": 350,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": "benchmarks/session-open/session-open.bench.ts",
+          "start": 340,
+          "end": 400,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 173,
+          "end": 185,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 1014,
+          "end": 1129,
+          "kind": "test"
+        }
+      ],
+      "problem": "Session 格式一旦随 alpha 发布，已有 JSONL 就不能当预发布垃圾丢弃。整文件迁移曾把 116MB 真实 Session 撑爆 16GB 进程；若迁移移动/覆盖旧代际，或读新格式时静默跳过未知事件，用户会得到被掏空但无诊断的会话。",
+      "triggers": [
+        "新增 Session 格式版本",
+        "修改 header/event envelope/payload",
+        "实现或修改历史读取",
+        "处理 unsupported/unknown event"
+      ],
+      "obligations": [
+        "一个单调整数，不做 major/minor；可升级性由相邻 upgrader 是否存在表达",
+        "同版本正常读；读到更新版本拒绝并指出 upgrade 方向，指向 raw log；读到更旧版本先在内存跑完整相邻链",
+        "read handle 可直接消费当前逻辑结果；write open 必须在 append 前独占发布最终当前代际",
+        "header-only stat/list 不打开 body、不发布，只报告最高规范代际",
+        "catalog 生成/模块初始化拒绝缺失相邻步",
+        "迁移从不移动/替换/删除已提交代际，只写最终当前目标；中间版本只在 stage 状态",
+        "v0 文件名 session.jsonl[.zstd]，正整数代际 session.vN.jsonl[.zstd]",
+        "POSIX hard-link + directory sync；Windows no-overwrite write-through MoveFileExW",
+        "目标已存在时只有已验证迁移前缀等于 staged 字节才接受",
+        "publish 开始后不可取消、不可回滚；拒绝时源不变、不发布 successor",
+        "保留低代际不承诺 fallback 或 downgrade",
+        "未知 event type 默认拒绝解释；只有 envelope 明确 ignorable: true 才可跳过；默认 required 避免静默恢复被掏空的 session",
+        "KNOWN_SESSION_EVENT_TYPES 由 gen-persistence-catalog 从所有 SessionEventMap merge 生成，verify-persistence-catalog 保持新鲜",
+        "首方 writer 不通过 Session.append 设置 ignorable；外部插件是当前消费者，其 unknown 保留/拒绝规则单独拥有",
+        "V3→V4 只做具名转换：header 3→4、tool-result lift、message-source 改名、未知 extension/ignore 事件加 plugin: 前缀、有证据的 interrupted turn 与 parent catalog 补全；不创建 system prompt/developer/tool execution/replacement",
+        "V3→V4 tool-result 要求 user role、非空 message id、source kind tool/callId、恰好一个同名 wrapper、数组 content、boolean isError；wrapper 其他字段变 plugin:result:，外层杂项变 plugin:message:；malformed/nested 拒绝",
+        "V3→V4 message-source 只走具名位置；plugin source 要求 string plugin（含空串）；first-party 名单精确映射；其他一律 plugin:<完整原名>；不得从文本/参数/配置推断",
+        "V3→V4 parent catalog 只用直接 child 的 id/createdAt/descriptorCount/first descriptor；v0/v1/v2 字段与 mode 精确；重复 child id 拒绝；继承 cut 前候选丢弃；缺失项排序追加、不进入 model surface",
+        "V3→V4 interrupted turn 只在该 open turn 无 open step 且下一个 numbered turn/start 紧跟 next-turn inbox spliced 时插入；插入 dense 重编号并重映射 sourceEventSeqs/startSeq/endSeq/sourceEventSeq/messageSeqs/shadowedRange/shadowedSeqs/image seq；其他引用/id/编号保留",
+        "V3→V4 delivery：解释到的 generation 必须非负安全整数；V3 marker 声称 4 拒绝；声称 3 要求非空 session id、marker 前 throughSeq、外来 id 仅在 inherited cut 前带 parentSession；其他 generation 保留但不激活；更高 migration 拥有未来检查",
+        "V3→V4 source audit：未知 required V3 event 在解释 payload/查 V4 词汇前拒绝；未知 ignorable 变 plugin:<原名> 且 payload 不变；retired tool-result tag 在其他被解释位置由 target admission 拒绝；无通用 schema validation/递归 numeric inference",
+        "native V4 永不运行 V3→V4；保留原 artifact，不合成 catalog/fork/developer/修复；header/envelope/surfaceEvent/source/tool-result/developer headerSeq/deferLoading/fork result 按 V4 规则直接校验",
+        "validation:'transformed' 的 native 只做 codec 检查，不是完整 native validation；historical transformed 加 generation V4 restoration；'current' 再加 installed Session checks；fixtures/publication 用 strict recovery",
+        "侧边栏 row-menu fork 的请求带 allowMigration:false：Host 先读 stat format，只有源格式需要迁移时拒绝，并给 app-wide Toast 提供“打开原 Session”；打开只导航、不自动重试 fork。缺失 live Session 或未打开的 Client history 不是拒绝理由；其他 fork 调用者省略该选项，允许自动迁移",
+        "session.projections 先检查 stored format：current cold history 走原 observation flow；需要迁移时返回 kind: migration-required 提示，Client 保留该 read state，cached hint 不能替代 history/control 发布的 sequenced 值；stat 的 formatStatus 描述 stored format，header 仍是 current logical format，不是迁移任务进度",
+        "create/adopt、full-text search 与普通 history opening 允许自动迁移；不要因“冷”就拒绝所有 fork",
+        "A released-generation benchmark fixture must assert exact generated event/row/frame counts and byte-identical source bytes after migration and reopen; a fresh write-open publishes only the current successor while leaving the released predecessor adjacent for reopen.",
+        "Retained migrated tool results must equal the native writer's tool-result messages modulo message ids; and packed versus unpacked representations must normalize equally. This parity is a migration oracle, not a substitute for release migration tests."
+      ],
+      "actors": [
+        "Session 维护者",
+        "迁移包作者",
+        "评审者",
+        "release manager"
+      ],
+      "steps": [
+        "新增 writer/codec，保持旧 codec 不可变",
+        "新增 vN-to-vN+1 包，声明 header migration/target validator/createStage",
+        "实现 stateful stage，严格恢复按行喂入并 finish",
+        "V3→V4 实现/审查命名转换、parent catalog 证据、interrupted turn 插入与引用重映射、delivery generation guard、source audit 拒绝",
+        "native V4 单独验证 header/envelope/message/tool/developer/fork，并用 current validation 做发布前 strict 检查",
+        "更新所有当前消费者与 projection/snapshot/SDK 身份",
+        "生成 snapshot successor，保留前代字节",
+        "生成/校验 catalog，跑 focused 迁移/快照测试",
+        "更新 Agent Note 与双语文档；发布后才更新 release record"
+      ],
+      "enforcement": {
+        "mode": "generator-plus-runtime-plus-tests",
+        "implementation": "catalog generator 的相邻/命名/codec 链接检查；SessionFormatCatalog 的严格恢复；JSONL 发布的无覆盖；迁移测试的前代字节/无 fallback 断言；V3→V4 的具名转换/source audit/native V4 admission",
+        "trust": "catalog 与运行时自动；真实历史语料、公开 Worker、SDK 消费者需测试覆盖；V3→V4 转换与 native 关系测试需执行，本次提取未运行",
+        "failure": "缺边、codec 断链、catalog stale、未知 required event、目标已存在且前缀不符、malformed wrapper、nested result、duplicate child id、delivery generation 4 都会失败",
+        "exceptions": "v0 是特殊文件名；历史 packed runs 可走 transformRun；外部插件的 ignorable 事件有单独保留规则；native V4 不运行 edge；unknown ignored payload 保持 opaque"
+      },
+      "applicability": "适用于有持久化日志/事件流的产品。若格式无需跨版本读取，可简化 chain，但“旧代际不可变、读新版本方向感知”仍应保留。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-upgrade-guides; release-persistence-format-archive; release-persistence-release-archive",
+        "crossDomain: 测试域拥有快照语料/选择/代际：testing-snapshot-corpus-policy, testing-snapshot-selection-and-generations; 文档域拥有双语/格式参考"
+      ],
+      "migration": {
+        "strategy": "先固定相邻边协议与文件名规则，再实现流式 stage；不要用一次性整文件转换",
+        "implementation": "one edge per adjacent pair；stateful stage；catalog 直接 import；write open 独占发布；header-only 非变更；旧代际保留",
+        "requiredSupport": [
+          "codec/stage 框架",
+          "catalog generator",
+          "严格恢复 API",
+          "快照语料",
+          "跨平台原子发布"
+        ]
+      },
+      "reference": "references/release.md#session-migration",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "v0->current 严格恢复通过，骨架身份/引用/时间戳保留",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "write open 只发布最终当前代际，源文件字节/inode 不变",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "V3→V4 tool-result/消息 source/extension/catalog/interrupted turn/引用重映射按规范通过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "native V4 current validation 通过且不运行 incoming edge",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺相邻边或 catalog 链断时 generator/初始化失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "读到未知 required event 时拒绝而非静默跳过",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "V3→V4 malformed/nested tool-result、duplicate child id、delivery generation 4、unsupported descriptor 拒绝且源不变",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "迁移拒绝后源不变、无 successor；修正后重跑",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "已发布代际不回滚；新版本失败时保留旧代际供检查",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行迁移/快照/native V4 测试；116MB 性能结论是历史记录；V3→V4 全 350 行只做规范审阅，未执行 converter；first-party 录制不覆盖第三方扩展；nested tool results 当前拒绝；child logs/cross-root 限制保留。"
+    },
+    {
+      "id": "release-session-migration-preparation",
+      "title": "历史 Session 读取：准备先于发布、单飞复用与写入前发布",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-05-read-only-session-migration-preparation.md",
+          "start": 1,
+          "end": 170,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md",
+          "start": 1,
+          "end": 43,
+          "kind": "history"
+        },
+        {
+          "path": "packages/session/session-persistence-jsonl/src/migration-verifier.ts",
+          "start": 1,
+          "end": 198,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session/session-persistence-jsonl/tests/migration-verifier.spec.ts",
+          "start": 1,
+          "end": 273,
+          "kind": "test"
+        }
+      ],
+      "problem": "串行持久化 open 即使只读也先编码、sync、Worker 验证、发布并重开，读历史要等约 2.2 秒且必须可写；但把发布拆到后台又会引入无人拥有的任务、失败/关闭/清理、取消传播和第二个 durability 状态。读取者看到准备结果后源漂移若静默重跑，还会替换已经展示的逻辑历史。",
+      "triggers": [
+        "打开历史格式 Session（只读或准备 resume）",
+        "并发 query/follow/resume 同一历史 Session",
+        "迁移准备期间源文件变化或发布者冲突",
+        "实现/修改 JSONL migration 的 read/write open"
+      ],
+      "obligations": [
+        "read open 只等待逻辑准备，不编码、不写临时文件、不 sync、不启动完整 Worker、不发布、不重开 committed generation",
+        "prepareJsonlMigration() 读取一个稳定历史 revision，跑完整 Stage 链一次，返回当前 artifact；不写任何字节",
+        "PreparedJsonlMigration 暴露 sourceIdentity、artifact 与 publish()；publish() 幂等，并发/后续调用共享一个 terminal Promise（包括 rejection），不能重复编码同一 artifact",
+        "publish() 把当前记录流式写入同目录独占临时文件，sync，等待有界 Worker verifier，比较准备时捕获的 sourceIdentity，再以 no-overwrite 发布 canonical path；成功发布者复用 prepared logical artifact，不重新 Decode 目标",
+        "publication verifier 的进程级并发当前上限为 2；成功 message 不提前释放 permit，成功必须等待 Worker natural zero exit；operation 无论成功或拒绝，最终都释放 permit 并优先直接交给最早 waiter；排队 abort 移除 waiter 且不启动 Worker",
+        "Worker 响应先校验为非 null object 且 ok 为 boolean；ok:false 用 message 构造错误并在存在时保留 stack；invalid response、Worker error、未报结果便 exit 或成功报告后 nonzero exit 都拒绝；active abort/error 等失败路径先等待 terminate() 结算，清理失败以 AggregateError 聚合原始与清理错误；首个终止路径获胜，迟到 terminal signals 不改变结果",
+        "竞争失败者必须验证 winner 文件以精确的 staged migration prefix 开头；append tail 校验仍由当前 reader 负责",
+        "write open 先取得 process-local claim 与跨进程 lease，重新解析 generation；若仍是历史格式，加入/复用 preparation 并 await publish()，之后才返回写 handle",
+        "append/flush/close 只走普通 current-generation 行为，不需要 “publishing” 分支；service flush() 只 flush 已采用 writer，不把只读 preparation 变成写",
+        "准备按 Session id + source path + stat-derived revision 单飞；新 open 只有在 path 与 revision 仍匹配时加入；已完成结果进入有界 coldLogMemo，in-flight map 只拥有运行中的工作",
+        "每个调用者的 AbortSignal 与共享 Promise 竞速，但不转发给共享工作；只有最后一个 waiter 离开且准备仍在运行时才 abort backend-owned controller",
+        "source identity 变化抛 JsonlGenerationSourceChangedError，删除临时文件，不重复 Decode/迁移；已展示给读者的逻辑历史不能被静默替换",
+        "read handle 初始服务 prepared events（state.primed），当 current generation 出现时清空 primed、读 current 并强制 non-shrinking history；resolveCurrentLog() 返回 undefined 只表示没有 current canonical file，不表示 Session 不可读",
+        "session.follow 先走 read path 恢复 Session/projection 并发出 opening snapshot，再启动 Agent promotion；Agent resume 走 write open，因此必须等发布完成才接受新 turn",
+        "只读 restoration 只验证 Session runtime 需要的 event/settlement 字段，不展开每个 embedded Assistant stream；publication Worker 仍做完整 stream replay 并校验 content/usage/replay-state agreement",
+        "只有 write open 调用 publish()，不做自动后台发布；read-only storage 也能读逻辑有效的历史 Session"
+      ],
+      "actors": [
+        "Session 持久化维护者",
+        "迁移包作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "read open 找到/创建同 source revision 的 preparation，等待逻辑 artifact",
+        "构造读取 handle，先服务 primed events；后续 read 解析 current path，存在则切换到 current 并检查 non-shrinking",
+        "follow 用 read path 发出 opening snapshot，再启动 promotion",
+        "write open 取得 claim/lease，重解析 generation，加入/复用 preparation",
+        "publish：独占临时文件 → encode → sync → Worker verify → source identity compare → no-overwrite publish",
+        "发布完成后返回写 handle；若 source 漂移则删除临时文件并拒绝，不重跑迁移",
+        "并发/取消测试覆盖 shared waiter、last waiter abort、memo handoff、read-handle switching、winner collision、idempotence、write-open ordering 与 Worker failure"
+      ],
+      "enforcement": {
+        "mode": "runtime-protocol-plus-focused-tests",
+        "implementation": "JSONL backend 的 PreparedJsonlMigration、单飞 preparation map、caller-local waitWithAbort、backend controller、coldLogMemo、StoredLog discriminant、primed read handle、write-open publish-before-return；测试覆盖取消/源漂移/winner/幂等/顺序/Worker 失败",
+        "trust": "生命周期顺序与单飞逻辑由实现与测试保证；真实 116MB 语料的性能数字是历史测量，本次未重跑；读取者仍依赖 current reader 做 tail/non-shrinking 校验",
+        "failure": "source identity 变化、Worker 验证失败、winner 前缀不符、发布目标已存在且不匹配、abort 在发布后到达，都会拒绝 write open 或迁移；read 已交付的结果仍来自未变 source",
+        "exceptions": "coldLogMemo 有意保留一个迁移 event array 以桥接 read/write；dispose 没有拥有所有未返回的 create/open，这是既有生命周期缺口；只读存储可以读历史但 body 仍必须结构有效"
+      },
+      "applicability": "适用于大日志/事件流产品的“历史读取 + 首次写入才发布”场景。若存储不允许同目录临时文件/原子 no-overwrite，或没有跨进程 lease，需要替换发布与所有权原语；不适用于必须每次 open 都落盘的格式。",
+      "relationships": [
+        "dependsOn: release-session-migrations; release-session-authority",
+        "related: release-persistence-records; release-persistence-format-archive",
+        "crossDomain: 持久化/runtime 域拥有 JSONL backend 与 Session handle; 测试域拥有语料/性能/取消测试"
+      ],
+      "migration": {
+        "strategy": "先分离“逻辑准备”与“持久发布”，再让 write open 拥有发布；不要后台自动发布，也不要在验证前返回写 handle",
+        "implementation": "实现 PreparedJsonlMigration、单飞 map、caller-local waitWithAbort、backend controller、primed read handle、current-path switch、no-overwrite publish 与 winner prefix check",
+        "requiredSupport": [
+          "可重放的 Stage/codec 链",
+          "有界 Worker verifier",
+          "同目录独占临时文件与原子 no-overwrite 发布",
+          "跨进程 SessionWriteLease",
+          "取消/超时与 bounded memo"
+        ]
+      },
+      "reference": "references/release.md#session-migration-preparation",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "只读打开历史 Session 返回 prepared events，不产生 successor；后续 writer 首次 append 前发布一次",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "并发 read/write open 共享一次 Decode/Stage；取消一个 waiter 不影响其他 waiter",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "发布后 read handle 从 primed 切到 current，并观察到 append tail",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "source revision 变化时 write open 拒绝且源不变，不重复迁移",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "Worker 验证失败或 winner 前缀不符时拒绝发布，不返回写 handle",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "删除临时文件后从当前源重新准备；已发布 successor 不回滚，read 结果保持",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本次未执行取消/并发/Worker 失败/116MB 性能测试；scheduler/取消测试替换 node:worker_threads，仅证明 permit 记账、FIFO、结算顺序与 terminate 调用，不证明真实线程在 abort 后已拆除或资源已释放，也未直接断言失败后的 permit 复用；prepared artifact 会保留一个有界迁移 event array；dispose 对未返回的 create/open 仍无所有权；源内性能数字是历史环境测量，不能当作当前 SLA。"
+    },
+    {
+      "id": "release-session-batch-migration-cli",
+      "title": "批量 Session 迁移命令：有界并发、失败分组与一次性重试",
+      "sources": [
+        {
+          "path": "scripts/migrate-sessions-to-v4.ts",
+          "start": 1,
+          "end": 303,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/migrate-sessions-to-v4.spec.ts",
+          "start": 1,
+          "end": 450,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/migration-failure-summary.ts",
+          "start": 1,
+          "end": 43,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "一次性迁移整个 Session 根目录时，天真的并发会同时打开过多 Session、在源被父/子迁移改变后重复发布，且首个失败会中断其余输入。操作员还需要可审计的逐输入诊断，而不是只有最终错误。",
+      "triggers": [
+        "V4 writer 与 catalog 已就绪，准备迁移用户 Session 根",
+        "新增一个格式版本的一次性迁移命令",
+        "审查批量迁移的并发/重试/摘要行为"
+      ],
+      "obligations": [
+        "命令是一次性 contributor command：默认 `~/.dsh/sessions`，不使用模型/API key；扫描前断言 `SESSION_FORMAT_VERSION===4` 且 catalog current===4",
+        "发现阶段只接受 project/session/generation 布局；不跟随 project/Session symlink；根级 `.jsonl`/`.jsonl.zstd` 是 unsupported flat-file；无 canonical generation 的目录计为 skipped；每个 Session 选数值最高的 generation（同版本按文件名）",
+        "V4 Session 以 `read` 打开，旧代际以 `write` 打开；迁移只通过 persistence 发布 successor，不移动/覆盖/删除源代际",
+        "`--jobs` 必须是正 safe integer，默认 `min(availableParallelism(), 16)`；worker 数不超过输入数；单个 Session 失败不阻止后续 Session",
+        "`JsonlGenerationSourceChangedError` 的首次尝试延迟到所有初始 worker 结算后，按索引升序串行重试一次；其他 worker 的意外 rejection 会 drain 并中止 retry pass",
+        "日志与摘要写入私有 OS 临时目录；log 以 `wx` 0600 创建，summary 以 `wx` 0600 创建；摘要包含 schemaVersion 1、targetVersion 4、root、inputCount、jobs、started/finished、git HEAD、node/platform/arch、totals、bySourceVersion、failureGroups 与逐项 inputPath",
+        "失败分类只提取已有诊断的 reason/event/member/child 与 sequence 坐标，不改变 migration admission；失败组按 sourceVersion + reason + errorName + eventType + member + child 分组，组内按 inputPath 排序",
+        "任何失败时进程 exit code 为 1；失败不影响已成功的 successor，也不清理源文件；重跑幂等：已 V4 的 Session 只读打开且字节不变"
+      ],
+      "actors": [
+        "release operator",
+        "Session persistence 维护者",
+        "迁移评审者"
+      ],
+      "steps": [
+        "确认 writer/catalog 已是目标版本，选定 Session 根与 jobs（默认 CPU 上限 16）",
+        "运行 `pnpm run migrate:sessions-to-v4 --sessions-dir PATH [--jobs N]`",
+        "读取 stdout 的 START/DEFERRED/RETRY/FAILED 与摘要；按 sourceVersion 分组检查失败",
+        "对失败输入分别修复或排除；不要为“让命令通过”而改源文件或删除失败记录",
+        "重跑命令确认已迁移 Session 只读且字节不变；保存 log/summary 作为发布证据"
+      ],
+      "enforcement": {
+        "mode": "reviewed-one-time-command-plus-tests",
+        "implementation": "discover/inspectDirectory 的布局与最高代际选择；runMigrationJobs 的有界 worker + 一次 retry；migrate 的版本断言、只读 V4、日志/摘要与 exit code；classifyMigrationFailure 的诊断分类",
+        "trust": "命令用真实 JsonlSessionPersistence 与真实临时语料测试；没有模型调用。测试覆盖并发上限、10k 输入、symlink/flat-file、坏 Session 不阻断、两次重跑字节不变、parent/child catalog、source-change retry、torn V4 tail、参数校验。本次未执行这些测试。",
+        "failure": "坏输入记录 FAILED 并继续；source-change 首次 defer，retry 仍失败则 FAILED；缺根目录记为 failed；非法 --jobs 在打开语料前失败；任何 failed>0 时 exit 1。",
+        "exceptions": "没有 canonical generation 的目录跳过；V4 torn tail 只读打开、不修复；symlink 与 flat-file 只报告，不遍历；命令明确是一次性版本升级工具，不是通用降级/回滚工具。"
+      },
+      "applicability": "适用于需要在发布前批量迁移大量本地 Session 的仓库。迁移到新格式时，必须重新实现发现布局、最高代际选择、只读/写打开、并发默认值、source-change 单次重试与失败摘要；若目标产品没有 generation 文件名或 persistence publish 语义，不能照搬。",
+      "relationships": [
+        "dependsOn: release-session-migrations; release-session-migration-preparation",
+        "related: release-session-authority; release-persistence-records",
+        "crossDomain: Session persistence 域拥有 generation 发布/读取语义; 运维/CLI 域拥有临时目录、退出码与日志保留"
+      ],
+      "migration": {
+        "strategy": "把批量迁移做成显式的 contributor command，而不是后台自动任务：先发现并选择最高代际，再有界并发、单次 source-change retry、逐项摘要；绝不删除/移动旧代际。",
+        "implementation": "实现 project/session/generation 发现、symlink/flat-file 拒绝、最高代际选择、写前版本断言、有界 worker、延迟 retry、私有 log/summary 与 exit code。",
+        "requiredSupport": [
+          "generation 文件命名/解析",
+          "persistence 的 read/write open 与 publish",
+          "source-change 错误类型",
+          "失败诊断分类",
+          "私有临时目录"
+        ]
+      },
+      "reference": "references/release.md#session-batch-migration",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "`--jobs 2` 峰值并发为 2，10k 输入不超上限；source-change 在初始 pass 全部结算后才 retry 一次",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "V0/V3 输入发布 V4 successor，源字节不变；重跑只读打开 V4 且目标字节不变；parent/child catalog 在串行/并行下一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "symlink、flat-file、未知 required event、sequence gap、缺根目录均记录失败且不阻断后续；非法 --jobs 在扫描前失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "source-change retry 仍失败时 FAILED；意外 worker rejection drain 并中止 retry；任何 failure 使 exit 1",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "按 failureGroups/inputPath 修复或排除失败输入后重跑；已成功 successor 与源代际保留，不自动回滚",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本次只逐行阅读命令、测试与分类器，没有执行 10k/并发/torn/log 权限测试；真实用户 Session 损坏类型、跨平台 symlink 语义与超大语料未验证。命令只覆盖 V4，不是通用迁移框架；“重跑字节不变”依赖 persistence 的 no-overwrite/winner prefix 语义。"
+    },
+    {
+      "id": "release-persistence-records",
+      "title": "持久化类型变更记录、兼容性决策与 finalized checkpoint",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/README.md",
+          "start": 1,
+          "end": 90,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/reviewing-persistence-type-changes.md",
+          "start": 1,
+          "end": 122,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": "docs/session-format-status.md",
+          "start": 1,
+          "end": 63,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-finalization.ts",
+          "start": 1,
+          "end": 168,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/persistence-changes/finalized/v4.json",
+          "start": 1,
+          "end": 20,
+          "kind": "config"
+        },
+        {
+          "path": "docs/persistence-changes/finalized/v4.json",
+          "start": 340,
+          "end": 379,
+          "kind": "config"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-11-persistence-type-history.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 23,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 535,
+          "end": 635,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 646,
+          "end": 716,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 793,
+          "end": 879,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 1,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 41,
+          "end": 534,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 636,
+          "end": 645,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 717,
+          "end": 792,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.ts",
+          "start": 880,
+          "end": 923,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.spec.ts",
+          "start": 568,
+          "end": 577,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/persistence-changes.spec.ts",
+          "start": 674,
+          "end": 682,
+          "kind": "test"
+        }
+      ],
+      "problem": "结构 schema 差异不等于必须 bump；但也不能因为“能解析”就假设旧 reader 安全。每个变更需要可审计的兼容决策、完整 after schema 和历史链，否则无法区分安全忽略、必要拒绝和静默误读。",
+      "triggers": [
+        "修改任何持久化类型/event/header",
+        "准备提交 PR",
+        "更新未接受记录",
+        "创建 finalized checkpoint"
+      ],
+      "obligations": [
+        "每个检测到的结构变化都要 acknowledgement；record 覆盖 header、physical header、envelope、每个 event 及传递引用",
+        "record 四件套：英文、中文、生成 pairing、生成完整 after schema；machine declaration 中英必须相等",
+        "新 root 无 predecessor；删除保留 tombstone；后续以 predecessor after schema 为 before",
+        "verifier 拒绝缺失 predecessor、环、重复 successor、digest 不匹配、当前 root 与最新记录不一致",
+        "same-version 仅在旧 reader 能正确恢复/安全忽略 optional/必要拒绝 required 时允许；否则 bump",
+        "same-version 需显式 --decision；version-bump 必须有自己增长的 SessionHeader.version",
+        "record 命令生成 artifacts；省略 prose 的 draft 会被 verifier 拒绝",
+        "doc-sync 检查 inventory/catalog/history/双语；record ok 不替代行为测试",
+        "finalized checkpoint 不可变；更新拒绝 baseline/有依赖者/checkpoint 记录；新变化创建 successor",
+        "finalized/vN.json 顶层只含 schemaVersion=1、sessionFormatVersion=N、roots、acceptedRecords；roots 为 kind/digest/event?/surface?，acceptedRecords 为 recordId→sha256",
+        "recordDigest 对固定前缀 + {record:{schemaVersion,id,baseline,排序 changes},snapshot:{formatVersion,排序 roots+schema}} 做 SHA-256；prose/alias/source location 不入摘要",
+        "create checkpoint 要求 current roots 与 history tips 完全一致，且 SessionHeader.version 是 literal 非负安全整数；helper 只返回数据，不写文件",
+        "load 要求双语 latestFinalizedVersion 相等、恰一个 finalization YAML 块、vN 存在、checkpoint 元数据精确、每条 accepted record 存在且摘要匹配、至少一条 baseline、predecessor 闭包、roots 等于 tips、writerVersion(tips)=N",
+        "checkpoint 只验证 acceptedRecords 所选子集，不要求包含所有后续记录；当前 v4 只锁 5 条；load 不检查 Git 历史，不自动保证旧 checkpoint 不被覆盖",
+        "Snapshot 解析是严格 schema 校验：未知字段、非 0 root、重复 root、非法 node kind/字段、空 union、重复 property、非 canonical graph（重新 canonicalize 后 JSON 必须相等）都拒绝；root digest 必须等于 canonical schema 的 schemaDigest。",
+        "Root 形态受限：event root key 必须为 `event:<name>` 且 surface 为 boolean；非 event root 不得带 event/surface；header 只允许 SessionHeader/JsonlHeaderLine，envelope 只允许 SessionEventEnvelope；event schema 的 type literal 必须等于事件名，surface 事件必须有 surfaceOp（当前记录 required，历史快照允许 optional），非 surface 不得有 surfaceOp。",
+        "compact snapshot 的 type 可以省略 schema，但仅当该 digest 可从 roots 重建；否则失败。historical snapshot 的 source 位置必须省略行号（`:line` 或 `#L` 形式拒绝）。",
+        "classifier 的 same-version 例外必须精确：既有 root 的 property 变化中，body scope 内新增 optional property 或把 property 变为 optional 可不要求兼容评审，body 外新增或 required 必须评审；完全保留旧 variant 且新 payload version 严格大于旧最大 version 的 payload-version-added 可不评审；source compatibility 只在两份 schema 都有匹配 promise 时按 kind 分组比较，attribution-only 新增 kind 必须在 attributionKinds 中声明。union 变体只在候选变更全部无需评审时做二分匹配，否则保持 added/removed 或 union-variants-changed。",
+        "新增 root 仅在 kind=event 且 surface=false 时不要求兼容评审；新增 surface event、新增非 event root 或删除任意 root 必须评审；SessionHeader/JsonlHeaderLine/SessionEventEnvelope 增加 optional property 也必须评审",
+        "当前 acknowledgement 只扫描 docs/persistence-changes/ 顶层英文 .md（排除 README、AGENTS 与 .zh.md）及 .schema.json；historical-formats/ 等嵌套归档不进入当前链的双语机器块/未引用 snapshot 检查",
+        "历史校验在既有 verifier 义务之上还需：每条 record 的 snapshot roots 集合等于其 after roots；baseline 的每个 transition 必须 previous=null、after 非 null、decision=same-version；不允许“无变化”的 acknowledgement；baseline 必须含 SessionHeader、JsonlHeaderLine、SessionEventEnvelope。",
+        "record 文档必须含恰好一个 `yaml persistence-change` 块、frontmatter kind=persistence-change、schemaVersion=1、id 与文件名一致、changes 非空且 root 不重复；machineBlock 固定使用 JSON 引用的 root/previous/after/decision；scaffold 生成双语 frontmatter、语言互链、目录、显式 `<a id>` 与占位 prose。",
+        "`--prose` 必须同时提供 en/zh 的 summary/compatibility/verification，全部非空且不含占位符；updateDocument 替换 machine block 与各恰好一个同名 `##` section，保留 anchor 行，section 到下一个一/二级标题（`#` 或 `##`）为止。",
+        "命令互斥：--check/--baseline/--record/--update 只能选一个；--decision 只能配 --record/--update；--prose 只能配 --baseline/--record/--update。baseline 在已有历史时拒绝重置；不能 update 缺失记录、baseline 记录或有 successor 的记录；没有 changed root 时失败。",
+        "建档默认 decision：SessionHeader.version 变化推断 version-bump，否则 same-version；在 version 未变化且存在 requiresCompatibilityReview 的变更时，若未显式给 decision 则抛 decision-required。新 record 的 snapshot 只含 changed roots 且 types 为空；写入前先验证新 history；record 文件以 wx 写入防止覆盖（update 除外），同时写 generated artifacts。",
+        "JSON 模式失败返回 `{schemaVersion:1, ok:false, operation, message, code, changes, roots, files:[]}`：PersistenceChangeFailure 保留 code/changes/roots，其他错误 code=verification-failed；文本模式直接抛出。CLI 只在 `--json` 且 ok=false 时设置 exitCode=1；非 JSON 错误打印后 exitCode=1。"
+      ],
+      "actors": [
+        "类型变更作者",
+        "评审者",
+        "Session 维护者",
+        "release manager"
+      ],
+      "steps": [
+        "写双语 prose（summary/compatibility/verification）",
+        "运行 persistence-changes --record 生成 record/schema/catalog/pairing",
+        "对 flagged 变化补 --decision same-version 或走 version-bump",
+        "审查完整 transition 与两个 reader 方向",
+        "跑 doc-sync 与行为/迁移测试",
+        "提交；未接受记录可 --update；接受后创建 successor",
+        "达到基线时用 helper 校验 current roots/tips 与 header.version，创建新的 finalized/vN.json 并推进 latestFinalizedVersion；不替换旧文件"
+      ],
+      "enforcement": {
+        "mode": "generator-plus-verifier-plus-review",
+        "implementation": [
+          "persistence-changes CLI 生成；verifier 读 machine declaration/checkpoint；doc-sync 检查；compatibility note 定义决策标准",
+          "parseSchema/parseSnapshot 做严格结构与 canonical 校验；classifyPersistenceChange 按 scope、version 与 source promise 分类；validatePersistenceHistory 做图校验；machineBlock/scaffold/updateDocument 生成/更新双语记录；executeCommand 负责互斥、决策、验证与写盘；runPersistenceChanges 负责 JSON 错误封装。"
+        ],
+        "trust": "digest/结构/链自动；语义安全与 reviewer 是否真的审查无法由 checker 证明",
+        "failure": [
+          "decision-required、digest mismatch、missing predecessor、cycle、duplicate successor、doc-sync 失败都会阻断合入",
+          "decision-required、unacknowledged-changes、stale-artifacts、generated-artifact-missing、version-transition-required、finalized-record-update、finalized-version-order、missing/duplicate/fork/cycle predecessor、digest/canonical/snapshot 不匹配、占位符、双语机器块不等、未引用 snapshot、文件已存在都会阻断。"
+        ],
+        "exceptions": [
+          "vendor/第三方 opaque 类型不暴露内部；behavior-only 变化不在范围；record 的 prose hash 不进入 checkpoint",
+          "历史快照允许 surfaceOp optional 与省略行号的 source；未接受的 draft 可在本次创建/更新时暂留占位符；已接受记录不可 update，只能创建 successor。"
+        ]
+      },
+      "applicability": "适用于有声明式持久化类型的产品。若没有生成式 schema，仍应保留 before/after 快照和兼容决策，不能只写 PR 描述。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-session-migrations; release-upgrade-guides; release-persistence-format-archive; release-persistence-release-archive",
+        "crossDomain: 文档域拥有双语配对; 测试域拥有行为测试"
+      ],
+      "migration": {
+        "strategy": "先定义 root/类型提取与 digest，再做 record 生成；兼容决策必须显式，不靠默认",
+        "implementation": "四件套 record + before/after schema + classifier + explicit decision + finalized checkpoint + doc-sync",
+        "requiredSupport": [
+          "类型提取器",
+          "schema 快照",
+          "record 生成器",
+          "verifier",
+          "双语 pairing"
+        ]
+      },
+      "reference": "references/release.md#persistence-records",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "optional 新增自动推断 same-version 并生成完整 record",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "finalized checkpoint 保持 accepted declaration/schema 不变",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "checkpoint 通过 bilingual status、digest、predecessor 闭包、roots/tips 与 writerVersion 校验",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "flagged same-version 无 --decision 时 decision-required",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "删除 predecessor/制造环/digest 不符时 verifier 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "accepted record 被改动/删除、checkpoint 版本高于 status、roots 不等于 tips 时 load 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "更新未接受记录刷新 artifacts；已 finalized 则创建 successor",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "checker 不证明解释符合运行时；未执行 CLI/doc-sync；finalized helper 已读但未运行；当前 v4 只锁 5 条 accepted record，不能据其推断全部 V4 记录已定稿；checkpoint 不证明已发布，覆盖旧文件不由代码阻止。；严格解析/分类只证明结构与被记录的决策，不证明 prose 语义、reader 行为或运行时兼容；JSON 与文本模式的失败表现不同；未执行 CLI/doc-sync。"
+    },
+    {
+      "id": "release-persistence-schema-policy",
+      "title": "持久化 schema 策略：指纹域、保留标记与歧义审查",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-09-17-persistence-schema-review.md",
+          "start": 1,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-11-persistence-type-history.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 42,
+          "end": 133,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 210,
+          "end": 360,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 400,
+          "end": 480,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-source-policy.ts",
+          "start": 1,
+          "end": 69,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-review.ts",
+          "start": 20,
+          "end": 183,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema-model.ts",
+          "start": 100,
+          "end": 185,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema-model.ts",
+          "start": 277,
+          "end": 294,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-review.ts",
+          "start": 1,
+          "end": 19,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-review.ts",
+          "start": 184,
+          "end": 230,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema-model.ts",
+          "start": 1,
+          "end": 99,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema-model.ts",
+          "start": 186,
+          "end": 276,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema-model.ts",
+          "start": 295,
+          "end": 321,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 1,
+          "end": 41,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 134,
+          "end": 209,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 361,
+          "end": 399,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-schema.ts",
+          "start": 481,
+          "end": 512,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/persistence-changes.spec.ts",
+          "start": 1017,
+          "end": 1022,
+          "kind": "test"
+        }
+      ],
+      "problem": "结构指纹只能说明“变了”，不能解释共享变化、reader 的显式承诺与运行时假设；用 union 位置/遍历路径命名又会在无关 sibling 插入时漂移。optional-never 属性默认被规范化掉，之后改成有 JSON 值的定义会被误判为新增 optional 字段，而不是现有类型变化。",
+      "triggers": [
+        "给持久化类型增加/修改显式兼容注解",
+        "增加或改变 attribution kind",
+        "增加 optional never 保留属性",
+        "审查两份 inventory 的 schema 差异"
+      ],
+      "obligations": [
+        "inventory format 2 把 supported compatibility metadata 与受影响 property 绑定：binding、policy version、literal discriminator、unknown-kind preservation promise、qualified attribution kinds",
+        "带 policy 的图使用独立 fingerprint domain；没有绑定 policy 的图保持 format-1 normalization/fingerprint；inventory version 描述 schema tooling，独立于 Session format version",
+        "extractor 只接受 core-owned source declaration 上的显式 binding，并要求每个 use 有 literal user 或 developer role",
+        "producer annotations 只限定完整 wire-kind 组；classifier 只有两份 saved schema 都带 matching promise 时才允许 qualified new attribution kind",
+        "现有 kind 仍参与结构比较；removal、retroactive qualification、reserved identities 与无关 breaking change 仍严格分类",
+        "RESERVED_SOURCE_KINDS 禁止作为 attributionKinds，包含 user/model/tool/system-prompt/compact-checkpoint/dsh-session-title-llm/tool-registry/runtime-context/plugin/auto-review/compact-basic/ptc-mode；saved snapshot 声明即按 invalid source compatibility 拒绝",
+        "runtime owner 必须在激活 binding 前建立并测试 promised preservation behavior；tooling 不推断也不执行运行时保留行为",
+        "@persistenceReserved 只在 optional never 属性上保留一个无参数注解，使 reader 禁止的名字仍出现在 extracted graph；mapped use 使属性 required 或给 JSON 值时拒绝",
+        "被保留的 optional never 属性后来出现 JSON-valued 定义时，必须分类为“现有类型变化”，不能当成 additive optional field",
+        "current inventory 保留 authored names 与 source locations 作为描述性 metadata；structural digest 识别类型并提供 catalog anchors；catalog 按 literal kind 分组并保留每个 form alternative、required field、index signature 与完整定义链接",
+        "bounded array label 描述其元素，不继承第一个到达数组的 event；historical reference 保留 frozen rendering",
+        "read-only persistence-review 接受显式 before/after inventory；digest 相同即 unchanged；changed alternative 只有在 literal discriminator 唯一识别时才匹配；歧义保持为分开的 addition/removal；共享证据列出所有受影响 root，并保留 classifier 的权威诊断",
+        "普通注释、label、source location 不进入 structural identity；不根据相似字段推断 rename",
+        "PersistenceReview 报告 schemaVersion=1；每个 changed root 保留 root key、before/after digest（缺失为 null）与 classifier 的完整 changes；unchangedTypes 只统计 after 中 digest 已存在于 before 的类型。",
+        "evidence 以 kind/field/before/after 去重，locations 收集所有 root+path 并排序；同一结构观察跨多个 root 时只出现一次。人类解释不能覆盖每个 root 的 classifier 结果，requiresCompatibilityReview 仍以 classifier 为准。",
+        "Markdown 报告显式分开 structural evidence 与 compatibility review requirements：added/removed root 单列；ambiguity 保持 added/removed 两侧，不强行配对；fingerprints 完整显示；field 做 HTML escape，路径/值用 Markdown code 转义（反引号、竖线）。",
+        "CLI 严格解析参数，必须同时提供 --before/--after，可选 --json；两个 inventory 都经 parsePersistenceSnapshot 校验；成功输出文本或 JSON，异常设置 exitCode=1。review 只读，不写记录或修改 inventory。",
+        "Canonical graph 必须拒绝缺失/越界/非整数 node 引用；union cycle 无 material type 时报错；单成员 union 作为 alias 折叠而不生成 material node；不可达 node 被丢弃；node 编号 root-first 确定。",
+        "normalizeUnions 先展平嵌套 union，删除 never，合并 true+false literal 为 boolean primitive，删除被 primitive subsumed 的 literal；空 union 变为 never。这些规范化与 property 名排序、index key/value 排序、union 去重排序、compatibility attributionKinds 去重排序共同决定 digest。",
+        "fingerprint 域带版本前缀：`dsh-persistence-schema-v1` 或 `dsh-persistence-schema-v2` 后跟换行；只要任一可达 object property 带 compatibility metadata 就用 v2，否则 v1；digest 是 lowercase SHA-256。版本或规范化变化会改变身份。",
+        "persistenceSchemaSnapshot 保留 roots 原顺序/内容与 type 顺序/names/sources；只有 type schema 与从 roots 重建的图 deep-equal 时才省略 schema，否则必须保留；snapshot 必须无损。",
+        "isArbitraryJsonSchema 通过完整递归 JSON 值语言的固定 digest 识别任意 JSON，而不是按类型名；该语言覆盖 null/boolean/number/string/array/object-any。",
+        "formatVersion 1|2 是 inventory 规范化版本，不是 Session 格式版本；roots 携带 key/kind/event?/surface?/digest/schema，types 携带 digest/names/sources。",
+        "编译器程序使用合成的 `scripts/__persistence_schema_roots__.ts` 导入 SessionHeader/SessionEvent/SessionEventMap/SurfaceEventType，并为每个发现事件生成 EventRoot；编译失败或 root 文件被省略即错误。",
+        "`keyof SessionEventMap` 的编译结果必须与源扫描事件完全一致（omitted 与 uncompiled 都失败）；SurfaceEventType 必须是闭合 string-literal union，成员必须有声明。",
+        "Host 源文件发现递归读取 tsconfig.host.json 的 project references，只纳入 `packages/*/*/src/` 文件；配置错误失败，仅忽略 code 18003。",
+        "编译选项强制 strict、exactOptionalPropertyTypes、skipLibCheck=false、noEmit、非 composite/incremental，确保可达 declaration 的错误不会退化成 any；options/syntactic/语义诊断失败。",
+        "物理 JSONL HeaderLine 必须恰有一个当前声明（`packages/session/session-persistence-jsonl/src/format.ts`）；可达声明再做 scoped semantic diagnostics，只有 packages/ 与 vendor/（排除 node_modules）被跟踪。",
+        "类型转换拒绝 unresolved `error` any、class 实例、callable、symbol-keyed 字段、无约束空 object、无 material 的 intersection；unknown 记为 opaque unknown；phantom symbol-only intersection 成员忽略；tuple 记录 optional/rest；index signature 进入 graph。",
+        "Envelope 要求 required `type` literal 等于事件名、required `data`；生成 envelope 时删除 data 并把 type 拓宽为 string；SessionEvent 必须是 object alternatives。",
+        "声明 metadata 记录 named type alias/interface/enum、type literal 与 enum member 的 `<file>#<Name>` 名称和 `<file>:<line>` source；只记录 tracked source，供 catalog anchor/描述使用，不进入 structural digest。",
+        "@persistenceReserved 校验是单次、无参数 tag，只允许 optional never 或 undefined property；mapped use 使其 required 或给 JSON 值时失败。"
+      ],
+      "actors": [
+        "持久化类型作者",
+        "runtime owner",
+        "schema reviewer",
+        "发布评审者"
+      ],
+      "steps": [
+        "为需要兼容承诺的 core source 声明绑定 policy，并确认 use 位置 role literal",
+        "在 producer annotation 中限定完整 wire-kind 组；不要用 traversal path 作为身份",
+        "若 reader 禁止某个 optional 名字，用 @persistenceReserved 保留该属性，而不是让它被规范化掉",
+        "生成 before/after inventory，运行 persistence-review；按 digest 匹配 unchanged，按 literal discriminator 匹配 changed",
+        "对歧义项保留 addition/removal；对 qualified attribution 检查两份 schema 的 matching promise",
+        "runtime owner 先实现并测试 promised preservation，再激活 binding",
+        "完成类型变更 acknowledgement/兼容决策后，再更新 finalized checkpoint"
+      ],
+      "enforcement": {
+        "mode": "inventory-tooling-plus-reviewed-policy",
+        "implementation": [
+          "inventory format 2、独立 fingerprint domain、显式 source binding、@persistenceReserved 校验、persistence-review 的 digest/discriminator 匹配与 classifier 诊断",
+          "renderPersistenceReview 生成 Markdown；runPersistenceReview 解析参数并调用 reviewPersistenceSchemas；review 结果不改变 classifier 诊断。",
+          "canonicalizeSchema 用 reachability + bisimulation partition + single-member-union alias 生成 root-first canonical graph；persistenceSchemaSnapshot 仅在可精确重建时省略 type schema；schemaDigest 按 compatibility presence 选 v1/v2 域。",
+          "extractPersistenceSchema 构造 Program、校验源/编译器事件一致并转换 roots；SchemaExtractor 做类型图转换与 metadata 记录；inventory 按 root 生成 canonical digest 并按 digest 汇总 types。"
+        ],
+        "trust": "提取/分类/歧义处理是工具自动的；promise 是否真实由 runtime owner 测试，tooling 不验证；reviewer 必须读 before/after inventory 与解释，不能只看 current-tree check",
+        "failure": [
+          "无 literal role、无效 binding、mapped use 使 reserved 属性 required/JSON-valued、qualified kind 缺少双侧 promise、reserved identity/removal/retroactive qualification 会拒绝或严格分类；歧义不会被强行配对",
+          "配置/编译诊断、事件不一致、缺失/重复 HeaderLine/SurfaceEventType、invalid reserved、class/callable/symbol/empty/unresolved 类型、envelope 形状错误、越界 node 都会带 source:line 失败。"
+        ],
+        "exceptions": "没有绑定 policy 的图保持旧 normalization；历史 reference 不重写；普通 comment/label/source location 不参与 identity；tooling 不推断 rename 或语义安全"
+      },
+      "applicability": "适用于有结构化持久化 schema、需要区分“结构变化”与“reader 承诺”的产品。若没有稳定的命名/绑定机制，或 schema 直接从运行时反射，需重新设计 inventory 与 fingerprint。",
+      "relationships": [
+        "dependsOn: release-persistence-records",
+        "related: release-persistence-format-archive; release-session-authority; release-session-migrations",
+        "crossDomain: 持久化/runtime 域拥有 reader 行为; 工程规范域拥有 schema 工具与类型检查"
+      ],
+      "migration": {
+        "strategy": "先把“身份”与“展示”分开：digest 识别类型，literal kind 分组 alternative；不要把 union 位置/遍历路径当身份；policy 只作为显式、可指纹的 opt-in",
+        "implementation": "实现 inventory format 2 metadata、独立 fingerprint domain、source binding/role 检查、producer annotation、@persistenceReserved、persistence-review 的 digest/discriminator 匹配与歧义保留",
+        "requiredSupport": [
+          "显式 before/after inventory",
+          "稳定 digest 与 literal discriminator",
+          "source binding/annotation 语法",
+          "runtime preservation 测试"
+        ]
+      },
+      "reference": "references/release.md#persistence-schema-policy",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "无 policy 图保持 format-1 fingerprint；带 policy 图使用独立 domain 且 review 能按 digest 匹配 unchanged",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "合法 @persistenceReserved optional never 保留在 extracted graph；later JSON-valued 定义被识别为现有类型变化",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "无 literal user/developer role 的 source binding、mapped reserved required/JSON-valued、缺少双侧 promise 的 qualified kind 被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "歧义 alternative 不被强行配对；removal/retroactive qualification/reserved identity 仍严格分类",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "补充显式 role/promise 或拆分 union 后重新生成 inventory 并 review；runtime owner 补测试后再激活",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "工具不证明运行时 preservation、也不证明解释语义正确；@persistenceReserved 只覆盖 reader 禁止的 optional never 名字；历史 frozen rendering 不重写；本次未执行 persistence-review/inventory 生成或 runtime 测试。；报告只解释结构证据，不决定兼容性；无法从 digest 推断 rename 或语义；未执行 CLI。；digest 只覆盖 canonical graph，不覆盖 names/sources/展示；v2 域只说明存在 policy metadata，不证明 runtime preservation；未执行。；编译成功不证明运行时读写兼容；source pointer/metadata 不进入 digest；未执行提取器。"
+    },
+    {
+      "id": "release-sqlite-schema-compatibility",
+      "title": "SQLite 物理 schema 拒绝不兼容，派生索引只重置自己",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 7,
+          "end": 7,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 9,
+          "end": 20,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 55,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts",
+          "start": 69,
+          "end": 85,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 7,
+          "end": 8,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 10,
+          "end": 11,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 38,
+          "end": 66,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 96,
+          "end": 138,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1319,
+          "end": 1375,
+          "kind": "test"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 1,
+          "end": 8,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 21,
+          "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 106,
+          "end": 119,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 1,
+          "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 67,
+          "end": 95,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/schema.ts",
+          "start": 139,
+          "end": 173,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts",
+          "start": 1,
+          "end": 290,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1261,
+          "end": 1318,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1376,
+          "end": 1500,
+          "kind": "test"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/tests/sqlite.spec.ts",
+          "start": 1570,
+          "end": 1880,
+          "kind": "test"
+        }
+      ],
+      "problem": "两类 SQLite 数据库的兼容承诺不同：物理存储保存用户/框架数据，不能把旧布局原地迁移；全文检索库是可重建派生索引，可以丢弃重建。把两者都叫“schema version”并统一处理，会要么静默重置 canonical 数据，要么让旧物理布局被当作可迁移。",
+      "triggers": [
+        "打开已存在的 SQLite 数据库",
+        "提升物理表布局或派生索引 schema 版本",
+        "新数据库首次 materialize",
+        "把 SQLite 数据写入升级指南或发布说明"
+      ],
+      "obligations": [
+        "物理存储的 `STORAGE_SQLITE_SCHEMA_VERSION` 存在 `PRAGMA user_version`；0 表示未定型，只有在表布局完成后才盖章为当前版本",
+        "物理存储遇到任何非 0 且非当前版本时抛 `StorageError` 的 `version-mismatch`，不原地迁移、不重建、不降级；物理布局只在 breaking table change 时提升",
+        "unit 自己的 `version` 与物理布局版本正交，必须分别处理",
+        "新数据库目录 0700、文件以 `wx` 0600 独占创建；`EEXIST` 之外的创建错误必须传播；`DatabaseSync` 按路径重开，父目录可被其他主体替换时该权限不提供完整机密性/完整性",
+        "派生全文索引用 `SESSION_QUERY_SQLITE_APPLICATION_ID` 标识；application id 非 0 且不等于本应用时拒绝，0 且已有任何 user table 时拒绝",
+        "派生索引的 application id 匹配时，未知 user table 拒绝；只有已识别的派生表 + 版本不匹配才可 drop 这些表、把 `user_version` 归 0 并重建，绝不触碰 canonical/foreign 文件",
+        "先拒绝 foreign/canonical 文件，再应用 journal mode 等 mutating pragmas",
+        "测试必须覆盖“新库盖当前版本”“不匹配物理版本被拒”“已识别旧派生库被重置”“未知/foreign 库被拒且无关表保留”",
+        "Physical store: stamp user_version only after every table/index creation succeeds; a failed materialization must leave version 0 so a repaired medium reopens, and close must drain an in-flight failing open before releasing names.",
+        "Physical store must reject invalid unit/table names before touching the medium, reject duplicate open and closed-backend use, round-trip prototype-polluting keys as own properties, normalize non-Error serializer throws to Error, and map unparsable stored JSON/global to a typed malformed-medium error.",
+        "Physical file/directory setup creates a missing database with exclusive wx 0600 and its directory owner-only, preserves an existing file's mode, propagates EACCES and NUL-path errors, and skips filesystem setup for :memory:.",
+        "Derived index identity is the application id plus an exact recognized-table whitelist; internal sqlite-prefixed names are not proof of foreignness (sqliteX must be rejected); only recognized derived tables with a version mismatch may be reset, and mutating pragmas apply only after foreign/canonical refusal.",
+        "Derived initialization must refuse an augmented, canonical, wildcard or other-application file before any mutation and leave its unrelated tables, user_version and journal mode untouched; only a recognized derived index with a stale version may be reset. Initialization failure leaves no partial service or unhandled rejection, and first-search mode defers only the invalid-database failure."
+      ],
+      "actors": [
+        "storage-sqlite 维护者",
+        "session-query-sqlite 维护者",
+        "持久化评审者",
+        "发布评审者"
+      ],
+      "steps": [
+        "判定数据库类别：canonical physical store、可重建 derived index，还是 foreign database",
+        "canonical store：读 `user_version`；0 则在布局完成后盖章，其他非当前值直接拒绝并给出版本错误",
+        "derived index：先校验 application id 与表集合；只有已识别派生表且版本不同时才 reset，未知表回退拒绝",
+        "提升版本时同步更新常量、测试和升级/迁移说明；不要为物理库补“自动迁移”而不改承诺",
+        "在 PR 中展示正例、拒绝例与恢复路径；未执行的数据库实验保持 planned"
+      ],
+      "enforcement": {
+        "mode": "runtime-identity-and-version-check-plus-tests",
+        "implementation": "storage-sqlite 的 openDatabase/configureDatabase 版本盖章与 version-mismatch；session-query-sqlite 的 application_id、DERIVED_USER_TABLES、resetDerivedSchema；两侧 focused tests",
+        "trust": "运行时检查在每次打开时真实执行；测试验证正常/拒绝路径。未覆盖并发打开、崩溃中断、父目录替换与真实损坏文件；测试未在本次迁移中执行。",
+        "failure": "物理版本不匹配抛 version-mismatch 并关闭句柄；派生库 unknown/foreign 表拒绝；重置只删除已识别派生表。错误不会自动“修复”canonical 数据。",
+        "exceptions": "派生索引可丢弃重建是明确例外，仅限 application id 与表集合都匹配的派生库；物理存储当前 unreleased format 没有迁移；`:memory:` 跳过文件系统权限步骤。"
+      },
+      "applicability": "适用于任何同时拥有 canonical SQLite store 与可重建索引的产品。迁移时必须先给数据库分类并写明“拒绝/重置/重建”承诺；若目标环境没有可靠的 application id 或表集合识别，不要启用自动 reset。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-persistence-format-archive",
+        "crossDomain: 存储/持久化域拥有物理数据库与派生索引的生命周期; runtime 域拥有损坏恢复、并发打开与文件系统故障行为"
+      ],
+      "migration": {
+        "strategy": "先分类后定策略：canonical 物理库升级版本即拒绝旧布局，派生索引才允许受限重置；不要把 Session JSONL 的相邻代际规则套到 SQLite，也不要把派生重置套到 canonical 库。",
+        "implementation": "实现数据库身份（application id 或等价物）、表集合白名单、物理 user_version 盖章/拒绝、派生 reset、owner-only 创建与 focused tests。",
+        "requiredSupport": [
+          "数据库身份字段",
+          "表集合白名单",
+          "可区分的版本错误",
+          "重建派生索引的能力",
+          "文件权限与父目录威胁模型"
+        ]
+      },
+      "reference": "references/release.md#persistence-sqlite-schema",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "新物理库在表布局完成后盖上当前 `user_version`，STRICT 表与 unit version 正确",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "已识别的旧派生索引被重置到当前版本并重新可查询，无关表保留",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "物理库 `user_version=999` 被 `version-mismatch` 拒绝",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "foreign application id、application id 0 带 user tables、派生库未知表均被拒绝且不修改文件",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "物理库拒绝后由用户/维护者显式迁移或换库；派生库重置后重建索引；失败时关闭句柄并保留原文件",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "本次只逐行阅读实现与 focused tests，没有执行测试、真实损坏/部分写入/并发打开/父目录替换实验；测试覆盖的是选定场景，不证明所有 SQLite 版本与文件系统行为。物理库的“拒绝而不迁移”是当前 unreleased format 的选择，不是通用 SQLite 升级方案。"
+    },
+    {
+      "id": "release-persistence-format-archive",
+      "title": "历史格式快照：v0 到 writer 的完整声明、归档与离线校验",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/historical-formats/README.md",
+          "start": 1,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/persistence-formats.ts",
+          "start": 1,
+          "end": 230,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/cookbook/adding-a-session-format-version.md",
+          "start": 23,
+          "end": 68,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "当前 schema 不能解释旧 Session；若只为“当前版本”保留文档，历史格式会丢失，旧数据无法被正确读取。历史页若引用当前类型或行号，会制造伪历史；归档若覆盖旧快照，会破坏不可变代际。",
+      "triggers": [
+        "推进 SESSION_FORMAT_VERSION",
+        "新增/审查历史格式页",
+        "归档当前 inventory",
+        "旧 Session 读取/兼容性争议"
+      ],
+      "obligations": [
+        "对每个整数 0<=version<writer 必须有 vN.md、vN.zh.md、vN.schema.json、vN.i18n.yaml；目录不能有未在范围内的 v* 文件",
+        "每个历史页 frontmatter kind=persistence-format，恰好一个 yaml persistence-format 机器块；中英文机器块逐字相等",
+        "机器块字段 schemaVersion/sessionFormatVersion/source/roots 精确；sessionFormatVersion 等于文件名；source 为 dsh-* tag 或正整数 pullRequest；roots 的 key 仅限三类 header 或 event:*",
+        "roots 必须是 64 位小写 hex，覆盖完整 schema 的全部 roots，不能多/少；schema 必须含三个 header roots 与至少一个 event root",
+        "SessionHeader.version 必须 required，且为匹配版本的字面量（历史允许 legacy number）；所有列出类型从 roots 可达、无重复、无遗漏；历史快照不得含未引用类型，当前由 catalog generator 另行检查",
+        "文档必须链接同名 schema；当前 catalog 文档还要有每个 root 的索引行 | `key` | kind | `digest` |",
+        "历史源码引用必须省略行号；tag/PR 只是来源指针，检查不 checkout 历史、不访问 Git/网络",
+        "推进 writer 前先 verify-persistence-catalog，再用 verify-persistence-formats --archive <旧 writer> 把当前 inventory 归档为 vN.schema.json",
+        "--archive 只接受当前 writer、拒绝已存在目标、不能与 --write 组合；只保留从 roots 可达的类型并去掉源码行号",
+        "归档后补双语记录/来源证据，再 --write 刷新生成区域与 pairing，最后默认验证与 doc-sync；默认验证拒绝 stale facts"
+      ],
+      "actors": [
+        "Session 维护者",
+        "类型变更作者",
+        "评审者",
+        "文档维护者"
+      ],
+      "steps": [
+        "writer 仍为旧版本时运行 verify-persistence-catalog",
+        "--archive <旧 writer> 生成 vN.schema.json",
+        "用模板补 vN 双语页、source、roots 声明与 pairing",
+        "--write 刷新索引/生成事实",
+        "运行 verify-persistence-formats 与 doc-sync",
+        "再提交 writer bump 与运行时实现"
+      ],
+      "enforcement": {
+        "mode": "generator-archive-plus-offline-verifier-plus-doc-sync",
+        "implementation": "persistence-formats.ts 的 expected artifact 集合、双语 machine block、source/roots/schema 可达性、archive 单次写入、--write 后验证",
+        "trust": "结构/digest 自动；历史来源是否真实、snapshot 是否完整对应历史 tag/PR 由作者证据与人工审查负责",
+        "failure": "缺失/额外 artifact、缺 kind、机器块数量/字段/双语不符、非法 source/root/digest、roots 与 schema 不匹配、version 不匹配、类型不可达/重复/遗漏、stale 事实、archive 非当前 writer/目标已存在都会失败",
+        "exceptions": "历史 SessionHeader.version 允许 number；当前 writer 使用 catalog 而非 vN.*；tag/PR 来源不重放历史应用"
+      },
+      "applicability": "适用于任何需要长期读取旧持久化格式的产品。若版本少，可简化目录，但每个历史整数必须有完整 schema+双语声明，且归档不可覆盖。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-persistence-release-archive; release-session-migrations",
+        "crossDomain: 文档域拥有双语/链接/生成事实; 测试域拥有历史读取测试"
+      ],
+      "migration": {
+        "strategy": "把“历史格式”作为不可变完整快照，而不是从当前类型反推",
+        "implementation": "每个整数四件套；machine declaration；完整 schema；archive 当前 inventory；--write；离线验证",
+        "requiredSupport": [
+          "writer 常量",
+          "schema extractor",
+          "生成式 catalog",
+          "双语 pairing",
+          "历史来源 tag/PR"
+        ]
+      },
+      "reference": "references/release.md#persistence-format-archive",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "v0 到当前 writer 每个历史页/schema/roots/双语声明通过；当前 catalog 索引行完整",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺失/额外 artifact、roots 与 schema 不符、类型不可达/重复、行号引用、stale 生成事实时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "先 archive 旧 writer，再补记录；已存在目标不覆盖，改用新 writer/正确的历史证据",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行 verify-persistence-formats/--archive/doc-sync；检查不 fetch Git、不重放历史应用，也不证明迁移安全；snapshot 完整性依赖所选 tag/PR 与 schema extractor 的规范化。"
+    },
+    {
+      "id": "release-persistence-release-archive",
+      "title": "预发布 tag 归档：manifest 顺序、tag-by-tag 差异与离线完整性",
+      "sources": [
+        {
+          "path": "docs/persistence-changes/releases/README.md",
+          "start": 1,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/persistence-changes/releases/manifest.json",
+          "start": 1,
+          "end": 162,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/persistence-releases.ts",
+          "start": 1,
+          "end": 257,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "alpha/RC 标签之间也存在持久化结构变化；若只保留“当前兼容链”，会丢失某个 tag 实际写出的格式。手工维护 tag 顺序/前后 digest 会漂移，回填记录还可能被误当成当前变更授权。",
+      "triggers": [
+        "新增/补录 alpha/RC 持久化历史",
+        "审查 tag-by-tag 差异",
+        "验证 release 归档完整性",
+        "解释历史 V0 无版本提升"
+      ],
+      "obligations": [
+        "manifest schemaVersion=1，capturedAt 为 YYYY-MM-DD，releases 非空且按语义版本严格递增、不能重复",
+        "tag 必须匹配 dsh-v<major>.<minor>.<patch>-(alpha|rc).<N>；sourceDate 必填，publishedAt 可 null，sessionFormatVersion 非负安全整数",
+        "目录必须恰好包含 README 三件套、manifest 与每个 tag 的 .md/.zh.md/.i18n.yaml/.schema.json；不能有未引用 artifact",
+        "每个 tag 双语页 kind=persistence-release，恰好一个 yaml persistence-release 机器块且逐字相等；字段精确为 schemaVersion/tag/previous/sessionFormatVersion/changes",
+        "previous 必须等于 manifest 顺序的前一个 tag（首个 null）；changes 的 root 仅限三类 header 或 event:*，同一 tag 不能重复 root，before/after 为 null 或 64 位小写 hex",
+        "历史源码引用禁止行号；schema 只含该 tag 的 changed after roots；before/after digest 必须与前置状态/当前 snapshot 一致；每个声明的 change 至少产生一个结构变化；无结构变化的 release 保持空 changes 与对应空 snapshot",
+        "所有列出类型从 roots 可达、无重复、完整覆盖；最终状态必须含三个 header roots；SessionHeader.version 必须 required 且为记录版本的字面量（历史允许 number）",
+        "verify-persistence-releases 只读 manifest/records/snapshots，不访问 Git/网络，验证 manifest 覆盖、predecessor、before/after、类型完整性、双语机器声明",
+        "默认拒绝 stale 生成事实；--write 在完整验证后刷新 marker 区域与 pairing；生成索引/inventory/结构变化事实",
+        "这些记录是历史结构快照：不证明历史运行时兼容，也不替代当前源码 acknowledgement；回填记录不能授权当前 PR 省略 acknowledgement 或版本提升"
+      ],
+      "actors": [
+        "Session 维护者",
+        "历史归档作者",
+        "评审者",
+        "发布者"
+      ],
+      "steps": [
+        "确定 tag 与 capture 范围，按语义版本写入 manifest",
+        "为每个 tag 提取 changed roots 的 before/after 与完整 reachable types",
+        "写双语页与机器声明、schema、pairing",
+        "运行 verify-persistence-releases 与 doc-sync",
+        "需要刷新生成事实时先完整验证再 --write",
+        "把归档作为历史证据，当前变更仍走当期 acknowledgement"
+      ],
+      "enforcement": {
+        "mode": "manifest-schema-plus-offline-verifier-plus-generated-facts",
+        "implementation": "persistence-releases.ts 的 tag 语义排序、artifact 集合、双语 machine block、predecessor/digest/类型/version 校验；--write 前完整验证",
+        "trust": "结构/digest/顺序自动；tag 是否真实存在、capture 范围是否完整依赖作者证据与人工审查，离线检查不会发现后来新增 tag",
+        "failure": "缺文件/未引用文件、tag 格式/顺序/重复、机器块/字段/双语不符、previous 错误、重复 root、digest 不符、无结构变化、类型不可达/重复、version 不匹配、stale 事实都会失败",
+        "exceptions": "publishedAt 可 null；历史 SessionHeader.version 允许 number；分类仅作现代规则阅读辅助，不是历史迁移义务"
+      },
+      "applicability": "适用于有多个 alpha/beta/RC 发布且需要审计历史格式的项目。若 tag 很少，可缩减 capture 范围，但不能伪造缺失 tag 或让离线检查声称覆盖未捕获标签。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-persistence-format-archive; release-session-migrations",
+        "crossDomain: 文档域拥有双语/链接; 测试域拥有历史读取证据"
+      ],
+      "migration": {
+        "strategy": "以 manifest 固定 capture 范围，以相邻 before/after 复原历史，不让当前 schema 回填旧 tag",
+        "implementation": "语义版本 manifest；每 tag 双语记录/schema；predecessor+digest 校验；生成索引；--write；离线验证",
+        "requiredSupport": [
+          "历史 tag 源码",
+          "schema extractor",
+          "分类器",
+          "双语 pairing",
+          "capture 证据"
+        ]
+      },
+      "reference": "references/release.md#persistence-release-archive",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "26 条记录/25 个相邻 transition 的 manifest、digest、类型与双语声明全部通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "tag 乱序/重复、previous 错误、digest 不符、类型缺失/重复、双语机器块不同时失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "修正 manifest/记录/schema 后重跑；--write 只在完整验证后刷新生成事实",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "未执行 verify-persistence-releases；归档不证明历史运行时兼容/迁移安全；tag 完整性只相对于 manifest 捕捉范围；未被检查的 per-tag 页面仍可能有摘要错误。"
+    },
+    {
+      "id": "release-upgrade-guides",
+      "title": "外部可观察破坏的升级指南：同改动、≤500 词、双语与结构门",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 1,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-upgrade-guides.ts",
+          "start": 1,
+          "end": 85,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/skills/dsh-doc/templates/upgrade-guide.md",
+          "start": 1,
+          "end": 29,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把升级说明推迟到发版准备，会漏掉破坏或写出跨多个 release 的含糊指南；把理由和代码塞进指南会超过读者可执行的长度。读者需要的是“旧行为/新行为/谁受影响/按顺序怎么做/怎么确认”。",
+      "triggers": [
+        "改动破坏外部可观察表面",
+        "根版本 bump",
+        "回滚已有指南覆盖的破坏",
+        "新增/修改 upgrade guide"
+      ],
+      "obligations": [
+        "只在破坏外部可观察表面时写：CLI、profile、cordis.yml/settings、持久化数据、SDK/wire API、包名/entry point",
+        "在引入破坏的同一次改动中写，不推迟到发版",
+        "路径 docs/upgrade-guide/v<version>/<kebab-item>/guide.md；目录只放 guide.md/guide.zh.md/guide.i18n.yaml",
+        "v<version> 是写指南时根 package.json 版本；描述到下一个 release；不跨多个 release",
+        "根版本未变时描述到当前 master；后续改动触及同表面时更新；回滚时删除；bump 后旧目录冻结",
+        "frontmatter 恰好 description/kind；kind=upgrade-guide；description 非空",
+        "guide.md 一个 # 标题 + ## Change + ## Migration；guide.zh.md 用 ## 变更 + ## 迁移",
+        "英文含 frontmatter ≤500 词；超长用链接/Agent Note/脚本",
+        "Migration 点名精确文件/key/命令/符号，并说明如何确认"
+      ],
+      "actors": [
+        "改动作者",
+        "评审者",
+        "文档维护者"
+      ],
+      "steps": [
+        "判断是否外部可观察破坏",
+        "在 docs/upgrade-guide/v<root-version>/<item>/ 创建 guide.md/guide.zh.md",
+        "写 Change（旧/新/受影响）和 Migration（有序步骤/确认）",
+        "英文控制在 500 词内，中文同改动",
+        "运行 verify-upgrade-guides、verify-translation-pairing、verify-md-links",
+        "随代码一起提交"
+      ],
+      "enforcement": {
+        "mode": "verifier-plus-translation-gate",
+        "implementation": "verify-upgrade-guides 检查路径/frontmatter/heading/500 词；verify-translation-pairing 检查双语；verify-md-links 检查链接",
+        "trust": "结构/词数/配对自动；内容是否覆盖真实破坏、步骤是否可执行需评审",
+        "failure": "路径/heading/frontmatter/词数/配对/链接失败都会阻断",
+        "exceptions": "预稳定内部 API 若同改动更新全部消费者，不需要指南；Session 格式变更仍要类型 record。自动门只验证已存在的 docs/upgrade-guide 树；目录整体缺失时 collectUpgradeGuideViolations 返回空，且不判断某 breaking change 是否应有指南。"
+      },
+      "applicability": "适用于有外部用户升级路径的产品。若产品不分版本发布，可改用变更日志，但“同改动、可执行步骤、确认方法”仍适用。",
+      "relationships": [
+        "dependsOn: release-session-authority",
+        "related: release-persistence-records; release-session-migrations",
+        "crossDomain: 文档域拥有双语配对/链接/散文标准; 工程规范域拥有预稳定 API 政策"
+      ],
+      "migration": {
+        "strategy": "把指南当代码同改的一部分，而不是发布时的总结",
+        "implementation": "固定目录/模板/heading/词数；verify-upgrade-guides + pairing + links；每个外部破坏一个 item",
+        "requiredSupport": [
+          "文档目录",
+          "模板",
+          "verifier",
+          "双语配对工具"
+        ]
+      },
+      "reference": "references/release.md#upgrade-guides",
+      "verification": {
+        "positive": [
+          {
+            "obligation": "一个破坏配一个 ≤500 词指南，双语链接通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "obligation": "缺 Migration/超 500 词/错误 heading 时 verify 失败",
+            "evidence": "planned"
+          },
+          {
+            "obligation": "只有英文或缺 pairing 时翻译门失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "obligation": "拆分长指南/链接源文件/抽脚本后重新验证",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": "verifier 不证明内容正确或覆盖所有破坏；未执行 verifier；模板只读 1-29 行。"
+    }
+  ]
+}

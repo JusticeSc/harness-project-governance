@@ -1,0 +1,5212 @@
+{
+  "domain": "engineering",
+  "sourceCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "mechanisms": [
+    {
+      "id": "engineering-instruction-tiers",
+      "title": "指令层级、单一事实归属与文档预算",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 179,
+          "end": 181,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 155,
+          "end": 155,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 15,
+          "end": 36,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 49,
+          "end": 59,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/AGENTS.md",
+          "start": 5,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/AGENTS.md",
+          "start": 1,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 7,
+          "end": 11,
+          "kind": "config"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 13,
+          "end": 15,
+          "kind": "config"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 24,
+          "end": 25,
+          "kind": "config"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 36,
+          "end": 40,
+          "kind": "config"
+        },
+        {
+          "path": "lefthook.yml",
+          "start": 42,
+          "end": 44,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/verify-doc-budgets.ts",
+          "start": 1,
+          "end": 58,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 9,
+          "kind": "config"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 75,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 165,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "package.json",
+          "start": 132,
+          "end": 132,
+          "kind": "config"
+        }
+      ],
+      "problem": "长篇指令被复制到根文件和各子树后会漂移；读者不知道哪份是权威；文档预算失控使根上下文重新膨胀。",
+      "triggers": [
+        "新增或修改 AGENTS.md/CLAUDE.md",
+        "同一规则在多个文档复述",
+        "文档字数超预算",
+        "新增/归档 Agent Note",
+        "修改 README 或 docs 页面"
+      ],
+      "obligations": [
+        "根 AGENTS.md 只放每个会话都需要的常驻命令，每条 1-3 行并链接归属文档；子树只放特有规则。",
+        "按事实类型分配唯一归属层：架构、子系统语义、决策理由、防御规则、事故、cookbook、包契约、生成目录。",
+        "编辑真实 AGENTS.md；根与 packages 的 CLAUDE.md 是指向它的符号链接。",
+        "已实现 Note 用现在时陈述已交付现实；归档 Note 冻结只读，永不作为当前权威。",
+        "文档预算超限时按迁移、压缩、提额顺序处理，提额需在 PR 说明理由。",
+        "维护文档引用用相对 Markdown link 或 tag/PR 号；verify-md-links 检查本地目标，verify-repository-references 拒绝实际 commit 标识和不允许的组织 URL。完整 commit anchor 只属于治理证据层，不复制进维护文档。",
+        "每个文件恰好一个尾随换行；pre-commit 的 git diff --cached --check 拒绝 staged whitespace 错误。"
+      ],
+      "actors": [
+        "改动作者",
+        "文档 owner",
+        "评审者",
+        "归档 Note owner"
+      ],
+      "steps": [
+        "判定事实归属层；已有归属时只写一行链接。",
+        "写根规则使其可独立理解，细节链接到架构/子系统/README/Note。",
+        "修改真实文件并保持相对链接可解析。",
+        "运行文档预算、链接、归档门禁；超限先迁移再压缩。",
+        "需要新结论时写新 Note 并声明取代关系，不改归档。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "verify-doc-budgets 检查字数与缺失文件",
+          "verify-md-links 检查本地链接/锚点",
+          "verify-repository-references 拒绝 commit 标识与不允许的组织 URL",
+          "pre-commit whitespace 与 verify-archived-agent-notes",
+          "层级归属与写作质量靠评审"
+        ],
+        "trust": "预算/链接/引用格式/归档/空白可自动拒绝；单一归属和内容质量是人工保证。",
+        "failure": "预算红、链接断、维护文档出现 commit 标识、归档被改、尾随空白错误；修复目标是归属层或链接，不是降低检查强度。",
+        "exceptions": [
+          "文档 owner 可批准提高预算并记录理由",
+          "局部编辑/机械改动可免写 Agent Note"
+        ]
+      },
+      "applicability": "适用于任何有代理指令文件和多层文档的仓库；无 docs 分层的仓库保留根/子树两级和单一事实归属，预算映射到现有 markdown lint。",
+      "relationships": [
+        "engineering-jsdoc-prose 共享写作规则",
+        "Decisions/Rationale 域拥有 Agent Note 生命周期",
+        "Documentation 域拥有预算与链接门禁"
+      ],
+      "migration": {
+        "strategy": "先冻结事实源，再建立归属表，最后接预算/链接门禁。",
+        "implementation": [
+          "建立根/子树 AGENTS.md 和 docs 归属表",
+          "为每类文档指定唯一目录",
+          "把预算和链接检查接入提交/CI",
+          "历史文档冻结而非继续编辑"
+        ],
+        "requiredSupport": [
+          "文档 owner",
+          "markdown lint/字数检查",
+          "符号链接或只编辑真实文件的约定"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-instruction-tiers",
+      "verification": {
+        "positive": [
+          {
+            "check": "同一规则只在一个权威位置出现，其他位置链接它",
+            "evidence": "planned"
+          },
+          {
+            "check": "预算/链接/归档门禁全部通过",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在根文件加入故事化细节或重复子树规则应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "修改归档 Note 应被 pre-commit 拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "超预算时迁移内容到归属层后可恢复绿色",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行任何门禁；以上均为迁移后义务。"
+      },
+      "limitations": "预算和链接检查不证明内容正确；层级归属没有自动检查器；符号链接在 Windows/无符号链接环境需替代方案。"
+    },
+    {
+      "id": "engineering-check-selection",
+      "title": "按改动面选择检查并保留真实证据",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 113,
+          "end": 121,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 109,
+          "end": 111,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 43,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 91,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 135,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/AGENTS.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "package.json",
+          "start": 7,
+          "end": 10,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 23,
+          "end": 23,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 61,
+          "end": 61,
+          "kind": "config"
+        }
+      ],
+      "problem": "代理常用全量测试替代针对性验证，或只跑单测就声称完成；证据与改动表面不匹配。",
+      "triggers": [
+        "准备提交/推送/PR",
+        "修复 CI",
+        "声称实现完成",
+        "选择 build/typecheck/test 命令"
+      ],
+      "obligations": [
+        "推送前按 dsh-pre-push-checks 选择覆盖改动面的最小检查。",
+        "工具链由根 manifest 固定：packageManager pnpm@11.28.5，engines.node ^22.19.0 || >=24.0.0；所有命令按 pnpm 脚本调用，不混用 npm/yarn 安装状态。",
+        "证据匹配表面：行为改动跑聚焦行为测试，模型/用户可见输出跑快照，文档跑 doc-sync，发布路径跑构建后 smoke，provider 跑真实 API e2e。",
+        "不为提交/推送重复已通过的检查；只有显式要求、诊断 CI 或不可约仓库级改动才本地重演全部。",
+        "CI 覆盖率门禁是 test:coverage，不是 test。",
+        "声明 TypeScript 工作完成前，在最新 build:artifacts 后跑 build:check，或直接 build。",
+        "测试解析只走源码平面，构建产物只由显式 lib 模式或 built smoke 消费。",
+        "钩子是快速本地检查点，不是完整测试：pre-commit 只做 staged pairing、staged Oxlint（一次 bounded retry）、whitespace、pi-ai metadata、vendor manifest guard；pre-merge-commit 重跑 pairing；pre-push 跑 typecheck（Typert contracts + Host/Client 双聚合）。hooks 有意不跑 tests/snapshots/docs/build/hygiene；check:all 是显式选择而非代理指令。",
+        "gate 脚本 shell-free 调 pnpm，统一把 repo-relative glob 归一化为 /，平台适配留在需要的 gate；源 ownership gate 用语法感知发现，拒绝空/缩窄语料，并为每个 admitted/excluded 边界写测试。并发 spec 必须自持端口、临时路径和子进程；单独跑才过是 spec 缺陷。",
+        "gate 聚合与 CI 模式库存由 scripts/run-gates.ts 和 Automation 拥有；本域只读局部接线，不能把局部 gate 列表当成完整矩阵。"
+      ],
+      "actors": [
+        "改动作者",
+        "CI",
+        "评审者"
+      ],
+      "steps": [
+        "列出改动面：源码/类型/文档/配置/发布产物/provider。",
+        "选择最小覆盖集并记录命令、版本、环境和结果。",
+        "失败与改动无关时标注并留给下一 PR 窗口，不静默修复。",
+        "完成前补跑该表面的最后一道检查。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "pre-push 检查清单",
+          "CI 穷举矩阵",
+          "覆盖率与 build:check 门禁"
+        ],
+        "trust": "检查选择是人工判断；CI 只证明被运行的检查通过。",
+        "failure": "漏跑表面检查、把全量当默认、重复已通过检查。",
+        "exceptions": [
+          "不可约仓库级改动",
+          "CI 诊断",
+          "用户显式要求可本地重演全部"
+        ]
+      },
+      "applicability": "任何有分层测试的仓库；无快照/e2e 时保留最小覆盖、CI 穷举、不重复已通过检查的原则。",
+      "relationships": [
+        "Testing 域拥有测试分层与快照",
+        "Release 域拥有发布 smoke",
+        "Automation 域拥有 CI 矩阵"
+      ],
+      "migration": {
+        "strategy": "把改动面映射到证据类型，先建立选择表再接 CI。",
+        "implementation": [
+          "建立改动面→检查表",
+          "为每类证据定义命令和记录格式",
+          "在 PR 模板要求证据清单"
+        ],
+        "requiredSupport": [
+          "分层测试套件",
+          "CI 矩阵",
+          "构建/类型检查命令"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-check-selection",
+      "verification": {
+        "positive": [
+          {
+            "check": "证据清单与改动面一一对应",
+            "evidence": "planned"
+          },
+          {
+            "check": "CI 全量与本地最小集边界清楚",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只跑单测却声称完成加载路径改动应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "无证据的重跑应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补跑缺失表面检查后可重新声明完成",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行这些检查。"
+      },
+      "limitations": "没有自动检查能证明选择充分；CI 绿不等于证据匹配表面。"
+    },
+    {
+      "id": "engineering-architecture-extension-map",
+      "title": "架构地图、扩展点与业务拥有自己",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 3,
+          "end": 3,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 138,
+          "end": 138,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 67,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 106,
+          "end": 106,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 118,
+          "end": 128,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 130,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 138,
+          "end": 165,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 124,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 14,
+          "end": 14,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/remote-and-api.md",
+          "start": 83,
+          "end": 115,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 94,
+          "end": 101,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "新行为容易被塞进中心 loop/controller，造成业务分支扩散；扩展点没有地图时每个代理都重新发明位置。",
+      "triggers": [
+        "新增跨包行为",
+        "修改 packages/",
+        "增加工具/适配器/命令/UI/持久状态",
+        "修改 agent loop",
+        "评审架构改动"
+      ],
+      "obligations": [
+        "改 packages/ 前读架构文档；新行为附着到已文档化扩展点。",
+        "插件优先，而不是改 loop；改 loop 必须同步更新架构地图。",
+        "按事件域选择：会话事件持久事实、agent 事件飞行中观察、能力事件接 seam。",
+        "业务能力拥有自己，中心 runtime/controller/manager/gateway 只做通用编排和生命周期。",
+        "API 层只做传输/调用形状/Session 生命周期，业务分支在拥有包内决策。"
+      ],
+      "actors": [
+        "改动作者",
+        "架构 owner",
+        "domain owner",
+        "评审者"
+      ],
+      "steps": [
+        "在架构地图定位能力与扩展点；没有则先设计 seam。",
+        "选择事件域并在拥有包实现/注册。",
+        "中心层只转发和管生命周期，不加业务常量/分支。",
+        "必须改 loop 时同一改动更新地图并说明原因。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "架构文档与 Where new behavior goes 表",
+          "真实组合测试",
+          "评审 checklist"
+        ],
+        "trust": "扩展点选择和业务归属靠评审；没有中心层业务分支的自动检查。",
+        "failure": "中心层出现业务分支或架构地图与实现脱节。",
+        "exceptions": [
+          "纯基础设施（日志/传输/存储）可属于中心层"
+        ]
+      },
+      "applicability": "适用于多层次插件/模块仓库；非 Cordis 时把 ctx.* 映射为目标注册 API，但保留扩展点目录与业务拥有自己的判定。",
+      "relationships": [
+        "engineering-capability-seam 定义 seam 三角色",
+        "engineering-remote-capability 约束 API 层",
+        "AgentFlows 域拥有 loop/session 语义"
+      ],
+      "migration": {
+        "strategy": "先写一页扩展点地图，再迁移行为。",
+        "implementation": [
+          "建立架构地图与 Where new behavior goes 表",
+          "为每类行为指定注册面",
+          "在评审模板加入中心层分支检查"
+        ],
+        "requiredSupport": [
+          "架构 owner",
+          "可运行的组合测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-architecture-extension-map",
+      "verification": {
+        "positive": [
+          {
+            "check": "新行为在扩展点表中有对应行",
+            "evidence": "planned"
+          },
+          {
+            "check": "中心层 diff 无业务常量/分支",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 controller 内硬编码业务条目应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "改 loop 不更新地图应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把业务移回拥有包后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行组合测试或评审。"
+      },
+      "limitations": "架构一致性主要靠评审；没有自动检查中心层业务分支。"
+    },
+    {
+      "id": "engineering-capability-seam",
+      "title": "能力缝三角色与按演化拆包",
+      "sources": [
+        {
+          "path": "docs/glossary.md",
+          "start": 7,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 130,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-06-13-capability-seams.md",
+          "start": 13,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 10,
+          "end": 10,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 94,
+          "end": 101,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把 interface 当 seam、让 Consumer 依赖 Provider、或预防性拆包，都会制造错误抽象和跨包耦合。",
+      "triggers": [
+        "设计可替换能力",
+        "决定拆包/合包",
+        "新增 Provider",
+        "评审 service 契约"
+      ],
+      "obligations": [
+        "seam 是 Service Definition + 一个或多个 Provider + 一个或多个 Consumer 的三角色。",
+        "Definition 拥有 ctx.<key> 与词汇类型，是运行时 Service（abstract class 或 registry），不是纯 TypeScript interface。",
+        "角色通常分开包当它们独立演化；同一关注点可合并，只有一个可设想 provider 和一个 consumer 时保持单包。",
+        "Definition 为所有当前 Consumer 设计；provider 特有行为留在 provider。",
+        "扩展插件依赖 Definition，不依赖具体 Provider；公共方法只有一个内部调用者是反向气味。"
+      ],
+      "actors": [
+        "Definition owner",
+        "Provider owner",
+        "Consumer owner",
+        "domain owner"
+      ],
+      "steps": [
+        "写三角色表和 ctx key/类型/错误。",
+        "按演化速率决定拆包或合并。",
+        "Definition 只暴露契约词汇，Provider/Consumer 不互相 import 实现。",
+        "为替换路径和 disposed/HMR 写真实组合测试。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "架构评审",
+          "真实组合测试",
+          "包依赖图检查"
+        ],
+        "trust": "三角色判定人工；替换测试可证明。",
+        "failure": "Definition 是纯 interface、Consumer import Provider、预防性拆包。",
+        "exceptions": [
+          "一个包拥有定义与具体实现的 seam（如 dsh-user-approval）"
+        ]
+      },
+      "applicability": "适用于多 provider 能力设计；没有多实现需求时只记录 seam 规则，不强行拆包。",
+      "relationships": [
+        "engineering-architecture-extension-map 选择扩展点",
+        "engineering-registrations-effects 管理 provider 生命周期",
+        "engineering-package-shape-exports 约束包形态"
+      ],
+      "migration": {
+        "strategy": "先用三角色表判定，再决定包边界。",
+        "implementation": [
+          "建 Definition 类/registry",
+          "注册 provider",
+          "consumer 只注入 Definition",
+          "真实组合测试"
+        ],
+        "requiredSupport": [
+          "依赖注入容器",
+          "包依赖图检查"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-capability-seam",
+      "verification": {
+        "positive": [
+          {
+            "check": "替换 Provider 不改 Consumer 的模型可见契约",
+            "evidence": "planned"
+          },
+          {
+            "check": "包依赖图只指向 Definition",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "Consumer 直接 import Provider 实现应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "把纯 interface 当 seam 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把 provider 类型收回到 Definition 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行组合测试。"
+      },
+      "limitations": "seam 质量是设计判断；一个 interface 不等于 seam；测试通过不证明边界合理。"
+    },
+    {
+      "id": "engineering-registrations-effects",
+      "title": "注册即效果与可逆生命周期",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 133,
+          "end": 133,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-tutorial/02-lifecycle-and-effects.md",
+          "start": 1,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 41,
+          "end": 45,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 12,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 39,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 59,
+          "end": 83,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 104,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 19,
+          "end": 19,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 7,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/cordis-styling-nitpicking/SKILL.md",
+          "start": 31,
+          "end": 35,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "注册工具/监听/进程后没有 disposer，卸载或 HMR 后仍活动，形成幽灵行为和资源泄漏。",
+      "triggers": [
+        "注册工具/prompt/provider/adapter/listener/slot/命令",
+        "实现 unload/HMR/teardown",
+        "新增 registry"
+      ],
+      "obligations": [
+        "每个贡献通过 ctx.effect()/ctx.on()；registry register() 返回 disposer 并附着调用插件。",
+        "Cordis 管理的注册自动回卷；timer/connection/watcher 必须包在 ctx.effect 并返回 disposer。",
+        "每个注册有 disposer；顺序敏感的 teardown 放进同一个 effect。",
+        "每个 registry 有 HMR 安全测试：dispose 贡献 fiber 并观察移除。",
+        "不在模块级制造单例/缓存承载注册。"
+      ],
+      "actors": [
+        "插件作者",
+        "registry owner",
+        "评审者"
+      ],
+      "steps": [
+        "列出 apply 中每个注册与资源获取点。",
+        "用 ctx.effect/ctx.on/registry disposer 覆盖。",
+        "顺序敏感时组合 effect 并 yield 精确 disposer。",
+        "写 HMR/卸载测试证明注册消失、资源关闭。"
+      ],
+      "enforcement": {
+        "mode": "loader-runtime",
+        "implementation": [
+          "Cordis effect 回卷",
+          "registry disposer",
+          "HMR safety 测试"
+        ],
+        "trust": "有 HMR 测试时较强；没有测试只有评审。",
+        "failure": "卸载后 listener/timer/process/file 残留。",
+        "exceptions": [
+          "有意保留的 durable writes/remote mutations 不回滚，但临时资源和 listener 仍需 owner"
+        ]
+      },
+      "applicability": "任何有插件卸载/HMR 的运行时；非 Cordis 用 dispose/AbortSignal/Closeable 映射。",
+      "relationships": [
+        "engineering-ownership-teardown 处理清理顺序与 quiescence",
+        "engineering-capability-seam 注册 provider"
+      ],
+      "migration": {
+        "strategy": "把每个注册改成返回 disposer，并补 HMR 测试。",
+        "implementation": [
+          "统一 effect/注册 API",
+          "为 registry 加 HMR fixture",
+          "teardown 顺序测试"
+        ],
+        "requiredSupport": [
+          "可卸载的插件容器",
+          "HMR 测试设施"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-registrations-effects",
+      "verification": {
+        "positive": [
+          {
+            "check": "卸载后注册消失且资源关闭",
+            "evidence": "planned"
+          },
+          {
+            "check": "HMR 后重载不重复注册",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "dispose 后 listener 仍触发应使测试变红",
+            "evidence": "planned"
+          },
+          {
+            "check": "模块级 handle 应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 disposer 后 HMR 测试恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 HMR 测试。"
+      },
+      "limitations": "dispose 调用次数不等于 quiescence；HMR 测试可能漏掉真实拓扑。"
+    },
+    {
+      "id": "engineering-explicit-state-contracts",
+      "title": "显式状态、正交结果与公共契约",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 7,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 13,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 19,
+          "end": 24,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 25,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 48,
+          "end": 70,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 71,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 17,
+          "end": 17,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把超时/信号/退出码压进一个分支、用 undefined 表示多种无值、或依赖微任务顺序，都会让调用者误判状态。",
+      "triggers": [
+        "设计异步结果",
+        "可选参数/字段",
+        "状态表示",
+        "错误/超时/退出组合",
+        "公共 API 返回值"
+      ],
+      "obligations": [
+        "正交结果独立报告：timedOut、signal、exitCode 各自暴露，不互相嵌套。",
+        "公共契约两侧归一化；文档在类型定义处写清归一化契约。",
+        "异步状态不是同步状态；调用者拥有区间时显式定义区间，不把 running 当逐消息完成。",
+        "时间不承载正确性；正确性来自显式调用点和状态。",
+        "可选输入同时说明存在与缺失行为及各自副作用。",
+        "一个值只表达一个事实；未知/空/缺失用三种表示。",
+        "在提交点发布状态；派生状态从单一权威源计算。"
+      ],
+      "actors": [
+        "API owner",
+        "实现者",
+        "评审者"
+      ],
+      "steps": [
+        "画独立事实表（成功/失败/取消/超时/信号/未知）。",
+        "在边界归一化并写类型/JSDoc。",
+        "显式命名调用区间，不用共享 running 标志。",
+        "用状态机/显式调用点替代 timing。",
+        "为可选/未知/空写区分测试。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "防御性模式文档",
+          "公共契约测试",
+          "switch 穷尽 lint（部分）"
+        ],
+        "trust": "主要靠评审；契约测试可验证具体 API。",
+        "failure": "嵌套条件才能读出状态、undefined 表示多义、依赖微任务顺序。",
+        "exceptions": [
+          "测试超时预算用于等待失败不是 timing 正确性",
+          "纯用户可见节奏延迟不属该规则"
+        ]
+      },
+      "applicability": "任何有异步 API/可选字段的语言；没有异步 API 时只应用可选参数与一值一事实。",
+      "relationships": [
+        "engineering-error-handling 处理失败状态",
+        "engineering-typed-boundaries 处理输入验证",
+        "engineering-ownership-teardown 处理生命周期边界"
+      ],
+      "migration": {
+        "strategy": "先归一化公共结果，再删除 timing 补偿。",
+        "implementation": [
+          "定义结果判别联合",
+          "在边界归一化",
+          "显式调用区间",
+          "补契约测试"
+        ],
+        "requiredSupport": [
+          "类型系统/结果类型",
+          "契约测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-explicit-state-contracts",
+      "verification": {
+        "positive": [
+          {
+            "check": "调用者仅凭公共 API 能命名失败来源",
+            "evidence": "planned"
+          },
+          {
+            "check": "未知/空/缺失可区分",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用一个 undefined 表示三种无值应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "用 setTimeout 决定正确性应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改成判别联合与显式调用点后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行契约测试。"
+      },
+      "limitations": "评审为主；公共 API 测试通过不证明所有调用者正确使用。"
+    },
+    {
+      "id": "engineering-ownership-teardown",
+      "title": "共享状态所有权、单一生命周期控制与静默拆卸",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 87,
+          "end": 103,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 104,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 192,
+          "end": 197,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 198,
+          "end": 211,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 9,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 13,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/cordis-styling-nitpicking/SKILL.md",
+          "start": 25,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md",
+          "start": 1,
+          "end": 51,
+          "kind": "history"
+        }
+      ],
+      "problem": "模块级单例、全局 current、多个生命周期 owner 和并发拆卸会让共享状态活过所有者，或让清理依赖早于消费者完成。",
+      "triggers": [
+        "引入共享缓存/单例",
+        "全局 current/active 选择",
+        "实现取消/关闭/进程退出",
+        "多阶段共享 readiness/disposal",
+        "provider 与 consumer 清理顺序"
+      ],
+      "obligations": [
+        "共享状态挂在命名 service/instance 上；模块级 cache/singleton/globalThis 是隐藏 owner。",
+        "拒绝新的全局 active/current 单例；每 service 唯一概念用 service/instance 字段加 inject。",
+        "一个异步操作一个生命周期控制器/事务；需要独立 owner/结算点才拆。",
+        "Dispose 必须达到 quiescence：kill/abort 后 await 子进程退出。",
+        "dispatcher 隔离每个 listener 异常，不让 dispatch reject 或饿死后续。",
+        "清理依赖必须活到消费者完成；Cordis sibling disposers 并发，需显式所有权和 awaited 顺序。",
+        "Provider 发布顺序：先资源/listener，最后 provide service；admission gate 最后 yield 清理。",
+        "AgentHandle disposer 是消费者能力：ctx.agents.create/resume 返回 { agent, dispose(): Promise<void> }；调用方 fiber 与注册 provider 是结构共有人，所有路径到同一 memoized teardown（停 loop → await 退出/idle flush → detach agent/session → unwind scope）；public id 在精确注册项 detach 后可复用。",
+        "Agent.cancel(cause?) 是唯一公共停止原语：清空 queued+steering FIFO、abort active turn、保留 cause-less pre-run marker；有效调用先发 agent/cancel-requested，idle cancel 不发；whenIdle() 达到 post-cancel quiescence。",
+        "后台任务 owner token 放在能力边界：ShellExecRequest.owner?: string 在 ShellExecSpec 中为 required-but-nullable；executor 用 ownerOf(id) 暴露，access policy 留在 Consumer tool-bash；session/agent id 在 live agent 中唯一，SessionStore.enter() 拒绝重复 live id；HMR reload 不会让旧任务被别的 session 读取或杀死。",
+        "上述 lifecycle Note 已归档，不是当前权威；迁移保留 disposer/结构共有人/LIFO/quiescence 判定，当前类型与测试仍归对应子系统。"
+      ],
+      "actors": [
+        "状态 owner",
+        "生命周期 owner",
+        "评审者"
+      ],
+      "steps": [
+        "给每个共享值命名 owner，删除模块级 handle。",
+        "画 readiness/cancel/dispose/reservation/sentinel 状态机。",
+        "写 cleanup 依赖图并用组合 effect/显式 await 保证顺序。",
+        "在失败路径也测试 abort/settlement/resource release。",
+        "用受控 promise 回归“消费者最后使用依赖时开始 disposal”。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "P0 cordis styling 规则",
+          "HMR/受控 promise 测试",
+          "disposer 约定"
+        ],
+        "trust": "有回归测试时较强；静态搜索只能发现候选。",
+        "failure": "dispose 后仍有活动、清理依赖被提前关闭、回调异常中断 dispatch。",
+        "exceptions": [
+          "不可变标量/纯冻结表/无状态函数不是单例",
+          "排除缺失 inject、不可达晚调用、有意抑制可选通知"
+        ]
+      },
+      "applicability": "任何有异步生命周期和共享状态的运行时；非 Cordis 用容器/作用域 + Closeable + 显式 await。",
+      "relationships": [
+        "engineering-registrations-effects 提供 disposer 基础",
+        "engineering-error-handling 处理 dispatcher 异常",
+        "Testing 域拥有 HMR/并发测试"
+      ],
+      "migration": {
+        "strategy": "先命名 owner，再收敛生命周期控制器，最后补清理顺序回归。",
+        "implementation": [
+          "删除模块级单例",
+          "组合 effect/显式 await",
+          "受控 promise 测试",
+          "quiescence 断言"
+        ],
+        "requiredSupport": [
+          "可观察的生命周期容器",
+          "HMR/并发测试设施"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-ownership-teardown",
+      "verification": {
+        "positive": [
+          {
+            "check": "dispose 后达到静默，无 listener/timer/process 残留",
+            "evidence": "planned"
+          },
+          {
+            "check": "消费者结算前清理依赖仍可用",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "模块级 current 单例应被评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "provider disposal 早于消费者完成应使回归变红",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改成显式 owner/await 顺序后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "源仓自己说明 Cordis workaround 不是完整 enclosing-owner 修复；作者未运行回归。"
+      },
+      "limitations": "HMR 测试和受控 promise 是证据，不覆盖所有并发拓扑；静态搜索不能证明安全。"
+    },
+    {
+      "id": "engineering-error-handling",
+      "title": "错误处理：类型化失败、所有权与可见报告",
+      "sources": [
+        {
+          "path": ".agents/skills/dsh-error-handling/SKILL.md",
+          "start": 10,
+          "end": 26,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 149,
+          "end": 150,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 198,
+          "end": 211,
+          "kind": "instruction"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 220,
+          "end": 225,
+          "kind": "config"
+        }
+      ],
+      "problem": "捕获异常不等于恢复；空 catch、message 路由、只记日志或把缺陷吞成成功都会让状态和用户报告失真。",
+      "triggers": [
+        "设计/评审失败",
+        "后台任务",
+        "用户可见错误",
+        "空 catch",
+        "重试/恢复"
+      ],
+      "obligations": [
+        "预期失败声明类型、稳定判别值、处理相关细节；复用包内约定，保留 cause，机器身份与展示文本分离，绝不解析 message 路由。",
+        "为每个失败定义处理/报告 owner、containment 和保证（不变量、副作用状态、清理责任）。",
+        "捕获只限制传播，不修复 mutation；只有受影响状态 owner 能建立安全继续，否则停止依赖工作/丢弃无效状态/升级。",
+        "日志不是恢复；重试需安全重复、取消和 owner；持续监督需生命周期 owner 和可观察降级。",
+        "最终报告含可读摘要、受影响操作、安全下一步；有 locale 时本地化；不含敏感内部细节。",
+        "未知/不可信状态通过 UI 或默认开启的可访问日志可见；报告失败需独立 fallback。",
+        "空 catch 必须命名错误和原因，try 只含一条语句；dispatcher 隔离 listener 异常。"
+      ],
+      "actors": [
+        "API owner",
+        "处理 owner",
+        "报告 owner",
+        "评审者"
+      ],
+      "steps": [
+        "定义错误类型/判别值和可重试/取消/幂等性。",
+        "标出处理/报告 owner 与失败后状态。",
+        "选择 catch/recover/stop；不能安全继续就停止依赖工作。",
+        "写用户/日志报告并覆盖未知性。",
+        "测试结果状态与可见报告，不只断言捕获。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "dsh-error-handling 技能",
+          "oxlint no-empty-catch/only-throw-error",
+          "评审"
+        ],
+        "trust": "空 catch/throw 非 Error 可由 lint 拒绝；恢复正确性靠评审和测试。",
+        "failure": "message 路由、日志即恢复、失败后状态不可命名、用户看不到可行动报告。",
+        "exceptions": [
+          "assertNever 等意外缺陷可用普通 Error",
+          "非 Error throw 只在测试允许"
+        ]
+      },
+      "applicability": "任何有失败路径的代码；库至少提供结构化错误和调用者可见失败语义。",
+      "relationships": [
+        "engineering-explicit-state-contracts 定义结果状态",
+        "engineering-ownership-teardown 定义清理责任",
+        "Testing 域拥有失败注入测试"
+      ],
+      "migration": {
+        "strategy": "先建错误分类与 owner 表，再替换空 catch/message 路由。",
+        "implementation": [
+          "错误类型/判别值",
+          "处理与报告 owner",
+          "containment 策略",
+          "可见报告测试"
+        ],
+        "requiredSupport": [
+          "日志/UI 通道",
+          "locale 机制（可选）"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-error-handling",
+      "verification": {
+        "positive": [
+          {
+            "check": "失败后状态可命名且用户看到可行动报告",
+            "evidence": "planned"
+          },
+          {
+            "check": "dispatcher 中一个 listener 异常不阻断后续",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "空 catch 无理由应被 lint/评审拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "解析 error.message 路由应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 owner/containment 后失败注入测试恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 lint 或失败注入测试。"
+      },
+      "limitations": "错误类型存在不等于处理正确；报告可见性需要 UI/日志测试。"
+    },
+    {
+      "id": "engineering-config-tunables",
+      "title": "配置化而非硬编码可调项",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 141,
+          "end": 143,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 7,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 125,
+          "end": 130,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 122,
+          "end": 132,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "部署相关常量、DEFAULT_* 和测试 hook 被硬编码；默认值隐藏在 run() 里；误配置静默跳过。",
+      "triggers": [
+        "新增部署可变常量",
+        "DEFAULT_*/测试 hook",
+        "超时/并发/路径/端点选择",
+        "新增配置字段"
+      ],
+      "obligations": [
+        "部署可变选择必须是经校验的 Config 字段，可从 cordis.yml 修改；DEFAULT_* 或测试 hook 不是配置化。",
+        "显式优于隐式：defaulting 是拥有实现的显式 resolve(request): Spec，不是 run() 里的 ?? default。",
+        "误配置响亮失败：自包含时 load 失败，否则最早可解析点失败，绝不静默跳过缺失 referent。",
+        "公共选择需要当前 Consumer 证据或先例，否则要求显式值或推迟。",
+        "Function plugin 的 Config 同时以 interface 和 runtime schema 值导出。",
+        "凭据不走通用 Config schema：真实 adapter/demos 从环境或 repo-root 的 gitignored .env 读取 DEEPSEEK_API_KEY 与可选 DEEPSEEK_BASE_URL（省略用公共 API）；绝不提交真实凭据；没有 key 时真实 API e2e 自跳过，key policy 由 Testing 拥有。"
+      ],
+      "actors": [
+        "插件作者",
+        "部署者",
+        "评审者"
+      ],
+      "steps": [
+        "列部署可变项并建 schema/默认/校验错误。",
+        "把默认解析集中到 resolve(request): Spec。",
+        "协议/安全常量注释为何不可配置。",
+        "写缺失/非法/未知 referent 失败测试。",
+        "更新配置目录/文档。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "Config schema/配置目录（若有）",
+          "fail-loud 测试",
+          "评审"
+        ],
+        "trust": "schema 校验可自动拒绝非法值；默认值是否有证据靠评审。",
+        "failure": "DEFAULT_* 冒充配置、?? 吞缺失、误配置静默跳过。",
+        "exceptions": [
+          "协议常量、外部规范、安全不变量不可配置",
+          "测试 hook 不是配置",
+          "凭据是环境/秘密输入，不是通用 Config 默认可调项；无 key 的真实 API e2e 自跳过，不能把跳过当作通过"
+        ]
+      },
+      "applicability": "有部署差异的插件/服务；无配置文件时保留 resolve 步骤和 fail-loud。",
+      "relationships": [
+        "engineering-loader-composition-validation 校验组合中的配置",
+        "engineering-plugin-export-forms 约束 Config 形态"
+      ],
+      "migration": {
+        "strategy": "把部署选择移到 schema，再把默认解析集中。",
+        "implementation": [
+          "Config schema + interface",
+          "resolve request→spec",
+          "fail-loud 校验",
+          "配置文档"
+        ],
+        "requiredSupport": [
+          "schema/validator 库",
+          "配置加载器"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-config-tunables",
+      "verification": {
+        "positive": [
+          {
+            "check": "部署可变项可仅通过配置改变",
+            "evidence": "planned"
+          },
+          {
+            "check": "非法/缺失配置在最早点失败",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "run() 中隐藏 ?? default 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "DEFAULT_* 被当配置化应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 resolve 与校验后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行配置测试。"
+      },
+      "limitations": "配置字段存在不证明默认值有证据；没有配置目录门禁时只能评审。"
+    },
+    {
+      "id": "engineering-loader-composition-validation",
+      "title": "Loader/组合元数据与预设平面校验",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 127,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 1,
+          "end": 12,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 106,
+          "end": 136,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 139,
+          "end": 180,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 240,
+          "end": 412,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 413,
+          "end": 448,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 517,
+          "end": 578,
+          "kind": "implementation"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 37,
+          "end": 39,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 13,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 12,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 39,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 59,
+          "end": 83,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/hmr/README.md",
+          "start": 104,
+          "end": 123,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-default-product-isolation.ts",
+          "start": 140,
+          "end": 220,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-cordis-config.spec.ts",
+          "start": 49,
+          "end": 155,
+          "kind": "test"
+        },
+        {
+          "path": "packages/bundle/web-app/presets/standard.patch.yml",
+          "start": 21,
+          "end": 26,
+          "kind": "config"
+        }
+      ],
+      "problem": "!!js 放在不被解释的元数据会变 truthy 数据；本地包从 lib 解析会在 clean checkout 失败；preset 行跨平面重复会重复注册或遮蔽。",
+      "triggers": [
+        "编辑 cordis.yml/cordis.patch.yml",
+        "新增 profile/bundle/preset",
+        "新增具名插件行",
+        "新增测试 Loader fixture",
+        "修改 !!js 表达式"
+      ],
+      "obligations": [
+        "只允许 !!js，绝不用 !js；只在 entry config（声明 inject 激活后）和 disabled（每次 mount）插值，其他元数据保持字面量；条件组合还用overlay，不向不求值字段塞表达式。",
+        "disabled 自身表达式 parse-only；嵌套表达式不求值。",
+        "具名插件从拥有 manifest 解析；fixture bare import 也要声明。",
+        "指向本地 workspace 包的 specifier 必须经 paths 解析到 .ts/.tsx，不能落到 lib/.d.ts。",
+        "每个 preset 行只属于 host 或 per-session 一个平面。",
+        "client 包的 ./client 导出必须同时声明 dsh.client。",
+        "HMR 是组合配置而非代码分支：有 profileContext 的 launcher 可启用，headless/SDK/ACP 在 YAML 禁用，profile patch 可覆盖；要监听源码需配置 root，root: [] 只保留显式 config watch，awaitWriteFinish 默认 2 秒；省略不等于热重载。",
+        "HMR 替换串行化并受 Loader internals 限制：失败替换不恢复旧版本；兼容性检查只在 startup/profile recomposition/preset mounting 运行，profile 外 row 重启不检查；package.json 变更、动态 import、浏览器 Client graph、packed worker 代码替换各有明确边界；每个 registry contribution 仍需 dispose fiber 的 HMR-safety 测试。",
+        "HMR 的一条队列串行化模块替换、Include 刷新和 profile 配置变更；包安装/移除在队列外；runExclusive() 串行化配置变更与 Loader 更新、拒绝嵌套事务，且不获取 package writer lock；manifest 通知只在有序 dsh.profile.bundles 列表变化时重载；reconcileProfile() 由 HMR 与 Plugin Manager 共享，调用方必须持有 runExclusive()。",
+        "app-boot 拥有 profile 解析与 patch 优先级；HMR 只读 launcher 的 data-only profileContext，启动时注册 profile manifest 与两个 user patch watch，等应用 ready 后处理变更；disposal 关闭 watcher、取消等待启动的 reload；配置 watcher 在活动事务外启动。",
+        "HMR README 对失败替换有一处阶段化张力：实现段说恢复旧模块/插件实现，Known Limitations 说 import/start 失败不恢复旧版本；迁移时不要把自动回滚当保证，用失败替换实验记录旧代码是否仍运行。",
+        "bundle 发现按 manifest 的 dsh.bundle.patch 声明，可在 packages/ 下任意深度，不能按目录名猜；bundle 可以 mount 自己，但其 patch 里出现的其他插件必须在其 dependencies 中声明。",
+        "包拥有的 Loader 测试配置必须完整：packages/*/tests/fixtures/**/cordis.yml 中每个具名插件都要在 dependencies 或 devDependencies，可执行 fixture 的 bare import 也要声明，无关 fixture 忽略；扫描不到任何包拥有配置时必须大声失败，不能空通过。",
+        "平台条件工具面必须在组合层用 `disabled: !!js <platform expression>` 互斥：标准 preset 在 win32 禁用 tool-bash、在非 win32 禁用 tool-pwsh；不要同时暴露两套 shell，也不要用插件运行时自检代替组合层 disabled。"
+      ],
+      "actors": [
+        "组合 owner",
+        "preset owner",
+        "评审者"
+      ],
+      "steps": [
+        "检查 !!js 只在 config/disabled。",
+        "解析具名插件到正确 manifest 并补 paths。",
+        "按 preset 行做平面归属检查。",
+        "检查 client half 声明。",
+        "运行组合门禁并定位 manifest/行/字段。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-cordis-config 覆盖元数据、解析、fixture、源平面、preset 平面、client half"
+        ],
+        "trust": "静态组合门禁强；不执行运行时组合。",
+        "failure": "表达式错位、manifest 缺失、lib 解析、跨平面重复、client half 缺失。",
+        "exceptions": [
+          "disabled 自身表达式是唯一允许插值的元数据",
+          "普通插件 config 数据不被当作新 entry list"
+        ]
+      },
+      "applicability": "Cordis/配置文件驱动组合的仓库；其他框架映射为 schema + 表达式位置 + 依赖解析 + 平面归属。",
+      "relationships": [
+        "engineering-config-tunables 提供 Config schema",
+        "engineering-ownership-teardown 负责 HMR 注册撤销与 disposer 顺序",
+        "engineering-experimental-isolation 复用组合解析",
+        "Release 域拥有发布组合"
+      ],
+      "migration": {
+        "strategy": "先定义组合 schema 和平面，再接静态校验。",
+        "implementation": [
+          "manifest 解析表",
+          "paths 源映射",
+          "preset 平面检查",
+          "client half 检查"
+        ],
+        "requiredSupport": [
+          "组合文件格式",
+          "依赖解析器",
+          "CI 门禁"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-loader-composition-validation",
+      "verification": {
+        "positive": [
+          {
+            "check": "所有组合文件通过静态门禁",
+            "evidence": "planned"
+          },
+          {
+            "check": "clean checkout 源解析成功",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "元数据中放 !!js 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "跨平面重复 preset 行应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "移动表达式/补 paths/删重复行后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 verify-cordis-config。"
+      },
+      "limitations": "不执行组合后的运行时行为；普通 config 数据可能被误认为 entry list 的边界需理解解析器。\n该互斥只由 preset 配置证明；本读取未运行组合，不能证明每种平台实际只挂载一个工具。"
+    },
+    {
+      "id": "engineering-application-launch",
+      "title": "唯一应用启动通道",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 13,
+          "end": 13,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 41,
+          "end": 47,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-application-entrypoints.ts",
+          "start": 1,
+          "end": 12,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-application-entrypoints.ts",
+          "start": 21,
+          "end": 89,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-application-entrypoints.ts",
+          "start": 102,
+          "end": 174,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-application-entrypoints.ts",
+          "start": 175,
+          "end": 203,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "新增 package bin、demo 或公共 SDK argv 入口会绕过 profile/patch 组合，产生不受支持的 Node 应用路径。",
+      "triggers": [
+        "新增应用/CLI/demo",
+        "修改 package bin",
+        "新增 root script",
+        "公共 SDK argv 入口",
+        "可执行 fixture"
+      ],
+      "obligations": [
+        "只有 dsh profile 启动受支持的 Node 应用；shipped profiles 为 web/headless/sdk/sdk-minimal/acp。",
+        "自定义组合仍是 profile + 有序 patch，不是另一个 executable 或 inline application tree。",
+        "package bin 只允许 apps/cli 的 dsh 和 WebWorker packer；shebang 源必须显式分类。",
+        "root demo 必须有分类；start:web 直接引用 apps/cli/src/bin.ts，dev:web wrapper 也不得直接启动 package entry。",
+        "verify-application-entrypoints 还校验：package bin 必须精确匹配 allowlist（apps/cli dsh / WebWorker packer），不得多出或改写；每个 shebang 源必须在 executable allowlist；所有 demo: script 必须有显式 dsh/in-process 分类；dsh-direct 必须引用 apps/cli/src/bin.ts 且不得引用 package entry；wrapper 必须存在且同样引用 dsh CLI；applicationEntrypointViolations 对违规路径逐条报错。"
+      ],
+      "actors": [
+        "应用 owner",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "新应用先建 profile/bundle，不建新 executable。",
+        "必须有可执行文件时加入显式分类并说明 build/test/packaging。",
+        "root launcher 引用 apps/cli/src/bin.ts。",
+        "运行 verify-application-entrypoints 并补负向测试。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-application-entrypoints 检查 bin/shebang/root scripts"
+        ],
+        "trust": "自动门禁较强；新增分类需显式 allowlist。",
+        "failure": "绕过 profile 的 Node 应用路径、未分类 bin/shebang/root script。",
+        "exceptions": [
+          "build-only/test-only/packaging 可执行文件有显式 allowlist 和理由"
+        ]
+      },
+      "applicability": "有统一应用启动器的仓库；无 profile 时保留单一受支持启动器 + 其他可执行文件显式分类。",
+      "relationships": [
+        "engineering-loader-composition-validation 校验 profile 内容",
+        "Release 域拥有发布启动"
+      ],
+      "migration": {
+        "strategy": "先建单一 launcher，再迁走其他入口。",
+        "implementation": [
+          "profile launcher",
+          "可执行分类表",
+          "root script 检查",
+          "负向测试"
+        ],
+        "requiredSupport": [
+          "统一应用入口",
+          "CI 门禁"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-application-launch",
+      "verification": {
+        "positive": [
+          {
+            "check": "所有 bin/shebang/root scripts 已分类且无绕过",
+            "evidence": "planned"
+          },
+          {
+            "check": "dsh --dump-config 可打印实际插件树",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "新增绕过 profile 的 demo 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "未分类 shebang 源应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除/改接 profile 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行入口门禁。"
+      },
+      "limitations": "门禁不证明 profile 内部组合正确；分类表可能被误用为橡皮图章。"
+    },
+    {
+      "id": "engineering-plugin-export-forms",
+      "title": "插件导出形态：四件套 vs 服务默认导出",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 7,
+          "end": 43,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 5,
+          "end": 5,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 34,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 27,
+          "end": 55,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 89,
+          "end": 99,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-export-jsdoc.ts",
+          "start": 16,
+          "end": 21,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-export-jsdoc.ts",
+          "start": 278,
+          "end": 305,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "function plugin 的 default export 会让 Loader 的 unwrapExports 丢掉 inject/name/Config；测试手工 mount 绕过 Loader，绿测试掩盖崩溃。",
+      "triggers": [
+        "新增/修改插件 src/index.ts",
+        "把 helper 暴露给测试",
+        "为 /client 加导出",
+        "使用 default export"
+      ],
+      "obligations": [
+        "Function plugin 命名导出 name/inject/Config/apply；name/inject/apply 小写，Config 大写且同时是 interface 和 schema 值；不得再有 default export。",
+        "Service plugin 默认导出 service class，由 Loader 加载；不得与四件套混用。",
+        "Host entry 只额外导出其他包需要 extend/throw 的 Service Definition class 和 error type，绝不导出 test-convenience value。",
+        "/client entry 只导出加载必需值和组件 type-only 消费的 store factory 返回类型；新增值导出需用户签字。",
+        "测试直接相对导入 src，不为测试扩大公共 API；fixture 不得相对进入另一个包 src。",
+        "用真实 Loader 组合测试，断言 inject 生效；为无 inject 插件加 default 不存在/unwrapExports round-trip 回归。"
+      ],
+      "actors": [
+        "插件作者",
+        "评审者",
+        "测试作者"
+      ],
+      "steps": [
+        "选定形态；function plugin 只写四件套。",
+        "检查入口无第五个值导出、无 default + 四件套混用。",
+        "/client 只留加载必需值和类型；测试改相对导入。",
+        "加真实 Loader 测试并证明 default 回归会变红。"
+      ],
+      "enforcement": {
+        "mode": "loader-runtime",
+        "implementation": [
+          "Cordis unwrapExports",
+          "真实 Loader 组合测试",
+          "verify-export-jsdoc 仅覆盖文档"
+        ],
+        "trust": "真实 Loader 测试是必要证据；仅 typecheck/单测不覆盖。",
+        "failure": "default 丢掉 inject/name/Config；测试绕过 Loader；/client 泄漏实现。",
+        "exceptions": [
+          "Host entry 的 Service Definition class/error type 是预期导出",
+          "内部模块/helper/hook 仍可导出值"
+        ]
+      },
+      "applicability": "任何有插件加载器/模块解包规则的仓库；映射为“插件模块形态 + 加载器解包”。",
+      "relationships": [
+        "engineering-optional-service-access 处理注入失败",
+        "Testing 域拥有真实 Loader 测试",
+        "engineering-jsdoc-prose 的导出文档"
+      ],
+      "migration": {
+        "strategy": "先定义插件形态契约，再补真实 Loader 测试。",
+        "implementation": [
+          "四件套/默认导出规则",
+          "入口导出审计",
+          "Loader 组合测试",
+          "default 回归"
+        ],
+        "requiredSupport": [
+          "插件加载器",
+          "真实组合测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-plugin-export-forms",
+      "verification": {
+        "positive": [
+          {
+            "check": "通过真实 Loader 加载后 inject 生效",
+            "evidence": "planned"
+          },
+          {
+            "check": "function plugin 无 default export",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "临时加回 default export 应使测试变红",
+            "evidence": "planned"
+          },
+          {
+            "check": "为测试扩大公共 API 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "移除 default 后 Loader 测试恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 Loader 测试。"
+      },
+      "limitations": "verify-export-jsdoc 只覆盖文档；真实 Loader 测试依赖组合设施。"
+    },
+    {
+      "id": "engineering-optional-service-access",
+      "title": "可选服务用 ctx.get(name)",
+      "sources": [
+        {
+          "path": "packages/AGENTS.md",
+          "start": 6,
+          "end": 6,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 56,
+          "end": 88,
+          "kind": "history"
+        },
+        {
+          "path": "docs/postmortem/0001-acp-default-export-drops-inject.md",
+          "start": 89,
+          "end": 99,
+          "kind": "history"
+        },
+        {
+          "path": "docs/cordis-tutorial/03-services.md",
+          "start": 56,
+          "end": 65,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "未声明服务用属性代理读取，会因 shadow 的祖先 walk 在 sibling 拓扑下抛错；可选服务被误当硬依赖。",
+      "triggers": [
+        "读取不在 inject 的服务",
+        "实现可降级/可选后端",
+        "跨 fiber 调用 service",
+        "怀疑 shadow/traceable proxy"
+      ],
+      "obligations": [
+        "可选服务用 ctx.get(name)；ctx.<name> 只保留给已声明 injection。",
+        "属性代理对拓扑敏感；ctx.get 用全局 isolate-keyed store，拓扑无关。",
+        "inject 是硬要求；可活在缺少能力时跳过 inject 并在使用点 probe，处理 undefined。",
+        "在真实 Loader/fiber 拓扑下测试，不只顶层手工 mount。"
+      ],
+      "actors": [
+        "插件作者",
+        "评审者"
+      ],
+      "steps": [
+        "列出读取的服务；硬依赖进 inject，可选探测用 ctx.get。",
+        "写缺失时的行为与报告。",
+        "用真实拓扑测试。",
+        "验证 ctx.get 的 active/disposal 语义。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "真实 Loader/拓扑测试",
+          "评审"
+        ],
+        "trust": "没有自动门禁；事故和教程是强证据。",
+        "failure": "属性代理抛 without inject；可选服务缺失时崩溃。",
+        "exceptions": [
+          "已声明 injection 继续用 ctx.<name>"
+        ]
+      },
+      "applicability": "Cordis 类 context proxy 框架；其他 DI 容器映射为声明依赖 vs 容器探测。",
+      "relationships": [
+        "engineering-plugin-export-forms 的 inject 形态",
+        "engineering-ownership-teardown 的 shadow/disposal 语义"
+      ],
+      "migration": {
+        "strategy": "区分硬依赖与可选探测，再在真实拓扑验证。",
+        "implementation": [
+          "inject 清单",
+          "ctx.get 探测",
+          "缺失行为",
+          "拓扑测试"
+        ],
+        "requiredSupport": [
+          "DI 容器",
+          "真实组合测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-optional-service-access",
+      "verification": {
+        "positive": [
+          {
+            "check": "可选服务缺失时有显式降级/失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "真实拓扑下读取成功",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "未声明服务属性读取应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "顶层手工 mount 代替真实拓扑应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 ctx.get 或补 inject 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行拓扑测试。"
+      },
+      "limitations": "静态搜索无法证明 fiber 拓扑；真实测试依赖组合设施。"
+    },
+    {
+      "id": "engineering-typed-events",
+      "title": "类型化事件、分派模式与 waterfall 契约",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 134,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 12,
+          "end": 12,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 15,
+          "end": 27,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cordis-primer.md",
+          "start": 29,
+          "end": 35,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 106,
+          "end": 106,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 67,
+          "end": 77,
+          "kind": "instruction"
+        },
+        {
+          "path": "package.json",
+          "start": 163,
+          "end": 163,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1,
+          "end": 18,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1119,
+          "end": 1170,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1188,
+          "end": 1259,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/gen-cordis-catalog.ts",
+          "start": 1280,
+          "end": 1291,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "事件 payload 靠字符串/any、waterfall listener 忘记 next()、分派模式没有文档，会让顺序和短路行为不可预测。",
+      "triggers": [
+        "新增事件",
+        "修改 payload",
+        "实现 listener",
+        "选择 emit/waterfall/parallel/serial/bail",
+        "生成事件目录"
+      ],
+      "obligations": [
+        "类型化事件用 declaration merging 和可合并 map；事件 JSDoc 必须有 @mode，payload 参数有 @param。",
+        "分派模式是公共契约：emit/waterfall 不 await，parallel 并行 await，serial 顺序 await，bail 顺序到短路。",
+        "waterfall listener 收到 (...args, next)；调用 next 委托，不调用则短路；值通过 next 返回传播。",
+        "只注解/观察的 listener 必须 next；拥有决策才短路。",
+        "需要早于普通注册时用 prepend: true 并说明。",
+        "agent/pre-step、agent/request、llm/stream、tools/* 是 waterfall；agent/turn-stopping 是 serial 且无 next。",
+        "事件目录由 pnpm run verify-cordis-catalog（package.json:163 → gen-cordis-catalog.ts --check）做分区与字节 freshness 检查：每个 event scope 必须映射到唯一子系统页或具名豁免，生成 region 同时更新双语 pair 与 .i18n.yaml（仅当 region 外无变化）。"
+      ],
+      "actors": [
+        "Service owner",
+        "listener 作者",
+        "评审者"
+      ],
+      "steps": [
+        "在拥有包声明事件 map/payload 与 @mode。",
+        "选择分派语义并与调用点一致。",
+        "listener 委托或短路；prepend 需理由。",
+        "为顺序/短路/异常隔离写测试，并运行 verify-cordis-catalog；目录不验证运行时分派点，不能用 freshness 代替语义测试。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "类型声明合并",
+          "测试",
+          "verify-cordis-catalog（package.json:163）运行 gen-cordis-catalog.ts --check；生成器头声明投影强制 event mode、JSDoc 参数/返回完整性和类型链接覆盖",
+          "1119-1170 对 service/event 分区双向 fail-closed；1286-1291 对全部 generated artifact 做字节 freshness 失败"
+        ],
+        "trust": "投影可自动检查 event mode、JSDoc 完整性、类型链接、分区覆盖与 freshness；它不证明运行时分派点/next()/短路语义正确，这些需测试。",
+        "failure": "event mode/JSDoc/类型链接缺失、event scope 未映射或有 stale 豁免、生成文件未重生成均红；运行时分派错误仍可能绿。",
+        "exceptions": [
+          "agent/turn-stopping 是 serial 不使用 next",
+          "纯观察 listener 在 serial 中按顺序"
+        ]
+      },
+      "applicability": "有事件总线的仓库；映射声明合并/map→union/分派模式。",
+      "relationships": [
+        "engineering-architecture-extension-map 选择事件域",
+        "engineering-ownership-teardown 的 listener 异常隔离"
+      ],
+      "migration": {
+        "strategy": "先定义事件 map 与模式，再迁移 listener。",
+        "implementation": [
+          "事件 map/payload",
+          "@mode 注解",
+          "waterfall next 规则",
+          "目录/freshness 检查"
+        ],
+        "requiredSupport": [
+          "类型化事件系统",
+          "事件目录生成器（可选）"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-typed-events",
+      "verification": {
+        "positive": [
+          {
+            "check": "verify-cordis-catalog 在重生成后通过（分区与字节 freshness）",
+            "evidence": "planned"
+          },
+          {
+            "check": "waterfall listener 正确委托",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "waterfall listener 漏 next 应使测试失败",
+            "evidence": "planned"
+          },
+          {
+            "check": "payload 用 any/字符串应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "只改事件声明/行号而不重生成目录时，verify-cordis-catalog 以 stale 失败",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 next/类型后恢复",
+            "evidence": "planned"
+          },
+          {
+            "check": "运行 gen-cordis-catalog 后 verify-cordis-catalog 恢复绿色",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行事件测试。"
+      },
+      "limitations": "类型与目录正确不证明 waterfall 语义；verify-cordis-catalog 检查声明/分区/freshness，不逐运行时分派点核对；作者未执行。"
+    },
+    {
+      "id": "engineering-typescript-strictness",
+      "title": "TypeScript 严格编译与类型感知 lint",
+      "sources": [
+        {
+          "path": "tsconfig.base.json",
+          "start": 5,
+          "end": 26,
+          "kind": "config"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 69,
+          "end": 146,
+          "kind": "config"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 160,
+          "end": 182,
+          "kind": "config"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 200,
+          "end": 229,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 173,
+          "end": 173,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 24,
+          "end": 25,
+          "kind": "instruction"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 253,
+          "end": 358,
+          "kind": "config"
+        }
+      ],
+      "problem": "关闭严格选项、全局抑制规则或把测试放宽扩散到生产，会让空值/浮空 promise/穷尽性问题进入运行路径。",
+      "triggers": [
+        "新增包/文件",
+        "修改类型",
+        "处理 any/非空断言/浮空 promise",
+        "调整 tsconfig/lint"
+      ],
+      "obligations": [
+        "全仓 strict、noUncheckedIndexedAccess、exactOptionalPropertyTypes、noImplicitOverride、noFallthroughCasesInSwitch、noUnusedLocals/Parameters、composite/incremental。",
+        "每个剩余 any 解释为何无法收窄。",
+        "类型感知规则为 error：no-explicit-any（窄抑制+理由）、no-floating-promises、no-unsafe-*、no-non-null-assertion、no-unnecessary-condition、only-throw-error、require-await、switch-exhaustiveness-check。",
+        "测试放宽只放在测试 glob，且带理由；不扩散到生产。",
+        "包级 tsconfig 继承共享 base，只做局部覆盖（rootDir: src、outDir: lib/types、workspace references）；src/types.ts 只含类型，无运行时代码。",
+        "风格规则同样以 error 运行：2 空格缩进、无分号、单引号（avoidEscape）、多行尾逗号、文件末尾换行、无行尾空格、对象花括号内空格、箭头参数 as-needed（块体必须加括号）、成员分隔符；不要降为 warning。",
+        "`@stylistic/max-len` 设为 140，并明确是 validation-only（行长度没有安全的 formatter 自动修复），忽略 URL、字符串与模板字面量；超长只能由人改写。",
+        "文件级关闭规则必须限定具体路径并写理由：type-model fixture 关闭 no-explicit-any（project-free staged profile 会重新包含该语法覆盖 fixture）与 quotes（TypeGraph 覆盖需保留源码语法）；webworker-runtime 的 `node/**`、`storage/memory.ts`、`module-system/module-loader.ts` 与 `transport/synthetic-http.ts` 关闭 require-await 与 no-extraneous-class（异步面 reject 而非 throw，Node 构造这些类）。",
+        "这些关闭只作用于列出的 fixture / webworker 路径，不整体关闭对应规则。"
+      ],
+      "actors": [
+        "包作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "从共享 base 继承，只覆盖 rootDir/outDir/references。",
+        "新增 any 写窄抑制和理由。",
+        "修浮空 promise/非空断言/unsafe，不全局关规则。",
+        "测试例外限定测试 glob。",
+        "运行 typecheck 和 lint 并保留诊断。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "tsc 严格选项",
+          "oxlint 类型感知规则",
+          "CI typecheck/lint"
+        ],
+        "trust": "自动强；any 理由仍靠评审。",
+        "failure": "严格选项关闭、规则全局抑制、测试放宽污染生产。",
+        "exceptions": [
+          "测试 glob 的放宽是显式例外",
+          "合并扩展的 empty object type 关闭 no-empty-object-type"
+        ]
+      },
+      "applicability": "TypeScript 仓库；其他语言映射严格空值/未使用/穷尽/浮空异步检查。",
+      "relationships": [
+        "engineering-no-unknown-assertions 补充 cast 规则",
+        "engineering-discriminant-brands 使用穷尽 switch"
+      ],
+      "migration": {
+        "strategy": "先开严格编译，再逐个收窄 lint 例外。",
+        "implementation": [
+          "共享 tsconfig",
+          "类型感知 lint",
+          "测试 glob 例外",
+          "typecheck/lint CI"
+        ],
+        "requiredSupport": [
+          "TypeScript",
+          "类型感知 linter"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-typescript-strictness",
+      "verification": {
+        "positive": [
+          {
+            "check": "生产代码无未解释 any，类型感知规则无扩散例外",
+            "evidence": "planned"
+          },
+          {
+            "check": "src/types.ts 无运行时",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "全局关闭 no-floating-promises 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "生产文件使用测试放宽应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "收窄抑制后 typecheck/lint 恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 tsc/oxlint。"
+      },
+      "limitations": "tsc/lint 不证明运行时行为；any 理由只能评审。\n本读取只证明规则配置；未运行 oxlint，不能证明这些规则在目标文件上实际执行或以 error 退出。"
+    },
+    {
+      "id": "engineering-no-unknown-assertions",
+      "title": "禁止新增 as unknown 断言与精确基线",
+      "sources": [
+        {
+          "path": ".agents/notes/implemented/process/2026-09-19-no-unknown-casts.md",
+          "start": 13,
+          "end": 35,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-no-unknown-casts.ts",
+          "start": 1,
+          "end": 25,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-unknown-casts.ts",
+          "start": 76,
+          "end": 134,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-unknown-casts.ts",
+          "start": 138,
+          "end": 185,
+          "kind": "implementation"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 146,
+          "end": 146,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "双重断言到 unknown 绕过类型系统；文件级 allowance 或计数预算会允许新断言替换旧断言，形成永久债务。",
+      "triggers": [
+        "写 as unknown/<unknown>",
+        "处理 parser 结果",
+        "修类型错误",
+        "搬迁/重命名断言",
+        "编辑 baseline"
+      ],
+      "obligations": [
+        "新的一手 JS/TS（含 tests/fixtures/benchmarks/scripts）禁止直接断言到 unknown；覆盖 as unknown、<unknown>、括号目标、含 direct unknown 成员的 union。",
+        "unknown 声明仍合法，但必须进入声明的 parser 再使用。",
+        "现有断言用精确 baseline：路径 + 语法 token SHA-256 + 出现次数；baseline 只可删除条目或降低计数。",
+        "相对于可信 baseline，未列文件、新指纹和超额次数由 AST 门禁拒绝；对 baseline 本身增加文件、指纹或计数，源决策明确要求评审者拒绝，不能把当前 baseline 的自洽校验误写为历史防扩张校验。",
+        "--prune 只在新违规不存在时机械删除/降低；没有命令添加新例外。",
+        "检查器用 TypeScript AST 扫描 tracked + 非忽略 untracked source；排除 vendor/归档 Note。"
+      ],
+      "actors": [
+        "改动作者",
+        "baseline owner",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "判断是边界输入还是内部类型错误。",
+        "边界输入用 unknown 声明 + parser/validator 输出 typed value。",
+        "内部类型错误修类型或调用点，不用双重断言。",
+        "遗留断言保持在精确 baseline 内；删除后 --prune。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-no-unknown-casts AST 扫描",
+          "精确 baseline",
+          "CI static/primary + hygiene/check-all"
+        ],
+        "trust": "自动保证相对于当前工作树中可信的 baseline；实现不读取 base ref 或历史版本来认证 baseline 是否扩张。基线扩张禁令由评审者执行。AST 不覆盖 alias/intersection、any 或隐藏转换的 helper。",
+        "failure": "自动拒绝未列/超额直接断言以及未 prune 的 stale 条目；评审另行拒绝 baseline 扩张和用 any/helper 隐藏转换，不能声称这些都由 AST 命令识别。",
+        "exceptions": [
+          "vendor/archived notes 排除",
+          "unknown 声明、unknown[]/Promise<unknown> 等容器、JS JSDoc @type 不在语法规则内"
+        ]
+      },
+      "applicability": "TypeScript/JavaScript 仓库；无 AST 时不要用文本搜索冒充。",
+      "relationships": [
+        "engineering-typescript-strictness 的严格类型",
+        "engineering-typed-boundaries 的 parser 边界"
+      ],
+      "migration": {
+        "strategy": "先建立精确 baseline，再禁止新增并逐项消除。",
+        "implementation": [
+          "AST 检查器",
+          "路径+tokens+count baseline",
+          "--prune",
+          "CI 接入"
+        ],
+        "requiredSupport": [
+          "TypeScript AST 工具",
+          "baseline 文件",
+          "可信 baseline 及其变更评审；命令绿不替代基线差异审阅"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-no-unknown-assertions",
+      "verification": {
+        "positive": [
+          {
+            "check": "门禁绿且 baseline 无新增指纹/计数",
+            "evidence": "planned"
+          },
+          {
+            "check": "删除断言后 --prune 让 baseline 收缩",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "新增 as unknown 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "手写新增 baseline 文件、指纹或提高计数时，评审者必须拒绝；不把该场景误称为本地 AST 命令自行拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "用 parser 替代断言后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 verify-no-unknown-casts。"
+      },
+      "limitations": "不证明总体类型安全，不解析 alias/intersection；any/helper 可绕过检测。当前 baseline 若被手动扩张，单独运行此命令不能认证该扩张的合法性；源规则的评审拒绝责任必须保留，不能用未运行目标 CI 作为弱化自动 AST 比较的理由。"
+    },
+    {
+      "id": "engineering-discriminant-brands",
+      "title": "判别标签、穷尽 switch 与品牌化 id",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 135,
+          "end": 135,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/core.md",
+          "start": 358,
+          "end": 408,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/llm-streaming.md",
+          "start": 169,
+          "end": 169,
+          "kind": "instruction"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 177,
+          "end": 182,
+          "kind": "config"
+        }
+      ],
+      "problem": "新增联合变体不让消费者编译失败、switch 用 default 吞掉新变体、跨包 id 都是 string，都会让扩展静默漏处理。",
+      "triggers": [
+        "新增可辨识联合",
+        "扩展事件/内容/结果",
+        "switch tag",
+        "跨边界传 id",
+        "导出 map"
+      ],
+      "obligations": [
+        "switch 判别标签；封闭联合以 assertNever 结尾；可合并扩展联合走文档化 default。",
+        "可扩展 sum type 用 Map→derived-union：interface 以 tag 为 key，union 由 keyof 派生，插件 declaration merging 加变体。",
+        "五个 canonical map：ContentBlockMap、MessageSourceMap、FinishReasonMap、TurnEndReasonMap、SessionEventMap。",
+        "跨包 id 品牌化：结构上是 string，类型上不可互换，用 brandString<T>() 或 owner factory 构造。",
+        "Branded<B> 原语与无状态构造在 dsh-brand。",
+        "流式 ContentBlock 封闭联合 switch 以 assertNever 结尾。"
+      ],
+      "actors": [
+        "类型 owner",
+        "插件作者",
+        "评审者"
+      ],
+      "steps": [
+        "新增变体加到拥有 map，用 declaration merging。",
+        "消费者 switch tag；封闭联合 assertNever，可扩展联合文档化 default。",
+        "跨边界 id 定义 brand，构造集中。",
+        "用编译器/测试验证新增变体使消费者失败。"
+      ],
+      "enforcement": {
+        "mode": "compiler",
+        "implementation": [
+          "TypeScript 判别/穷尽",
+          "oxlint switch-exhaustiveness-check",
+          "declaration merging"
+        ],
+        "trust": "编译器和 lint 自动；运行时分派仍需测试。",
+        "failure": "default 吞新变体、裸 string 传 id、switch 不穷尽。",
+        "exceptions": [
+          "可合并扩展联合有意 default",
+          "merge-extensible maps 的 empty object type 允许"
+        ]
+      },
+      "applicability": "TypeScript/有 sum type 的语言；映射为 sealed union/enum + exhaustive match + opaque type。",
+      "relationships": [
+        "engineering-typescript-strictness 的 switch lint",
+        "engineering-typed-events 的 payload 扩展"
+      ],
+      "migration": {
+        "strategy": "先把联合改成 map→union，再加品牌 id。",
+        "implementation": [
+          "Map→union",
+          "assertNever",
+          "brandString/factory",
+          "穷尽测试"
+        ],
+        "requiredSupport": [
+          "类型系统",
+          "declaration merging 或等价扩展机制"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-discriminant-brands",
+      "verification": {
+        "positive": [
+          {
+            "check": "新增变体使消费者编译失败（封闭联合）",
+            "evidence": "planned"
+          },
+          {
+            "check": "跨包 id 不能混用",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "用 default 吞新变体应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "裸 string 表示不透明 id 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "加 map 变体/穷尽分支后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行编译器。"
+      },
+      "limitations": "品牌只在编译期，运行时无保护；可扩展联合的 default 仍可能漏处理。"
+    },
+    {
+      "id": "engineering-typed-boundaries",
+      "title": "类型信任与验证边界",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 145,
+          "end": 145,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 13,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 16,
+          "end": 16,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 18,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "为静态接口加无用运行时校验，或在 wrapper/facade 里做安全判断而被直接调用绕过；限制加在错误位置。",
+      "triggers": [
+        "决定是否加运行时校验",
+        "处理 JSON/YAML/模型输出/文件/worker/网络",
+        "设计安全策略",
+        "实现资源限制"
+      ],
+      "obligations": [
+        "有类型的同进程边界信任 TypeScript；不为静态接口要求的值添加运行时校验/fallback/敌意输入测试。",
+        "在 parser/config、排队输入、模型/工具 JSON、durable/file、worker、进程、wire 边界校验。",
+        "公共契约两侧归一化，消费者仅凭公共 API 命名失败来源。",
+        "决策要在执行它的操作里强制；schema omission/prompt filtering/facade/wrapper/listener order 在可绕过时不是强制。",
+        "对完整结果应用 byte/token/item/time 限制，测试极小限制、超大单 chunk、多字节边界。"
+      ],
+      "actors": [
+        "边界 owner",
+        "评审者"
+      ],
+      "steps": [
+        "标记每个数据入口是否跨信任边界。",
+        "边界输入声明 raw/unknown，交给 parser/validator。",
+        "内部接口不重复校验；校验要说明防哪个边界。",
+        "把限制放在能看到完整结果的位置并测试边界。",
+        "拒绝只在 wrapper 里判断的强制。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "边界清单",
+          "executor denial 测试",
+          "限制边界测试"
+        ],
+        "trust": "评审为主；测试可验证 denial/限制。",
+        "failure": "无边界校验、内部重复防御、wrapper 强制被绕过、限制遗漏 wrapper/metadata。",
+        "exceptions": [
+          "可信进程内、无外部输入代码不受必须校验约束"
+        ]
+      },
+      "applicability": "任何有动态输入和安全策略的系统；无动态输入的库只保留边界分类。",
+      "relationships": [
+        "engineering-error-handling 的失败报告",
+        "engineering-no-unknown-assertions 的 parser 用法"
+      ],
+      "migration": {
+        "strategy": "先画边界，再把校验/限制移到执行点。",
+        "implementation": [
+          "边界清单/validator",
+          "executor denial 测试",
+          "完整结果限制"
+        ],
+        "requiredSupport": [
+          "schema/validator",
+          "可测试的执行器"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-typed-boundaries",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个校验对应一个边界，内部无重复防御",
+            "evidence": "planned"
+          },
+          {
+            "check": "denial 通过 executor 测试",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "仅在 facade 判断安全应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "为静态接口加无用校验应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把判断移到执行器后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 denial/限制测试。"
+      },
+      "limitations": "类型系统不覆盖运行时输入；运行时校验不证明业务正确。"
+    },
+    {
+      "id": "engineering-performance-evidence",
+      "title": "性能改动的测量证据",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 149,
+          "end": 172,
+          "kind": "instruction"
+        },
+        {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "用整机分数或带测量 hook 的基线声称性能中性；回归被别处优化抵消；CI 绿被误当性能证明。",
+      "triggers": [
+        "改动可能移动热路径成本",
+        "声称性能中性/优化",
+        "新增 benchmark",
+        "内存/延迟回归"
+      ],
+      "obligations": [
+        "在同一环境、同一输入下测量所改代码 before/after，报告数字与条件。",
+        "报告运行时、峰值内存、稳态内存三个指标，粒度为改动路径。",
+        "基线是不带测量 hook 的同一路径，不是旧实现+同样 hook。",
+        "benchmarks 归 benchmarks/ 拥有，一个用户路径一个目录；场景是入口；包内诊断用 .perf.ts，不进 test:bench。",
+        "check:ci:bench 是警报不是通过；回归要本地重跑 owning scenario 并 profile。",
+        "内存声明用 test:bench:memory 4g|8g 在无 swap cgroup 中按不变预算重跑。",
+        "不触运行路径的改动免测；架构性性能代价需 domain owner 批准。"
+      ],
+      "actors": [
+        "改动作者",
+        "benchmarks owner",
+        "domain owner",
+        "评审者"
+      ],
+      "steps": [
+        "识别热路径与用户场景。",
+        "用无 hook 基线测 before，同环境/输入测 after。",
+        "报告三指标、命令、环境、输入大小。",
+        "回归时 profile 分段定位；架构性代价交 owner。",
+        "更新 owning scenario，不把诊断塞进 test:bench。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "benchmarks/ 场景与预算",
+          "check:ci:bench 警报",
+          "test:bench:memory",
+          "评审"
+        ],
+        "trust": "测量是经验证据；CI 警报不是通过。",
+        "failure": "无数字、基线带 hook、用整机分数、回归未定位。",
+        "exceptions": [
+          "注释/文档/纯测试不触运行路径免测",
+          "生产性能代码不删"
+        ]
+      },
+      "applicability": "任何有热路径/性能声明的仓库；无 benchmark 设施时用临时脚本保留方法，但不伪装持续门禁。",
+      "relationships": [
+        "Testing 域拥有 benchmark 运行/分区",
+        "Release 域拥有 CI 报告"
+      ],
+      "migration": {
+        "strategy": "先建立 owning scenario，再要求 before/after 证据。",
+        "implementation": [
+          "benchmarks 目录",
+          "fresh child + mkdtemp",
+          "三指标报告",
+          "预算/警报"
+        ],
+        "requiredSupport": [
+          "benchmark runner",
+          "稳定环境/cgroup"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-performance-evidence",
+      "verification": {
+        "positive": [
+          {
+            "check": "PR 含可重建的三指标数字和条件",
+            "evidence": "planned"
+          },
+          {
+            "check": "基线不带测量 hook",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只用整机分数应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "环境变量覆盖预算应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 owning scenario 测量后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 benchmark。"
+      },
+      "limitations": "benchmark 不建模所有路径；测量不是证明；CI 警报可能漏报。"
+    },
+    {
+      "id": "engineering-migration-behavior",
+      "title": "迁移保持可观察行为",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 174,
+          "end": 190,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 7,
+          "end": 11,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "迁移中顺手重写/修缺陷，导致错误码、诊断、数据流顺序或 UI 时序变化，评审无法区分移动与语义改动。",
+      "triggers": [
+        "迁移/包拆分/移动代码",
+        "重写",
+        "导出路径变化",
+        "迁移中发现缺陷"
+      ],
+      "obligations": [
+        "迁移/拆分保持外部可观察行为相等：错误码、诊断、数据流顺序、UI 时序逐项比较。",
+        "优先移动代码而不是删除重写；重写适合语义本来要变的代码并列出差异。",
+        "包/导出路径变化是载体变化，不是行为变化；行为变化是独立改动。",
+        "无法完全相等时说明不同项及验证，并由 domain owner 批准。",
+        "迁移中发现的缺陷作为独立改动修复，不折进移动。",
+        "涉及 public API 或已提交 Session 持久格式时，迁移规则不等于版本策略：公开 API 仍 pre-stable 并同改所有 consumer；breaking change 立即记入 upgrade guide；已提交 generation 不得移动/覆盖/删除；前代不意味着 fallback/downgrade；SQLite SCHEMA_VERSION 单调。"
+      ],
+      "actors": [
+        "迁移 owner",
+        "domain owner",
+        "评审者"
+      ],
+      "steps": [
+        "列可观察面。",
+        "优先 git mv/移动，保持路径和错误码。",
+        "必须重写时逐项列差异与验证。",
+        "缺陷单独改动。",
+        "用 before/after 测试或快照证明相等。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "可观察行为清单",
+          "before/after 测试/快照",
+          "评审"
+        ],
+        "trust": "评审为主；快照/契约测试补充。",
+        "failure": "迁移 diff 混入行为变化或缺陷修复。",
+        "exceptions": [
+          "语义本来要变的重写可列差异",
+          "包/导出路径变化本身不算行为变化"
+        ]
+      },
+      "applicability": "任何语言/仓库；把可观察行为映射到目标公共 API/错误/时序。",
+      "relationships": [
+        "engineering-check-selection 的证据匹配",
+        "Release 域的行为变更记录"
+      ],
+      "migration": {
+        "strategy": "先移动，后改语义，缺陷分离。",
+        "implementation": [
+          "行为清单",
+          "移动优先",
+          "差异审批",
+          "before/after 测试"
+        ],
+        "requiredSupport": [
+          "快照/契约测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-migration-behavior",
+      "verification": {
+        "positive": [
+          {
+            "check": "迁移 diff 主要是移动且行为逐项有证据",
+            "evidence": "planned"
+          },
+          {
+            "check": "差异有 owner 批准",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "迁移中顺手改错误码应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "把缺陷修复折进移动应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "拆分行为改动后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行迁移测试。"
+      },
+      "limitations": "移动 diff 小不证明行为相等；快照只覆盖已捕获表面。"
+    },
+    {
+      "id": "engineering-untrusted-subprocess",
+      "title": "不受信边界：子进程环境、临时路径与凭据重定向",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/general.md",
+          "start": 212,
+          "end": 222,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 20,
+          "end": 20,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/web/AGENTS.md",
+          "start": 1,
+          "end": 5,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "继承全量 env 泄漏凭据；可预测临时路径招 symlink race；递归删除跟随链接到目标目录；HTTP 客户端自动 redirect 会把凭据/请求数据转发到另一个 origin。",
+      "triggers": [
+        "spawn 命令",
+        "写临时/溢出文件",
+        "清理 link-shaped path",
+        "并发测试资源",
+        "配置凭据承载的 provider HTTP 客户端或 redirect 策略"
+      ],
+      "obligations": [
+        "spawn 的 command 得到清洗 env，丢弃 *KEY*/*SECRET*/*TOKEN*/*PASSWORD*。",
+        "临时/溢出文件用 0700 私有目录、随机名、独占 owner-only 打开（wx/0o600）。",
+        "可能是 symlink/junction 的路径先 lstatSync().isSymbolicLink()，再 unlinkSync；递归 rmSync 只用于已知真实目录。",
+        "spec 并发运行，每个 port/path/child process 通过 teardown 拥有；只在单独运行通过的 spec 是缺陷。",
+        "凭据承载的 provider 请求必须在 HTTP 客户端层配置为跟随任何 redirect 之前失败；回归证明 redirect 目标未被联系，并证明每个 credentialed provider 都 opt-in。配置 endpoint 会收到初始请求，本条防的是自动转发到另一 origin，不是 endpoint 自身被攻陷。"
+      ],
+      "actors": [
+        "执行器 owner",
+        "provider owner",
+        "安全评审者",
+        "测试作者"
+      ],
+      "steps": [
+        "构造清洗 env 白名单/黑名单。",
+        "用 0700 随机目录和 0600 独占文件。",
+        "删除前 lstat，link 用 unlink，真实目录才递归。",
+        "为泄漏/符号链接/并发写测试。",
+        "为 credentialed provider 关闭自动 redirect，并测试目标 origin 未被联系、所有 provider 都采用该策略。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "env 清洗",
+          "安全临时文件 API",
+          "lstat/unlink 规则",
+          "并发资源测试",
+          "HTTP redirect: manual/error + target-not-contacted 回归"
+        ],
+        "trust": "评审为主；安全测试补充。",
+        "failure": "继承 process.env、可预测路径、rmSync 跟随链接、credentialed 请求自动跨 origin redirect。",
+        "exceptions": [
+          "可信进程内、无外部输入代码不受该规则约束"
+        ]
+      },
+      "applicability": "任何 spawn/临时文件/路径清理的系统；Windows 需单独处理 junction；任何带凭据的 HTTP provider 需关闭自动 redirect。",
+      "relationships": [
+        "engineering-ownership-teardown 的资源所有权",
+        "Security/Web 域的 provider 凭据与 redirect 策略",
+        "Testing 域的并发 spec 规则"
+      ],
+      "migration": {
+        "strategy": "先清洗 env/路径，再关闭 credentialed HTTP redirect，最后补攻击回归。",
+        "implementation": [
+          "env 清洗",
+          "私有临时目录",
+          "lstat/unlink",
+          "并发 teardown",
+          "HTTP redirect: manual/error + provider opt-in"
+        ],
+        "requiredSupport": [
+          "安全临时文件设施",
+          "子进程包装",
+          "可配置的 HTTP 客户端 redirect 策略"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-untrusted-subprocess",
+      "verification": {
+        "positive": [
+          {
+            "check": "子进程 env 无凭据，临时路径不可预测",
+            "evidence": "planned"
+          },
+          {
+            "check": "删除 link 不跟随目标",
+            "evidence": "planned"
+          },
+          {
+            "check": "credentialed provider 在 redirect 前失败，目标 origin 未被联系",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "全量继承 process.env 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "递归 rmSync 删除可能是 junction 的路径应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "credentialed provider 自动跟随 redirect 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改清洗 env/lstat/redirect 策略后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行安全测试。"
+      },
+      "limitations": "未发现泄漏不等于没有竞争；跨平台 symlink/junction 行为需实测；redirect 目标未被联系需要真实 HTTP 回归，不能由配置代码推断。"
+    },
+    {
+      "id": "engineering-source-artifact-plane",
+      "title": "源平面 vs 产物平面",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 132,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 147,
+          "end": 147,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 59,
+          "end": 110,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/testing.md",
+          "start": 43,
+          "end": 46,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-cordis-config.ts",
+          "start": 413,
+          "end": 448,
+          "kind": "implementation"
+        },
+        {
+          "path": "package.json",
+          "start": 23,
+          "end": 23,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 61,
+          "end": 61,
+          "kind": "config"
+        }
+      ],
+      "problem": "测试/静态门禁解析到 built lib 会因陈旧产物加载第二个 module singleton；clean checkout 失败；局部开发与完整构建边界不清。",
+      "triggers": [
+        "静态门禁/测试",
+        "局部开发",
+        "构建/依赖解析",
+        "Typert 生成",
+        "发布 smoke",
+        "clean checkout"
+      ],
+      "obligations": [
+        "模块系统契约：全仓 ESM（type: module）；跨包 import 用包名，局部相对 import 带 .ts；配置子进程用构建后的 lib 在 plain Node 运行，源回归用声明的 launcher；dsh source launch 走 node --import tsx/esm，其可达模块必须保持 ESM（不得有 CJS-only exports），因为 engines 范围不能用 Node 原生 TypeScript 模式。",
+        "静态分析与测试通过 base paths 解析 workspace import 到 src，必须在 clean tree 通过；消费 built lib 的门禁显式声明依赖。",
+        "测试解析只走源码平面：vitest config 指向 tsconfig.base.json，裸 workspace import 解析到 src，绝不经 package exports 到 lib。",
+        "构建/检查按目的选择：迭代源码 build:artifacts；检查测试/脚本/benchmarks/website 用最新构建后的 build:check；声明 TS 完成前 build:check 或 build；完整验证 build；无产物类型检查 typecheck。",
+        "build:artifacts 按 native→Host tsc→Host tsdown→Desktop→Client tsc→Client tsdown→Web；build:check 只并发跑 Host/Client tsc。",
+        "build 嵌入 root version、七位 commit、dirty marker 并写 record；release/built Web tests 拒绝缺失或被后续构建改动的产物。",
+        "Typert 从 Host 类型生成 Host 反射与 Host-for-Client Remote 投影；bundle-free pass 只从 source 读 workspace 包。"
+      ],
+      "actors": [
+        "门禁作者",
+        "开发者",
+        "CI",
+        "build owner"
+      ],
+      "steps": [
+        "给每个门禁标注 source/built-lib/mixed-but-explicit。",
+        "源测试只解析 src；built smoke 声明需要 build。",
+        "日常 build:artifacts；完成前 build:check；发布用 build。",
+        "生成器从 source 运行并检查 freshness。",
+        "删除 lib/dist/tsbuildinfo 后跑源门禁验证 clean checkout。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "build:check/typecheck",
+          "clean checkout 源门禁",
+          "构建 record 检查",
+          "paths 校验"
+        ],
+        "trust": "自动较强；不证明发布包内容。",
+        "failure": "源门禁依赖 lib、clean checkout 失败、build record 缺失。",
+        "exceptions": [
+          "生成的 Host-for-Client Remote 声明是显式例外；contracts-ready 假定调度器已依赖 Typert 生成"
+        ]
+      },
+      "applicability": "有源码/产物双平面的仓库；无生成器可省略 Typert 部分。",
+      "relationships": [
+        "engineering-compiler-faces 定义 program seed",
+        "Release 域的发布 smoke",
+        "Testing 域的测试解析"
+      ],
+      "migration": {
+        "strategy": "先统一 paths 到 src，再分离 built 门禁。",
+        "implementation": [
+          "源码解析优先",
+          "显式 built 门禁",
+          "生成物 freshness",
+          "构建身份 record"
+        ],
+        "requiredSupport": [
+          "构建系统",
+          "CI clean checkout"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-source-artifact-plane",
+      "verification": {
+        "positive": [
+          {
+            "check": "clean tree 源门禁通过，产物门禁显式依赖 build",
+            "evidence": "planned"
+          },
+          {
+            "check": "构建 record 绑定版本/commit/dirty",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "测试经 exports 解析到 lib 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "用陈旧 lib 让门禁通过应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 paths/重建产物后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 build/typecheck。"
+      },
+      "limitations": "源门禁通过不证明发布包内容；Typert 生成未逐行审阅。"
+    },
+    {
+      "id": "engineering-compiler-faces",
+      "title": "显式编译面与 Host/Client 聚合隔离",
+      "sources": [
+        {
+          "path": "tsconfig.base.json",
+          "start": 1,
+          "end": 29,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.client.json",
+          "start": 1,
+          "end": 30,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.base.client.json",
+          "start": 1,
+          "end": 12,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 148,
+          "end": 148,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 59,
+          "end": 75,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/project-reference-faces.ts",
+          "start": 1,
+          "end": 129,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/ts-project.ts",
+          "start": 1,
+          "end": 120,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 649,
+          "end": 659,
+          "kind": "implementation"
+        },
+        {
+          "path": "tsconfig.host.json",
+          "start": 220,
+          "end": 223,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.host.json",
+          "start": 533,
+          "end": 536,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.client.json",
+          "start": 47,
+          "end": 53,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.client.json",
+          "start": 65,
+          "end": 75,
+          "kind": "config"
+        },
+        {
+          "path": "tsconfig.client.json",
+          "start": 155,
+          "end": 155,
+          "kind": "config"
+        }
+      ],
+      "problem": "Host/Client 在同一 ts.Program 中 declaration-merge 同一 Context key 会冲突；base include/files 泄漏到每个包；脚本 seed root solution 破坏 face 隔离。",
+      "triggers": [
+        "新增包",
+        "拆分 Host/Client",
+        "改 tsconfig",
+        "repo-wide ts.Program 脚本",
+        "Project Reference"
+      ],
+      "obligations": [
+        "Host 与 Client 是两个隔离聚合；普通包只在之一；三个共享 leaf 被两边引用。",
+        "tsconfig.base.json 永不加 include/files。",
+        "repo-wide ts.Program 脚本显式 seed tsconfig.host.json 或 tsconfig.client.json，绝不用 root solution。",
+        "新包只注册一个聚合；六个 split 包带两个 leaf config，共享 leaf 两边注册。",
+        "split 包根 tsconfig 只是 solution；两个聚合并直接消费者分别引用 host/client leaf。",
+        "constraints 遍历 Project Reference 图，检查每个引用项目的 compiler face；split target 必须匹配遍历起点。",
+        "测试文件用后缀声明编译面：`*.client.*` 归 Client 聚合，`*.host.spec.ts` / `*.host.e2e.ts` / `*.host.ts` 归 Host 聚合；两后缀互斥，各聚合 exclude 对方，且 exclude 优先于 include，因此包测试 glob 可以保持宽泛而不逐文件登记。",
+        "聚合 references 必须逐个显式列出（TS project references 没有通配形式）；跨面共享 leaf 只有在不会合并另一面 Cordis Context 时才能加入，并需在引用处说明（如 webserver 零 workspace 依赖、compaction checkpoint 为 cordis-free leaf）。",
+        "app 的 face 归属由 references 决定而不是目录名：Host references 以 apps/cli、apps/plugin-market-generator、apps/desktop-host 和 desktop host leaf 收尾；Client references 以 apps/web 与 desktop client leaf 收尾。"
+      ],
+      "actors": [
+        "包作者",
+        "face owner",
+        "脚本作者",
+        "CI"
+      ],
+      "steps": [
+        "判定 Host/Client/真 split。",
+        "在恰好一个聚合注册；split 建 solution + 两个 leaf。",
+        "包 tsconfig 继承 base/base.client，设 rootDir/outDir/references。",
+        "脚本用 faceConfigs/TypeScriptProject 从 face seed。",
+        "运行 constraints + tsc -b。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "Project Reference face 检查",
+          "tsc -b",
+          "ts-project seed 约束"
+        ],
+        "trust": "自动较强；不证明运行时分包。",
+        "failure": "Context merge 冲突、base include/files、脚本 seed root、face mismatch。",
+        "exceptions": [
+          "六个 split 包和三个共享 leaf 是显式例外",
+          "api/remotes 的 Host/Client entry 特例"
+        ]
+      },
+      "applicability": "TypeScript Project References/多 face 仓库；无 declaration merging 冲突时可合并聚合但保留显式 face。",
+      "relationships": [
+        "engineering-source-artifact-plane 的 build/check",
+        "engineering-package-shape-exports 的包形态"
+      ],
+      "migration": {
+        "strategy": "先分 face 聚合，再迁包。",
+        "implementation": [
+          "host/client 聚合",
+          "共享 leaf",
+          "face 检查",
+          "脚本 seed"
+        ],
+        "requiredSupport": [
+          "tsc Project References",
+          "CI"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-compiler-faces",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个包只在一个聚合（除声明例外）",
+            "evidence": "planned"
+          },
+          {
+            "check": "两个聚合各自可编译且 constraints 绿",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "base 加 include/files 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "脚本 seed root solution 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "按 face 改 references 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 tsc/constraints。"
+      },
+      "limitations": "不证明运行时分包正确；declaration merging 冲突需实际 program 才暴露。\n聚合成员只由静态 tsconfig 证明；未运行 tsc，不能证明每个 program 的实际 declaration merging 或错误面。"
+    },
+    {
+      "id": "engineering-package-shape-exports",
+      "title": "包形态与标准导出键",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 45,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 75,
+          "end": 113,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 71,
+          "end": 71,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 142,
+          "end": 152,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 145,
+          "end": 161,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 7,
+          "end": 40,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-meta.ts",
+          "start": 1,
+          "end": 285,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-client-packages.ts",
+          "start": 1,
+          "end": 713,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 362,
+          "end": 381,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 420,
+          "end": 542,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 551,
+          "end": 570,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "第三种包形态、手写 external/roster、非标准 export 键会让构建/加载在后期失败，且没有统一语义。",
+      "triggers": [
+        "新增包",
+        "改 package.json",
+        "加 export subpath",
+        "改构建输出",
+        "加 /client"
+      ],
+      "obligations": [
+        "新包只有 Host 或 Host+Client 两种形态；静态 client 库和 util 零依赖库是历史封闭集合。",
+        "只有真正双面包拆 compiler faces；输出 lib；include/external/roster 由扫描派生。",
+        "manifest 不变量：private true（发布成员例外）、版本匹配 root、type module、main lib/index.js、types lib/types/index.d.ts、exports types/default 精确、cordis 在 peer+dev 同范围、files 精确、src/types.ts 只类型。",
+        "Client 包 published payload 必须闭合：每个相对 runtime import 和 emitted asset 都被 files 覆盖；仓库 publint pass 检查精确 publication view。",
+        "Client 新包 bring-up：dsh.client 必须同时有 ./client，platform 为 web，immediately 只给 stage-one-prefetch 基础设施；dsh.client.inject 只是 informational package edge，不排序 activation；非 baseline external 会序列化动态 supplier；改 bundle 后先重建再 probe live dsh web。",
+        "Client 新包注册到别的包的 slot 用 ctx.slots.inject(name, () => ctx.slots.register(...))；裸 slots.register 到未声明 slot 是错误；多个注册需要原子回滚时返回 generator。",
+        "包层次严格 packages/<group>/<pkg>；group 不得有 package.json，包不得更深。",
+        "exports 只用标准键：.、./package.json、./src/*、./client、./types、./typert、./remote、./locale/*.json、./cordis.patch.yml；集合外键需先改文档/检查并获 owner 确认。",
+        "Client 插件补 dsh.client、./client export、tsconfig.base.client.json、共享 tsdown preset 和三个注册面。",
+        "verify-package-meta 扫描 packages/*/*/package.json（空语料失败），从源 JSON（排除 node_modules/lib/tests）解析 meta；locale 资源必须经 exports 解析到源 JSON、以 en.json 为 baseline、与英文同目录、被 files 覆盖；display manifest/icon 也必须解析到源 JSON 而非 built lib；@deepseek-ai/dsh-* 的 SVG 必须 36×36、SVG namespace、仅自包含 geometry、无 script/style/image/foreignObject/text/animation、唯一 id、无 on* handler、href/url(...) 只引用本地 id；嵌套 package 拥有未声明资源，但外层显式 exports 仍校验。",
+        "verify-client-packages 要求每个 client 包是 dynamic dsh.client 或 staticLinked 之一；PLATFORM_MODULES 的 workspace module owner 必须用 staticLinked preset；parser-preloaded external 必须有 dynamic row 和 PARSER_PRELOAD_IDS row；dsh.client external/inject 不得为空/重复，external 不得重复 baseline、不得命名自己的 row、feature 包不得请求 runtime external、必须有生产 runtime import/re-export、supplier 必须存在且无环；malformed dsh.client 失败。"
+      ],
+      "actors": [
+        "包作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "选两种形态之一。",
+        "写标准 manifest 字段和 files，让派生列表自动生成。",
+        "只加标准 export 键；新键先改文档/检查。",
+        "新包加入现有 group，目录两层。",
+        "Client 包补齐注册面。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "check-workspace-constraints manifest/层次",
+          "verify-client-packages",
+          "export 键集合评审"
+        ],
+        "trust": "manifest/层次/client gate 自动；export 键含义靠评审。",
+        "failure": "第三种形态、手写派生列表、非标准键、manifest 字段漂移。",
+        "exceptions": [
+          "已存在非标准键是待评审遗留，不是新先例；新增需文档+检查+owner"
+        ]
+      },
+      "applicability": "有 workspace 包管理器的仓库；无 client/server 分包可省略 /client。",
+      "relationships": [
+        "engineering-compiler-faces 的 tsconfig 注册",
+        "engineering-dependency-policy 的 manifest 依赖",
+        "Release 域的打包"
+      ],
+      "migration": {
+        "strategy": "先固定两种形态和标准键，再接 constraints。",
+        "implementation": [
+          "两种包模板",
+          "manifest 不变量",
+          "派生 include/external/roster",
+          "export 键表"
+        ],
+        "requiredSupport": [
+          "包管理器",
+          "CI constraints"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-package-shape-exports",
+      "verification": {
+        "positive": [
+          {
+            "check": "constraints/client gate 绿，manifest 字段精确",
+            "evidence": "planned"
+          },
+          {
+            "check": "无手写派生列表和非标准 export 键",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "新增第三种包形态应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "新增未文档化 export 键应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改回标准形态/键后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 constraints/client gate。"
+      },
+      "limitations": "export 键兼容性需消费者测试；manifest 正确不证明运行时加载。verify-package-meta 全文校验 locale/icon/SVG/files，verify-client-packages 全文校验 client 形态/edges，但都不执行 client boot，也不校验完整标准键 allowlist。"
+    },
+    {
+      "id": "engineering-dependency-policy",
+      "title": "包依赖声明与 workspace 范围策略",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 131,
+          "end": 132,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 115,
+          "end": 186,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 28,
+          "end": 34,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 593,
+          "end": 655,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.ts",
+          "start": 853,
+          "end": 867,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/package-dependency-policy.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 61,
+          "end": 73,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 183,
+          "end": 185,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1,
+          "end": 207,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 345,
+          "end": 999,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1039,
+          "end": 1061,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1135,
+          "end": 1211,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-dependencies.spec.ts",
+          "start": 1241,
+          "end": 1246,
+          "kind": "test"
+        }
+      ],
+      "problem": "依赖 section/范围不一致、Host runtime export 未分类、root type 包泄漏、用改扫描过门禁，都会导致重复实例或缺失共享身份。",
+      "triggers": [
+        "新增/修改依赖",
+        "修 dependency scan",
+        "加 Host/Client import",
+        "提升包",
+        "peer 关系"
+      ],
+      "obligations": [
+        "内部依赖语法：@deepseek-ai/dsh 和 dsh-* 用 workspace:*，其他内部包用 workspace:~；workspace:^ 退役；同名依赖每个 workspace 写法一致。",
+        "Harness 包在 peerDependencies 和 devDependencies 同时声明 @deepseek-ai/cordis，范围相同。",
+        "@types/react/@types/react-dom 只在 root devDependencies；包仍声明自己 import 的 react/react-dom。",
+        "Host runtime import 只在精确 specifier + runtime export 出现在 safeHostDependencyExports 时进 dependencies；需要共享身份的 export 进 peerRequiredHostExports，整条边保留 peer+dev。",
+        "Browser/type 关系 development-only：workspace/第三方 Client import、type-only import、augmentation、TS references、dsh.client.inject、metadata-only peer 只进 devDependencies。",
+        "策略由 package-dependency-policy.ts 拥有；safeHostDependencyExports 新条目默认禁止，代理不得添加例外，需显式人工评审。",
+        "修红改 manifest 命名的 section，不改扫描/放宽 policy；改 policy 需 domain owner 确认并记录理由。",
+        "vendor/ 是固定上游 SHA 的 source copy，不是普通 workspace 依赖：按 vendor/README.md 同步，重放/退役已记录本地修改，并重跑 pnpm run test && pnpm run build；不要把 vendored 包当可随手编辑的普通包。"
+      ],
+      "actors": [
+        "包作者",
+        "policy owner",
+        "domain owner",
+        "CI"
+      ],
+      "steps": [
+        "判断包 role 和 import 的 runtime/type 性质。",
+        "按 face 放 dependencies/devDependencies/peer+dev，范围按族规则。",
+        "新增 Host runtime export 前查 policy；未分类不要 --fix 写。",
+        "--fix 只修 owned relationships，写前校验整批。",
+        "运行 verify-package-dependencies 和 constraints。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-package-dependencies 扫描/--fix",
+          "package-dependency-policy.ts",
+          "constraints"
+        ],
+        "trust": "自动较强；policy 例外需人工。",
+        "failure": "section 错、范围不一致、peer/dev 缺一、root type 包泄漏、未分类 runtime export。",
+        "exceptions": [
+          "非 workspace same-namespace 包用普通第三方范围",
+          "duplicateSafePackages 可跨重复安装"
+        ]
+      },
+      "applicability": "pnpm/workspace 类仓库；其他包管理器映射 workspace 协议/peer 规则。",
+      "relationships": [
+        "engineering-package-shape-exports 的 manifest",
+        "Supply 域的依赖健康/重复安装",
+        "engineering-compiler-faces 的 references"
+      ],
+      "migration": {
+        "strategy": "先建 policy 与扫描，再逐包修 manifest。",
+        "implementation": [
+          "依赖分类/范围规则",
+          "scan/--fix",
+          "policy 例外表",
+          "重复安装 smoke"
+        ],
+        "requiredSupport": [
+          "包管理器",
+          "依赖扫描器"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-dependency-policy",
+      "verification": {
+        "positive": [
+          {
+            "check": "扫描绿且同一依赖名/范围一致",
+            "evidence": "planned"
+          },
+          {
+            "check": "peer+dev 成对、root type 包不泄漏",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "改扫描放宽 policy 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "代理新增 safeHostDependencyExports 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 manifest section 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行依赖扫描。"
+      },
+      "limitations": "--fix/扫描不证明语义正确；共享身份需真实重复安装 smoke。"
+    },
+    {
+      "id": "engineering-resolve-hook-ban",
+      "title": "禁止新增 resolve hook",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 188,
+          "end": 225,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-07-29-dsh-source-launch-tsx-esm.md",
+          "start": 15,
+          "end": 24,
+          "kind": "history"
+        }
+      ],
+      "problem": "新增解析 hook 或包装已有 hook 会制造第二解析策略，绕过依赖声明和源/产物边界。",
+      "triggers": [
+        "新增 Node loader resolve hook",
+        "包装已有 hook",
+        "为 specifier 改解析",
+        "修源/产物混合"
+      ],
+      "obligations": [
+        "新 resolve hook 默认拒绝；包括包装已有 hook 且重写同一 specifier 的等价形态。",
+        "真正需要时两个前置条件同时成立：整体重审 resolve 策略（解析/HMR/插件管理），domain owner 在落地前确认。",
+        "唯一解析路径是 dsh source launch 的 tsx ESM hook。",
+        "tsx ESM-only 同时做 TypeScript transform 和 paths；依赖声明完整性由静态门禁承担。"
+      ],
+      "actors": [
+        "改动作者",
+        "domain owner",
+        "评审者"
+      ],
+      "steps": [
+        "先尝试 paths/包导出/构建修复。",
+        "仍需 hook 时写整体审计和 owner 确认。",
+        "把确认链接到 change。",
+        "加解析 smoke，证明不混 src/lib。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "review checklist",
+          "解析 smoke",
+          "source-launch 文档"
+        ],
+        "trust": "评审为主；没有自动 hook 禁令门禁。",
+        "failure": "新增/包装 resolve hook 未经整体审计。",
+        "exceptions": [
+          "两个前置条件同时成立，无 case-specific 例外"
+        ]
+      },
+      "applicability": "任何有模块解析层的运行时；无 hook 的原生解析自动满足，记录不适用原因。",
+      "relationships": [
+        "engineering-source-artifact-plane 的解析",
+        "engineering-package-shape-exports 的 exports"
+      ],
+      "migration": {
+        "strategy": "先修 paths/导出，最后才考虑 hook。",
+        "implementation": [
+          "paths/导出修复",
+          "整体解析审计",
+          "owner 确认",
+          "解析 smoke"
+        ],
+        "requiredSupport": [
+          "模块解析配置",
+          "domain owner"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-resolve-hook-ban",
+      "verification": {
+        "positive": [
+          {
+            "check": "无新 hook 或有两个前置条件记录+owner 确认",
+            "evidence": "planned"
+          },
+          {
+            "check": "解析 smoke 不混 src/lib",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "为单个 specifier 加 hook 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "包装已有 hook 的重写形态应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改 paths/导出后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行解析 smoke。"
+      },
+      "limitations": "没有自动门禁；评审可能漏掉包装形态。"
+    },
+    {
+      "id": "engineering-no-top-level-await",
+      "title": "包源码禁止模块级 await",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/package-surface.md",
+          "start": 226,
+          "end": 231,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 1,
+          "end": 22,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 64,
+          "end": 97,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 100,
+          "end": 177,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 179,
+          "end": 233,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-no-top-level-await.ts",
+          "start": 234,
+          "end": 267,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "模块级 await 让每个 importer 等待，rejection 变模块求值失败，且无法降级到 browser-worker 的同步 CJS wrapper。",
+      "triggers": [
+        "包 src 出现 await/for await/await using",
+        "写模块初始化",
+        "可执行文件/bin"
+      ],
+      "obligations": [
+        "包源模块不得在模块作用域使用 await、for await、await using。",
+        "异步工作放进函数里调用，例如显式 main() 并自己处理 rejection。",
+        "门禁解析 packages/*/*/src/**/*.{ts,tsx}；只排除 shebang 源或包 bin 命名的 lib 输出源。",
+        "门禁证明 corpus 完整：空 corpus、无 .tsx、漏包都抛错。",
+        "检测 await 表达式、带 await 的 for...of、await using；函数体/参数内 await 不算模块级。"
+      ],
+      "actors": [
+        "模块作者",
+        "CI"
+      ],
+      "steps": [
+        "把模块初始化异步逻辑移到 main()/start()。",
+        "可执行文件用 shebang 或 bin 声明排除。",
+        "运行门禁并确认 corpus 覆盖所有包。",
+        "新增包确保 glob 覆盖。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-no-top-level-await AST 扫描",
+          "corpus 完整性检查",
+          "负向测试"
+        ],
+        "trust": "自动较强；只检查语法位置。",
+        "failure": "模块顶层 await、corpus 空/漏包、未声明排除。",
+        "exceptions": [
+          "shebang 源、包 bin 命名的构建输出源"
+        ]
+      },
+      "applicability": "有 CommonJS/browser 降级或模块求值敏感性的仓库；语言允许 TLA 且不影响时可记录不适用。",
+      "relationships": [
+        "engineering-source-artifact-plane 的模块解析",
+        "Release 域的 browser bundle"
+      ],
+      "migration": {
+        "strategy": "先把异步初始化移入函数，再开门禁。",
+        "implementation": [
+          "main() 启动",
+          "AST 扫描",
+          "corpus 完整性",
+          "负向测试"
+        ],
+        "requiredSupport": [
+          "AST 工具",
+          "CI"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-no-top-level-await",
+      "verification": {
+        "positive": [
+          {
+            "check": "门禁绿且 corpus 覆盖所有包",
+            "evidence": "planned"
+          },
+          {
+            "check": "可执行排除有声明",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "模块顶层 await 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "缩小扫描导致漏包应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "移入函数后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行门禁。"
+      },
+      "limitations": "只检查语法位置，不证明初始化逻辑正确。"
+    },
+    {
+      "id": "engineering-product-classification",
+      "title": "非实验包的产品使用或显式分类",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 79,
+          "end": 79,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 87,
+          "end": 92,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/product-package-policy.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 58,
+          "end": 249,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 250,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 277,
+          "end": 304,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.spec.ts",
+          "start": 1,
+          "end": 302,
+          "kind": "test"
+        }
+      ],
+      "problem": "装了但未被真实产品入口使用的孤儿包，或用 policy 掩盖忘记挂载，会让维护/发布面膨胀。",
+      "triggers": [
+        "新增/移动 packages/<group>/<pkg>",
+        "包不再被默认组合使用",
+        "发布包清理",
+        "政策条目陈旧"
+      ],
+      "obligations": [
+        "非实验 runtime 包必须有产品使用或显式分类；SDK/build/test/declaration 有单独分类。",
+        "PRODUCT_PACKAGE_POLICY 键是仓库相对包目录，值含 reason 和 category：optional/sdk/build/test/web-distribution/declarations。",
+        "optional 不得用于 test-support；test 只用于 test-support；sdk/build/web-distribution/declarations 有精确路径约束。",
+        "verify-product-use 从真实产品入口构建 effective runtime 图：paths、源 import 递归、profiles/bundles/patches/Includes/presets/Web HTML/Desktop main。",
+        "default 与 optional（OPTIONAL_BUNDLES/ON_DEMAND_BUNDLES）分开；不读 built outputs；缺失 source mapping 失败。",
+        "每个非实验包 default/optional 可达或有 policy 条目；policy 目录缺失/experimental/空 reason/非法 category/default 使用却声明（除 web-distribution）都失败。",
+        "负向测试体已读：覆盖 disabled Include children/group/preset/nested initial/conditional disabled、Include patch 先应用、type-only 不计数、runtime import/export/await import/require 计数、Desktop/Web 入口可达、profile 独立组合、optional 与 default 分离、source mapping 缺失拒绝、web-distribution source-reachable、shipped profile corpus 不得缩窄；测试未执行，不能声称已绿。"
+      ],
+      "actors": [
+        "包 owner",
+        "policy owner",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "新增包接入真实产品入口，或声明 optional/sdk/build/test/declaration。",
+        "policy 写 reason，不掩盖忘记挂载。",
+        "运行 verify-product-use 并按诊断修。",
+        "移动/删除包同步删 policy。",
+        "验证 optional 只在显式选择后可达。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-product-use 真实入口图",
+          "PRODUCT_PACKAGE_POLICY",
+          "负向测试"
+        ],
+        "trust": "自动较强；不执行运行时。",
+        "failure": "孤儿包、stale/空 policy、source mapping 缺失、optional 混入 default。",
+        "exceptions": [
+          "web-distribution 可不在 default 图但仍是产品角色；optional 不得用于 test-support"
+        ]
+      },
+      "applicability": "有多入口/可选 bundle 的产品仓库；小型仓库可只做 manifest/runtime import 扫描。",
+      "relationships": [
+        "engineering-experimental-isolation 的可选 bundle",
+        "engineering-application-launch 的 profile",
+        "Release 域的发布清单"
+      ],
+      "migration": {
+        "strategy": "先画真实入口图，再要求每个包可达或分类。",
+        "implementation": [
+          "产品入口图",
+          "policy 分类",
+          "optional/default 分离",
+          "负向测试"
+        ],
+        "requiredSupport": [
+          "源 import 解析",
+          "真实 profile/config"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-product-classification",
+      "verification": {
+        "positive": [
+          {
+            "check": "每个非实验包可达或有合法 policy",
+            "evidence": "planned"
+          },
+          {
+            "check": "policy 无 stale/空 reason",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "装了但未挂载的孤儿包应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "用 policy 掩盖忘记挂载应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "挂载或移 experimental 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 verify-product-use。"
+      },
+      "limitations": "不执行运行时；reachable 包不一定工作。"
+    },
+    {
+      "id": "engineering-experimental-isolation",
+      "title": "实验包状态、发布与默认产品隔离",
+      "sources": [
+        {
+          "path": "packages/experimental/README.md",
+          "start": 24,
+          "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/AGENTS.md",
+          "start": 5,
+          "end": 9,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/experimental-package-policy.ts",
+          "start": 1,
+          "end": 67,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-default-product-isolation.ts",
+          "start": 1,
+          "end": 30,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-default-product-isolation.ts",
+          "start": 45,
+          "end": 300,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-09-12-default-product-experimental-isolation.md",
+          "start": 11,
+          "end": 36,
+          "kind": "history"
+        },
+        {
+          "path": ".agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md",
+          "start": 11,
+          "end": 30,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 362,
+          "end": 381,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/check-workspace-constraints.ts",
+          "start": 593,
+          "end": 613,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "实验包被默认安装/打包/运行时加载，用户得到未承诺能力；发布 experimental 被误当成熟度提升；optional bundle 缺元数据/开关。",
+      "triggers": [
+        "新增/提升 experimental 包",
+        "加依赖",
+        "加 optional bundle",
+        "改默认 profile/Web 入口",
+        "发布检查"
+      ],
+      "obligations": [
+        "Experimental 表示完整公共能力仍评估、不是产品支持承诺；行为/API 可变、能力可撤回；工程/安全/文档/测试/released-data 义务仍适用。",
+        "Optional 是用户显式选择；Official 是项目维护并列入 Plugins 页面；两者都不描述成熟度；发布/默认安装/GUI 可见性也不决定成熟度。",
+        "Promotion 需要命名产品角色、文档化行为/限制、当前 consumer、release 内容、测试证据；移动包/改命名/同步 consumer。",
+        "Release 包和 apps 不得在 runtime sections 命名 experimental 包；默认产品隔离检查传递安装、runtime import、shipped composition。",
+        "发布 experimental 不提升状态；命名默认 @deepseek-ai/dsh-experimental-*；PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES 才 private 且省略 publishConfig，其他公共实验包设 publishConfig.access public。",
+        "verify-default-product-isolation 跟随 runtime/optional/peer、解析 workspace/npm alias、按前缀/目录识别；检查源 import、profile bundle、bundle patch、presets、config trees；disabled 行仍检查。",
+        "Web 默认源图从 HTML module scripts 出发，含 inline/Worker；构建期检查 client preset 与 Web graph 的实际 ECharts/worker/CSS/assets 边。",
+        "运行时 smoke 用真实 Web/Chromium 读取 Loader/fiber/module cache，要求所有 entry active，并用 negative control 证明拒绝。",
+        "Optional bundles 是唯一声明例外：OPTIONAL_BUNDLES 默认关闭，必须 icon、locale meta.title/description、apps/cli runtime dependency、dsh.bundle.patch、非 default bundle；隔离检查仍拒绝实验依赖。"
+      ],
+      "actors": [
+        "experimental owner",
+        "release owner",
+        "Testing",
+        "评审者"
+      ],
+      "steps": [
+        "判断完整公共契约是否 experimental/internal-only。",
+        "保证 release/apps 不依赖它；需用户选择则做 optional bundle。",
+        "改默认 profile/Web 入口时跑静态/source/composition/build-input 检查。",
+        "真实 Web/CLI smoke 观察实际 Loader/module cache，并用 negative control。",
+        "Promotion 时移动包、改命名、更新 imports/config、重审证据。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-default-product-isolation 静态/源/组合",
+          "experimental-package-policy",
+          "check-workspace-constraints",
+          "build-time client/Web graph",
+          "真实 runtime smoke（跨域）"
+        ],
+        "trust": "多门禁较强；runtime smoke 是独立证据。",
+        "failure": "默认安装/运行/打包含实验包、disabled 行逃避、optional 元数据缺失、naming 错。",
+        "exceptions": [
+          "OPTIONAL_BUNDLES 唯一声明例外",
+          "sdk-minimal 不应用 dsh-base 的组合例外"
+        ]
+      },
+      "applicability": "有 experimental 组/可选 bundle 的产品；无该组时保留“成熟度≠发布/可选/可见性”和默认隔离。",
+      "relationships": [
+        "engineering-product-classification 的真实入口图",
+        "Release 域的发布 payload",
+        "Testing 域的 runtime smoke",
+        "Supply 域的依赖隔离"
+      ],
+      "migration": {
+        "strategy": "先定义成熟度与默认隔离，再做 optional bundle，最后补 runtime smoke。",
+        "implementation": [
+          "experimental 命名/发布策略",
+          "默认隔离静态检查",
+          "optional bundle 元数据/开关",
+          "真实 runtime smoke + negative control"
+        ],
+        "requiredSupport": [
+          "profile/bundle 组合",
+          "构建期图检查",
+          "浏览器/CLI smoke"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-experimental-isolation",
+      "verification": {
+        "positive": [
+          {
+            "check": "静态图和真实 runtime 都不含实验依赖",
+            "evidence": "planned"
+          },
+          {
+            "check": "optional bundle 元数据/开关正确",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "默认入口 import 实验包应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "disabled 行仍应被检查，不能逃避",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "删除/替换依赖或降为 optional 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "静态隔离、构建输入、runtime smoke 均未运行；runtime smoke 属 Testing/Release 域。"
+      },
+      "limitations": "不覆盖每个后续用户触发路径或显式安装的 profile 扩展；发布策略不决定成熟度。"
+    },
+    {
+      "id": "engineering-client-component-contract",
+      "title": "客户端组件：注入、数据流与身份",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 7,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 55,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 95,
+          "end": 134,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 135,
+          "end": 169,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 170,
+          "end": 187,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 188,
+          "end": 228,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 229,
+          "end": 272,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 273,
+          "end": 309,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 310,
+          "end": 347,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 348,
+          "end": 381,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 382,
+          "end": 416,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 417,
+          "end": 449,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 7,
+          "end": 33,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 42,
+          "end": 45,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "组件持有 ctx/服务/订阅、传 ReactNode、render 期创建组件、effect 同步状态、全局 current、index key 等都会造成隐藏耦合和 UI 重置。",
+      "triggers": [
+        "写/评审 client 组件",
+        "slot/store/hook/effect/资源读取",
+        "样式/构建",
+        "新增插件 UI"
+      ],
+      "obligations": [
+        "组件通过自己注册的 inject face 接收所有渲染数据：plain data、action、保留 hooks；父渲染点通过 renderSlot 传 owner data。",
+        "props 是数据或回调；React node 通过声明的 child slot 传递，不放 ReactNode/ReactElement/() => JSX.Element。",
+        "slot 注册模块作用域稳定函数组件；不在 render 期创建组件函数；参数通过 props 到达。",
+        "组件永不接收 Cordis ctx、不 import service class poke、不读 React context；不自己 subscribe/useSyncExternalStore。",
+        "上下文来自当前 scope；不用全局 current/active/selection/viewId；同一 session 多 composer/conversation 独立。",
+        "资源走注入的 useResource；store 只承载共享 viewing/interaction state，inject face 给窄接口/selector/actions，handle 在 apply 内。",
+        "切换状态不 remount/替换 DOM；初始状态在第一次 flow 建立，不由 effect 后填。",
+        "useLayoutEffect 不是默认；layout measurement 先回答三问并经 domain expert 确认。effect 不推数据回父级。",
+        "build 走 tsdown plugin；样式 CSS Modules；只 inline images/GIF/SVG 到 CSS；大文本不进 TSX；style 只放运行时计算值。",
+        "key 只在命名实体/实例身份时传；index key 对可变列表失败，不用 key 消 warning。"
+      ],
+      "actors": [
+        "插件作者",
+        "评审者",
+        "domain expert",
+        "测试作者"
+      ],
+      "steps": [
+        "设计 registration：name/children/store/inject，列子状态与稳定 props。",
+        "inject 只返回窄数据/回调/hooks。",
+        "组件用框架 hook 读数，写走 actions，派生用纯函数/useMemo。",
+        "资源/共享状态走 useResource/store；handle 留 apply。",
+        "检查身份/初始状态/effect/key；样式 CSS Module；测试直接喂 props。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "client-components 防御规则",
+          "组件测试",
+          "client package gate（部分）"
+        ],
+        "trust": "评审为主；测试补充。",
+        "failure": "组件持 ctx、props 含 ReactNode、render 期建组件、全局 current、模块级 store handle、index key。",
+        "exceptions": [
+          "已发布 node-valued props 在触碰时转换不扩展",
+          "useLayoutEffect 三问通过+expert 确认",
+          "真正 remount 由调用者拥有并说明"
+        ]
+      },
+      "applicability": "React 类客户端；其他框架映射注入数据/回调 + 稳定身份 + 无全局选中 + 单资源路径 + 窄 store。",
+      "relationships": [
+        "engineering-client-layering 的目录分层",
+        "engineering-conversation-render 的 slot/renderer",
+        "Testing 域的组件测试"
+      ],
+      "migration": {
+        "strategy": "先把数据/回调注入组件，再消除全局状态与 effect 同步。",
+        "implementation": [
+          "registration/inject 设计",
+          "窄 store/actions",
+          "useResource",
+          "稳定组件身份",
+          "组件测试"
+        ],
+        "requiredSupport": [
+          "slot/inject 机制",
+          "组件测试设施"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-client-component-contract",
+      "verification": {
+        "positive": [
+          {
+            "check": "组件不持 ctx/服务/订阅，props 无 ReactNode",
+            "evidence": "planned"
+          },
+          {
+            "check": "slot 注册稳定且 store 窄",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "render 期创建组件函数应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "全局 current/selection 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "改为 inject/apply 数据后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行组件测试。"
+      },
+      "limitations": "评审为主；渲染测试不证明没有隐藏订阅。"
+    },
+    {
+      "id": "engineering-client-layering",
+      "title": "客户端分层与域图",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/client-components.md",
+          "start": 450,
+          "end": 493,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 46,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/client/AGENTS.md",
+          "start": 105,
+          "end": 114,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-client-domain-graph.ts",
+          "start": 1,
+          "end": 104,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "feature 直接 import 另一个 feature、把业务数据塞进 store、或把 React 集成散落到 UI，都会让 layering 腐化。",
+      "triggers": [
+        "新增 client domain 目录",
+        "跨域 import",
+        "改 shared layer",
+        "评审 UI 改动"
+      ],
+      "obligations": [
+        "ui-primitives 消费目录控件，新控件先在 feature 包，第二个消费者才提升；ui-layout/shell 通过 wrapper/覆盖样式适配。",
+        "ui-renderer 业务代码无 value 依赖，只通过 slots/provide-inject hooks/declared stores 扩展。",
+        "feature plugin 之间无 runtime import/re-export；UI 走 slots、行为走 injected services；共享 runtime 只放窄静态 owner。",
+        "data object layer 通过文档化 surface 读，feature 概念不进入。",
+        "三层红线：data object layer（React-free）、render machinery（ctx→React/slot/SessionProvider/uSES）、presentation components（纯 props）。",
+        "业务数据在 object layer 不在 store；store 只放共享 viewing/interaction state。",
+        "rpcId 双向；notifier 发布按手势/结构/流式选择；Web 层纯展示，tool card 从 raw call/result+metadata 派生，未知数据回退 generic，新 model-visible input 仍需 session event。",
+        "多域包用 contract/ + domain 目录 + apply.ts；域间只通过 contract，注册走 slots，不用模块级副作用。",
+        "verify-client-domain-graph：contract 可被所有域 import；domain 不 import sibling；只有顶层 apply/index 可跨域 assembly。"
+      ],
+      "actors": [
+        "feature owner",
+        "shared layer owner",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "判定 feature vs shared layer。",
+        "跨包 UI 走 slot，行为走 injected service。",
+        "多域包建 contract/domain/apply。",
+        "改 shared layer 列消费者回归。",
+        "运行 domain graph + client tests。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-client-domain-graph 目录门禁",
+          "client package tests",
+          "评审"
+        ],
+        "trust": "目录门禁自动；语义 layering 靠评审。",
+        "failure": "sibling-domain import、shared layer 含 feature 概念、object layer 含 React、业务数据进 store。",
+        "exceptions": [
+          "shared layer 真正通用改动需 owner 确认并回归所有消费者"
+        ]
+      },
+      "applicability": "多 feature 前端；无 slot 时用组合/DI 替代。",
+      "relationships": [
+        "engineering-client-component-contract 的组件规则",
+        "engineering-conversation-render 的 renderer 注册"
+      ],
+      "migration": {
+        "strategy": "先建 contract/domain 结构，再接目录门禁。",
+        "implementation": [
+          "contract/ + domain + apply",
+          "slot/injected service",
+          "shared layer owner",
+          "domain graph gate"
+        ],
+        "requiredSupport": [
+          "目录 lint",
+          "client 测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-client-layering",
+      "verification": {
+        "positive": [
+          {
+            "check": "domain graph 绿，无 sibling import",
+            "evidence": "planned"
+          },
+          {
+            "check": "shared layer 无 feature 概念",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "feature plugin 直接 runtime import 另一个 feature 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "业务数据进 store 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "建 contract/移动 assembly 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 domain graph/client tests。"
+      },
+      "limitations": "目录门禁只查相对 import 的目录边界，不查语义。"
+    },
+    {
+      "id": "engineering-remote-capability",
+      "title": "远程能力：每能力一个 service 与 @Remote 纪律",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/remote-and-api.md",
+          "start": 7,
+          "end": 44,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/remote-and-api.md",
+          "start": 45,
+          "end": 82,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/remote-and-api.md",
+          "start": 83,
+          "end": 115,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "把新方法加到已有大 service、在 wrapper 上标 @Remote、手写第二套类型、输出 decode、漏列 resources/principal 都会破坏 API 边界。",
+      "triggers": [
+        "新增 @Remote 方法",
+        "改 API controller/service",
+        "迁移 remote 能力",
+        "处理资源/调用者身份"
+      ],
+      "obligations": [
+        "新远程业务能力是新 service（自己的包或对象），@Remote 标在具体方法上；按业务边界拆，不按调用者数量。",
+        "@Remote 标在真正执行能力的具体方法，不是转发 wrapper。",
+        "client-facing 类型从生成器推断/别名，不手写第二套。",
+        "wire payload 是 JSON，binary 字段级表达；出站不做 decode（生成 codec + Gateway 校验）。",
+        "已发布方法/字段名只增不改；重命名是独立改动。",
+        "每个方法声明触碰的所有 resources；多资源返回逐项 remoteAccess.allows(resource) 过滤；principal 只从 invocation.peer.principal 读。",
+        "API controller/gateway/remotes 只做通用编排，业务分支在拥有包。"
+      ],
+      "actors": [
+        "能力 owner",
+        "API owner",
+        "domain owner",
+        "评审者"
+      ],
+      "steps": [
+        "按业务边界建 service，@Remote 放 concrete 方法。",
+        "Client 类型用生成器别名；payload JSON，binary 字段级。",
+        "列 resources、逐项 filter、principal 从 invocation 读。",
+        "不改已发布名称；重命名单独改动+owner。",
+        "生成 Typert 产物并编译/测试。"
+      ],
+      "enforcement": {
+        "mode": "mixed",
+        "implementation": [
+          "Typert 生成/编译",
+          "Gateway 校验",
+          "resources/principal 测试",
+          "评审"
+        ],
+        "trust": "生成类型/编译自动；访问控制需 denial 测试。",
+        "failure": "wrapper 上标 @Remote、手写类型、输出 decode、漏 resources/principal。",
+        "exceptions": [
+          "同业务边界 service 保持整体",
+          "独立协议数据（事件流/分页/增量/投影/子流）走各自注册模型"
+        ]
+      },
+      "applicability": "有 RPC/远程服务的仓库；无 @Remote/Typert 时映射为每能力 service + 生成类型 + JSON + 资源授权 + principal。",
+      "relationships": [
+        "engineering-architecture-extension-map 的 API 层编排",
+        "Testing 域的生成/契约测试"
+      ],
+      "migration": {
+        "strategy": "先按业务拆 service，再落实五项纪律。",
+        "implementation": [
+          "service 边界",
+          "生成类型",
+          "JSON payload",
+          "resources/principal",
+          "denial 测试"
+        ],
+        "requiredSupport": [
+          "远程框架/生成器",
+          "访问控制"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-remote-capability",
+      "verification": {
+        "positive": [
+          {
+            "check": "新能力在新 service，类型为生成别名",
+            "evidence": "planned"
+          },
+          {
+            "check": "resources/principal 正确且有 denial 测试",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "在 wrapper 上标 @Remote 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "从参数读 principal 应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "把 decorator 移到实现/补 resources 后恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行生成/编译/denial 测试。"
+      },
+      "limitations": "生成类型正确不证明运行时授权；没有真实调用路径的静态正确不等于安全。"
+    },
+    {
+      "id": "engineering-conversation-render",
+      "title": "会话读取与渲染：投影单路径、增量计算、无业务分支",
+      "sources": [
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 7,
+          "end": 49,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 50,
+          "end": 84,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 85,
+          "end": 127,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 128,
+          "end": 161,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 162,
+          "end": 196,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 197,
+          "end": 232,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 233,
+          "end": 278,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/defensive-patterns/conversation-and-session.md",
+          "start": 279,
+          "end": 316,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 137,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/architecture.md",
+          "start": 118,
+          "end": 128,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "组件直接拉 log、每 chunk 全量重算、分组/列表/Markdown 里加业务分支、retention 枚举业务状态，都会造成第二读路径和性能/一致性回归。",
+      "triggers": [
+        "读 Session 数据",
+        "加 conversation node",
+        "改分组/列表/seat/Markdown/UserMessage",
+        "客户端缓存/retention",
+        "流式渲染"
+      ],
+      "obligations": [
+        "Session 数据只通过 Projection 读取与计算：client 读 projection value，不拉 log；计算注册 unit 并发布。",
+        "stateVersion 从 1 开始；序列化 state 或 fold 语义变化就 bump；同一 key 不同版本注册两次 throw。",
+        "默认全量计算；缩小范围需 domain expert 确认；部分 view 只服务可用性，不决定外部可见结果。",
+        "冷读是最后手段；只有无 projection 覆盖才 cold read；cache miss/stale 产生显式结果，不静默切慢路径。",
+        "Retention 一条生命周期规则：显式 SessionReference 引用计数到 0 释放；idle 谓词 refCount==0 && inflight==0。",
+        "新 node 声明复杂度；高频 streaming chunk 不立即发布/不全量重算；append 成本是 D 次 Definition match + 常量 Context lookup；发布词汇 none/animation-frame/immediate。",
+        "分组引擎/列表/seat/Markdown/UserMessage 无业务分支；业务注册 renderer 或把语义放进 data。",
+        "session log 是模型上下文唯一来源；deriveMessages() 从 log 投影；模型可见 ⟺ 已记录，新 model-visible input 需 session event；host 消费者读 typed state，carrier 批量裁剪 client view。"
+      ],
+      "actors": [
+        "session/UI owner",
+        "业务包作者",
+        "评审者"
+      ],
+      "steps": [
+        "找现有 projection/read path；没有才加 cold read 并显式 miss。",
+        "注册 unit，声明 stateVersion/复杂度，变化就 bump。",
+        "高频 chunk 增量更新受影响子树，batching 发布。",
+        "业务包注册 node kind/renderer；shared 层不加分支。",
+        "retention 用引用计数；reclamation 一个谓词。",
+        "写 streaming 性能、cache miss、版本冲突测试。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "projection registry",
+          "renderer 注册",
+          "性能测试",
+          "评审"
+        ],
+        "trust": "评审+测试；没有自动第二读路径检查。",
+        "failure": "组件拉 log、每 chunk 全量、shared 层业务分支、retention 枚举业务状态。",
+        "exceptions": [
+          "结构/终态可 immediate",
+          "host 可有 cold read",
+          "部分 projection view 只服务可用性"
+        ]
+      },
+      "applicability": "有会话/事件流和客户端投影的系统；映射为单一读模型 + 注册计算 + 显式 miss + 增量/批量 + renderer 注册。",
+      "relationships": [
+        "engineering-client-component-contract 的 slot/renderer",
+        "AgentFlows 域的 session log/projection 语义",
+        "Testing 域的性能测试"
+      ],
+      "migration": {
+        "strategy": "先单读路径，再增量化，最后清 shared 层业务分支。",
+        "implementation": [
+          "projection unit/stateVersion",
+          "cache miss 状态",
+          "增量发布",
+          "renderer 注册",
+          "retention 引用计数"
+        ],
+        "requiredSupport": [
+          "projection 框架",
+          "性能测试"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-conversation-render",
+      "verification": {
+        "positive": [
+          {
+            "check": "只有一条 read path，无每 chunk 全量",
+            "evidence": "planned"
+          },
+          {
+            "check": "shared 层无业务分支，retention 可审计",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "组件直接拉 log 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "在分组引擎加业务规则应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "接 projection/注册 renderer 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行性能/投影测试。"
+      },
+      "limitations": "评审+测试为主；快照不覆盖所有流式路径。"
+    },
+    {
+      "id": "engineering-jsdoc-prose",
+      "title": "导出 JSDoc、契约措辞与禁用词",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 173,
+          "end": 173,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 175,
+          "end": 175,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/AGENTS.md",
+          "start": 38,
+          "end": 48,
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-export-jsdoc.ts",
+          "start": 1,
+          "end": 607,
+          "kind": "implementation"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md",
+          "start": 13,
+          "end": 39,
+          "kind": "history"
+        },
+        {
+          "path": "scripts/verify-concrete-terms.ts",
+          "start": 1,
+          "end": 105,
+          "kind": "implementation"
+        }
+      ],
+      "problem": "导出无 JSDoc、注释叙述控制流/评审历史、用模糊隐喻或统一 origin 标签，会让契约不可判定并漂移。",
+      "triggers": [
+        "新增/修改导出/service 方法",
+        "写 README/JSDoc/注释",
+        "命名",
+        "文档措辞"
+      ],
+      "obligations": [
+        "每个模块和导出有简洁 JSDoc 说明非显然契约；function-like 导出含 @param/@returns；verify-export-jsdoc 强制。",
+        "Heritage 成员、插件协议槽、constructor 把文档留在声明处。",
+        "注释/文档陈述完整契约与上下文，不是推理过程；直接具体，不用隐喻。",
+        "写 contract/boundary/shape 前找更精确词；contract 只用于前置/后置/不变量/兼容承诺/义务；保留字面的 process/wire/security/transaction/lifecycle boundary。",
+        "不叙述控制流/测试、不保留评审历史、不复述代码；保留行为/失败/时序/所有权/安全使用事实。",
+        "禁止一个模糊 origin 标签（ASCII prove+nance 十字母 token，任意大小写）出现在 maintained tracked path/text；替换为精确本地概念。",
+        "verify-concrete-terms 扫描 tracked filenames、symlink targets、NFKC 文本，排除 vendor/archived/historical schema。"
+      ],
+      "actors": [
+        "作者",
+        "评审者",
+        "CI"
+      ],
+      "steps": [
+        "在声明处写描述性 JSDoc 和 @param/@returns。",
+        "检查隐喻/模糊词，换成精确名词。",
+        "搜索禁用 token（含路径/标识符），按本地含义替换。",
+        "运行 verify-export-jsdoc 和 verify-concrete-terms。",
+        "文档变更同步 README/JSDoc 契约。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "verify-export-jsdoc",
+          "verify-concrete-terms",
+          "doc-sync quick leaf"
+        ],
+        "trust": "文档存在/术语可自动；语义质量靠评审。",
+        "failure": "导出缺 JSDoc、模糊措辞、禁用 token、注释叙述控制流。",
+        "exceptions": [
+          "插件协议槽/继承成员/constructor 文档留在声明处",
+          "vendor/archived/historical schema 排除"
+        ]
+      },
+      "applicability": "任何导出公共 API 的仓库；无 AST gate 时用 lint/API doc 工具，禁用词作为可配置词表。",
+      "relationships": [
+        "engineering-instruction-tiers 的写作规则",
+        "Documentation 域的 doc-sync",
+        "engineering-plugin-export-forms 的协议槽"
+      ],
+      "migration": {
+        "strategy": "先补导出契约，再接 AST/术语门禁。",
+        "implementation": [
+          "JSDoc 规则",
+          "精确术语表",
+          "禁用词扫描",
+          "doc-sync 接入"
+        ],
+        "requiredSupport": [
+          "AST/文档 linter"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-jsdoc-prose",
+      "verification": {
+        "positive": [
+          {
+            "check": "门禁绿且导出有契约",
+            "evidence": "planned"
+          },
+          {
+            "check": "无禁用 token，注释不叙述控制流",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "导出无 JSDoc 应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "用模糊 origin 标签应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "补 JSDoc/替换术语后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 doc gate。"
+      },
+      "limitations": "Gate 通过不证明文档完整；语义质量仍靠评审。"
+    },
+    {
+      "id": "engineering-dependency-over-handrolling",
+      "title": "依赖优先、当前 owner 与对称性",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 140,
+          "end": 140,
+          "kind": "instruction"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 153,
+          "end": 153,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md",
+          "start": 11,
+          "end": 31,
+          "kind": "history"
+        },
+        {
+          "path": "packages/AGENTS.md",
+          "start": 11,
+          "end": 11,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/cookbook/adding-a-package.md",
+          "start": 46,
+          "end": 75,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "手写协议/解析/重试/glob/SSE，或引入依赖只包一层，都会保留复杂度；无当前 owner 的抽象和无法解释的不对称会积累。",
+      "triggers": [
+        "手写协议/解析/重试/glob/SSE",
+        "新增依赖",
+        "移除抽象",
+        "发现并行值不对称",
+        "评审 NIH"
+      ],
+      "obligations": [
+        "维护良好的外部依赖（或引擎下限内 Node builtin）覆盖手写表面时，替换是首选方向。",
+        "净删除：替换真实 owned code，不是假想未来代码；纯加能力是特性决策。",
+        "新依赖需健康（活跃维护、广泛使用、合理传递足迹）和边界契合（包语义覆盖实际契约，残余手写语义算反对）。",
+        "已定 seam（schemastery、vendored Cordis、twin adapters）不被此策略重开。",
+        "packages/util 的零依赖 charter 是导出纪律（不依赖 harness 包），不是禁外部包。",
+        "每个抽象/状态机/选项/防御性拷贝/兼容路径绑定当前契约或生产 consumer。",
+        "并行值优先对称；无法解释的不对称通常意味着漏了提取。",
+        "命名命名存在的稳定职责，不是第一个实现/未来扩展/Cordis 基类。"
+      ],
+      "actors": [
+        "改动作者",
+        "supply-chain owner",
+        "评审者"
+      ],
+      "steps": [
+        "搜索已有依赖/内置能力，列出可删实现+测试+文档。",
+        "评估健康度和残余语义；纯加能力走特性决策。",
+        "写 dependency-swap 提案：候选、可删表面、残余语义、supply-chain。",
+        "删除 owned 代码/测试，不保留 wrapper 兼容层。",
+        "检查并行值对称性和命名。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "dependency-swap 提案",
+          "评审",
+          "净删除量化"
+        ],
+        "trust": "评审为主；净删除可量化。",
+        "failure": "只包一层、无净删除、无当前 owner 的抽象、无法解释的不对称。",
+        "exceptions": [
+          "已记录 seam/依赖决策不重开",
+          "纯加能力是特性决策"
+        ]
+      },
+      "applicability": "任何仓库；supply-chain 评审映射到目标策略；无 util charter 可省略该例外。",
+      "relationships": [
+        "Supply 域的依赖健康",
+        "engineering-package-shape-exports 的包命名",
+        "engineering-migration-behavior 的简化"
+      ],
+      "migration": {
+        "strategy": "先用净删除门槛筛选依赖，再删代码。",
+        "implementation": [
+          "dependency-swap 提案",
+          "净删除清单",
+          "健康/边界评估",
+          "对称性检查"
+        ],
+        "requiredSupport": [
+          "依赖审查流程"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-dependency-over-handrolling",
+      "verification": {
+        "positive": [
+          {
+            "check": "净删除可量化，依赖健康/边界契合",
+            "evidence": "planned"
+          },
+          {
+            "check": "无当前 owner 的抽象被删，命名与职责一致",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "只包一层依赖应被拒绝",
+            "evidence": "planned"
+          },
+          {
+            "check": "为假想未来代码引入依赖应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "保留手写并记录理由可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行依赖审查。"
+      },
+      "limitations": "依赖健康是判断；净删除不证明替换后行为等价。"
+    },
+    {
+      "id": "engineering-todo-markers",
+      "title": "TODO 标记的紧迫性语义",
+      "sources": [
+        {
+          "path": "AGENTS.md",
+          "start": 164,
+          "end": 164,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/development.md",
+          "start": 196,
+          "end": 204,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "所有 TODO 同一优先级，发布阻塞项和 someday-maybe 无法区分。",
+      "triggers": [
+        "在代码里留已知问题",
+        "发布前扫描",
+        "评审 FIXME"
+      ],
+      "obligations": [
+        "FIXME 应阻塞新发布；发布不应带 open FIXME，除非评审者明确同意该改动仍可合并。",
+        "TODO 资源允许时尽快修。",
+        "XXX 也许 someday 修，最低优先级、无承诺。",
+        "选与紧迫性匹配的标签，让扫描者区分发布阻塞和 someday-maybe。"
+      ],
+      "actors": [
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "判断是否阻塞发布，选 FIXME/TODO/XXX。",
+        "注释写清问题与触发条件。",
+        "发布前扫描 FIXME；保留需评审同意。",
+        "修复后删除标记。"
+      ],
+      "enforcement": {
+        "mode": "review",
+        "implementation": [
+          "发布扫描",
+          "评审"
+        ],
+        "trust": "人工/扫描；没有自动语义检查。",
+        "failure": "FIXME 随发布合并且无同意；标签与紧迫性不符。",
+        "exceptions": [
+          "评审者明确同意可合并的 FIXME 可随发布，但需记录"
+        ]
+      },
+      "applicability": "可直接采用；有 issue tracker 时保留三档语义并映射标签。",
+      "relationships": [
+        "Release 域的发布检查",
+        "Documentation 域的写作"
+      ],
+      "migration": {
+        "strategy": "直接采用三档标签并接入发布扫描。",
+        "implementation": [
+          "标签约定",
+          "发布前扫描",
+          "评审同意记录"
+        ],
+        "requiredSupport": [
+          "代码搜索/发布检查"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-todo-markers",
+      "verification": {
+        "positive": [
+          {
+            "check": "标签与紧迫性一致，发布无未同意 FIXME",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "把发布阻塞项标 XXX 应被评审拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "修复/改标签后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行发布扫描。"
+      },
+      "limitations": "没有自动语义检查。"
+    },
+    {
+      "id": "engineering-duplication",
+      "title": "跨文件重复检测门禁",
+      "sources": [
+        {
+          "path": ".jscpd.json",
+          "start": 1,
+          "end": 15,
+          "kind": "config"
+        },
+        {
+          "path": "package.json",
+          "start": 59,
+          "end": 59,
+          "kind": "config"
+        },
+        {
+          "path": "AGENTS.md",
+          "start": 153,
+          "end": 153,
+          "kind": "instruction"
+        },
+        {
+          "path": ".oxlintrc.json",
+          "start": 230,
+          "end": 252,
+          "kind": "config"
+        }
+      ],
+      "problem": "复制粘贴的实现跨文件扩散，提取信号被忽略；或者为过门禁把 ignore 扩散到生产。",
+      "triggers": [
+        "复制粘贴实现",
+        "提取共享 helper",
+        "修改 packages/scripts 相似代码"
+      ],
+      "obligations": [
+        "jscpd 配置 minTokens 60、minLines 6、mode mild、typescript/tsx、忽略 tests/tsdown.config.ts、exitCode 1。",
+        "pnpm run duplication 检测跨文件克隆。",
+        "复制粘贴不自动等于错误；但 unexplained duplication 是提取信号（与对称性规则一致）。",
+        "除 jscpd 跨文件克隆外，sonarjs 在 packages/apps/examples/scripts/website 的 TS/TSX 上以 error 检测重复分支、相同条件/表达式、相同函数、重复测试标题以及字符类/复合条件重复。",
+        "重复测试标题也被视为错误；测试代码不是保留克隆的豁免区。"
+      ],
+      "actors": [
+        "作者",
+        "评审者"
+      ],
+      "steps": [
+        "提交前跑 pnpm run duplication。",
+        "同一职责提取共享 helper；有意分叉记录原因。",
+        "提取后重跑；不用 ignore 掩盖生产重复。"
+      ],
+      "enforcement": {
+        "mode": "automatic-gate",
+        "implementation": [
+          "jscpd 配置",
+          "duplication script"
+        ],
+        "trust": "自动检测；不判断是否应共享。",
+        "failure": "克隆超阈值、ignore 扩散到生产。",
+        "exceptions": [
+          "tests/ 和 tsdown config 被排除",
+          "生成代码/有意分叉需评审"
+        ]
+      },
+      "applicability": "任何多文件代码库；阈值按语言调整，保留生产重复需解释。",
+      "relationships": [
+        "engineering-dependency-over-handrolling 的对称性/提取",
+        "Automation 域的 gate 调度"
+      ],
+      "migration": {
+        "strategy": "先接 jscpd，再逐项消除/解释重复。",
+        "implementation": [
+          "jscpd 配置",
+          "duplication 命令",
+          "提取/记录"
+        ],
+        "requiredSupport": [
+          "jscpd 或等价工具"
+        ]
+      },
+      "reference": "references/engineering.md#engineering-duplication",
+      "verification": {
+        "positive": [
+          {
+            "check": "duplication 绿，重复要么消除要么有理由",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "check": "为过门禁把 ignore 扩散到生产应被拒绝",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "check": "提取共享 helper 后可恢复",
+            "evidence": "planned"
+          }
+        ],
+        "note": "作者未运行 duplication。"
+      },
+      "limitations": "不判断重复是否应共享；阈值可能漏掉语义重复。\nsonarjs 是局部/单文件模式，不能替代 jscpd 的跨文件 token 克隆检测；两套规则集与阈值需要分别维护。"
+    }
+  ]
+}
