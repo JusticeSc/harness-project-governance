@@ -136,22 +136,18 @@ npm run test-doc-gates
 
 只报告实际运行过的命令及其退出码。
 
-## 已知限制与延后工作
+## 接入你的项目
 
-- 本版本没有通过原始迁移任务完整的 C1–C6 验收。它交付可用命令、参考与明确边界，不是已经完成的全量审计。
-- 1,195 条机制来自一个固定提交；不声称上游全部源码都被语义审阅，也不声称机制账完整穷尽。
-- `verify` 是完整性检查，不是真值检查或采用检查。它不执行项目检查，不能证明某个仓库已经受到治理。
-- 可选检查与工具需要目标项目显式配置和依赖：`policy.checks` 在你填写前为空；文档门禁需要各自固定的解析器；GitHub 审批模块的归属分析需要 Python 与 Pygments。
-- 安装 Skill 不会部署分支保护、必需评审、审批工作流或其他远端强制。可选审批安装器只写入候选文件并报告 `enforcementActive: false`；远端设置必须另行配置并验证。
-- 本初始公开版本的 Node 与操作系统证据有限。文档同时给出 Windows 与 POSIX 命令形式，但不声称每个受支持操作系统都经过独立执行验证；请以随版本发布的验证证据为准。
-- 机制标题、`SKILL.md` 与参考正文目前以中文为主。CLI 与这份入门文档提供英文版本，但详细操作指南尚未完整英译。
-- `package.json` 设置了 `"private": true`，因此没有 npm registry 发布。分发通过本 GitHub 仓库或 `npm pack --ignore-scripts --offline` 生成的离线 tarball 进行。
-- Demo 是带真实示例应用和测试命令的受控走查，不是自主 Agent 采用的证据，也不会在其他仓库运行检查。
+从零依赖核心开始，再按仓库特点接入需要的治理检查：
 
-## 来源、许可与独立性
+- **让工作可追溯。** 把 Skill 的需求、验收、验证与交接流程融入现有开发方式。
+- **按项目选择检查。** 为文档、Agent Note 与审批模块配置实际规则，并接入项目自己的检查命令和 CI；GitHub 审批与分支保护由项目策略统一管理。
+- **方便获取与分发。** 可以直接使用本仓库，或下载 [Releases 页面](https://github.com/JusticeSc/harness-project-governance/releases)的离线包。
 
-本项目是独立提取，与 DeepSeek 没有隶属关系，也未获得其背书或赞助。“DeepSeek Harness”仅指上游来源。
+核心安装与演示流程已在 Windows、Linux 的 Node.js 22.19 和 24 上通过验证。可复跑命令与各模块的适用范围见[验证说明](PUBLIC-VERIFICATION.md)。详细操作参考以中文为主，同时提供英文 CLI 输出和入门文档。
 
-知识与参考材料提取自 [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`。来源衍生材料与被复制的摘录保留上游 MIT 声明，见 [SOURCE-LICENSE.txt](SOURCE-LICENSE.txt)。本包自身代码与文档使用 [LICENSE](LICENSE)。归属声明只记录来源，不表示未审阅的上游内容经过了语义核对，也不表示上游保证已被完整重新实现。
+## 许可与致谢
 
-由于包为 private，请使用 GitHub 克隆、安装辅助脚本或离线 tarball，而不要期待从 npm registry 安装。tarball 包含 `package.json` 声明的运行文件；安装到 `.agents/skills/harness-project-governance` 仍是 Agent 发现该 Skill 的受支持路径。
+本项目独立维护，借鉴并提取了 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317) 的项目治理实践，不是 DeepSeek 官方产品。
+
+采用 [MIT 许可](LICENSE)，来源归属与原始 MIT 声明保留在 [SOURCE-LICENSE.txt](SOURCE-LICENSE.txt)。

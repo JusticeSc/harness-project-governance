@@ -134,22 +134,18 @@ npm run test-doc-gates
 
 Report only commands you actually ran and their exit codes.
 
-## Known Limitations and Deferred Work
+## Adopt it in your project
 
-- The original migration's full C1–C6 acceptance envelope is not certified by this release. The package provides working commands, references, and explicit boundaries, not a completed full audit.
-- The 1,195 mechanisms come from one pinned commit; no claim is made that all upstream source content was semantically reviewed or that the ledger is exhaustive.
-- `verify` is an integrity check, not a truth check or an adoption check. It does not execute project checks and cannot prove that a repository is governed.
-- Optional checks and tools require explicit target configuration and dependencies. `policy.checks` is empty until you populate it; documentation gates need their pinned parsers; the GitHub approval module needs Python and Pygments for ownership analysis.
-- Installing the Skill does not deploy branch protection, required reviews, approval workflows, or other remote enforcement. The optional approval installer writes candidate files and reports `enforcementActive: false`; remote settings must be configured and verified separately.
-- Node and operating-system evidence is limited for this initial public release. Windows and POSIX command forms are provided, but the README does not claim that every supported OS has been independently exercised; consult the verification evidence published with the release.
-- Mechanism titles, `SKILL.md`, and reference prose are currently Chinese-first. The CLI and this landing documentation are available in English, but the detailed operating guidance is not yet fully translated.
-- `package.json` has `"private": true`, so there is no npm registry release. Distribution is through this GitHub repository or an offline tarball created with `npm pack --ignore-scripts --offline`.
-- The demo is a controlled walkthrough with a real sample app and test command. It is not evidence of autonomous agent adoption, and it does not run checks in other repositories.
+Start with the zero-dependency core, then add the governance checks that fit your repository:
 
-## Provenance, license, and independence
+- **Keep work traceable.** Use the Skill's requirement, acceptance, verification, and handoff workflow alongside your existing development process.
+- **Choose your checks.** Configure the optional documentation, Agent Note, and approval modules for your project, and connect them to your own check commands and CI. Keep GitHub approvals and branch protection under your project's policy.
+- **Share it easily.** Use this repository or the offline package on the [Releases page](https://github.com/JusticeSc/harness-project-governance/releases).
 
-This is an independent extraction and is not affiliated with, endorsed by, or sponsored by DeepSeek. “DeepSeek Harness” refers to the upstream source only.
+The core installation and demo workflows have passed on Windows and Linux with Node.js 22.19 and 24. See [verification results and scope](PUBLIC-VERIFICATION.md) for reproducible commands and module-specific details. Detailed operating references are Chinese-first, with English CLI output and getting-started documentation.
 
-The knowledge and reference material were extracted from [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) at commit `687f282e8625c6b8d11ff58211a90524be2e4317`. Source-derived material and copied excerpts retain the upstream MIT notice in [SOURCE-LICENSE.txt](SOURCE-LICENSE.txt). This package's own code and documentation are licensed under [LICENSE](LICENSE). Attribution records provenance; it does not imply that uninspected upstream content was semantically reviewed or that upstream guarantees were fully reimplemented.
+## License and acknowledgements
 
-Because the package is private, use GitHub clones, the install helper, or an offline tarball rather than expecting an npm registry install. The tarball includes the runtime files declared in `package.json`; installation into `.agents/skills/harness-project-governance` remains the supported path for Agent discovery.
+This independently maintained project draws on the governance practices of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness/tree/687f282e8625c6b8d11ff58211a90524be2e4317). It is not an official DeepSeek product.
+
+Released under the [MIT License](LICENSE). Source attribution and the original MIT notice are preserved in [SOURCE-LICENSE.txt](SOURCE-LICENSE.txt).
