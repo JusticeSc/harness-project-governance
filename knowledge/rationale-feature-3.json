@@ -332,7 +332,31 @@
           "path": ".agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md",
           "start": 1,
           "end": 43,
-          "kind": "config"
+          "kind": "instruction"
+        },
+        {
+          "path": "scripts/primary-runtime/prepare.ts",
+          "start": 121,
+          "end": 131,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/primary-runtime/prepare.spec.ts",
+          "start": 25,
+          "end": 47,
+          "kind": "test"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/src/index.ts",
+          "start": 85,
+          "end": 129,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/skill/tool-workspace-dependencies/README.md",
+          "start": 40,
+          "end": 47,
+          "kind": "instruction"
         }
       ],
       "problem": "A version string or directory name cannot prove which bytes were assembled; two builds with the same label can differ, and a silent assembly change can masquerade as the same artifact.",
@@ -361,7 +385,7 @@
       ],
       "enforcement": {
         "mode": "build",
-        "implementation": "A manifest digest computed from locked inputs; installer compares it before reuse.",
+        "implementation": "Current source: scripts/primary-runtime/prepare.ts computes SHA-256 over JSON {format: 7, target, pythonVersion, pythonRelease, nodeVersion (only when pnpm is present), artifact: runtimeLock.targets[target], wheels, pythonPackages, pnpm}. Install metadata validation in tool-workspace-dependencies accepts payloadDigest only as 64 lowercase hex and reuses an installation only when the manifest matches. Source tests cover target isolation, shared-wheel/package-manager invalidation and Python-only identity; they were not executed here. Target adoption remains planned.",
         "trust": "The manifest is the build's claim; the installer must verify the bytes it consumes.",
         "failure": "Missing or mismatched identity forces a rebuild or reinstall rather than silent reuse.",
         "exceptions": [
@@ -386,11 +410,12 @@
       "verification": {
         "evidence": "planned",
         "positive": [
-          "Two builds from the same locked inputs share an identity; a changed archive changes it.",
-          "An unrelated target does not invalidate the selected target."
+          "Two builds from the same locked inputs share an identity; a changed archive changes it; a target identity is unchanged by another target's archive.",
+          "A shared wheel, a distribution version, the pnpm version, or Python-only omission changes the identity as specified."
         ],
         "rejection": [
-          "A changed assembler without a format bump is rejected as ambiguous identity."
+          "A malformed payloadDigest (not 64 lowercase hex) is rejected at manifest validation.",
+          "A changed assembler that keeps format 7 is not detectable by the digest; the change review must reject the missing bump. The inspected source has no automatic assembler-change check, so this is not a runtime rejection guarantee."
         ],
         "recovery": [
           "A legacy manifest without a digest is readable but never treated as a current match."
@@ -398,6 +423,7 @@
       },
       "limitations": [
         "A digest proves input identity, not runtime correctness.",
+        "The format bump is developer discipline: the digest hashes a literal `format` value, so an extraction/assembly change that does not bump it is invisible to the build and installer. Do not claim automatic detection.",
         "Key-order rules are subtle; they must be documented and tested."
       ]
     },
@@ -1858,6 +1884,18 @@
           "start": 14,
           "end": 24,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/auto-review/src/index.ts",
+          "start": 634,
+          "end": 725,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/core/tools/src/index.ts",
+          "start": 1725,
+          "end": 1775,
+          "kind": "implementation"
         }
       ],
       "problem": "Treating a denial as an exception, or a failure as a denial, hides the reason, invites retries and can turn a refusal into execution.",
@@ -1887,7 +1925,7 @@
       ],
       "enforcement": {
         "mode": "runtime",
-        "implementation": "Typed result variants; dispatch checks the allowed variant only.",
+        "implementation": "Typed result variants; dispatch checks the allowed variant only. Current source: auto-review returns `kind: 'deny'` under `never`, and only after downstream allows returns `kind: 'ask'` under `ask`; the tools approval seam maps `allowed-once` to allow and `rejected`/`cancelled`/`unavailable` to distinct denials. Target adoption remains planned; source tests were not executed here.",
         "trust": "The gate owns the decision; the executor owns the failure.",
         "failure": "Failure is surfaced as failure; denial never executes.",
         "exceptions": [
@@ -1912,7 +1950,7 @@
       "verification": {
         "evidence": "planned",
         "positive": [
-          "A reviewer denial returns the approval service's `ask` decision when the policy is `ask`; `allowed-once` executes, while `rejected`, `cancelled`, and `unavailable` deny and the body does not run."
+          "Under approval policy `ask`, a reviewer denial is returned as the tools pipeline's `ask` decision (not an approval-service result); the approval service then maps `allowed-once` to allow and `rejected`, `cancelled`, `unavailable` to deny with distinct reasons, and the body does not run. Under `never`, the reviewer denial is final and no approval prompt occurs."
         ],
         "rejection": [
           "A denial is never retried automatically.",
@@ -1925,7 +1963,8 @@
       },
       "limitations": [
         "More result variants complicate callers.",
-        "Some failures are ambiguous; the contract must choose a default."
+        "Some failures are ambiguous; the contract must choose a default.",
+        "The tools pipeline's `ask` decision and the approval service's `ask` policy are different layers; do not report one as the other."
       ]
     },
     {
@@ -3036,6 +3075,24 @@
           "start": 12,
           "end": 27,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/mcp/mcp-client/package.json",
+          "start": 31,
+          "end": 52,
+          "kind": "config"
+        },
+        {
+          "path": "packages/mcp/mcp-client/src/connection.ts",
+          "start": 257,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/mcp/mcp-client/src/tools.ts",
+          "start": 118,
+          "end": 143,
+          "kind": "implementation"
         }
       ],
       "problem": "Hand-rolled protocol negotiation or a forked SDK drifts from the standard, misses capabilities and multiplies maintenance.",
@@ -3063,7 +3120,7 @@
       ],
       "enforcement": {
         "mode": "architecture",
-        "implementation": "SDK client inside a supervisor; no parallel protocol code.",
+        "implementation": "Current source: SDK Client inside the connection supervisor with versionNegotiation { mode: 'auto' }; bridge calls high-level listTools/callTool and has no parallel protocol code. The archived note says client 2.0.0; the fixed-commit manifest pins @modelcontextprotocol/client 2.2.0. Target adoption remains planned; source tests were not executed here.",
         "trust": "The SDK owns the wire; the harness owns lifecycle.",
         "failure": "Negotiation failure is reported; no fallback protocol guess.",
         "exceptions": [
@@ -3088,7 +3145,7 @@
       "verification": {
         "evidence": "planned",
         "positive": [
-          "`dsh-mcp-client` uses the official `@modelcontextprotocol/client` SDK with SDK-owned protocol negotiation, discovery, list-change subscriptions, pagination, request headers, cancellation and output validation; the bridge calls high-level `listTools`/`callTool` and adds no parallel pagination implementation."
+          "`@deepseek-ai/dsh-mcp-client` declares `@modelcontextprotocol/client` 2.2.0 and constructs `new Client(..., { versionNegotiation: { mode: 'auto' } })`; discovery calls high-level `client.listTools(undefined, { cacheMode: 'refresh' })`, and each registered tool delegates to `client.callTool(..., { toolDefinition: tool })`; the bridge adds no parallel pagination code."
         ],
         "rejection": [
           "Unsupported capabilities are reported, not emulated.",
@@ -3100,7 +3157,8 @@
       },
       "limitations": [
         "SDK bugs become yours to work around.",
-        "SDK version upgrades can be breaking."
+        "SDK version upgrades can be breaking; the archived note names client 2.0.0 while the fixed-commit manifest pins 2.2.0.",
+        "The no-parallel-pagination claim concerns tools discovery; the bridge also exposes SDK resource methods, which receive and return the SDK cursor unchanged rather than iterating it."
       ]
     },
     {
@@ -3111,6 +3169,36 @@
           "path": ".agents/notes/implemented/feature/2026-09-24-session-inspector.md",
           "start": 11,
           "end": 30,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/implemented/feature/2026-09-24-session-inspector.md",
+          "start": 26,
+          "end": 28,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/inspector-profile/cordis.patch.yml",
+          "start": 1,
+          "end": 5,
+          "kind": "config"
+        },
+        {
+          "path": "packages/experimental/inspector/src/host/inspection/network.ts",
+          "start": 39,
+          "end": 160,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/experimental/inspector/README.md",
+          "start": 136,
+          "end": 137,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/experimental/inspector/README.md",
+          "start": 143,
+          "end": 151,
           "kind": "instruction"
         }
       ],
@@ -3140,11 +3228,11 @@
       ],
       "enforcement": {
         "mode": "runtime",
-        "implementation": "Read-only APIs; no write handles; lazy references.",
+        "implementation": "Read-only APIs; no write handles; lazy references. The source's read-only Session Inspector (existing loaded window and pagination, only the selected table subscribes) is distinct from the opt-in inspector-profile bundle that adds the debugging Worker and fetch capture.",
         "trust": "The inspector is outside the authority path.",
         "failure": "A failed read shows unavailable; it does not repair or write.",
         "exceptions": [
-          "The default-off `inspector-profile` optional bundle is an explicit exception: enabling it starts the NodeJS Inspector with local code execution and unredacted Host fetch capture (complete URL, headers, request/response bodies, status, timing, errors); closing the debugging window does not stop capture. Redaction is an adoption requirement, not source behavior."
+          "The default-off `inspector-profile` optional bundle is a separate privileged capability, not part of the diagnostic-read contract: its patch enables the Inspector with `captureFetch: true`, starting the NodeJS Inspector with local code execution and unredacted Host fetch capture (complete URL, headers, request/response bodies, status, timing, errors, cancellation); closing the debugging window does not stop capture. Redaction is an adoption requirement, not source behavior."
         ]
       },
       "applicability": [
@@ -3169,7 +3257,7 @@
         ],
         "rejection": [
           "Opening/closing the default Inspector does not change ownership or run state.",
-          "Enabling the default-off `inspector-profile` bundle starts the NodeJS Inspector and unredacted Host fetch capture without a debugging argument; closing the debugging window does not stop capture."
+          "Treating the read-only contract as covering the debugging bundle fails: enabling `inspector-profile` activates `captureFetch: true`, the NodeJS Inspector with local code execution, and unredacted Host fetch capture without a debugging argument; closing the debugging window does not stop capture."
         ],
         "recovery": [
           "A missing/partial record shows unavailable; no reconstruction write occurs."
@@ -3177,7 +3265,7 @@
       },
       "limitations": [
         "Read-only views may lag live state.",
-        "The opt-in `inspector-profile` bundle permits local code execution and unredacted Host fetch capture; it does not redact credentials, cookies, query values or payloads. A deployment must add redaction; the source does not."
+        "The opt-in `inspector-profile` bundle is a separate privileged capability, not a property of the read-only Inspector: it permits local code execution and unredacted Host fetch capture; it does not redact credentials, cookies, query values or payloads. A deployment must add redaction; the source does not."
       ]
     },
     {
@@ -3369,6 +3457,24 @@
           "start": 1,
           "end": 46,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 38,
+          "end": 42,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/README.md",
+          "start": 92,
+          "end": 94,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/jobs/tool-jobs/src/index.ts",
+          "start": 194,
+          "end": 300,
+          "kind": "implementation"
         }
       ],
       "problem": "Completion delivered only by injection never reaches an idle owner; waking unconditionally can launder a user interrupt into a new turn and create a self-exciting wake chain.",
@@ -3390,15 +3496,15 @@
         "Completion-delivery ledger"
       ],
       "steps": [
-        "Classify owner state.",
-        "Inject for busy; wake with followup for idle.",
-        "Leave cancelled turns closed.",
-        "Apply an optional turn-count cap; restore on user message.",
+        "Classify owner state from the live driver; only an idle owner is a wake candidate.",
+        "Inject for a busy or cancelled-converging owner; call followup for an idle owner under wakeup.",
+        "Suppress settlements that are awaited, model-killed, teardown or unowned.",
+        "Apply an optional per-owner turn-count cap; refill it only when user-authored input is claimed.",
         "Use quiet explicitly for deterministic transcripts."
       ],
       "enforcement": {
         "mode": "runtime",
-        "implementation": "A single delivery owner selects injection or wake from the live owner state; cancellation and cap are enforced before opening a turn.",
+        "implementation": "Current source: @deepseek-ai/dsh-tool-jobs owns delivery. Its settlement subscription ({ owners: 'scope' }) skips event.awaited, model-killed jobs, unowned jobs and teardown settlements; a wakeup delivery calls followup() only when owner.status === 'idle', otherwise inject(). maxConsecutiveWakes is counted per exact Agent in a WeakMap and reset only by agent/inbox/claimed with message.source.kind === 'user'. The old registry reported bit/onJobDone no longer owns delivery. Target adoption remains planned and source tests were not executed here.",
         "trust": "The session driver owns turn state; the job registry cannot force a new turn.",
         "failure": "A cancelled owner is not woken; cap exhaustion degrades to injection and waits for the next turn.",
         "exceptions": [
@@ -3415,27 +3521,29 @@
         "rationale-feature-3-single-flow-owner"
       ],
       "migration": {
-        "strategy": "Move delivery into one owner that reads live owner state; keep the registry as a ledger.",
-        "implementation": "Add busy/idle branch, cancellation guard, optional turn cap and explicit quiet mode; test wake of an idle owner and a cancelled turn.",
-        "requiredSupport": "A session driver that exposes running/idle/cancelled state and a followup wake primitive."
+        "strategy": "Keep the lane decision in the component that owns completion delivery; use the job registry for routing/settlement facts, not for forcing a turn.",
+        "implementation": "Add a busy/idle branch, teardown/awaited/model-kill suppression, an optional per-owner turn cap refilled only on human input, and an explicit quiet mode; test wake of an idle owner and non-wake of a cancelled-converging owner.",
+        "requiredSupport": "A session driver exposing live owner status and a followup wake primitive, plus a settlement subscription that distinguishes awaited, killed, teardown and unowned work."
       },
       "reference": "references/rationale-feature-3.md#rationale-feature-3-completion-delivery-lane",
       "verification": {
         "evidence": "planned",
         "positive": [
-          "An idle owner is woken and continues; a busy owner receives injection without a new turn."
+          "An idle owner is woken and continues; a busy owner receives injection without a new turn; under quiet the idle owner stays on injection.",
+          "An awaited settlement, a job killed through job_kill, a teardown settlement and an unowned job each produce no notice; another mounted preset cannot deliver across its scope."
         ],
         "rejection": [
-          "A cancelled turn is not reopened; a completion cannot busy-poll the owner."
+          "A cancelled-converging owner is not reopened; a completion cannot busy-poll the owner.",
+          "A plugin-queued notice does not refill the wake budget; only a claimed user-authored message does."
         ],
         "recovery": [
-          "Cap exhaustion degrades to injection; a user message restores the wake budget; quiet mode is explicit."
+          "Cap exhaustion degrades to injection until the next turn; a user-authored claim restores the budget; quiet mode is explicit."
         ]
       },
       "limitations": [
-        "Waking creates turns and can be self-exciting; the cap is opt-in.",
-        "Quiet mode trades immediacy for deterministic transcripts.",
-        "The source later moved the reported bit/onJobDone ledger; the rule survives, implementation details did not."
+        "Waking creates turns and can be self-exciting; the cap is opt-in and a spent budget is not restored by time.",
+        "Quiet mode trades immediacy for deterministic transcripts, and a notice past the cap waits silently.",
+        "The archived note's reported bit/onJobDone left with the jobs seam consolidation; the current delivery ledger is event.awaited plus the model-kill set and teardown cause in tool-jobs, with a per-Agent WeakMap for the cap. Do not reintroduce the old registry names."
       ]
     }
   ]

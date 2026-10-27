@@ -2,7 +2,7 @@
 
 本参考只提取 `deepseek-harness` 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317` 中以架构 Note 形式记录的、**可迁移的工程治理机制**。它不复制该项目的业务代码，也不把项目规模、部署形态或工具链当作放松义务的理由。每条机制的完整机读记录见 `knowledge/rationale-architecture-2.json`，覆盖与阅读范围见 `research/rationale-architecture-2-coverage.json`。
 
-阅读方式：先按“触发条件”定位机制，再执行“迁移步骤”，最后按“完成信号”和“证据边界”核对。所有验证项在本轮均为 `planned`（未执行），不得据本文声称任何目标仓库已通过验证。
+阅读方式：先按“触发条件”定位机制，再执行“迁移步骤”，最后按“完成信号”和“证据边界”核对。所有验证项在本轮均为 `planned`（未执行），不得据本文声称任何目标仓库已通过验证。来源路径中的 `archived`/`implemented`/`proposed` 目录与 coverage 的逐文件 Lifecycle 记录决定历史/提案/现役；knowledge 记录不设 `authority` 字段，`sources[].kind` 表示文档角色而非生命周期。
 
 ---
 

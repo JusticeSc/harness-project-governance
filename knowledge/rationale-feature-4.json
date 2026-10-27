@@ -1523,7 +1523,7 @@
       ],
       "enforcement": {
         "mode": "配置默认值 + 启动检查 + 组合测试",
-        "implementation": "源端当前 base/后端配置与反馈授权实现；目标接入仍 planned。旧 SDK launcher 的冻结规则只作为历史信任边界，不声称重新实现该已删除工具链",
+        "implementation": "源端当前 base 行 mode 表达式、OTel 后端闭合模式与反馈授权实现；非空 DSH_TELEMETRY_DISABLED 由 profile 启动上下文传入并在 readProfilePatches 中追加 session-telemetry-otel 的 disabled patch（加载前生效）；源测试存在但本次未执行。目标接入仍 planned。旧 SDK launcher 的冻结规则只作为历史信任边界，不声称重新实现该已删除工具链",
         "trust": "部署者；代码不能替用户授权",
         "failure": "未授权则不发送/不启用；不支持模式拒绝；硬 opt-out 优先",
         "exceptions": "当前 OTel 后端不提供内部部署 FULL 例外；归档中的 FULL/旧 launcher 许可仅保留为历史，不覆盖当前闭合模式"
@@ -1644,6 +1644,24 @@
           "start": 11,
           "end": 21,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/boot/app-boot/src/profile-context.ts",
+          "start": 29,
+          "end": 64,
+          "kind": "implementation"
+        },
+        {
+          "path": "apps/cli/src/profile-boot.ts",
+          "start": 314,
+          "end": 322,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session/session-telemetry-otel/tests/otel.spec.ts",
+          "start": 732,
+          "end": 773,
+          "kind": "test"
         }
       ]
     },

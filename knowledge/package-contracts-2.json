@@ -253,27 +253,22 @@
         "需要在无 HMR 的启动型 profile 中替换正在运行的包"
       ],
       "obligations": [
-        "插件开关只更新 profile cordis.patch.yml 中最后匹配 override 的 disabled，或在无匹配时追加；仅含 id+disabled 且与 bundle 层/其余 patch 合成后状态相同的 override 被移除",
-        "bundle 开关修改 package.json 中有序的 dsh.profile.bundles；禁用保留依赖，启用追加到末尾（可能改变配置优先级）",
-        "安装前检查版本兼容（本地路径读自身 package.json，registry spec 通过 pnpm 查询 engines/peerDependencies）；不满足 DSH 要求时在 pnpm 运行前拒绝，不下载、不执行构建脚本",
-        "git/tarball spec 只能安装后判定；失败时恢复 manifest 与 lockfile、按恢复后的 lockfile 重装，并回报实际状态",
-        "安装失败恢复 package.json 与 pnpm-lock.yaml；pnpm 已下载文件可残留；后续步骤失败保留已完成变更并报告剩余状态",
-        "移除顺序固定：从 dsh.profile.bundles 移除、卸载运行时贡献、pnpm remove、发布运行解析；某步失败阻止后续步骤，发布失败不恢复已删除包",
-        "无 HMR 时，若仍有已取消选择的启动 bundle 在运行，后续包操作保留整张当前表并报 restart-required",
-        "写 profile manifest 的 CLI 与服务共享锁；pnpm 在 HMR 队列之外运行；移除时先在 pnpm 前取消选择并卸载 bundle",
-        "结果必须报告实际剩余状态（最后阶段、目标、saved-state 变化、application 状态、错误码），不得把 pnpm 退出码 0 当作发布成功",
-        "切换只改 profile 的 `cordis.patch.yml` 最后一个匹配 override 的 `disabled`，或在无匹配时追加；若 bundle 层与剩余 profile patch 已给出请求状态，则只含 id+disabled 的 override 被移除且不追加，profile patch 只记录对 bundle 的偏离。",
-        "home 与 invocation patch 优先级更高且不参与上述比较；bundle toggle 改 `package.json` 的 `dsh.profile.bundles` 有序列表，禁用保留依赖，启用追加到末尾（可能改变优先级），安装默认启用新 bundle。",
-        "安装失败恢复 profile manifest 与 lockfile；安装成功后 activation 失败可能保留已保存依赖与选择；`cancelInstall(requestId)` 在 Git 检查/pnpm 退出且文件恢复后答 cancelled，apply 阶段答 too-late；`plugin-manager/install-log` 与 `install-state` 流式报告。",
-        "registry 计划从 `options.registry` 或配置 registry 开始，仅在不可达/超时/无此包或版本时 fall through；私有 registry 单独询问；pnpm 自身 registry 只有在指向 npm 或 fallback 时才算集合一部分。",
-        "pnpm 11 阻止依赖脚本时，`pendingBuilds` 列出待批包名；`approvedBuilds` 需先经用户批准，按包名持久化并保留拒绝/通配规则不可覆盖；安装前对本地路径/registry spec 检查 `engines` 与 `peerDependencies`，不满足 DSH 要求则不下载不跑脚本。",
-        "`restart-required` 带 `restartReason`（`no-hmr`/`package-moved`/HMR pending）；移除顺序是 deselection → runtime 贡献卸载 → `pnpm remove` → publication；无 HMR 时 deselected startup bundle 仍运行，后续操作保留整表并报 restart-required。",
-        "`waitForInstall(requestId)` 在响应丢失后等待活动安装（含不可取消的 applying 阶段），返回与原调用相同结果；请求不活动时返回 `null`，已完成结果不保留，`null` 不代表成功或取消。",
-        "失败/取消/装入无组合包 patch 的包的运行恢复 `package.json` 与 `pnpm-lock.yaml`；`packageResult.kind` 按退出方式与输出分类最后一次运行，`registries` 列出问过的注册表，`bundle` 给出完成运行新增的包，`version` 可能因 pnpm `minimumReleaseAge` 等原因不同于 `inspect` 读到的版本。",
-        "`listBundles` 携带每个组合包的 description、patch 声明的行、存活条目与覆盖的内置行；选中却无 patch 的名字标为 `not-bundle`，未选中的普通依赖不列出；`OPTIONAL_BUNDLES` 点名的组合包默认关闭、随安装提供、永不可卸载、也不被随附模板选中。",
+        "插件开关只更新 profile `cordis.patch.yml` 中最后一个匹配 override（entry id + 可选 module-name assertion）的 `disabled`，无匹配时追加；仅含 id+disabled 的 override 在与 bundle 层及剩余 profile patch 合成后已给出请求状态时被移除且不追加，profile patch 只记录对 bundle 的偏离。home/invocation patch 优先级更高但不参与该比较。",
+        "bundle 开关修改 `package.json` 中有序的 `dsh.profile.bundles`：禁用保留依赖，启用追加到末尾（可能改变配置优先级），安装默认启用新 bundle。",
+        "安装前检查版本兼容：本地路径读自身 `package.json`，registry spec 通过 pnpm 查询所选版本的 `engines`/`peerDependencies`；不满足 DSH 要求时在 pnpm 运行前拒绝，不下载、不执行构建脚本。git/tarball spec 只能安装后判定；失败时恢复 manifest 与 lockfile、按恢复后的 lockfile 重装，并回报实际状态。",
+        "安装失败/取消或装入无组合包 patch 的包：恢复 `package.json` 与 `pnpm-lock.yaml` 快照；pnpm 已下载文件可残留，用户 patch、应用数据、诊断日志不受影响。安装成功后 activation 失败可能保留已保存依赖与选择；后续阶段失败保留已完成变更并报告剩余状态。",
+        "移除顺序固定：从 `dsh.profile.bundles` 移除 → 卸载运行时贡献 → `pnpm remove` → 发布运行解析；某步失败阻止后续步骤，发布失败不恢复已删除包。`pnpm remove` 使用本进程上次安装该包的 registry；进程启动前安装的包使用安装首选的 registry。",
+        "无 HMR 时，若仍有已取消选择的启动 bundle 在运行，后续包操作保留整张当前表并报 `restart-required`；`restartReason` 区分 `no-hmr`/`package-moved`/HMR pending。HMR 安装会拒绝仍在启动期运行、无法移除的包；非运行的 bundle 仍可安装/移除但激活等重启。",
+        "写 profile manifest 的 CLI 与服务共享锁；pnpm 在 HMR 队列之外运行；安装成功后才选择 bundle，移除则在 pnpm 前先取消选择并卸载 bundle；HMR 不获取该锁。",
+        "结果必须报告实际剩余状态：最后尝试阶段、目标、saved-state 变化、application 状态、错误码，以及可执行的 `nextStep`；不得把 pnpm 退出码 0 当作发布成功。`packageResult.kind`、`registries`、新增的 `bundle`、可能与 inspect 不同的 `version` 都要如实回报。",
+        "`cancelInstall(requestId)` 在 Git 检查/pnpm 退出且文件恢复后答 `cancelled`，apply 阶段答 `too-late`；`waitForInstall(requestId)` 等待活动安装（含不可取消的 applying 阶段），返回与原调用相同结果，请求不活动时返回 `null`，已完成结果不保留，`null` 不代表成功或取消；`plugin-manager/install-log` 与 `install-state` 流式报告。",
+        "registry 计划从 `options.registry` 或配置 registry 开始，只在不可达/超时/无此包或版本时 fall through；私有 registry 单独询问；pnpm 自身 registry 只有在指向 npm 或某个 fallback 时才算集合一部分。git/tarball 的 host 失败不被另一 registry 替代；`failedAt` 区分无法到达的 spec host 与 registry。GitHub 仓库在 pnpm 前用 `git ls-remote` 检查，`githubConnectionTimeoutMs` 默认 5000ms，禁用凭据 helper/prompt，只有网络失败/超时阻止安装。",
+        "pnpm 11 阻止依赖脚本时，`pendingBuilds` 列出待批包名（含早前尝试与本次 ignored 的名字）；`approvedBuilds` 需先经用户批准，按包名持久化并保留拒绝/通配规则不可覆盖；服务只校验 pending 名称，不验证对话历史。",
+        "`listBundles` 携带每个组合包的 `description`、patch 声明行、存活条目与覆盖的内置行；选中却无 patch 的名字标为 `not-bundle`，未选中的普通依赖不列出；`OPTIONAL_BUNDLES` 点名的组合包默认关闭、随安装提供、永不可卸载、也不被随附模板选中。`official`/`availability`/`installed`/`meta`/`source` 要区分发布、可读安装、profile 声明与安装来源；无法加载的选中 bundle 保留 `error` 且可取消选择但不能启用，管理组件文件不可读时仍受保护。",
         "每个完成的操作发出 `plugin-manager/changed`；在管理器之外应用的一代 patch（HMR 监视到 CLI/手工编辑）不发通知，页面要到下一次读取才知道。",
-        "配置 `outputBytes` 默认 16384（返回的 pnpm 诊断上限，完整日志在日志路径）、`lockWaitMs` 默认 120000、`idleTimeoutMs` 默认 600000（service 包操作无捕获输出上限，超时终止；继承终端描述符的 CLI 不受此限）。",
-        "失败保留已完成步骤：安装 pnpm/校验失败恢复 manifest+lock；启用失败保留依赖与选择；发布失败保留磁盘改动与上一张运行时表；卸载在失败步骤停止且不重新启用。"
+        "配置 `outputBytes` 默认 16384（返回的 pnpm 诊断上限，完整日志在日志路径）、`lockWaitMs` 默认 120000、`idleTimeoutMs` 默认 600000（service 包操作无捕获输出上限，超时终止并分类 `timeout`、不重试下一 registry；继承终端描述符的 CLI 不受此限）。",
+        "失败保留已完成步骤：安装 pnpm/校验失败恢复 manifest+lock；启用失败保留依赖与选择；发布失败保留磁盘改动与上一张运行时表；卸载在失败步骤停止且不重新启用。",
+        "版本豁免是精确 `package-name@version` 到精确 DSH 运行时版本的 `compatibility.json` 映射，不改变依赖、bundle 选择或 patch；不继承到升级，写入需 `acceptRisk` 且只对该 pair 生效；live profile 重组报 `applied`，startup-only profile 报 `restart-required`。"
       ],
       "actors": [
         "插件管理员",
@@ -583,7 +578,7 @@
     },
     {
       "id": "package-contracts-2.ui-contribution-ownership",
-      "title": "UI 贡献所有权：每 Session 单控制器、版本冲突对账与失败面分离",
+      "title": "UI 贡献所有权：Session 反馈控制器、共享 Platform 页、配额提示与引导写入",
       "sources": [
         {
           "path": "packages/client/ui-message-feedback/README.md",
@@ -604,12 +599,13 @@
           "kind": "instruction"
         }
       ],
-      "problem": "同一 Session 的多个 UI 表面（消息行、Header 菜单、命令、设置页）若各自维护状态，会产生重复请求、互相覆盖的写入与不一致的失败提示；多标签页和并发写还会让本地视图与 Host 真值分叉。",
+      "problem": "多个 UI 表面共享同一 Session 级或账户级资源时，各自维护状态会产生重复请求、互相覆盖的写入与不一致的失败提示；多标签页、并发写、共享 Platform 页与引导写入还会让本地视图与 Host 真值分叉。本记录合并三个包中共享“所有权”纪律的子契约，但它们不是同一机制：Session 反馈控制器、共享 Platform host entry、配额提示生命周期与 Desktop 引导有序写入必须分别验证。",
       "triggers": [
         "一个 Session 级能力由多个入口打开",
         "实现乐观/比较交换写入",
         "插件卸载或重连时清理订阅与回调",
-        "设计失败提示与草稿保留"
+        "设计失败提示与草稿保留",
+        "Desktop 共享 Platform 页、账户配额提示或引导完成写入"
       ],
       "obligations": [
         "每个 Session 只有一个控制器实例支撑所有消息控件；一个对话框控制器拥有草稿、提交与 toast 序列",
@@ -637,7 +633,10 @@
         "实现读取去重与串行化写入",
         "为冲突回复实现对账路径",
         "把每类失败映射到确定的展示位置与可重试状态",
-        "在卸载/重连路径清理回调并验证无幽灵提示"
+        "在卸载/重连路径清理回调并验证无幽灵提示",
+        "为账户页确认只有一个共享 `shell.overlay` host entry，所有页面经 `PlatformPages` 请求并 identity-safe 释放",
+        "为配额提示确认共享宿主持有 keepOpen/页面请求，并在共享页显示期间不绘制自己的 Modal/Toast",
+        "为 Desktop 引导确认写入顺序与拒绝重试，不让已完成安装重新应用默认值"
       ],
       "enforcement": {
         "mode": "client-state-machine-plus-host-compare-and-set",
@@ -646,7 +645,7 @@
         "failure": "并发写入仍可能收到冲突；客户端只对账不重取；跨标签页更新只在重连或下次冲突时可见",
         "exceptions": "Chat 视图之外（trajectory/waterfall）不渲染反馈控件；Session remark 没有 note 字节上限"
       },
-      "applicability": "适用于多入口、Session 级状态与比较交换持久化的 UI。单入口只读界面可省去控制器合并，但仍应保留失败分级。",
+      "applicability": "适用于多入口、Session 级状态与比较交换持久化的 UI，以及 Desktop/Web 共享账户页、配额提示与引导写入。单入口只读界面可省去控制器合并，但仍应保留失败分级。记录内四类子契约分别适用：反馈控制器不自动推出账户页/引导的结论。",
       "relationships": [
         "package-contracts-2.remote-layer-selection",
         "package-contracts-2.ui-slot-extension"
@@ -672,6 +671,16 @@
             "evidence": "planned",
             "note": "",
             "scenario": "并发修改后 version-conflict 用返回的权威条目对账，视图与 Host 一致且无额外全量读取"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "账户页与配额提示同时请求共享 Platform 页时，新请求先退役旧 owner，旧 owner 的 release 不关闭新页面"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "Desktop 引导完成时先应用 Chat 视图/用量偏好，再保存代码工作工具偏好，最后写完成标记；已完成安装重启后不重新应用默认值"
           }
         ],
         "rejection": [
@@ -679,6 +688,16 @@
             "evidence": "planned",
             "note": "",
             "scenario": "超过 Host maxNoteBytes 的备注提交时返回 note-too-large，对话框保持打开"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "共享 Platform 页显示期间配额提示仍绘制自己的 Modal/Toast，或 stale owner 关闭不属于它的页，应被评审拒绝"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "引导完成写入被拒绝却显示完成或覆盖用户后续偏好，应被评审拒绝"
           }
         ],
         "recovery": [
@@ -686,13 +705,20 @@
             "evidence": "planned",
             "note": "",
             "scenario": "卸载插件或重连后，迟到的失败/图片加载结果不再更新 UI"
+          },
+          {
+            "evidence": "planned",
+            "note": "",
+            "scenario": "引导最后一条写入失败时恢复已保存进度并保留引导供重试；配额提示在查看者返回且通知仍为最新时重新出现"
           }
         ]
       },
       "limitations": [
         "没有跨标签页推送，第二标签页的评级只在重连或冲突回复时可见",
         "trajectory 与 waterfall 视图不渲染反馈控件",
-        "客户端不预检备注大小，超额只在提交时失败"
+        "客户端不预检备注大小，超额只在提交时失败",
+        "本记录把 ui-message-feedback 的反馈控制器、ui-settings-account 的共享 Platform 页/配额提示/引导写入，以及 ui-workflow-run 的 UI 贡献放在同一 ID 下；它们共享所有权纪律但不是同一机制，验证与迁移必须按子契约分别执行。",
+        "ui-workflow-run 的持久事件重放与节点展开选择没有单独的 obligation 展开；本记录只保留其来源，不能据此声称已覆盖该包的完整 UI 契约。"
       ]
     },
     {
@@ -1358,7 +1384,7 @@
         "implementation": "src/config.ts 解析与 matcher 校验；src/index.ts 事件映射与决策折叠；dsh-hook-protocol 的 createDetachedRuns；每事件 payload 构造",
         "trust": "不支持事件与解析失败被代码隔离；外部钩子是否遵守协议、超时与输出格式取决于钩子本身",
         "failure": "坏配置不阻止启动；钩子崩溃记录后继续；Stop 阻断会强制下一步（无连续阻断上限，需钩子自限）",
-        "exceptions": "23/30 事件不支持；允许 list? No: allow 不预批准，defer 不支持；updatedInput 只记录+告警不生效"
+        "exceptions": "23/30 Claude Code 事件不支持；PreToolUse 支持 `deny` 与 `ask`，`allow` 只参与 deny>ask>allow 折叠但不预批准，`defer` 不支持，`additionalContext` 被忽略，`updatedInput` 只记录+告警不生效；PostToolUse 的 `updatedToolOutput`/`updatedMCPToolOutput` 不支持且 `tool_response` 扁平化为文本；Stop 无连续阻断上限；`transcript_path` 恒为空。"
       },
       "applicability": "适用于需要兼容既有外部钩子配置的迁移场景。新项目应优先用原生扩展点，而不是复制外部子集。",
       "relationships": [
@@ -1552,7 +1578,7 @@
       ],
       "obligations": [
         "packer 不编译源码；基础镜像携带仓库真实构建产物，stale build 会打包 stale 字节",
-        "三层标准栈：roster（profile template + OPTIONAL_BUNDLES + patch 引用包 + dsh.configTrees 依赖闭包）、publish view（workspace/vendored 用 files+picomatch 的 npm slice；外部包保留 src/ 与 dist/）、reachability sweep（从非通配 workspace runtime export 与 IMAGE_ENTRY_SEEDS 走解析）",
+        "源 README 称 VFS pack 为“three-layer standard stack”，但紧接着按 1-4 编号列出四项；记录按实际清单描述为四层：roster（profile template + OPTIONAL_BUNDLES + patch 引用包 + dsh.configTrees 依赖闭包）、publish view（workspace/vendored 用 files+picomatch 的 npm slice；外部包保留 src/ 与 dist/）、reachability sweep（从非通配 workspace runtime export 与 IMAGE_ENTRY_SEEDS 走解析）、lazy chunks（每个 `require.async(\"./client.<name>.js\")` 独立归档）。源文的层数措辞与清单不一致，以清单为准，不推断第五层。",
         "外部 peer 不绑定 worker；workspace peer 留在链上；CLI manifest 只以 node_modules/@deepseek-ai/dsh/package.json 进入镜像作为解析锚",
         "可达性只推断精确请求形式；计算 import/require、存储的 createRequire 等只在运行时解析，必要时加显式 entry seed",
         "页面 chunk 只识别 require.async('./client.<name>.js') 字面量；打包为 lazy/<sha256>.tar.gz 并在 manifest 注册；包未发布的 chunk 请求使 pack 失败",
@@ -1562,7 +1588,6 @@
         "可达性从每个非通配 workspace runtime export 加 worker assembly seeds（`IMAGE_ENTRY_SEEDS`）出发；declaration-only condition tree 不 seed，运行时请求这些 export 仍失败。",
         "转换报告静态命名 import、re-export、dynamic import、经 `require` 的调用，以及 `createRequire(import.meta.url)('pkg')` 形式的模块级直接调用（含 alias）；页面资产 `lib/client.js` 原样发布；自有代码的不可解析请求使 pack 失败，第三方请求容忍到 require 时 loud fail。",
         "`packPreviewFixture` 经 Session format catalog 把每个 fixture 目录最新 canonical raw generation 转为当前 successor，严格恢复源、编码并验证，畸形/不支持/未来 generation 拒绝而不回退；临时 successor 打包后删除。",
-        "VFS 打包是四层标准栈：roster（随附 profile 模板 bundle + OPTIONAL_BUNDLES + patch 点名包 + `dsh.configTrees` 行，按 Node 依赖闭包物化）、发布视图（构建后 npm 切片，保留外部包 src/dist JS）、可达性 sweep（从非通配 workspace 运行时导出 + `IMAGE_ENTRY_SEEDS` 出发，按运行时加载器解析转换）、懒加载 chunk（每个 `require.async(\"./client.<name>.js\")` 独立归档）。",
         "外部 peer 边绝不绑定到 worker，workspace peer 保留；CLI manifest 单独进入镜像作为 bundle 解析锚点；基础镜像 gzip tar，懒加载 chunk 归档命名 `lazy/<sha256>.tar.gz`，overlay tar 按序应用；打包器不编译源码，假定 `lib/` 新鲜。",
         "`dsh.configTrees` 由内部 `repository.ts` 拥有，不属于公共插件 manifest API；`homePatch` 写入 `home/cordis.patch.yml`；页面资产原样直发；自有代码不可解析请求使 pack 失败，第三方请求延迟到 require 时明确失败。",
         "fixture overlay 绕过 npm 发布视图与可达性排除，点目录/示例源码完整保留，挂载位置仅限 `home/` 与 `workspace/`；`packPreviewFixture` 经 Session format catalog 取每个 fixture 最新 canonical raw generation，严格恢复/校验当前 successor，畸形/不支持/未来版本拒绝而不回退，临时 successor 打包后删除。",
@@ -1641,7 +1666,8 @@
         "只推断精确请求形式；动态形式需显式 seed",
         "不编译，stale build 打包 stale 字节",
         "CLI 需原始仓库位置；npm 安装只能用参数化库 API",
-        "preview Session 输入仅原始 JSONL，拒绝压缩/非规范文件名"
+        "preview Session 输入仅原始 JSONL，拒绝压缩/非规范文件名",
+        "源 README 自称“three-layer standard stack”却编号列出四项；记录按四项清单描述，源文没有解释层数措辞，不能据此推断存在未列出的第五层"
       ]
     },
     {
@@ -1870,6 +1896,18 @@
           "kind": "instruction"
         },
         {
+          "path": "packages/llm/llm/src/index.ts",
+          "start": 956,
+          "end": 964,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/llm/llm/src/index.ts",
+          "start": 1016,
+          "end": 1019,
+          "kind": "implementation"
+        },
+        {
           "path": "packages/web/README.md",
           "start": 1,
           "end": 55,
@@ -1898,6 +1936,18 @@
           "start": 1,
           "end": 51,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/llm/llm/README.md",
+          "start": 85,
+          "end": 86,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/subsystems/web.md",
+          "start": 121,
+          "end": 162,
+          "kind": "instruction"
         }
       ],
       "problem": "同一能力常有多个互斥实现（模型提供方、搜索后端、沙箱后端、存储后端、代码执行后端）。若消费者直接依赖某个实现，替换后端会改调用方；若在一个包里同时放接口与实现，后端之间会互相 import。",
@@ -1911,7 +1961,9 @@
         "每个能力只有一个 Service Definition 包拥有公共词汇与 ctx key（如 ctx.llm、ctx.web、ctx.subprocess、ctx.sandbox、ctx.ptcRuntime、ctx.storage）",
         "后端只实现 seam 并注册 provider，不定义第二套公共词汇；消费者只依赖 seam 或门面",
         "消费者拥有业务语义与默认值（命令含义、deadline、模型可见呈现），seam 只拥有机制（进程、调用、注册、释放）",
-        "同一路由/提供方重复注册必须失败（如 DUPLICATE_ADAPTER），不得静默覆盖",
+        "同一路由重复注册必须失败（如 `DUPLICATE_ADAPTER`），不得静默覆盖；不同路由的多个 provider 可以共存，由请求/配置选择，未选中的 provider 仍注册但不得静默接管。",
+        "提供方选择遵循各 seam 自身合同；LLM 按请求 config.provider 精确查注册表，无匹配路由即 NO_ADAPTER，不因只注册一个 adapter 而推断路由。",
+        "Web 特有：对本次 search/fetch 能力，无配置 id 且恰好一个 provider 可用时自动选择，多个可用时 WEB_PROVIDER_AMBIGUOUS；配置 id 缺失或不可用时明确失败、不改选其他 provider。此缺省选择不是所有 seam 的通用保证。",
         "后端不可用时 fail closed 或返回结构化错误，不得静默降级到未配置实现",
         "服务本身无配置、无 wire 代码的包（llm、web、subprocess）不得长出 provider 特定分支"
       ],
@@ -1962,7 +2014,7 @@
           {
             "evidence": "planned",
             "note": "",
-            "scenario": "同一能力挂载两个后端时按配置选择一个，另一个不生效或注册被拒"
+            "scenario": "同一能力挂载两个不同路由的 provider 时，请求按 route/provider 选择其一；同路由再次注册被拒，而不是整个能力只允许一个 provider"
           }
         ],
         "rejection": [
@@ -5469,7 +5521,7 @@
         "initializeDefault 只创建/返回 Workspace，不创建 Session、不发送消息",
         "已有默认 Workspace 永不重命名或迁移",
         "Documents 查询会阻塞其他 Workspace mutation 最多 documentsLookupTimeoutMs",
-        "只有标题展示依赖“是否仍为自动标题”，没有其他行为依赖"
+        "标题展示依赖两个条件：Workspace 仍带自动标题，或用户把目录重命名为/从选择器采用恰好 `default-workspace`；除此之外没有行为依赖该判断"
       ]
     },
     {

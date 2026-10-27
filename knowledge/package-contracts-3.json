@@ -47,6 +47,36 @@
           "start": 1,
           "end": 4,
           "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 142,
+          "end": 160,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
+          "start": 348,
+          "end": 356,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/verify-package-readme-model-experience.ts",
+          "start": 333,
+          "end": 393,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-readme-limitations.ts",
+          "start": 34,
+          "end": 86,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-readme-summaries.ts",
+          "start": 40,
+          "end": 53,
+          "kind": "implementation"
         }
       ],
       "problem": "包没有单一契约面时，读者必须读源码才能知道边界；限制被当成待办、Dev Note 被当成承诺、双语长期漂移，都会让包契约失去可核对性。",
@@ -81,11 +111,11 @@
         "同步中文并重新生成 i18n 侧车。"
       ],
       "enforcement": {
-        "mode": "review",
-        "implementation": "README 段落本身是人工产物；i18n 配对有命令 verify-translation-pairing --write（侧车头部声明）。未观察到 README 段落的自动检查器。",
-        "trust": "文档与评审保证；配对哈希可机械核对，但内容正确性未自动验证。",
-        "failure": "缺段、限制写成 backlog、Dev Note 被当作承诺、双语失配时评审拒绝或要求重配对。",
-        "exceptions": "apps/plugin-market-generator 没有 frontmatter 但仍有完整叙述；组地图只承诺组结构与包表，不承诺运行行为。"
+        "mode": "review + partial automatic section/kind checks",
+        "implementation": "README 段落本身是人工产物；i18n 配对有命令 verify-translation-pairing --write（侧车头部声明）。源仓库同时存在部分自动检查：`scripts/doc-standard.spec.ts` 校验每个包 README 的 kind 与所在位置/模板一致、description 非空且无冗余字段，并检查英文 Summary/TOC/Dev Note 与中文概述/目录/开发备注；`scripts/verify-package-readme-model-experience.ts` 与 `scripts/verify-package-readme-limitations.ts` 校验 Model Experience 与 Known Limitations 的结构/允许清单；`scripts/verify-package-readme-summaries.ts` 限制英文 Summary 长度。purpose、configuration、extension points 的完整性与内容质量仍无自动检查。",
+        "trust": "上述检查器在运行时可拒绝缺段/变体标题/非法 kind/超长 Summary；本域未运行它们，不能声称当前树通过。它们不验证叙述是否仍然正确。",
+        "failure": "缺段、限制写成 backlog、Dev Note 被当作承诺、双语失配时检查器或评审拒绝；未覆盖的 purpose/configuration/extension points 只能靠评审。",
+        "exceptions": "apps/plugin-market-generator 没有 frontmatter 但仍有完整叙述；组地图只承诺组结构与包表，不承诺运行行为；Model Experience 与 Known Limitations 各有自己的允许清单。"
       },
       "applicability": [
         "scope: 任何以 README 作为公开契约的包；组地图用精简模板。",
@@ -99,7 +129,7 @@
       ],
       "migration": {
         "strategy": "把 README 模板化为固定段落，用受控 kind 枚举，限制段与 Dev Note 用固定措辞，双语用标题哈希侧车。",
-        "implementation": "在仓库根放 README 模板；新增包脚手架生成骨架；评审清单逐段勾选；CI 只检查段落/锚点/链接存在。",
+        "implementation": "迁移设计：在仓库根放 README 模板；新增包脚手架生成骨架；评审清单逐段勾选；CI 可检查节存在、kind/标题/锚点与链接。源仓库当前的自动面只覆盖 kind/description、Summary/TOC/Dev Note、Model Experience、Known Limitations 与 Summary 长度；不能把“CI 检查全部段落/锚点/链接”写成现状。",
         "requiredSupport": [
           "模板文件",
           "kind 枚举",
@@ -131,7 +161,8 @@
       "limitations": [
         "生成目录不校验 README 叙述是否仍正确；只有评审。",
         "i18n 侧车只证明标题级哈希一致，不证明语义逐行一致。",
-        "组地图不承诺运行行为，不能当作包契约使用。"
+        "组地图不承诺运行行为，不能当作包契约使用。",
+        "源已有 kind/description、Summary/TOC/Dev Note、Model Experience、Known Limitations 与 Summary 长度的自动检查，但它们在本域未执行；purpose/configuration/extension points 仍无自动检查。"
       ]
     },
     {

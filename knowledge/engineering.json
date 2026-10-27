@@ -4805,8 +4805,8 @@
         "注释/文档陈述完整契约与上下文，不是推理过程；直接具体，不用隐喻。",
         "写 contract/boundary/shape 前找更精确词；contract 只用于前置/后置/不变量/兼容承诺/义务；保留字面的 process/wire/security/transaction/lifecycle boundary。",
         "不叙述控制流/测试、不保留评审历史、不复述代码；保留行为/失败/时序/所有权/安全使用事实。",
-        "禁止一个模糊 origin 标签（ASCII prove+nance 十字母 token，任意大小写）出现在 maintained tracked path/text；替换为精确本地概念。",
-        "verify-concrete-terms 扫描 tracked filenames、symlink targets、NFKC 文本，排除 vendor/archived/historical schema。"
+        "禁止歧义 origin 标签 `provenance`（十字母 ASCII token，任意大小写变体）出现在 maintained tracked path/text；替换为精确本地概念（source-event references、provider metadata、model identity、context producer、configuration source、artifact identity、recorded evidence 等）。",
+        "verify-concrete-terms 对 `git ls-files` 的 tracked filenames、symlink targets 与文本行做 NFKC 归一化后 lowercase 匹配；排除 `vendor/`、`.agents/notes/archived/`、release schema JSON 及 historical-format schema/i18n 的标记区内 schema。"
       ],
       "actors": [
         "作者",
@@ -4882,7 +4882,7 @@
         ],
         "note": "作者未运行 doc gate。"
       },
-      "limitations": "Gate 通过不证明文档完整；语义质量仍靠评审。"
+      "limitations": "Gate 通过不证明文档完整；语义质量仍靠评审。若采用方把本参考或治理文档置于同一 token 扫描范围，必须分写该 token 或显式列入例外；源仓 Note 自身即采用 `prove` + `nance` 分写。"
     },
     {
       "id": "engineering-dependency-over-handrolling",

@@ -230,10 +230,10 @@
         "Test that a second provider fails and that the seam alone produces the documented unavailable behavior."
       ],
       "enforcement": {
-        "mode": "automatic",
-        "implementation": "Cordis duplicate-service errors and per-registry duplicate checks (LSP extension reservation, telemetry single backend, typert duplicate package-face/schema/endpoint, LLM route collision) reject registration.",
-        "trust": "Registration is same-process and cooperative; it prevents accidental conflicts, not a hostile plugin that edits internals.",
-        "failure": "Duplicate load throws and the composition must be fixed; an unregistered seam leaves consumers with no capability, which should be surfaced as unavailable rather than retried silently.",
+        "mode": "automatic for duplicate registration; implementation + review for provider transparency and seam inertness",
+        "implementation": "Cordis duplicate-service errors and per-registry duplicate checks (LSP extension reservation, telemetry single backend, typert duplicate package-face/schema/endpoint, LLM route collision) reject registration automatically. Provider replacement preserving the consumer request/model-visible response and seam-alone inertness are implemented per capability and verified by their packages/tests or review; they are not one registry-wide guarantee.",
+        "trust": "Automatic only for same-process duplicate/name collision rejection at registration. Request/response invariance across providers and the absence of a silent fallback when no provider exists depend on each seam's implementation, consumer code and review; the registry cannot prove them.",
+        "failure": "Duplicate load throws and the composition must be fixed; an unregistered seam leaves consumers with no capability, which should be surfaced as unavailable rather than retried silently. A provider that changes consumer-visible shape or a seam that invents a fallback is an implementation/review defect, not caught by duplicate registration.",
         "exceptions": "A deployment-configured selector above registrations is named as intended future work for relaxing exclusive extension ownership; it is not implemented."
       },
       "applicability": "Any service with interchangeable backends (filesystem, shell, sandbox, directory picker, LSP, web fetch, spill storage, telemetry, subagent providers).",

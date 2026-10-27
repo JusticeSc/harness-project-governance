@@ -4,7 +4,7 @@
   "mechanisms": [
     {
       "id": "policy-tests-2-macos-signing-cache-identity",
-      "title": "macOS 签名缓存键绑定证书、标识与 entitlements",
+      "title": "macOS 签名缓存键绑定证书摘要、标识、entitlements、工具与 OS",
       "sources": [
         {
           "path": "apps/desktop/tests/macos-cache-policy.spec.ts",
@@ -17,6 +17,12 @@
           "start": 1,
           "end": 61,
           "kind": "implementation"
+        },
+        {
+          "path": "apps/desktop/scripts/verify-macos-signature.mjs",
+          "start": 14,
+          "end": 39,
+          "kind": "implementation"
         }
       ],
       "problem": "只按目标缓存签名结果，会在 Developer ID 证书轮换、bundle identifier 或 entitlements 改变时复用错误签名；只检查 codesign 退出码也会接受与预期身份、Team 或权限不匹配的二进制。",
@@ -28,8 +34,8 @@
         "缓存策略或 codesign 验证逻辑变更"
       ],
       "obligations": [
-        "缓存键必须包含 bundle identifier、签名身份/TeamIdentifier、叶证书字节，以及实际 entitlements 文件内容；不同 entitlements（含 JIT 与 node-x64）不得共享键。",
-        "验证必须解析 codesign 详情并逐项匹配：Authority=Developer ID Application:<identity>、TeamIdentifier、Identifier、非空 Timestamp、hardened runtime flag。",
+        "缓存键必须包含 bundle identifier、签名身份/TeamIdentifier、叶证书的 SHA-256 摘要（不是原始证书字节）、实际 entitlements 文件内容（base64），以及 codesign 可执行文件、verify helper、policy 脚本、cache 脚本的摘要和 os.release()；不同 entitlements（含 JIT 与 node-x64）不得共享键。",
+        "验证必须解析 codesign 详情并逐项匹配：Authority=Developer ID Application:<identity>、TeamIdentifier、Identifier、非空 Timestamp、hardened runtime flag；Authority/Team/Timestamp/runtime 由导入的 assertMacOSRuntimeSignatureDetails 检查。",
         "验证必须通过 codesign --verify --strict --verbose=2；退出码非零即拒绝。",
         "必须提取并比较叶证书；证书轮换后旧缓存不得复用。",
         "必须比较实际 entitlements；未声明的 JIT 权限即拒绝。",
@@ -52,7 +58,7 @@
       ],
       "enforcement": {
         "mode": "unit-policy-with-mocked-platform-tools",
-        "implementation": "macOSCachePolicy(probe)(identifier, expected, entitlements?) 返回 policy、sign 与 verify；spec 用 spawnSync/readFileSync doubles 模拟 codesign、plutil 与证书提取。",
+        "implementation": "macOSCachePolicy(probe)(identifier, expected, entitlements?) 返回 policy、sign 与 verify；policy 序列化证书 SHA-256、identifier、expected、entitlements base64、工具摘要与 os.release()；verify 调用导入的 assertMacOSRuntimeSignatureDetails，并比较证书摘要、Identifier 与解析后的 entitlements；spec 用 spawnSync/readFileSync doubles 模拟 codesign、plutil 与证书提取。",
         "trust": "缓存键输入与字段比较由测试保证；真实 Apple 签名、notarization、Gatekeeper 与缓存实现本身不由该测试证明。",
         "failure": "证书、identifier、team、authority、timestamp、runtime、entitlements、codesign verify、universal header 任一不符即抛出；缓存键不变则继续复用。",
         "exceptions": [
@@ -100,7 +106,7 @@
           }
         ]
       },
-      "limitations": "测试 mock 了 codesign/plutil，只证明策略与字段比较；不证明真实签名、notarization、Gatekeeper 或缓存实现本身。未覆盖 Windows/Linux。",
+      "limitations": "测试 mock 了 codesign/plutil，只证明策略与字段比较；不证明真实签名、notarization、Gatekeeper 或缓存实现本身。签名身份与发布身份只是相关依赖：本机制不证明发布流程使用该缓存，也不证明 release 门禁已核验身份。未覆盖 Windows/Linux。",
       "origin": "source",
       "sourceBacked": true
     },
@@ -113,6 +119,12 @@
           "start": 1,
           "end": 90,
           "kind": "test"
+        },
+        {
+          "path": "packages/experimental/webworker-runtime/tests/compile/transform-corpus-check.ts",
+          "start": 1,
+          "end": 152,
+          "kind": "implementation"
         }
       ],
       "problem": "Vitest/vite 的模块 runner 能解析 Node 不能解析的 CSS、koffi 等导入；在测试进程内运行构建产物扫描会得到与发布运行时不同的结论，并把固定豁免误报为过期。一个判定随启动器变化的 gate 不是 gate。",
@@ -125,11 +137,11 @@
       ],
       "obligations": [
         "扫描必须 spawn process.execPath 并用 tsx/esm 运行 transform-corpus-check.ts；不得在 Vitest 进程内 import 该 runner。",
-        "没有 built bundles 时显式 skip；skip 不是通过。",
+        "没有 built bundles 时，直接运行 transform-corpus-check.ts 会打印提示并 exitCode 1；spec 包装器识别 `no built bundles found` 后显式 skip。直接调用脚本的 CI 不能把无构建树当通过，skip 也不是通过。",
         "所有以 '- ' 开头的 finding 必须为空，且子进程退出码为 0。",
-        "只有 Node 对 CSS 的 ERR_UNKNOWN_FILE_EXTENSION 可作为 baseline exemption；其他扩展名、错误码或消息都算 unexpected baseline failure。",
+        "baseline exemption 是四个 bundle 的固定清单：dockkit、ui-primitives、web、client-runtime。只有 dockkit 额外要求 Node 对 `.css` 的 ERR_UNKNOWN_FILE_EXTENSION（消息前缀不绑定具体 stylesheet）；其他三个豁免接受任意缺失依赖或抛错原因，其他扩展名/错误码/消息对 dockkit 都是 unexpected baseline failure。",
         "被豁免的 bundle 若已能干净导入，必须报 STALE EXEMPTION 并失败。",
-        "固定扫描摘要为 baselineExempt=1 unexpectedBaselineFailure=0；用 dockkit 负例覆盖 expected-css、other-css、other-extension、error、other-code、clean 六种分类。"
+        "`baselineExempt=1 unexpectedBaselineFailure=0` 只是 dockkit 注入控制（只把 dockkit bundle 传给 check）的期望摘要；全语料摘要按实际 files/ok/baselineExempt/unexpectedBaselineFailure 输出，不能把 1 当作全语料基线计数。dockkit 负例覆盖 expected-css、other-css、other-extension、error、other-code、clean 六种分类。"
       ],
       "actors": [
         "CI",
@@ -147,22 +159,22 @@
       ],
       "enforcement": {
         "mode": "spawned-node-gate-plus-negative-controls",
-        "implementation": "transform-corpus.spec.ts 用 spawnSync(process.execPath, ['--import','tsx/esm',runner])；另以 registerHooks 注入六种 dockkit 负例，断言分类与退出码。",
-        "trust": "Node loader 是判定器；测试覆盖分类逻辑，不证明所有 bundle 均可导入，也不替代实际构建。",
-        "failure": "unexpected finding、stale exemption 或非零退出失败；无 built output 只 skip。",
+        "implementation": "transform-corpus.spec.ts 用 spawnSync(process.execPath, ['--import','tsx/esm',runner])；另以 registerHooks 注入六种 dockkit 负例，断言分类、退出码与摘要。transform-corpus-check.ts 发现 packages/<group>/<package>/lib/index.js 与 vendor/<package>/lib/index.js，用 BASELINE_EXEMPT 四键、isUnknownCssExtension 与 stale/unexpected 分支生成 findings 和汇总行。",
+        "trust": "Node loader 是判定器；dockkit 六类分类由源测试覆盖，不证明所有 bundle 均可导入，也不证明其他三个豁免 bundle 的实际失败原因；不替代实际构建。",
+        "failure": "unexpected finding、stale exemption 或非零退出失败；无 built output 时直接脚本 exit 1，spec 包装器 skip。",
         "exceptions": [
-          "仅 CSS unknown-extension 的固定 baseline",
-          "无构建产物时 skip"
+          "四个 bundle 的固定 baseline；只有 dockkit 要求 CSS unknown-extension 原因",
+          "无构建产物时 spec 包装器 skip，直接脚本 exit 1"
         ]
       },
-      "applicability": "任何对构建产物做导入扫描的仓库。不适用于源码平面测试；目标仓库必须按自己的扩展名与依赖重设豁免，不能照抄 dockkit 的计数。",
+      "applicability": "任何对构建产物做导入扫描的仓库。不适用于源码平面测试；目标仓库必须按自己的扩展名与依赖重设豁免，不能照抄 dockkit 的 `baselineExempt=1` 单 bundle 计数。",
       "relationships": [
         "testing-source-built-entry-modes",
         "testing-real-entry-composition"
       ],
       "migration": {
         "strategy": "reimplement-oracle-in-node-subprocess",
-        "implementation": "把 gate 作为 Node 子进程执行，固定豁免精确到 bundle、扩展名与错误码，并保留一个 clean/stale 负例；不要在 Vitest 内 import gate。",
+        "implementation": "把 gate 作为 Node 子进程执行；baseline 按 bundle 固定，只对确实需要原因约束的 bundle 绑定扩展名与错误码，其余豁免记录其真实失败原因而不是声称统一 CSS 规则；保留 clean/stale、other-extension 与 no-build 负例；不要在 Vitest 内 import gate。",
         "requiredSupport": [
           "Node",
           "tsx/esm",
@@ -177,13 +189,23 @@
             "check": "有构建产物时，Node 子进程报告零 finding 且退出码为 0。",
             "evidence": "planned",
             "note": "本次未构建、未运行。"
+          },
+          {
+            "check": "dockkit 注入的 expected-css 与 other-css 都归类为 baselineExempt=1 unexpectedBaselineFailure=0；这只是单 bundle 控制，不是全语料摘要。",
+            "evidence": "planned",
+            "note": "源测试的 test.each 覆盖这两个接受分支。"
           }
         ],
         "rejection": [
           {
             "check": "other-extension、error、other-code 报 UNEXPECTED BASELINE FAILURE；clean 报 STALE EXEMPTION。",
             "evidence": "planned",
-            "note": "源测试用 registerHooks 注入这些负例。"
+            "note": "源测试用 registerHooks 注入这些负例；不覆盖 ui-primitives/web/client-runtime 的失败原因。"
+          },
+          {
+            "check": "无构建产物时直接运行 check 脚本必须 exit 1，而 spec 包装器把该输出转为 skip；不能把 skip 计为通过。",
+            "evidence": "planned",
+            "note": "本次未验证两层行为。"
           }
         ],
         "recovery": [
@@ -194,7 +216,7 @@
           }
         ]
       },
-      "limitations": "本次未构建、未运行 gate；第一个测试超时为 900,000 ms，第二个测试复用当前测试超时（文件未给出数值），目标仓库需按规模重设。测试只覆盖 dockkit 的六类分类，不覆盖全语料。",
+      "limitations": "本次未构建、未运行 gate；第一个测试超时为 900,000 ms，第二个测试复用当前测试超时（文件未给出数值），目标仓库需按规模重设。测试只覆盖 dockkit 的六类分类，不覆盖全语料，也不验证 ui-primitives/web/client-runtime 三个豁免的失败原因。无构建树时直接脚本 exit 1 与 spec skip 是不同层行为，不能互相替代。",
       "origin": "source",
       "sourceBacked": true
     },
@@ -219,11 +241,13 @@
       "obligations": [
         "helper 调用只允许 READ_ONLY_METHODS 白名单（getCapabilities、getApp、listWindows、getState）；发送其他方法立即失败。",
         "每个响应必须只含 id 与 result，且 id 与请求匹配；错误响应按失败记录。",
-        "请求与响应原文写入 artifact，并记录 requestId、helper SHA-256、responseBytes 与 responseSHA256；部分响应也保存并记录。",
+        "完整响应原文写入 artifact，并记录 requestId、helper SHA-256、responseBytes 与 responseSHA256；当帧不完整时只保存 pipe.pending 字节并记录 partialResponseFile/partialResponseBytes，不计算 responseSHA256。",
         "观察结果必须绑定 fixture PID 与 window ID，包含必需字段，truncated 必须为 false，且静态行标签集合精确等于请求行数。",
         "reference 与 candidate 各一次 warm-up，随后三轮交替测量；只有 helper 生成的 appHandle 与 snapshotId 从比较中排除，其他字段必须同型同值。",
         "响应预算固定为 32 MiB；超时/部分帧/EOF 后多余输出都失败。",
-        "每个 helper 与 fixture 都是自有进程：记录 pid、cleanup 结果、cleanup 前后退出码，并用 stop_group 清理；失败不得吞掉清理错误。"
+        "每个 helper 与 fixture 都是自有进程：记录 pid、cleanup 结果、cleanup 前后退出码，并用 stop_group 清理；失败不得吞掉清理错误。",
+        "观察前后读取 fixture-state.json 必须逐值相同；每个 helper 二进制与 fixture source 的 SHA-256 在运行前后必须一致，否则失败。",
+        "脚本只允许在 macOS 运行；启动 helper 后要求 sessionLocked=false 且 Accessibility=true；--request-timeout 与 --timeout 必须为正有限数，并按运行 deadline 失败，而不是无限等待。"
       ],
       "actors": [
         "基准维护者",
@@ -237,21 +261,22 @@
         "按白名单发送请求，记录原始请求/响应与哈希",
         "每 helper 一次 warm-up，再做三轮交替测量",
         "逐字段比较观察结果，仅排除 helper 生成的 appHandle/snapshotId",
-        "清理自有进程并记录退出码与清理错误"
+        "比较观察前后的 fixture state 与 helper/fixture 哈希，再清理自有进程并记录退出码与清理错误"
       ],
       "enforcement": {
         "mode": "opt-in-native-benchmark-with-assertions",
-        "implementation": "observation_benchmark.py 的 READ_ONLY_METHODS、ObservationHelper.call、check_observation、OwnedProcess、FramedPipe 与 aggregate；默认不进入 CI。",
-        "trust": "运行时的输入白名单、字段比较、artifact 哈希与清理由脚本保证；真实 Accessibility 授权、AppKit 行为与性能结论依赖机器。",
-        "failure": "非白名单方法、响应形状不符、PID/window 不符、行数缺失、截断、超预算、超时或清理失败都中止。",
+        "implementation": "observation_benchmark.py 的 READ_ONLY_METHODS、ObservationHelper.call、check_observation、OwnedProcess、FramedPipe、aggregate，以及 scenario_run 的 fixture-state 前后比较、helper/fixture 哈希复核与 main 的 macOS/超时校验；默认不进入 CI。",
+        "trust": "运行时的输入白名单、字段比较、artifact 哈希、fixture 不变性、哈希稳定性与清理由脚本保证；脚本只在 macOS、未锁 session 且 Accessibility 已授权时运行，真实 AppKit 行为与性能结论仍依赖机器。",
+        "failure": "非白名单方法、响应形状不符、PID/window 不符、行数缺失、截断、超预算、超时、fixture 状态变化、helper/fixture 哈希变化或清理失败都中止。",
         "exceptions": [
           "基准为 opt-in，不在默认测试门禁内",
           "appHandle/snapshotId 为 helper 生成，排除比较"
         ]
       },
-      "applicability": "只读原生 GUI/API 的 A/B 观察基准。写操作、需要交互的流程或无法绑定进程/窗口的场景不适用。",
+      "applicability": "只在 macOS、未锁 session 且 Accessibility 已授权的条件下，对只读原生 GUI/API 做 A/B 观察基准。它是条件式人工产品证据，不是默认 CI 门禁；写操作、需要交互的流程或无法绑定进程/窗口的场景不适用。",
       "relationships": [
-        "testing-benchmark-workload-hygiene"
+        "testing-benchmark-workload-hygiene",
+        "testing-resource-isolation"
       ],
       "migration": {
         "strategy": "retain-methodology-parameterize-workload",
@@ -270,6 +295,11 @@
             "check": "两个 helper 在三轮交替测量中返回同型同值观察，行数完整且未截断。",
             "evidence": "planned",
             "note": "本次未运行 native benchmark。"
+          },
+          {
+            "check": "完整运行结束后 fixture state 前后逐值相同，helper 二进制与 fixture source 的 SHA-256 未变化，且所有自有进程 cleanup=completed。",
+            "evidence": "planned",
+            "note": "源脚本在 scenario_run/main 中断言这些条件。"
           }
         ],
         "rejection": [
@@ -277,6 +307,11 @@
             "check": "发送写方法、错误 id、截断结果、缺失行、超 32 MiB、PID/window 不符或清理失败均中止。",
             "evidence": "planned",
             "note": "源脚本以 AssertionError/RuntimeError 失败。"
+          },
+          {
+            "check": "fixture 状态被观察改变、helper binary 或 fixture source 哈希变化、非 macOS、session 已锁、Accessibility 未授权、超时为非正/非有限值都必须失败。",
+            "evidence": "planned",
+            "note": "本次未在 macOS 上执行这些分支。"
           }
         ],
         "recovery": [
@@ -287,7 +322,7 @@
           }
         ]
       },
-      "limitations": "opt-in 且依赖 macOS Accessibility；本次未运行。脚本保证方法论，不证明性能差异或产品行为。行数 35/400 与 helper 路径是源场景参数。",
+      "limitations": "opt-in 且依赖 macOS、未锁 session 与 Accessibility 授权；本次未运行。脚本保证方法论，不证明性能差异或产品行为。行数 35/400 与 helper 路径是源场景参数。没有持久事实、实时权限或重启再激活模型，不能据此声称这些保证。",
       "origin": "source",
       "sourceBacked": true
     }

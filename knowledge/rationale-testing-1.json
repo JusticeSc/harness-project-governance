@@ -222,11 +222,9 @@
       "obligations": [
         "Stamp the calling session id on every model request and route by that id, not by global call order.",
         "Harvest every session log, primary-first, and fail loudly when a live session has no recorded script.",
-        "Bind live sessions to recorded scripts by first-call order and advance a cursor per session.",
-        "Persist an explicit inherited-prefix boundary at the producer; slice child events at that boundary and never infer it from the current seed length.",
+        "Bind live sessions to recorded scripts by first-call order and advance an independent cursor per session; a session token resolves against actual bound live ids and fails if that Session has not bound; a background child id may be learned from the stable `started subagent <id>` tool-result text.",
         "Treat a call without a session id as one anonymous session bound to the primary script so the single-session path stays byte-identical.",
-        "The inherited boundary is consumed from the persisted fixture's inheritedEventCount, never inferred from the current seed length; child script derivation slices exactly at that boundary.",
-        "Live Sessions bind to recorded scripts in first-call order; a session token resolves against actual bound live ids and fails if that Session has not bound; a background child id may be learned from the stable started-subagent tool-result text."
+        "Persist an explicit inherited-prefix boundary at the producer; derive the child script from the persisted fixture's `inheritedEventCount` (events at or after that boundary) and never infer it from the current seed length."
       ],
       "actors": [
         "Replay adapter owner: implements keying and fail-loud behavior.",
@@ -237,8 +235,8 @@
         "Add the optional session id to the model request options and stamp it from the agent session.",
         "Name fixtures `session[.vN].jsonl` for the parent and `session.<ordinal>[.vN].jsonl` for children; select the highest generation per role.",
         "Sort child fixtures by header `createdAt` and break ties by recorded id.",
-        "At live replay, let the first live session to call claim the first script, and so on; error if live sessions exceed recorded scripts.",
-        "For fork children, derive the script from events at or after `inheritedEventCount` and mark the boundary in persisted JSONL."
+        "At live replay, let the first live session to call claim the first script, and so on; error if live sessions exceed recorded scripts; resolve `{{session:N}}` tokens only against already-bound live ids, and learn a background child id from the stable started-subagent tool-result text.",
+        "For fork children, derive the script from persisted events at or after `inheritedEventCount` and mark the boundary in JSONL (`session/end-seed { inherited: true }`); never re-derive it from `seed.length` on resume."
       ],
       "enforcement": {
         "mode": "runtime routing invariant plus fail-loud error",
@@ -2647,9 +2645,9 @@
         "Update the guide if the failure class is new."
       ],
       "enforcement": {
-        "mode": "review policy and a maintained guide",
-        "implementation": "A CI test reliability guide or Skill, resource inventory, flake classification, prohibition of retry-based masking, explicit budget ownership.",
-        "trust": "The guide is current guidance; proposed mechanisms it does not implement are not obligations.",
+        "mode": "review policy and a maintained advisory guide",
+        "implementation": "`dsh-ci-test-reliability` (`SKILL.md` plus `references/ci-flake-diagnosis.md`) owns authoring and diagnosis guidance; `dsh-pre-push-checks` conditionally consults it before selecting evidence, and `dsh-code-review` applies it to resource-owning, asynchronous, platform-sensitive or flaky tests. Its resource inventory, flake classification and prohibition of retry masking are review criteria, not an executed checker.",
+        "trust": "The guide is current advisory guidance; proposed mechanisms it does not implement are not obligations. Its presence and consumers are inspected source instructions, not proof that a particular flake was diagnosed.",
         "failure": "A retry hides the cause. A widened budget hides a capacity problem. A skip hides a supported path. A fix without reproduction may change the wrong thing.",
         "exceptions": [
           "An external-service outage may be retried only under an explicitly stated policy, not as a general test fix.",
@@ -2680,7 +2678,7 @@
         "recovery": [
           "Reproduce, fix ownership or observation, then rerun under the real topology; record the rate."
         ],
-        "evidenceStatus": "reported in source notes; the guide itself was referenced but not inspected in this partition."
+        "evidenceStatus": "Source notes report focused local runs or CI run ids; the current `dsh-ci-test-reliability` Skill, its diagnosis reference and its pre-push/code-review consultations were inspected at the fixed commit and are advisory. No test, gate or flake diagnosis was re-executed here."
       },
       "limitations": [
         "A guide is not an automatic checker.",
@@ -2711,6 +2709,36 @@
           "start": 1,
           "end": 52,
           "kind": "history"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/SKILL.md",
+          "start": 1,
+          "end": 131,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md",
+          "start": 1,
+          "end": 60,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-pre-push-checks/SKILL.md",
+          "start": 30,
+          "end": 32,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 22,
+          "end": 23,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/skills/dsh-code-review/SKILL.md",
+          "start": 52,
+          "end": 53,
+          "kind": "instruction"
         }
       ]
     },

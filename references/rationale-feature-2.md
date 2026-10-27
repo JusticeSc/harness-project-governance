@@ -34,6 +34,7 @@
 | 13 | [特权本地能力与密钥处理](#privileged-capability-and-secrets) | 当从 Web UI 调用宿主机能力（原生对话框、打开系统路径）、保存提供商凭据、启动子进程、选择… | denied or typed unsupported error; secrets are not written; duplicate keys fail at load |
 | 14 | [同意门控与数据最小化](#consent-data-minimization) | 当收集遥测/诊断、启用调试导出、提交反馈、回放录制会话，或增加后端 exporter 时。… | disabled mode sends nothing; unknown mode fails before setup; reentrant emit is impossible |
 | 15 | [证据诚实、可操作诊断与显式缺口](#honest-evidence) | 当报告完成或调试、写诊断/错误、显示实时状态/进度、撰写验证、回答“未找到/不支持”、回放 fi… | overclaim is a review finding; a divergent replay fixture fails loudly |
+| 16 | [tmux 位置上下文（条件性子契约）](#tmux-location-context) | 当某个 surface 需要自身 tmux session/window/pane/layout，并通过 shell 拉取后注入持久历史时。 | tty 不匹配/缺 seam 时 no-op；重复注入或进程内缓存失败 |
 
 <a id="authoritative-context-sources"></a>
 ## 1. 权威上下文来源与作用域
@@ -52,7 +53,8 @@
 6. 精确读取已知会话时先读 live store，不读持久层；读持久层必须证明存在，并拒绝 header/list 不一致；live header 胜出，live 与持久可用性独立报告，不缓存持久元数据。
 7. SQLite 搜索、清单、生成的参考等派生结果一律可丢弃、可重建；不得用它们授予可见性或扩大授权，schema 版本变化时重建。
 8. 任何上下文增强都有显式预算；发生截断必须显式报告，不能把部分上下文当成完整。
-9. Shell/tmux 位置只在每轮首 step 通过 `ctx.shell` 读取，不绕过 sandbox 使用 raw `child_process`。以本进程 controlling tty（`ps -o tty= -p <pid>`）匹配 pane `#{pane_tty}`，不信任可继承的 `$TMUX`/`$TMUX_PANE`。只读取自己的 session/window/pane/active/layout，不抓 sibling 内容或 pixel size；state block 变化才追加一条带 plugin source 的 durable `user/message`，从 raw durable events 查最近注入、无进程内缓存；可选 `refreshIntervalMs` 是非负 safe integer 下限。
+
+**条件性子契约**：若某 surface 需要自身 tmux 位置，见 [16. tmux 位置上下文](#tmux-location-context)；它不改变本节指令/状态解析规则，也不是默认启用项。
 
 **操作步骤**
 
@@ -64,19 +66,13 @@
 
 **完成证据**：记录每个作用域的实际来源、去重结果与截断；冲突产生类型化错误，而非静默选择缓存；暂态错误保留旧作用域并有可观察说明。
 
-Shell/tmux 的计划场景：真实 pane 每轮首 step 读取，未变不重复、移位下轮追加，resume/compaction 从持久事件找抑制基线；继承 tmux 环境但 tty 不匹配时不注入；负数/非整数刷新间隔在 load 拒绝。仍为 `planned`，未运行平台场景。
-
 **失败与例外**：文件损坏或 header/list 冲突必须显式失败；不得用未经验证的索引声称“文件不存在”。个人层位置与优先级属于项目 owner 决定，代理不得自创。
-
-Shell/tmux 缺 executor/env、tty 不匹配、wrong field count、空 pane id 等为 no-op；nonzero exit、aborted signal 和 executor rejection 被包含，不能终止该 turn。corrupt prior reading 不破坏 change suppression。
 
 **证据边界**：固定提交中多篇 Note 属归档历史，入口模式与文件名后来被取代；迁移项目须重新确认当前仓库事实。去重只按字节，语义相同但格式不同者都会加载。派生索引不保证即时收敛。
 
-tmux 插件仅显式组合（TUI 自行 opt-in）；位置是 per-turn 外部快照，mid-turn 移位下轮才反映。prepended listener 已追加的记录在后续 listener 取消/失败时不回滚；不进入 system prompt/request header。原运行时 invariant 已删除，因为只重复生产者计算；仅新增独立跨事件关系时才重触发。
-
 **审查问题**：A generated index is used directly to claim a file does not exist; the check fails because the authoritative read was skipped；An instruction candidate from a sibling directory leaks into the session; the scope test fails。
 
-**来源**：`deepseek-harness/.agents/notes/archived/feature/2026-06-24-workspace-context.md:1-90@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-10-session-query-service.md:1-43@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-20-dsh-cli-personal-config.md:1-52@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-21-follow-instruction-symlinks.md:1-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-21-instruction-load-all-dedup.md:1-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-27-tmux-location-context.md:1-62@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-27-web-session-search.md:1-45@687f282e`
+**来源**：`deepseek-harness/.agents/notes/archived/feature/2026-06-24-workspace-context.md:1-90@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-10-session-query-service.md:1-43@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-20-dsh-cli-personal-config.md:1-52@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-21-follow-instruction-symlinks.md:1-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-21-instruction-load-all-dedup.md:1-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-27-web-session-search.md:1-45@687f282e`
 
 <a id="change-discipline"></a>
 ## 2. 变更纪律：范围、取代、例外与发布
@@ -598,6 +594,35 @@ tmux 插件仅显式组合（TUI 自行 opt-in）；位置是 per-turn 外部快
 
 **来源**：`deepseek-harness/.agents/notes/archived/feature/2026-07-21-tui-auto-pane-title.md:1-42@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-21-tui-auto-title-default-on.md:1-33@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-23-tui-file-reference-autocomplete.md:1-34@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-27-tmux-location-context.md:1-62@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-29-persistent-bash-str-replace-editor.md:1-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-30-plan-review-presentation-intent.md:1-56@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-web-workspace-file-links.md:1-39@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-06-continuable-subagent-interrupt.md:1-49@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-install-manifest.md:1-40@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-05-web-preview-product-badge.md:1-34@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-10-durable-workflow-runs-in-chat.md:1-46@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-export-command-and-dialog.md:1-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-12-web-image-intake-and-limits-alignment.md:1-36@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-model-selected-subagent-routes.md:1-62@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-out-of-process-subagent-minimal-diagnostics.md:1-87@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-22-fire-and-forget-webhook-sessions.md:1-59@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-26-shell-execute-projection-and-jobs-at-start.md:1-53@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-07-session-prose-local-media-display.md:1-44@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-file-display-through-filesystem.md:1-36@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-09-ptc-trajectory-code-inspection.md:1-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-14-docs-mermaid-viewer.md:1-36@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-15-continuable-activation-capacity.md:1-36@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-15-docs-page-markdown-actions.md:1-36@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-27-desktop-cli-runtime.md:1-42@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-20-config-schema-dump-validation-policy.md:1-31@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-22-archive-admission-reads-stored-tasks.md:1-27@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-discover.md:1-56@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-06-approval-seam.md:1-139@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-08-windows-acl-restricted-token-sandbox.md:1-53@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-06-15-ptc.md:1-138@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-20-ptc-typed-tool-returns.md:1-116@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-26-generic-file-upload.md:1-56@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-15-deepseek-search-fetch-api.md:1-84@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-17-sidebar-file-and-directory-auto-refresh.md:1-345@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-02-web-thinking-tail-scroll.md:1-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-03-fs-tool-error-remedy.md:1-32@687f282e`
 
+<a id="tmux-location-context"></a>
+## 16. tmux 位置上下文（条件性子契约）
+
+`rationale-feature-2.tmux-location-context`
+
+**适用**：某个 surface 需要 agent 知道自己所在的 tmux session/window/pane/layout，并愿意把该信息作为持久、可重建的上下文注入。它不是通用指令/状态解析的一部分；普通项目不需要启用。
+
+**前置条件**：可用的 `ctx.shell` executor；tmux 提供 `display-message`；`ps -o tty=` 等 POSIX tty 查询可用；存在可从 `user/message` 事件重建的持久投影；消息类型能标注独立来源。
+
+**责任者**：上下文插件（注册 `agent/pre-step` 监听器）；shell executor（执行策略与 sandbox）；session projection（抑制基线）；agent runtime（消费持久消息）。
+
+**操作步骤**
+1. 注册 prepended `agent/pre-step` 监听器；先调用下游决策，仅在 `step === 1`、决策非 `reject` 且 signal 未 aborted 时继续。
+2. 从持久 `tmuxContext` 投影读取上次注入的 stable state block；不要建立进程内缓存。
+3. 若配置了正的 `refreshIntervalMs`，且距上次注入不足该毫秒数，直接返回。
+4. 通过 `ctx.shell` 执行一次只读查询：先取本进程 controlling tty，再取 `$TMUX_PANE` 的 `#{pane_tty}`，两者一致才输出 tab 分隔字段。
+5. 解析 session/window/pane/active/layout；字段数不符、pane id 为空、非零退出或查询异常均视为 no-op。
+6. 仅当 stable state block 变化时，prepend 一条持久 `user/message`，source kind 为 `tmux-context`，正文含 turn preamble 与状态块；turn preamble 不参与比较。
+
+**完成信号**：真实 pane 内每轮首 step 至多一条带来源的持久消息；同轮后续 step 不重复；状态未变的下轮不注入；移位/改名/重排后下轮注入；resume/compaction 后仍能从持久投影找到抑制基线。
+
+**失败与例外**：缺 `ctx.shell`、缺 tmux env、tty 不匹配、字段数错误、空 pane id、非零退出、aborted signal 或 executor rejection 都是 no-op 或警告，不能终止 turn。继承 `$TMUX`/`$TMUX_PANE` 的终端（例如 VS Code 集成终端）必须读作“不在 tmux”，否则会注入陈旧位置。pane 在轮内移动只在下一轮反映；prepended listener 已追加的记录，在后续 listener 取消或失败时不回滚；不抓 sibling pane 内容或 pixel size；原运行时 invariant 已删除，因为它只重复生产者自己的调度/格式计算。
+
+**证据边界**：固定提交的 Note 是归档历史，当前实现是该提交的 `packages/context/tmux-context`；本包未执行其测试。`ps -o tty=` 与 `#{pane_tty}` 不可用的平台为空操作，不能据此声称位置已注入。持久投影只证明注入基线可重建，不证明两轮之间的实时 tmux 状态。
+
+**来源**：`deepseek-harness/.agents/notes/archived/feature/2026-07-27-tmux-location-context.md:1-62@687f282e`；`deepseek-harness/packages/context/tmux-context/src/index.ts:1-275@687f282e`；`deepseek-harness/packages/context/tmux-context/README.md:32-52,64-66@687f282e`。
+
+---
+
 ## 交叉机制检查表
 
 对任何变更，逐行回答；答“否”或“未验证”必须写入结果，不得略过。
@@ -615,6 +640,7 @@ tmux 插件仅显式组合（TUI 自行 opt-in）；位置是 per-turn 外部快
 | 能力/字段是否按声明暴露？ | `capability-and-interface-negotiation` | 不支持组合在执行前失败；新注册不扩大授权 |
 | 操作是否有界、可取消、就绪后才发布？ | `bounded-operations` | 池/超时/取消/ready 顺序有测试；job 可停 |
 | 是否收集/外发用户数据？ | `consent-data-minimization` | 当前反馈门控默认 + 硬 opt-out/disabled + 显式反馈边界 + 采集时脱敏 |
+| 是否注入位置/环境上下文？ | `rationale-feature-2.tmux-location-context` | opt-in；tty 验证真实 pane；每轮首 step；状态变化才注入；无进程内缓存 |
 | 完成声明是否只覆盖实际观察？ | `honest-evidence` | 已运行/未运行、已读/未读分离；限制已列出 |
 | 是否说明非目标、取代关系与发布步骤？ | `change-discipline` | 非目标 + 精确 supersession + opt-in/迁移 |
 

@@ -25,6 +25,7 @@
 - **源义务**：Note 正文明确写出的决策、约束、否决理由、测试固定项和已知缺口。本文件用“必须/不得”表述，并给出行号。
 - **迁移设计**：为让另一个项目落地而补充的步骤顺序、责任角色、完成信号、参数化建议。它们不是源仓已经自动执行的保证，标为“迁移建议”。
 - **强制力**：只有源仓中真实存在的门禁/测试/编译器检查才算自动强制；其余标为评审或人工验证。Note 中的“测试固定”说明测试文件存在，但本域未运行它们，不能声称通过。
+- **历史来源与现行性**：本域十个机制的来源都是 `.agents/notes/archived/` 中的归档 Agent Note（`kind: history`）。它们是条件性迁移经验，不是固定提交的现行产品政策或普适硬约束；每条 knowledge 记录的 `applicability` 也带同一 provenance。涉及 TUI 的条目在固定提交已无该表面，Web 条目也必须在目标实现上重验；不得把本参考当作当前源义务清单。
 
 ### 0.3 强制力图例
 
@@ -649,7 +650,7 @@
 ### 12.2 未决问题
 
 - **docs 的完整机制归属**：本域完整阅读了 `docs/ui-radius.md` 与 `docs/web-styling.md`，但只在机制 1、2、5 中引用“复用控件/焦点”“降级/全圆退出”等段落；两份文档的 token/尺度/菜单/elevation 等完整规则仍由中央文档与文档域拥有。若集成要求单一所有者，可把这两份文档的覆盖记录迁给文档域。
-- **TUI 表面移除**：`configurable-tui-prompt-theme`、`tui-question-dialog-multiline`、`assistant-timing-header-trailing`、`tui-hidden-mode-assistant-fold` 的源表面在固定提交时已不存在。机制按“重启条件/设计先例”保留；迁移到新终端表面时必须重新验证几何、ANSI 与生命周期。
+- **TUI 表面移除**：`configurable-tui-prompt-theme`、`tui-question-dialog-multiline`、`assistant-timing-header-trailing`、`tui-hidden-mode-assistant-fold` 的源表面在固定提交时已不存在。机制按“重启条件/设计先例”保留；迁移到新终端表面时必须重新验证几何、ANSI 与生命周期。全部十个 knowledge 记录的 `applicability` 现均带归档 Note（`history`）与条件性迁移 provenance；Web 条目是历史经验而非现行产品政策，同样须在目标实现重验。
 - **未读实现**：本域只读 Note 与中央文档，未读 `read-card-model.ts`、`ReadBlock`、`windowBlocks`、`MessageFeedbackController`、presenter 实现或测试文件。所有“测试固定”都是源 Note 的声明，不是本域的运行结果。
 - **未执行**：没有构建、测试、lint、格式化、安装或网络操作；所有验证证据标为 planned。
 

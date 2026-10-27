@@ -3203,6 +3203,18 @@
           "start": 74,
           "end": 78,
           "kind": "history"
+        },
+        {
+          "path": ".agents/notes/README.md",
+          "start": 38,
+          "end": 50,
+          "kind": "instruction"
+        },
+        {
+          "path": ".agents/notes/AGENTS.md",
+          "start": 1,
+          "end": 7,
+          "kind": "instruction"
         }
       ],
       "scope": "Agent Note/决策记录的生命周期、归档、合并、部分取代与拒绝理由。",
@@ -3210,7 +3222,7 @@
         "归档后的纯格式/链接修复也不得改内容；由工具而非手改。",
         "机械/本地 UI 改动可豁免新笔记，但已有记录仍受冻结规则保护。"
       ],
-      "independence": "来自 Agent Note 生命周期/归档政策，以及 flush、Web steer、Workspace recency、id、JSONL、E2B、desktop、preset、proposed 55-58、rejected 59-61 等不同状态的记录。",
+      "independence": "来自 Agent Note 生命周期/归档政策，以及 flush、Web steer、Workspace recency、id、JSONL、E2B、desktop、preset 等不同状态的记录，加上四条 proposed（`2026-09-17-defer-office-background-scheduling.md`、`2026-09-19-provider-only-instruction-reads.md`、`2026-09-19-shell-env-key-declarations.md`、`2026-09-19-trim-session-query-convenience-api.md`）与三条 rejected（`2026-06-20-truncate-interrupted-turns.md`、`2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md`、`2026-07-26-dependency-swaps-rejected-by-nih-audit.md`）。这些文件 ID 就是来源清单中的条目，不使用提取工作簿的内部序号。",
       "limitations": "未运行归档验证器；未逐条核对当前代码是否仍实现每个 implemented 决策；当前政策/代码优先。",
       "completionSignal": "三件套冻结；状态与生命周期一致；部分取代点名剩余 owner；拒绝理由可查；新提案回应旧理由。",
       "antiPatterns": [

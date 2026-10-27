@@ -72,6 +72,18 @@
           "start": 1,
           "end": 11,
           "kind": "config"
+        },
+        {
+          "path": "packages/test-support/session-snapshot/src/manifest.ts",
+          "start": 150,
+          "end": 432,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/session-snapshot-corpus.corpus.ts",
+          "start": 1,
+          "end": 216,
+          "kind": "test"
         }
       ],
       "problem": "场景目录同时存放 replay 输入、期望持久化输出、header sidecar、workspace 种子、补丁与辅助字节。若没有作者声明，适配器和评审无法区分哪些字节是权威输入、哪些是 oracle、哪些只是惰性 fixture；fixture 里的 AGENTS.md、系统提示或 expected 散文还可能被误当成项目指令，record/refresh 也可能覆盖错误产物。",
@@ -82,11 +94,12 @@
         "接入新 profile 或新场景作者"
       ],
       "obligations": [
-        "每个场景目录恰好一份 snapshot.yml：version 为 1、scenario 等于目录名、profile 与父目录匹配、composition 命名补丁族、recording 为 live|authored、header.class 必填；未知字段由 exact-key 解析拒绝。",
+        "parseSnapshotManifest 以 yaml.JSON_SCHEMA 读取（不接受 JS tag），exact-key 拒绝未知字段，要求 version=1，并校验 profile/recording/platform/permission 枚举、sessionFormat.version 为非负安全整数、sessionFormat.coverage 为非空且唯一的受支持集合、sessionFormat 不得与 session 同时出现、lower-kebab 名称、header/workspace/session 子字段、附件 id 以 `sha256:` 开头且唯一。scenario、composition、recording 与 header 在 parser 中都是可选字段；parser 不检查目录名或父 profile。",
+        "corpus gate（scripts/session-snapshot-corpus.corpus.ts）断言每个 profile 目录下的场景都有 snapshot.yml、scenario 等于目录名、profile 与父目录匹配（sdk 允许 sdk|sdk-minimal，session 必须 headless，acp/web 精确匹配）、composition/recording/header 存在，并要求每个 composition/header class 有唯一 pin。这些必填与位置关系不由 parser 承担。",
         "角色由清单而不是文件名决定：session*.jsonl 同时是 replay 输入与期望持久化输出；writer*.expected.jsonl 是独立 native-writer oracle；workspace/ 是运行前种子，workspace.expected/ 只在 workspace.final: true 时作为完整最终树 oracle；input.attachments 是内容寻址输入；input.task 只在没有可接受 session 提供任务时使用；replay.override: true 声明行为补丁侧车；session.source 表示借用者、目录不拥有 canonical session；sessionFormat 保留历史代际与闭合 coverage 名。",
         "recording: authored 表示手工声明，record 必须跳过；live 表示来自真实 provider 录制。sessionFormat owner 在 record/refresh 中不可被改写，期望改用独立 writer oracle。",
-        "fixture 字节不承载政策：workspace 内 AGENTS.md、JSONL 系统提示、expected 散文、prompt/schema sidecar 与 helper 文件都是数据，不得作为项目指令编辑或晋升为仓库规则。",
-        "新增角色必须先扩展 schema 与适配器；不得复用现有字段或从文件名推断角色。"
+        "fixture 字节不承载政策：workspace 内 AGENTS.md、JSONL 系统提示、expected 散文、prompt/schema sidecar 与 helper 文件都是数据，不得作为项目指令编辑或晋升为仓库规则。此边界是人工评审规则，不是本次读取范围中的机械扫描器。",
+        "新增角色必须先扩展 schema 与适配器；不得复用现有字段或从文件名推断角色。未知字段由 parser 拒绝，但角色语义与接线仍需适配器和评审。"
       ],
       "actors": [
         "场景作者：判断行为与证据产物，填写清单并放置字节",
@@ -102,9 +115,9 @@
       ],
       "enforcement": {
         "mode": "closed manifest schema + 适配器 + corpus gate",
-        "implementation": "parseSnapshotManifest 的 exact-key 校验；ACP/SDK/headless 适配器只消费清单声明；fixture/sidecar/workspace 守卫按声明判断存在性与唯一性。",
-        "trust": "schema 与角色接线可机械检查；场景是否真的覆盖目标风险仍需评审。",
-        "failure": "未知字段或角色歧义被解析器/适配器拒绝；错误产物被 replay diff 暴露；fixture 文本被当指令时评审阻断。",
+        "implementation": "parseSnapshotManifest 以 JSON_SCHEMA + exact-key 校验字段类型和枚举；scripts/session-snapshot-corpus.corpus.ts 断言目录/scenario/profile/composition/recording/header 与 pin 唯一性；ACP/SDK/headless 适配器只消费清单声明；fixture/sidecar/workspace 守卫按声明判断存在性与唯一性。",
+        "trust": "parser 的字段闭合/类型、corpus gate 的位置与必填关系、适配器接线可机械检查；场景是否真的覆盖目标风险仍需评审；fixture 文本不得成为项目指令这一边界只有人工评审。",
+        "failure": "未知字段或类型错误被 parser 拒绝；目录/scenario/profile 不匹配、composition/recording/header 缺失或 pin 重复被 corpus gate 拒绝；角色歧义与错误产物由适配器/replay diff/评审暴露。",
         "exceptions": [
           "web/schedule-catalog 的 catalog-only pin 没有 request/header 或 system/message，但保留历史 prompt/schema sidecar",
           "Web 跨 profile 借用 canonical session",
@@ -144,13 +157,17 @@
       "verification": {
         "positive": [
           {
-            "scenario": "逐份解析 250 个场景 manifest，全部通过 exact-key/schema 守卫；注入一个未知字段时解析失败并指出路径。",
+            "scenario": "逐份解析 250 个场景 manifest，全部通过 parser；corpus gate 对 scenario=目录名、profile=父 profile、composition/recording/header 存在与 pin 唯一性均通过；注入一个未知字段时解析失败并指出路径。",
             "evidence": "planned"
           }
         ],
         "rejection": [
           {
             "scenario": "删除 acp/image-compaction 的 input.attachments，或把 session.source 指向不存在的 owner，输入/借用守卫失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "把 scenario 改成与目录不符、把 profile 改成父目录不允许的值、删除 composition/recording/header，或为同一 composition/header class 增加第二个 pin，corpus gate 必须失败。",
             "evidence": "planned"
           }
         ],
@@ -164,13 +181,25 @@
       "limitations": [
         "清单角色是声明，不证明场景语义覆盖或 fixture 内容质量。",
         "借用 session 依赖源场景的 selected generation，源场景迁移会改变借用者输入。",
-        "本分区未重新读取 snapshots/AGENTS.md 与 corpus gate，不能据此扩展 schema 之外的规则。"
+        "本分区只补读了 manifest parser 与 corpus gate 作为本记录 provenance；corpus AGENTS 的完整语义、8 个适配器名册和其他 profile 的额外规则不在本记录范围，不能据此扩展 schema 之外的保证。"
       ]
     },
     {
       "id": "snapshot-corpus-inventory.adapter-entry-and-profile-selection",
       "title": "ACP/SDK/headless 三个适配器是各自 profile 场景的唯一执行入口",
       "sources": [
+        {
+          "path": "snapshots/sdk/sdk.snapshot.ts",
+          "start": 491,
+          "end": 495,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/sdk/sdk.snapshot.ts",
+          "start": 687,
+          "end": 766,
+          "kind": "test"
+        },
         {
           "path": "snapshots/acp/acp.snapshot.ts",
           "start": 26,
@@ -290,12 +319,12 @@
       ],
       "obligations": [
         "ACP 适配器持有闭合、有序的 9 场景 controller 表；handshake 与 reject-extra-dirs 明确无模型轮次；每个 manifest 必须有 recording 与 header；replay.override、pin、changes、sidecar 来源、platform、permission/environment 被映射进 suite 选项；ACP 本地 pin 来源只接受裸场景名。",
-        "SDK 适配器扫描 session/ 与 sdk/ 目录，按 profile sdk|sdk-minimal 过滤，要求 composition/recording/header；每个 composition 恰好一个 cordis.yml owner，每个 composition/header class 恰好一个 pin；sidecar 来源可为裸名或 corpus 相对路径；每个场景通过真实 CLI 的 stdio JSON-RPC 驱动一轮。",
+        "SDK适配器扫描session/与sdk/目录，按profile sdk|sdk-minimal过滤，建立composition owner与header pin唯一性；sidecar来源可为裸名或corpus相对路径；通过真实CLI的stdio JSON-RPC按夹具动作序列驱动场景，不限定为一个模型turn。源实现在composition/recording/header任一缺失时静默continue，可能使场景从suite消失，这是源负向发现，不是目标保证。",
         "Headless 适配器只自动收集 profile=headless 且带 composition 的 manifest，缺 recording/header 直接抛错；每个 composition 恰好一个 cordis.yml owner，每个 composition/class 恰好一个 pin；补丁层序为 base cordis.yml + 模式补丁（replay 用 cordis.snapshot.yml，record 用 cordis.yml）+ model.cordis.yml + 可选 runtime.cordis.yml。",
         ".snapshot.ts 是可执行适配器而非 fixture；不得新增第二入口、隐藏 CLI 模式或可执行场景驱动，也不得手写与发布 composition 平行的孪生配置。",
-        "适配器必须在未知 DSH_SNAPSHOT mode 上抛错；record 对 authored 与 sessionFormat 场景跳过，replay 默认 keyless。",
-        "Each adapter must own a scenario assertion table (expected final response, tools and required keys, system prompt, tool descriptions, runtime-context include/exclude, child agent config) and drive the real CLI/JSON-RPC or browser path; collected logs are compared parent-first against committed fixtures.",
-        "Adapter fixtures hydrate committed cwd tokens into a temporary replay root, bind sibling roles by catalog order before timestamps, and await post-turn events so assertions do not race process exit.",
+        "ACP 与 headless 在未知 DSH_SNAPSHOT mode 上抛错；SDK 源实现把任何非 record/refresh 值当作 replay（未校验 DSH_SNAPSHOT），这是源负向发现，不能作为通用保证。record 对 authored 与 sessionFormat 场景跳过，replay 默认 keyless。",
+        "场景专用断言的拥有方式不同，不能概括为每个适配器都有一张同形表：SDK 有 SDK_ASSERTIONS（final response、tools、system prompt、tool descriptions、runtime-context、child config 等）；headless 用 verifyHeaders 与场景专用 verify* 函数；ACP 将期望交给 defineAcpSnapshotSuite 和提交夹具。迁移时必须逐适配器声明其证据，不能伪造统一表。",
+        "SDK把提交夹具中的{{cwd}}水合到临时.replay-fixtures根；headless优先按父Session的subagent/catalog顺序、缺catalog顺序时才回退createdAt。SDK各action按对应turn/end同步；全部actions完成后，才按夹具最后一次turn/end之后的事件类型执行一次最终尾部等待，不保证每轮之后都有通用post-turn屏障。标题和completion等场景专用等待另行保留。",
         "Retained replay input must remain byte-identical after refresh/record, and adapter-specific oracles (spill payload, worktree, confinement, provider-cwd) must verify the corresponding external artifact."
       ],
       "actors": [
@@ -312,9 +341,9 @@
       ],
       "enforcement": {
         "mode": "adapter registration + ownership assertions",
-        "implementation": "ACP controllerCases 表与 manifest 映射；SDK collectCorpus/filter/compositionOwners/headerPins；Headless collectScenarios/ownerOf/pinOf 与 patchSources 层序。",
-        "trust": "适配器证明收集、接线与模式分派，不证明场景语义正确。",
-        "failure": "缺 composition owner 或 pin 在收集期抛错；未收集场景从 suite 消失；未知模式抛错；record 误跑 authored/retained 会被跳过条件阻止。",
+        "implementation": "ACP controllerCases 表与 manifest 映射；SDK collectCorpus/filter/compositionOwners/headerPins、SDK_ASSERTIONS、hydrateReplayFixtures 与 postTurnEventTypes；Headless collectScenarios/ownerOf/pinOf、patchSources 层序与 persistedSessions 的 catalog-order 排序。",
+        "trust": "适配器证明收集、接线、模式分派与已读的断言/排序辅助；不证明场景语义正确。SDK 的静默跳过与未知模式 fallback 是源缺陷，不是可迁移保证。",
+        "failure": "缺 composition owner 或 pin 在收集期抛错；ACP/headless 未知模式抛错；SDK 缺 composition/recording/header 会静默跳过、未知模式会 fallback 到 replay（源负向发现）；record 误跑 authored/retained 会被跳过条件阻止。",
         "exceptions": [
           "catalog-only pin 可以没有 header 块",
           "tool-call-turn 在 replay 额外运行 retained V3 输入",
@@ -339,7 +368,7 @@
           "实现 composition owner 与 header pin 的唯一性映射",
           "实现模式到补丁层的选择（base/mode/model/runtime）",
           "让 authored 与 retained 场景在 record 中跳过",
-          "用未知模式与缺失 owner 的负向测试守住入口"
+          "ACP/headless 用未知模式负向测试守住入口；SDK 需先补 mode 校验、missing-field 失败和场景计数断言，再谈同等级保证"
         ],
         "requiredSupport": [
           "真实 CLI 或浏览器入口",
@@ -358,7 +387,11 @@
         ],
         "rejection": [
           {
-            "scenario": "删除某 composition 的 cordis.yml owner、增加第二个同 class pin，或把 DSH_SNAPSHOT 设为未知值，适配器在收集/启动期抛错。",
+            "scenario": "删除某 composition 的 cordis.yml owner 或增加第二个同 class pin，适配器在收集期抛错；把 ACP/headless 的 DSH_SNAPSHOT 设为未知值，启动期抛错。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "删除 SDK 场景的 recording/header，或把 SDK 的 DSH_SNAPSHOT 设为未知值：源实现会静默跳过或 fallback 到 replay。目标必须先补计数/模式校验；修复前不得把该场景列为通过或拒绝证据。",
             "evidence": "planned"
           }
         ],
@@ -371,8 +404,8 @@
       },
       "limitations": [
         "适配器证明收集与接线，不证明被测行为正确。",
-        "SDK/Headless 适配器只选读关键段，场景专用断言未逐行审计。",
-        "corpus gate 的 8 适配器名册不在本分区路径内。"
+        "SDK/Headless 适配器只选读关键段，场景专用断言未逐行审计；SDK 的 silent skip 与未知模式 fallback 是源负向发现，目标需补计数断言与 mode 校验。",
+        "corpus gate 的 8 适配器名册不在本分区路径内；本记录只验证三个适配器入口。"
       ]
     },
     {
@@ -395,6 +428,12 @@
           "path": "snapshots/session/headless.snapshot.ts",
           "start": 962,
           "end": 995,
+          "kind": "test"
+        },
+        {
+          "path": "snapshots/session/headless.snapshot.ts",
+          "start": 989,
+          "end": 1000,
           "kind": "test"
         },
         {
@@ -463,9 +502,9 @@
         "snapshots/ 下所有 .mjs 必须绑定 OS 分配端口：listen(0)、listen({ port: 0, ... }) 或 listen({ path })；固定数字端口、动态 port 变量，以及 path 与非零数字 port 混用都失败。Headless 适配器对全部 fixture .mjs 做 AST 扫描并让 lane 变红。",
         "workspace.setup 是适配器内闭合的字符串映射；未知 setup 在运行前抛错。当前集合覆盖 office skills、retired PTC wrapper、git worktree、delimiter path、固定搜索 mtime、Windows ACL skill 与 editing-cordis skill。",
         "setup 种子必须确定且自包含：固定 mtime、局部 git config、复制技能资产、不依赖 ambient repo/网络；凭据或宿主秘密只用场景声明的哨兵值。",
-        "fixture helper 与 workspace 文件都是数据；其文本不得作为项目指令。workspace/ 原样复制，workspace.final 仍是 oracle；helper 产生的运行期目录要么进入 capture 的忽略表，要么单独断言。",
-        "A worktree fixture must assert the actual refs/HEAD/attributes/filter/config state rather than only working-tree text; any helper that creates that Git state must make it deterministic and isolated from user/system configuration.",
-        "Fixture-helper admission must reject extra files and JSONL that is not already a scrub/redaction fixed point; a workspace.final scenario needs an independent expected tree and an explicit runtime ignore list."
+        "fixture helper 与 workspace 文件都是数据；其文本不得作为项目指令。workspace/ 原样复制，workspace.final 仍是 oracle；helper 产生的运行期目录要么进入 capture 的忽略表，要么单独断言。该“数据而非指令”边界只有人工评审，本次读取范围没有机械扫描器。",
+        "worktree setup 必须用局部 Git config、GIT_CONFIG_GLOBAL/SYSTEM=/dev/null、清空 GIT_*、固定 author/committer 与日期来隔离并固定 Git 状态；verifyWorktree 比较 config 与 config.before-worktree、attributes/filter、tracked/untracked 内容、branch、HEAD、worktree list 与 check-ignore，而不是只看工作树文本。",
+        "精确文件清单与 JSONL fixed-point 守卫是 Web-only：apps/web/tests/scaffold.ts 的 assertFixtureInventory 对 Web 场景目录检查预期文件集合、profile=web、canonical session owner/borrower，以及每个 JSONL 的 prompt/schema scrub 与身份 redaction fixed point。headless 不跑该清单，只检查 input.json 与 stdout.expected.jsonl 不存在，并对 session-owned 输入做同样两类 fixed-point。workspace.final 场景仍需要独立 expected tree 与显式 runtime ignore list。"
       ],
       "actors": [
         "fixture 作者：维护 server、种子与 setup",
@@ -481,9 +520,9 @@
       ],
       "enforcement": {
         "mode": "AST scan + closed setup map + workspace capture",
-        "implementation": "listenerPortViolations 对 snapshots/**/*.mjs 做 TypeScript AST 扫描；workspaceSetups 闭合映射在 seedWorkspace 中查表；captureWorkspaceSnapshot 的 ignoredRootEntries 与 workspace.final 断言。",
-        "trust": "端口形态与未知 setup 可机械检查；seed 确定性与 helper 文本边界仍需评审。",
-        "failure": "固定端口使 lane 测试失败并给文件行号；未知 setup 抛错；额外运行期文件造成 workspace oracle diff。",
+        "implementation": "listenerPortViolations 对 snapshots/**/*.mjs 做 TypeScript AST 扫描；workspaceSetups 闭合映射在 seedWorkspace 中查表；captureWorkspaceSnapshot 的 ignoredRootEntries 与 workspace.final 断言；verifyWorktree 的 Git 状态断言；Web assertFixtureInventory 的清单/fixed-point 守卫；headless 的 input.json/stdout.expected.jsonl 禁止检查。",
+        "trust": "端口形态、未知 setup、Web 文件清单、headless 禁止文件与 workspace capture 可机械检查；Git 确定性由代码结构保证；fixture helper/workspace 文本不得成为指令仍是人工评审。",
+        "failure": "固定端口使 lane 测试失败并给文件行号；未知 setup 抛错；额外运行期文件造成 workspace oracle diff；Web 目录出现额外/缺失文件或 JSONL 非 fixed point 失败；headless 出现 input.json/stdout.expected.jsonl 失败。",
         "exceptions": [
           "Unix socket path fixture 使用 listen({ path }) 合法",
           "git-worktree setup 保留 .git 并在最终树中单独过滤临时指针",
@@ -521,11 +560,19 @@
           {
             "scenario": "fixture .mjs 端口扫描零违规，所有 workspace.setup 都能在闭合映射中解析，workspace.final 场景与 oracle 一致。",
             "evidence": "planned"
+          },
+          {
+            "scenario": "Web 场景目录通过 assertFixtureInventory 的精确文件集合、profile=web、session owner/borrower 与 JSONL fixed-point 检查；headless 场景没有 input.json/stdout.expected.jsonl 且 session 输入为 fixed point；worktree 场景通过 config/attributes/filter/branch/HEAD/worktree list/check-ignore 断言。",
+            "evidence": "planned"
           }
         ],
         "rejection": [
           {
             "scenario": "把某个 fixture server 改成 listen(43118)，扫描测试失败并指出文件行号；把 workspace.setup 改为未注册名，运行前抛错。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Web 场景多一个未声明文件或 JSONL 未通过 scrub/redaction fixed point 时 assertFixtureInventory 失败；headless 场景出现 input.json 或 stdout.expected.jsonl 时禁止检查失败；worktree 的 HEAD/config/attributes 被改动时 verifyWorktree 失败。",
             "evidence": "planned"
           }
         ],
@@ -539,6 +586,8 @@
       "limitations": [
         "AST 扫描只覆盖 listen 调用形态，不证明其它资源（临时目录、文件描述符、定时器）已清理。",
         "setup 的确定性由代码结构保证，未逐一执行全部 setup。",
+        "精确文件清单与 JSONL fixed-point 守卫只在 Web scaffold；headless 只检查指定禁止文件和 session-owned 输入 fixed point，不能外推成所有 profile 的统一准入。",
+        "fixture helper/workspace 文本“是数据而非指令”是人工评审边界，本次读取范围没有机械扫描器。",
         "本地 Windows 检出可能把 symlink 物化为普通文件，端口扫描与 workspace 捕获行为需在目标平台验证。"
       ]
     }

@@ -1354,7 +1354,7 @@
         ],
         "evidence": "planned"
       },
-      "limitations": "无法证明所有瞬态都被正确分类；策略表需随 provider 维护。固定提交内旧 Note 与 llm-retry 包 README 在默认次数和 turn 边界上有文档漂移；本机制不把这些来源伪装为一致，normal/always 与 open-turn 契约详见关联的包机制。"
+      "limitations": "无法证明所有瞬态都被正确分类；策略表需随 provider 维护。固定提交内旧 Note（2026-06-21）写 normal 默认两次重试，而 llm-retry README 与 provider-retry 决策写默认五次，这是已披露的默认次数漂移；本机制不据此确定任何次数或上限，本次核对也未发现 turn 边界冲突。normal/always 与 open-turn 契约以关联的 package-contracts-2.llm-retry-durable 为准。"
     },
     {
       "id": "rationale-architecture-1.derived-state-single-source",

@@ -90,8 +90,8 @@
       "obligations": [
         "pnpm-workspace.yaml.packages 是 pnpm 的成员真源；package.json.workspaces 只服务读取它的脚本，两者差异必须是有意的并记录。",
         "根 packageManager、devDependency pnpm 和 release-age 豁免三处版本必须一致。",
-        "每个安装/构建脚本必须在 allowBuilds 显式写 true 或 false；未列出脚本在 strict 模式下是安装错误。",
-        "release age 的每个豁免必须是精确包版本，不允许用范围或全局关闭；本仓库没有显式 minimumReleaseAge，24h 是 pnpm 11 默认（apps/desktop/packaging/README.md:227、scripts/local-bundle-registry.spec.ts:513-515），迁移到其他 pnpm 主版本必须重验。",
+        "源仓 `pnpm-workspace.yaml` 注释说明 pnpm 10+ 将未审查的安装/构建脚本作为硬错误；pnpm 11 官方发布说明把 `strictDepBuilds` 默认改为 true，因此每个此类脚本必须在 allowBuilds 显式写 true 或 false。源仓未显式写 `strictDepBuilds`；本批未执行实际安装观察。",
+        "release age 的每条豁免必须是精确 `name@version`，或由精确版本组成的 `||` 联合（如 OpenAI Codex 平台别名），不允许 semver 范围或全局关闭；本仓库没有显式 minimumReleaseAge；pnpm 11 官方发布说明把 `minimumReleaseAge` 默认设为 1440 分钟（24h），未命中精确豁免的包默认受此约束，源仓 README/测试亦按此描述。迁移到其他 pnpm 主版本必须在实际解析/安装中重验，不能把 24h 当作通用事实。",
         "CI 安装必须 --frozen-lockfile；发布安装另用 --ignore-scripts。",
         "新增成员要同时考虑发布树、workspace 协议、版本家族和许可证扫描。",
         "Official bundle catalog 必须等于 ON_DEMAND_BUNDLES；每个选中的成员必须非 private 且出现在 release member 索引中；workspaceNames 必须是全部 workspace 名称（而不只是选中包），从而把 repository-owned 的缺失请求判为本地 404 而不是上游重定向。"
@@ -178,9 +178,9 @@
             "evidence": "planned"
           }
         ],
-        "note": "作者未运行安装或 gate；strictDepBuilds 默认值和 nodeLinker 行为未独立验证。"
+        "note": "作者未运行安装或 gate；pnpm 11 默认值已对官方发布说明核对，未做实际安装/解析；nodeLinker 行为未独立验证。"
       },
-      "limitations": "未显式配置 nodeLinker 或 minimumReleaseAge；24h 是 pnpm 11 默认而非仓库字段；strictDepBuilds 默认值来自注释；两份成员清单不是自动同步。"
+      "limitations": "未显式配置 nodeLinker 或 minimumReleaseAge；24h 是 pnpm 11 官方发布说明的默认（1440 分钟），不是仓库字段；strictDepBuilds 默认 true 见 pnpm 11 官方发布说明与源注释；两者本批未通过实际安装观察；两份成员清单不是自动同步。"
     },
     {
       "id": "supply-chain-workspace-protocol",
@@ -1133,8 +1133,8 @@
         },
         {
           "path": "AGENTS.md",
-          "start": 82,
-          "end": 89,
+          "start": 132,
+          "end": 132,
           "kind": "instruction"
         },
         {
@@ -1184,7 +1184,7 @@
         "新增 bin/worker"
       ],
       "obligations": [
-        "ESM：根与 dsh 包 type=module；只支持单个 . 入口；main/types/exports 固定。",
+        "ESM：根与 dsh 包 type=module；main=lib/index.js、types=lib/types/index.d.ts 固定；exports['.'].types=./lib/types/index.d.ts、default=./lib/index.js 固定。checkWorkspaceManifest 只强制根入口，允许额外标准 subpath（./client、./types、./typert、./remote、./locale/*.json、./src/*、./cordis.patch.yml）；新增键不受该 gate 约束，需要单独评审，publint 检查发布视图。",
         "禁止模块作用域 await/for await/await using；仅 bin 源与 shebang 文件排除。",
         "publint 对 packages/*/* 的发布视图检查 error 和相对 import closure；浏览器格式误报精确过滤。",
         "NodeNext 对 vendor+packages 的公开声明做临时消费者编译；声明相对导入必须有扩展名。",
@@ -1197,7 +1197,7 @@
         "评审者"
       ],
       "steps": [
-        "写单个 . exports 和类型路径。",
+        "写根 `.` 入口的 exports/types，并按需添加标准 subpath。",
         "构建后用 publint 检查发布视图；补 files/相对导入。",
         "用 NodeNext gate 编译公开声明；修扩展名/类型导出。",
         "运行 package-meta 检查 locale/icon/files。",
@@ -1500,7 +1500,7 @@
         "trust": "pre-commit guard 只验证 vendor/<pkg>/src/** 或 bin.js 变更时 vendor/README.md 同批 staged；它不校验 README 内容，也不覆盖 package.json/tsconfig 等其他文件。清单完整性、版本/commit 对应关系、本地修改是否仍必要以及上游行为差异都需要人工审查。",
         "failure": "上游覆盖本地修复、清单版本/目录不匹配、未登记目录、notices 漏项、vendor tarball 不可安装。",
         "exceptions": [
-          "vendor/AGENTS 说只改构建问题，但 README 记录行为修改；需明确政策",
+          "vendor/AGENTS 允许因 type-checking policy 改动 vendor/*/tsconfig.json；这些重生成文件不登记为行为 divergence，src 内的每个 divergence 必须在 vendor/README.md 完整登记",
           "vendor 在 manifest files 检查中豁免 source/map，但 tarball 仍校验"
         ]
       },
@@ -1563,7 +1563,7 @@
         ],
         "note": "作者未同步/运行 gate；vendor/README.md 1-73 全读，check-vendor-manifest.sh 1-17 与 lefthook.yml 5-33 全读；未逐条验证每个本地修改与上游行为差异。"
       },
-      "limitations": "本地修改日志是自然语言，难自动校验；vendor/AGENTS 与 README 存在张力；pre-commit guard 只检查 README 是否同批 staged，不验证内容；仓库没有 verify-vendor-manifest package script。"
+      "limitations": "本地修改日志是自然语言，难自动校验；vendor/AGENTS 禁止随意改 src 并要求每个 divergence 完整登记，tsconfig 是可因类型检查策略重生成的真例外，README 记录的行为修改都按该登记规则存在；pre-commit guard 只检查 README 是否同批 staged，不验证内容；仓库没有 verify-vendor-manifest package script。"
     },
     {
       "id": "supply-chain-vendor-rescope",
@@ -1582,9 +1582,15 @@
           "kind": "history"
         },
         {
+          "path": "docs/rescope.md",
+          "start": 44,
+          "end": 51,
+          "kind": "instruction"
+        },
+        {
           "path": "AGENTS.md",
-          "start": 88,
-          "end": 89,
+          "start": 131,
+          "end": 131,
           "kind": "instruction"
         }
       ],
@@ -2218,7 +2224,7 @@
             "evidence": "planned"
           }
         ],
-        "note": "作者未运行；只读 1-130，未逐行读辅助函数；不验证 Python 实际 import。"
+        "note": "作者未运行 gate；登记时的作者读数只到 1-130。本记录实际核对 1-237，包括 preset/平台/target 解析、active 插件遍历与 workspace 闭包辅助函数；仍不验证 Python 实际 import。"
       },
       "limitations": "只覆盖 runtime manifest 可达的 workspace 包；不检查 devDependency 泄漏；平台条件识别有限。"
     },
@@ -2592,42 +2598,9 @@
         ],
         "note": "作者未发布/运行；pack 1-108、publish 1-235、verify-packed 1-126 全读；pnpm 替换规则来自官方文档，未实际观察 tarball。"
       },
-      "limitations": "平台 native 包覆盖不全；publish 的 registry 重试/partial 状态只读源码；发布环境的 reviewer/token 远端配置未验证；pnpm pack 替换未本地执行。；This fixture proves packing and relocation isolation for the test lane only. It does not prove registry publication, real consumer installation or platform installation parity.\n本地 registry 是开发传输层，不改发布路径；测试使用合成 tarball 与本地 pnpm，不证明打包应用内 Plugin Manager 的交互，也不证明真实 npm registry 的行为。",
+      "limitations": "平台 native 包覆盖不全；publish 的 registry 重试/partial 状态只读源码；发布环境的 reviewer/token 远端配置未验证；pnpm pack 替换未本地执行。测试 fixture 只证明 test lane 的打包与重定位隔离，不证明 registry 发布、真实消费者安装或平台安装一致性。\n本地 registry 是开发传输层，不改发布路径；测试使用合成 tarball 与本地 pnpm，不证明打包应用内 Plugin Manager 的交互，也不证明真实 npm registry 的行为。",
       "notes": [
-        "源",
-        "码",
-        "与",
-        " ",
-        "s",
-        "p",
-        "e",
-        "c",
-        " ",
-        "审",
-        "阅",
-        "，",
-        "未",
-        "执",
-        "行",
-        " ",
-        "p",
-        "n",
-        "p",
-        "m",
-        "、",
-        "r",
-        "e",
-        "g",
-        "i",
-        "s",
-        "t",
-        "r",
-        "y",
-        " ",
-        "或",
-        "安",
-        "装",
-        "。"
+        "源码与 spec 审阅，未执行 pnpm、registry 或安装。"
       ]
     },
     {
@@ -3434,7 +3407,7 @@
       ],
       "obligations": [
         "Dependabot 覆盖 npm（排除 vendor）、uv（python/sdk）、github-actions；每天 04:00 Asia/Shanghai；cooldown 30 天。",
-        "更新仍要过 pnpm 24h release age；豁免必须精确版本。",
+        "更新仍受 pnpm release-age 约束（源仓不显式配置 `minimumReleaseAge`，按 pnpm 11 官方默认 24h 运行，精确版本豁免除外；本批未做实际安装观察）；豁免必须精确版本（允许 `||` 联合精确版本）。",
         "每个 PR 要跑 constraints/package-dependencies/runtime-closure/build/相关测试，并更新 notices。",
         "vendor 不走 Dependabot；走 vendor-sync。"
       ],

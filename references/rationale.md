@@ -14,7 +14,7 @@
 
 | 术语 | 含义 | 不是 |
 |---|---|---|
-| Agent Note | 一次非平凡变更的持久决策记录；`proposed` / `implemented` / `rejected` 三种生命周期，`archived` 是冻结历史目录 | 变更日志、实现计划、规格书、PR 描述 |
+| Agent Note | 承载持久决策理据的记录；`proposed` / `implemented` / `rejected` 三种生命周期，`archived` 是冻结历史目录 | 变更日志、实现计划、规格书、PR 描述 |
 | Postmortem | 一次已发生事故的根因、时间线、安全网与教训叙事 | 决策记录、缺陷单、追责报告 |
 | Current authority | 当前活文件中的规则、接口、默认值或行为 | 归档 Note 中的旧事实 |
 | Frozen snapshot | 归档 Note 的字节副本；只读、可链接、不可编辑 | 可修正的活文档 |
@@ -29,7 +29,7 @@
 3. **历史不是权威**：归档 Note 是历史快照。当前行为以活代码、活规则、活文档为准；引用归档时必须明确它是历史。
 4. **否决要可检验**：备选方案要写“为什么没选”，最好带证据（失败测试、PR、基准、平台限制）。没有理由的“不选”会在下一次调查中被重新提出。
 5. **证据分层**：格式正确不等于内容正确；测试通过不等于生产行为正确；文档声明不等于运行时保证。写 Note 和做评审时都要说明证据属于哪一层。
-6. **判断留给人**：是否“非平凡”、是否“低价值可删”、译文是否等义、根因叙事是否充分，都是语义判断；工具只能检查字节、结构、链接和部分行为。
+6. **判断留给人**：是否承载持久决策理据、是否“低价值可删”、译文是否等义、根因叙事是否充分，都是语义判断；工具只能检查字节、结构、链接和部分行为。
 
 ### 机制 ID 与章节索引
 
@@ -58,7 +58,9 @@
 
 ### 1.1 何时必须写
 
-`【源规则】` 每个非平凡变更都必须在同一变更中新增或更新 Agent Note。源规则给出的非平凡范围包括：
+`【源规则｜现行】` 只有 **lasting decision rationale**（代码、测试和现有文档无法解释的持久决策）才要求在同一变更中新增或更新 Agent Note；不是每个非平凡变更都强制。当前活权威是根 `AGENTS.md:155`、`docs/AGENTS.md:40-41` 与 `.agents/notes/README.md#when-to-write-one`；归档的 2026-07-19 “every non-trivial change” 规则是历史，不再单独构成义务。
+
+`【源规则｜历史信号】` 归档 Note 给出的非平凡范围仍可用于判断改动是否承载持久决策：
 
 - 新增或修改事件/上下文/hook/流；
 - 新增状态存储；
@@ -68,11 +70,11 @@
 - 移除能力、文件或路径；
 - 其他会让未来读者问“为什么”的改动。
 
-纯 typo、格式、注释编辑，以及不改变接口、状态或行为的机械清理，可以不写。**但“小”不等于“平凡”**：一个字符的默认值、一个 CSS token、一个 accessibility 语义都可能改变用户可见行为。2026-06-20 的分类修订明确删除了“small UI adjustments or purely mechanical changes”这一豁免，因为“看起来像调参”的 UI 改动仍可能改变行为、可访问性和契约（`deepseek-harness/.agents/notes/archived/process/2026-06-20-agent-note-classification.md:11-33@687f282e`）。测试和 fixture 的批量机械修改通常可视为平凡；但如果测试本身在定义新的验证契约，则应按非平凡处理。
+纯 typo、格式、注释编辑，以及不改变接口、状态或行为的机械清理，可以省略 Note。**但“小”不等于“平凡”**：一个字符的默认值、一个 CSS token、一个 accessibility 语义都可能改变用户可见行为。2026-06-20 的分类修订明确删除了“small UI adjustments or purely mechanical changes”这一豁免，因为“看起来像调参”的 UI 改动仍可能改变行为、可访问性和契约（`deepseek-harness/.agents/notes/archived/process/2026-06-20-agent-note-classification.md:11-33@687f282e`）。测试和 fixture 的批量机械修改通常可省略；但如果测试本身在定义新的验证契约，则应按承载持久决策处理。
 
-判定表（`【迁移设计】`，用于把源规则落成可操作流程）：
+判定表（`【迁移设计】`，用于判断改动是否需要为持久决策建 Note）：
 
-| 问题 | 是 → 非平凡 | 否 → 可平凡 |
+| 问题 | 是 → 需要 Note | 否 → 可省 Note |
 |---|---|---|
 | 是否改变事件、上下文、hook、流、持久化状态或 schema？ | 是 | 否 |
 | 是否改变默认值、公开 API、CLI、配置键或扩展点？ | 是 | 否 |
@@ -123,7 +125,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 前置 | 已确认改动非平凡；已读当前活规则和同主题旧 Note；知道当前权威文件 |
+| 前置 | 已确认改动承载持久决策理据（非平凡判定表只是信号）；已读当前活规则和同主题旧 Note；知道当前权威文件 |
 | 步骤 1 | 先写 `## Problem`：具体失败/机会、观察方式、受影响 actor；不要把方案写进问题 |
 | 步骤 2 | 写 `## Decision`：选择、边界、所有权、负向保证；用现在时 |
 | 步骤 3 | 写 `## Alternatives considered`：至少一个真实备选；逐条写“为什么不选” |
@@ -214,17 +216,17 @@
 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:45-55@687f282e
 
 <a id="3"></a>
-## 3. 非平凡变更的判定：为什么没有自动分类器
+## 3. 持久决策理据的判定：为什么没有自动分类器
 
 ### 3.1 源规则的核心
 
-`【源规则】` 变更范围由作者声明、评审者判断；**没有自动门把 diff 分类为 trivial/non-trivial**。2026-07-19 的 Note 明确说：“Review enforces the semantic boundary. No automated gate attempts to classify a diff as trivial or non-trivial, so this policy adds no gate stage or runtime.”（`deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:30-40@687f282e`）
+`【源规则｜历史】` 归档 2026-07-19 Note 明确说：“Review enforces the semantic boundary. No automated gate attempts to classify a diff as trivial or non-trivial, so this policy adds no gate stage or runtime.” 这句话仍准确描述现行机制：变更范围由作者声明、评审者判断；**没有自动门把 diff 分类为 trivial/non-trivial**（`deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:30-40@687f282e`）。
 
-`【源规则】` 当前活规则仍然要求：每个非平凡变更在同一个 change 中新增或更新 Agent Note；只在 PR/commit body 中解释不算（`deepseek-harness/AGENTS.md:155@687f282e`；`deepseek-harness/docs/AGENTS.md:40-41@687f282e`；`deepseek-harness/.agents/notes/README.md:44-52@687f282e`）。
+`【源规则｜现行】` 触发已收窄为 lasting decision rationale：只有承载持久决策的变更才在同一个 change 中新增或更新 Agent Note；只在 PR/commit body 中解释不算。现行权威为 `AGENTS.md:155`、`docs/AGENTS.md:40-41` 与 `.agents/notes/README.md:44-52`（`deepseek-harness/AGENTS.md:155@687f282e`；`deepseek-harness/docs/AGENTS.md:40-41@687f282e`；`deepseek-harness/.agents/notes/README.md:44-52@687f282e`）。归档的“每个非平凡变更都写 Note”是历史触发，不是现行义务。
 
-### 3.2 不被源规则采纳的简化做法（迁移设计）
+### 3.2 现行规则下仍不采纳的简化做法（迁移设计）
 
-`【迁移设计】` 以下几类“缩小记录范围”的做法在源文的判定逻辑下都会漏掉风险，因此不建议在安装后项目采用：
+`【迁移设计】` 现行规则不要求“每个非平凡变更”，但仍不能把持久理据缩成某一类改动；以下做法会漏掉其他类的决策：
 
 | 替代 | 为什么不行 |
 |---|---|
@@ -239,14 +241,14 @@
 | 项 | 内容 |
 |---|---|
 | 前置 | 作者能描述改动的可观察效果和受影响契约 |
-| 步骤 1 | 用 1.1 的判定表逐项问；不确定时按非平凡处理 |
+| 步骤 1 | 用 1.1 判定改动是否承载持久决策理据；不确定时按需要 Note 处理 |
 | 步骤 2 | 在 PR 描述中写“实际改了什么/没改什么”；测试范围也要如实写（见 `dsh-code-review` 的 scope 要求） |
-| 步骤 3 | 如判为平凡：在 PR 中给出理由（纯格式/纯机械/无行为变化），不要只写“trivial” |
+| 步骤 3 | 如判为无需 Note：在 PR 中给出理由（纯格式/纯机械/无行为变化），不要只写“trivial” |
 | 责任角色 | 作者判断；评审者复核；没有机器兜底 |
-| 完成信号 | Note 存在且与改动同一变更；或 PR 中有可复核的平凡理由 |
-| 失败处理 | 评审者认为漏写：要求补 Note；作者认为被过度要求：引用具体行为/契约说明为什么平凡 |
+| 完成信号 | 需要 Note 时 Note 存在且与改动同一变更；或 PR 中有可复核的免 Note 理由 |
+| 失败处理 | 评审者认为漏写：要求补 Note；作者认为被过度要求：引用具体行为/契约说明为什么不需要 Note |
 | 例外 | 紧急回滚可先落地，但随后补 Note；不要用“紧急”永久豁免 |
-| 证据限制 | 误判会长期累积；没有指标能证明“所有非平凡变更都写了 Note” |
+| 证据限制 | 误判会长期累积；没有指标能证明“所有持久决策都写了 Note” |
 
 ---
 
@@ -410,7 +412,7 @@
 
 | 归档 Note（历史理由） | 它冻结了什么 | 当前权威（活文件） | 验证/注意 |
 |---|---|---|---|
-| `archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes` | 非平凡变更写 Note；无自动分类器；移除保留理由 | `.agents/notes/README.md:44-52`；`AGENTS.md:155`；`docs/AGENTS.md:40-41`；`.agents/notes/implemented/AGENTS.md:3-13` | 读当前 README；确认 PR 同变更含 Note；没有 CI 分类器 |
+| `archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes` | 历史触发：every non-trivial change 写 Note；无自动分类器；移除保留理由 | `.agents/notes/README.md:44-52`；`AGENTS.md:155`；`docs/AGENTS.md:40-41`；`.agents/notes/implemented/AGENTS.md:3-13` | 现行触发已缩为 lasting decision rationale；非平凡判定不再是强制触发；读当前 README 确认 PR 同变更含 Note |
 | `archived/process/2026-07-05-uniform-agent-note-format` | 统一骨架/状态/文件名 | `.agents/notes/README.md:54-125`；`scripts/verify-agent-note-format.ts`；`scripts/agent-note-tree.ts` | 运行格式/分类脚本；读当前 README |
 | `archived/process/2026-06-20-agent-note-classification` | 类型/生命周期/路径分类；未知拒绝 | `.agents/notes/README.md:7-34`；`scripts/verify-agent-note-classification.ts`；`scripts/agent-note-tree.ts` | 运行分类脚本；确认新类型同时改脚本/文档 |
 | `archived/process/2026-07-19-remove-generated-agent-note-index` | 删除生成索引；链接替代 | `.rgignore:1-2`；`scripts/verify-doc-refs.ts`；`.agents/notes/README.md:36-42` | 搜索是否重新出现 INDEX；运行链接检查 |
@@ -857,7 +859,7 @@
 |---|---|---|
 | Automatic gate | 机器在每次提交/CI 上执行，失败会阻止合并 | 源仓库已有脚本的格式/分类/链接/归档字节/翻译配对（安装后需接入才算） |
 | Automatic observation | 机器记录/报告，但不阻止 | 性能趋势、覆盖率报告、审计输出 |
-| Review-only | 人按检查表评审，没有机器兜底 | 非平凡判定、备选真实性、归档低价值判断、根因充分性、译文等义 |
+| Review-only | 人按检查表评审，没有机器兜底 | 持久理据判定、备选真实性、归档低价值判断、根因充分性、译文等义 |
 | Recommendation | 文档建议，尚未落地 | human-review 双评审、某些迁移期流程 |
 | Unknown | 未验证/未实现 | 任何“计划中”的自动支持 |
 
@@ -896,7 +898,7 @@
 ### 12.1 新变更
 
 1. 读当前 `AGENTS.md`、领域 `docs/AGENTS.md`、`.agents/notes/README.md`、同主题活 Note/历史。
-2. 用 1.1 判定是否非平凡；不确定按非平凡。
+2. 用 1.1 判断改动是否承载持久决策理据（非平凡判定表只是信号）；不确定时按需要 Note 处理。
 3. 写 Note（1.5 操作卡）；同时写代码/测试。
 4. 分类/命名/配对；运行格式/分类/链接检查。
 5. 评审：备选是否真实、代价是否完整、永久边界是否写清、验证是否分层。
@@ -940,7 +942,7 @@
 
 ### 12.7 一页检查表
 
-- [ ] 这个改动是否非平凡？理由是什么？
+- [ ] 这个改动是否承载持久决策理据？理由是什么？
 - [ ] Note 是否与代码同一变更？
 - [ ] `Problem` 是否描述可观察失败，而不是方案？
 - [ ] `Decision` 是否写清边界/所有权/负向保证？

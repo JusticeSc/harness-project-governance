@@ -6,7 +6,7 @@
 
 - `deepseek-harness/<path>:<start>-<end>@687f282e` 表示在固定提交上实际读取的行区间；行号以换行字节计数，文件末尾换行不额外加一行。
 - **源义务**（source obligation）是源 README 明确要求的规则；**迁移设计**（migration design）是把该规则搬到新仓库时的实现选择；**额外建议**（extra recommendation）是源未要求、但采用者可以加的保护。三者不混写。
-- `enforcement.mode` 只记录源中可观察到的执行方式：`implementation`（代码路径直接拒绝/抛错）、`test`（契约测试/夹具）、`config`（清单、工作流、策略文件）、`review`（仅文档与评审，未被自动检查）。README 声称的自动性未在本提取中执行，`verification.*` 一律标为 `planned`。
+- `enforcement.mode` 是描述性自由文本，不是封闭枚举；`implementation`（代码路径直接拒绝/抛错）、`test`（契约测试/夹具）、`config`（清单、工作流、策略文件）、`review`（仅文档与评审，未被自动检查）只是常用取值。记录也可以写 `mixed`、`automatic` 或更具体的说明，但必须把自动保证与人工/评审职责分开。README 声称的自动性未在本提取中执行，`verification.*` 一律标为 `planned`。
 
 ## 触发索引
 

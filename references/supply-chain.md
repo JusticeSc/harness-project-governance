@@ -100,10 +100,10 @@ Python wheel 的发布专用 gate 不经过 `run-gates.ts`：`build-exe-for-pyth
 - `pnpm-workspace.yaml` 是 pnpm 的真实成员清单，额外包含 `benchmarks` 与 `python/sdk-runtime`（`deepseek-harness/pnpm-workspace.yaml:1-15@687f282e`）。`package.json.workspaces` 不含 `benchmarks`、`python/sdk-runtime`；两份清单并不等价。
 - pnpm 版本有三处锚：`packageManager`、根 devDependency `pnpm: 11.28.5`、`minimumReleaseAgeExclude` 中的 `pnpm@11.28.5`（`deepseek-harness/package.json:1-10@687f282e`、`deepseek-harness/package.json:275-275@687f282e`、`deepseek-harness/pnpm-workspace.yaml:105-105@687f282e`）。
 - 文档要求 strict symlinked linker，未声明依赖不能靠 hoisting 成功；依赖构建脚本必须显式 allowlist（`deepseek-harness/docs/development.md:27-31@687f282e`）。
-- `allowBuilds` 默认拒绝安装/构建脚本；注释说明 `strictDepBuilds` 默认 true，未列出的脚本是硬错误。允许的有 `esbuild`、`lefthook`、`node-pty`、`koffi`、`@deepseek-ai/dsh-subprocess-local@file:...`；明确拒绝的有 `@google/genai`、`protobufjs`、`node-addon-require-builtin`、`electron-winstaller`、`msgpackr-extract`（`deepseek-harness/pnpm-workspace.yaml:31-56@687f282e`）。
+- `allowBuilds` 默认拒绝安装/构建脚本；`pnpm-workspace.yaml` 注释说明 pnpm 10+ 将未审查脚本作为硬错误，pnpm 11 官方发布说明把 `strictDepBuilds` 默认改为 true；源仓未显式写该字段，本批未执行实际安装观察。允许的有 `esbuild`、`lefthook`、`node-pty`、`koffi`、`@deepseek-ai/dsh-subprocess-local@file:...`；明确拒绝的有 `@google/genai`、`protobufjs`、`node-addon-require-builtin`、`electron-winstaller`、`msgpackr-extract`（`deepseek-harness/pnpm-workspace.yaml:31-56@687f282e`）。
 - `overrides` 固定 `extract-zip>yauzl: 3.4.0`，并把 `@deepseek-ai/cosmokit`/`schemastery` 链接到 `vendor/`（`deepseek-harness/pnpm-workspace.yaml:17-20@687f282e`）。
 - `peerDependencyRules.allowedVersions.typescript` 为 `>=5 <7`（`deepseek-harness/pnpm-workspace.yaml:22-24@687f282e`）。
-- release age 的配置边界：`pnpm-workspace.yaml` 只写 `minimumReleaseAgeExclude`，没有显式写 `minimumReleaseAge`；24 小时来自 pnpm 11 默认（`deepseek-harness/apps/desktop/packaging/README.md:227@687f282e`、`deepseek-harness/scripts/local-bundle-registry.spec.ts:513-515@687f282e`）。豁免条目覆盖 LibreOffice kit、pi-ai/telemetry、node-addon 系列、Claude Agent SDK 平台包、OpenAI Codex、CUA、Electron、pnpm 等（`deepseek-harness/pnpm-workspace.yaml:57-105@687f282e`）。列表是精确 `name@version`，不是范围；迁移时若 pnpm 主版本或目标策略不同，必须显式配置/重验默认值，不能把 24h 当成通用事实。
+- release age 的配置边界：`pnpm-workspace.yaml` 只写 `minimumReleaseAgeExclude`，没有显式写 `minimumReleaseAge`；24 小时是 pnpm 11 官方发布说明的默认（`minimumReleaseAge` 1440 分钟），源仓 README/测试亦按此描述（`deepseek-harness/apps/desktop/packaging/README.md:227@687f282e`、`deepseek-harness/scripts/local-bundle-registry.spec.ts:513-515@687f282e`），本批未执行实际安装/解析观察。豁免条目覆盖 LibreOffice kit、pi-ai/telemetry、node-addon 系列、Claude Agent SDK 平台包、OpenAI Codex、CUA、Electron、pnpm 等（`deepseek-harness/pnpm-workspace.yaml:57-105@687f282e`）。列表条目是精确 `name@version`；OpenAI Codex 的平台别名用 `||` 连接多个精确版本，仍然不是 semver 范围。迁移时若 pnpm 主版本或目标策略不同，必须在实际解析/安装中重验，不能把 24h 当成通用事实。
 - 根 `postinstall` 是 `node scripts/install-lefthook.mjs`（`deepseek-harness/package.json:214-214@687f282e`）；CI 使用 `pnpm install --frozen-lockfile`（`deepseek-harness/.github/workflows/ci.yml:96-102@687f282e`）。
 - `benchmarks` 与 `python/sdk-runtime` 是 pnpm 成员，但不在 `package.json.workspaces`，也不在发布/约束检查的 `workspaceGlobs` 中（`deepseek-harness/scripts/check-workspace-constraints.ts:28-36@687f282e`）。
 
@@ -126,7 +126,7 @@ Python wheel 的发布专用 gate 不经过 `run-gates.ts`：`build-exe-for-pyth
 
 **例外**：`benchmarks`、`python/sdk-runtime` 只属于 pnpm 成员；`native/` 在 `package.json.workspaces` 中但被许可证生成器标为 dev-only area（`deepseek-harness/scripts/gen-third-party-notices.ts:30-37@687f282e`）。迁移时若不用 `package.json.workspaces` 相关脚本，可以省略该字段，但不能让两份清单独自漂移。
 
-**证据边界**：未验证 pnpm 的 `strictDepBuilds` 实际默认行为；`nodeLinker` 未在 `pnpm-workspace.yaml` 显式写出，文档只声明 strict symlinked linker。迁移时建议显式写 `nodeLinker: isolated`（或等价项），不要依赖默认值。
+**证据边界**：`minimumReleaseAge=1440` 与 `strictDepBuilds=true` 的默认值已对 pnpm 11 官方发布说明核对；本批未执行实际安装/解析，也未检查 pinned pnpm 实现。`nodeLinker` 未在 `pnpm-workspace.yaml` 显式写出，文档只声明 strict symlinked linker。迁移时建议显式写 `nodeLinker: isolated`（或等价项）与目标 release-age 值，不要依赖默认值。
 
 ---
 
@@ -483,7 +483,7 @@ App 包的特例（`appPackageFiles`）：
 
 **失败处理**：
 - `files` 不匹配：先判断文件是否应发布；应发布则补推导/extra，不应发布则从构建/复制步骤删除。不要为了让 gate 通过而把 `src` 加进白名单。
-- `exports` 多入口：源仓库只支持单个 `.`；需要子路径导入时先扩展设计，不要在单包里偷偷加。
+- `exports` 多入口：根入口固定，但标准 subpath（`./client`、`./types`、`./remote`、`./locale/*.json` 等）是允许且实际存在的；只有标准集合之外的新键才需要先改文档/检查并获 owner 确认，不要在单包里偷偷加。
 - 源码/map 进入 tarball：修构建器的 sourcemap/复制配置；不要在 `files` 里用负模式掩盖（负模式可能被 publint 的 files 视图忽略）。
 - app 包 `files` 不匹配：用 `appPackageFiles` 的精确列表，不要套普通包模板。
 
@@ -584,8 +584,8 @@ App 包的特例（`appPackageFiles`）：
 
 ### 7.1 源义务
 
-- 根与 DSH 包使用 ESM：根 `type: module`（`deepseek-harness/package.json:6-6@687f282e`）；`packages/` 下 DSH 包必须 `type: module`、`main: lib/index.js`、`types: lib/types/index.d.ts`、单个 `.` exports（`deepseek-harness/scripts/check-workspace-constraints.ts:509-545@687f282e`）。
-- `AGENTS.md` 还要求不要从 `tsx` 可达路径引入仅 CJS 的包（`deepseek-harness/AGENTS.md:82-89@687f282e`）。这没有看到独立的自动 gate；主要靠构建/运行时测试暴露，属于 [源事实]/[未验证]。
+- 根与 DSH 包使用 ESM：根 `type: module`（`deepseek-harness/package.json:6-6@687f282e`）；`packages/` 下 DSH 包必须 `type: module`、`main: lib/index.js`、`types: lib/types/index.d.ts`，以及 `exports['.'].types: ./lib/types/index.d.ts`、`exports['.'].default: ./lib/index.js`（`deepseek-harness/scripts/check-workspace-constraints.ts:509-545@687f282e`）。`checkWorkspaceManifest` 只强制根入口；包可以并实际拥有额外标准 subpath（如 `./client`、`./types`、`./remote`、`./locale/*.json`、`./src/*`），不得把根入口检查误读为单入口限制。
+- `AGENTS.md` 还要求不要从 `tsx` 可达路径引入仅 CJS 的包（`deepseek-harness/AGENTS.md:132-132@687f282e`）。这没有看到独立的自动 gate；主要靠构建/运行时测试暴露，属于 [源事实]/[未验证]。
 - **顶层 await 禁止**：`verify-no-top-level-await` 用 TypeScript AST 扫描 `packages/*/*/src/**/*.{ts,tsx}`，检测模块作用域的 `await`、`for await`、`await using`。
   - 排除：以 `#!` 开头的可执行文件；manifest `bin` 指向的 `lib/<path>.js` 对应源码（仅当 `bin` 在 `lib/` 下）。
   - 没有 Cordis 特殊允许列表；`vendor/`、`apps/`、`native/` 不在 corpus。
@@ -615,7 +615,7 @@ App 包的特例（`appPackageFiles`）：
 
 ### 7.2 操作程序
 
-1. 包只暴露一个 `.` 入口；`exports` 按 `types`、`default` 写。源仓库不支持子路径公开入口（`check-workspace` 强制单个 `.`）。
+1. `exports['.']` 固定为 `types`→`./lib/types/index.d.ts`、`default`→`./lib/index.js`；`main`/`types` 也固定。需要子路径时，优先使用源仓已出现的标准键（`./package.json`、`./src/*`、`./client`、`./types`、`./typert`、`./remote`、`./locale/*.json`、`./cordis.patch.yml`）；这些键不是 gate 枚举的封闭 allowlist——`checkWorkspaceManifest` 不校验额外键，新增键不会被当前 constraints 拒绝，因此必须单独评审并用 publint/NodeNext/packed install 验证，不能假装 gate 已覆盖。
 2. 源码用 `import type` 做类型导入；不要留下运行时对 devDependency 的引用。
 3. 禁止模块作用域 await；把异步工作放进显式 `main()`/`initialize()` 或 Cordis 生命周期。
 4. 构建后运行 `pnpm run publint`、`pnpm run verify-node-next-types`、`pnpm run verify-package-meta`、`pnpm run verify-package-dependencies`。
@@ -643,7 +643,7 @@ App 包的特例（`appPackageFiles`）：
 ---
 
 来源：deepseek-harness/package.json:6-6@687f282e
-来源：deepseek-harness/AGENTS.md:82-89@687f282e
+来源：deepseek-harness/AGENTS.md:132-132@687f282e
 来源：deepseek-harness/scripts/check-workspace-constraints.ts:509-545@687f282e
 来源：deepseek-harness/scripts/publint-all.ts:1-245@687f282e
 来源：deepseek-harness/scripts/verify-node-next-types.ts:1-164@687f282e
@@ -734,7 +734,7 @@ App 包的特例（`appPackageFiles`）：
 
 本地修改日志（`vendor/README.md:59-73`）覆盖：HMR/timer locale 删除、package manifest、tsconfig、`.ts` 扩展名、tsdown 配置、fiber 生命周期、include refresh/patch、HMR readiness、ESM 条件导出、`applyEntryPatches`、loader observer、`writeTask` 类型、durable writes、延迟配置解析、rescope、禁用插值、loader shape detection、fiber identity、logger disposer、volatile config、module identity、timer locale 等。每一项都写明行为差异与测试覆盖。
 
-`vendor/AGENTS.md` 说"Cordis 和 Cosmos 是 vendored upstream code；只有构建/打包问题才改，其他修改应重新评估"（`deepseek-harness/vendor/AGENTS.md:1-7@687f282e`）。这与 README 的本地修改日志并存，是源仓库的内部张力；迁移时应写成明确政策（允许的修改类别 + 审批 + 每次同步的 delta 审查）。
+`vendor/AGENTS.md` 的实际政策：不得随意编辑 `vendor/*/src/`；每个相对上游的 divergence 都必须在 `vendor/README.md` 的 "Local modifications" 完整登记；`vendor/*/tsconfig.json` 是明确例外，可因 monorepo 集成或 type-checking policy（如 `noImplicitAny`）重生成（`deepseek-harness/vendor/AGENTS.md:1-7@687f282e`）。它没有“只许改构建问题”的规则；README 记录的行为修改与测试覆盖正是按该登记义务存在。迁移时应把“允许的修改类别 + 审批 + 每次同步的 delta 审查”写成明确政策，而不是制造一个源仓并不存在的构建/行为二分。
 
 ### 9.2 操作程序：同步一个 vendored 包
 
@@ -809,7 +809,7 @@ App 包的特例（`appPackageFiles`）：
 
 排除规则：脚本自身、`.agents/notes/**`（历史记录）、`scripts/snapshots/**`（逐字模型载荷）、`docs/rescope.md`/`.zh.md`（映射文档同时列两名）、`*.i18n.yaml`（配对哈希）、`pnpm-lock.yaml`、`scripts/dependency-catalog/package-lock.json`、`vendor/*/README.md` 与 `vendor/*/LICENSE`（上游原文）不扫描；其他非文本扩展也不扫描。vendor README 的 manifest 表由 exact edit 更新，而不是通用替换。
 
-`AGENTS.md` 要求改动 vendor 后运行 `pnpm run rescope-vendor`，再检查 `docs/rescope.md` 的映射（`deepseek-harness/AGENTS.md:88-89@687f282e`）。`rescope-vendor:check` 在 `hygiene` 中运行，不在 `ci-static`。
+`AGENTS.md` 只声明 vendor 使用 `@deepseek-ai` rescope 并链接 `docs/rescope.md`；映射表在该文档（已读 1-34），命令块在 `docs/rescope.md:44-51`（`pnpm run rescope-vendor` dry-run、`--apply`、`:check`）；`rescope-vendor:check` 在 `hygiene` 中运行，不在 `ci-static`（`deepseek-harness/AGENTS.md:131-131@687f282e`、`deepseek-harness/docs/rescope.md:44-51@687f282e`、`deepseek-harness/vendor/README.md:51-51@687f282e`）。
 
 ### 10.2 操作程序
 
@@ -832,13 +832,15 @@ App 包的特例（`appPackageFiles`）：
 
 **例外**：rescope 只处理名称，不处理 API/行为变化；`--check` 的成功还依赖 exact edit 与 postcondition，不只是“搜不到旧名”。vendor 上游 `README`/`LICENSE` 永远保留原文。`docs/rescope.md` 自身同时列上游名和本地名，不能被通用替换。`--check` 不在普通 `ci-static` lane。
 
-**证据边界**：`rescope-vendor.ts` 661 行全读；`docs/rescope.md` 1-31 全读。未执行 dry-run/apply/reverse/check；未跑 fixture。`EXACT_EDITS` 的每个站点未逐条在目标文件验证，命中数行为来自源码；reverse 的实际文件结果未观测。
+**证据边界**：`rescope-vendor.ts` 661 行全读；`docs/rescope.md` 1-34 全读，44-51 的命令块已读；`vendor/README.md:51` 的 rescope 本地修改条目已读。未执行 dry-run/apply/reverse/check；未跑 fixture。`EXACT_EDITS` 的每个站点未逐条在目标文件验证，命中数行为来自源码；reverse 的实际文件结果未观测。
 
 ---
 
 来源：deepseek-harness/scripts/rescope-vendor.ts:1-661@687f282e
-来源：deepseek-harness/docs/rescope.md:1-31@687f282e
-来源：deepseek-harness/AGENTS.md:88-89@687f282e
+来源：deepseek-harness/docs/rescope.md:1-34@687f282e
+来源：deepseek-harness/docs/rescope.md:44-51@687f282e
+来源：deepseek-harness/vendor/README.md:51-51@687f282e
+来源：deepseek-harness/AGENTS.md:131-131@687f282e
 
 <a id="sc-vendor-patches"></a>
 ## 11. 外部补丁（pnpm patchedDependencies）
@@ -998,7 +1000,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 - 对每个 preset 的 active plugin（按平台判断 `disabled`），要求它在 runtime manifest 的 `dependencies` 中以 `workspace:` 声明；如果声明了非 workspace range，也报错。
 - 从 runtime manifest 的直接 workspace 依赖出发，遍历 workspace 包的 `dependencies`/`optionalDependencies`；每个 workspace peer 如果非 optional，且不是 runtime manifest 的直接 `workspace:` 依赖，则报"缺失 peer"。
 - 预设为空、平台列表为空也失败。
-- 证据：`deepseek-harness/scripts/verify-runtime-closure.ts:1-130@687f282e`。
+- 证据：`deepseek-harness/scripts/verify-runtime-closure.ts:131-237@687f282e`（错误/辅助函数在 1-130）。
 
 它**不**检查：
 
@@ -1024,7 +1026,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 **例外**：runtime manifest 直接依赖里的 workspace 包可以继续提供自己的 optional 依赖；gate 对 optional peer（`peerDependenciesMeta.optional: true`）跳过。平台包在 release 验证中可能被排除（musl 工具链），这是覆盖缺口。
 
-**证据边界**：未运行；237 行中读了 1-130，未逐行读 preset 解析的剩余辅助函数。它不证明 Python 运行时真实 import 闭包，只证明 manifest/preset/peer 关系。
+**证据边界**：未运行；本记录实际阅读 `scripts/verify-runtime-closure.ts` 1-237，包括 preset/平台/target 解析、`activeBarePluginPackages`、`disabledOnPlatform`、`processPlatformForTarget`、`barePackageName`、workspace 闭包与错误链辅助函数。它不证明 Python 运行时真实 import 闭包，只证明 manifest/preset/peer 关系。
 
 ---
 
@@ -1445,7 +1447,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 - 不覆盖 `benchmarks/`、`website/` 或其他 Python 子项目（如果存在）。
 - 证据：`deepseek-harness/.github/dependabot.yml:1-38@687f282e`。
 
-另一层是 pnpm 的 24 小时 release age（第 2 节）；Dependabot cooldown 30 天不能替代它。版本豁免必须逐精确版本加入 `minimumReleaseAgeExclude`。
+另一层是 pnpm 的 release age（第 2 节：源仓未显式设置 `minimumReleaseAge`，按 pnpm 11 官方默认 24h 运行，除非精确版本被 `minimumReleaseAgeExclude` 完全排除；本批未做实际安装观察）；Dependabot cooldown 30 天不能替代它。版本豁免必须逐精确版本加入 `minimumReleaseAgeExclude`。
 
 ### 22.2 操作程序
 
@@ -1733,7 +1735,7 @@ Python 侧有两个发行物，不能混成一个 wheel：
    - 8 个 patch 文件均按 hunk/关键 diff 阅读；`exceljs` 806 行未逐行语义审阅，`@yao-pkg/pkg` 的巨型 worker bundle 行未逐字符展开。
    - `.github/workflows/release.yml`、`release-publish.yml`、`release-vendor-publish.yml` 全读；GitHub Environment 的 reviewer/allowed-tag 是远端设置，未验证。
 3. **未验证的外部依赖/运行行为**：
-   - pnpm 的 `strictDepBuilds`/`minimumReleaseAge` 具体默认值与本地行为；`workspace:` 替换规则已查 pnpm 官方 Workspace 文档，但未实际跑 `pnpm pack` 观察 tarball。
+   - pnpm 的 `strictDepBuilds`/`minimumReleaseAge` 在 pinned pnpm 下的解析/安装行为；默认值已对 pnpm 11 官方发布说明核对，但未在本机安装观察，也未检查 pinned pnpm 实现。`workspace:` 替换规则已查 pnpm 官方 Workspace 文档，但未实际跑 `pnpm pack` 观察 tarball。
    - npm 的 hoisting/peer 解析在具体版本下的行为；`release:publish` 的 registry 重试只读源码，未对真实 registry 运行。
    - GitHub Actions OIDC/provenance/Environment 的实际配置；源码没有 `--provenance`，provenance 只是迁移增强建议。
    - native 平台包的 musl/架构构建；`release.yml` 的 packed install 不安装这些平台包。

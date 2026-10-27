@@ -37,12 +37,6 @@
           "kind": "history"
         },
         {
-          "path": ".agents/notes/archived/feature/2026-07-27-tmux-location-context.md",
-          "start": 1,
-          "end": 62,
-          "kind": "history"
-        },
-        {
           "path": ".agents/notes/archived/feature/2026-07-27-web-session-search.md",
           "start": 1,
           "end": 45,
@@ -55,7 +49,6 @@
         "adding personal/global configuration",
         "reading history, issues or generated indexes",
         "instruction discovery through links",
-        "pulling location context from a shell",
         "deciding which file wins between AGENTS.md and CLAUDE.md"
       ],
       "obligations": [
@@ -66,8 +59,7 @@
         "Load all existing candidates in configured order; deduplicate only byte-identical trimmed content within one directory, never globally, and render the survivor original bytes.",
         "Read exact live state from the live store for known sessions; when reading persistence, prove existence and reject header/list mismatch rather than trusting cached metadata.",
         "Treat generated indexes (SQLite search, inventories, rendered references) as discardable, rebuildable projections; they may be stale and MUST NOT grant visibility or widen authorization.",
-        "Bound any context enrichment with an explicit size/node/time budget and an explicit truncation signal.",
-        "For shell/tmux location context, pull once on the first step of each turn through the configured ctx.shell seam (never raw child_process); distinguish a real pane by matching the process's controlling tty (ps -o tty= -p <pid>) to the pane's #{pane_tty}, because $TMUX_PANE/$TMUX are inherited; no-op when ctx.shell, tmux env, field count or pane id is absent; inject one durable sourced user/message only when the rendered state block changes, comparing against the latest injection found by scanning raw durable session events (no process-local cache), with an optional non-negative safe-integer refreshIntervalMs floor; keep only own session/window/pane/layout fields (no pane contents or pixel sizes); the reading is a per-turn snapshot with no cross-event invariant, and a preparation append may remain if a later pre-step listener cancels or fails."
+        "Bound any context enrichment with an explicit size/node/time budget and an explicit truncation signal."
       ],
       "actors": [
         "agent runtime/context loader",
@@ -85,21 +77,22 @@
       ],
       "enforcement": {
         "mode": "runtime resolution plus review",
-        "implementation": "context loader and query service in the source; tmux-context: first-step agent/pre-step listener; ctx.shell read; ps -o tty= vs #{pane_tty}; one durable user/message on change; scan raw durable events; optional refreshIntervalMs; planned in the adopting project",
+        "implementation": "context loader and query service in the source; planned in the adopting project",
         "trust": "repository owner may choose precedence and personal-layer location; an agent MUST NOT invent precedence",
         "failure": "missing scopes are explicit; transient instruction errors retain the prior scope; a header mismatch is a typed query error",
-        "exceptions": "A deliberate overlay order or legacy file name is allowed only when documented and tested; a symlink exception is a declared owner trade-off, not a default. tmux-context is opt-in; outside a real pane, without ctx.shell, without tmux env, with a wrong field count or with an empty pane id it is a no-op; a pane moved mid-turn is reflected next turn; the reading is a per-turn snapshot with no cross-event invariant; a prepended append may remain if a later pre-step listener cancels or fails; pixel sizes and sibling-pane contents are excluded."
+        "exceptions": "A deliberate overlay order or legacy file name is allowed only when documented and tested; a symlink exception is a declared owner trade-off, not a default. A shell-derived location enrichment is a separate conditional contract (see rationale-feature-2.tmux-location-context); it is not a default part of instruction/state resolution."
       },
       "applicability": "All projects with nested agent instructions, personal configuration, or any generated index/search surface. Not a license to commit personal settings.",
       "relationships": [
         "change-discipline",
         "logging-reconstructability",
-        "honest-evidence"
+        "honest-evidence",
+        "rationale-feature-2.tmux-location-context"
       ],
       "migration": {
         "strategy": "Start from the repository hierarchy already in use; add explicit scope/precedence documentation and a single resolver before adding personal or global layers.",
         "implementation": "Planned; requires a resolver, loader tests for symlinks/dedup/transient errors, and query tests for live-vs-persisted conflicts.",
-        "requiredSupport": "Authoritative file locations, precedence table, and a documented policy for derived indexes; for tmux location, a ctx.shell executor, tmux environment, raw durable session events and an optional refreshIntervalMs config."
+        "requiredSupport": "Authoritative file locations, precedence table, and a documented policy for derived indexes."
       },
       "reference": "references/rationale-feature-2.md#authoritative-context-sources",
       "verification": {
@@ -111,10 +104,6 @@
           {
             "scenario": "A stale search index omits a record but the authoritative read still finds it and authorization is unchanged.",
             "evidence": "planned"
-          },
-          {
-            "scenario": "In a real tmux pane, the first step injects one source-attributed durable user/message with session/window/pane/layout; later steps in the same turn do not repeat it; the next turn with unchanged state injects nothing; a moved or renamed pane injects on the next turn; the comparison baseline is found by scanning raw durable session events, so resume/compaction still suppresses duplicates.",
-            "evidence": "planned"
           }
         ],
         "rejection": [
@@ -124,10 +113,6 @@
           },
           {
             "scenario": "An instruction candidate from a sibling directory leaks into the session; the scope test fails.",
-            "evidence": "planned"
-          },
-          {
-            "scenario": "Launch from a terminal that inherited $TMUX/$TMUX_PANE (for example a VS Code integrated terminal): the tty does not match the pane's #{pane_tty}, so the attempt is a no-op and no stale location is injected; run every step or use raw child_process: the per-turn/ctx.shell contract fails; use a process-local cache: resume/compaction loses the suppression baseline.",
             "evidence": "planned"
           }
         ],
@@ -139,18 +124,13 @@
           {
             "scenario": "A corrupt persisted header is reported as a source conflict enabling a live re-read rather than silently preferring the cache.",
             "evidence": "planned"
-          },
-          {
-            "scenario": "Missing ctx.shell, missing tmux env, wrong field count, empty pane id, nonzero exit, aborted signal or a contained executor rejection: the attempt is a no-op or warning and the turn continues; a corrupt prior reading (non-text or single-line) does not break suppression; refreshIntervalMs rejects negative and non-integer values at load; a prepended listener's append may remain if a later pre-step listener cancels or fails, and no rollback is assumed.",
-            "evidence": "planned"
           }
         ]
       },
       "limitations": [
         "The fixed source has multiple archived proposals whose entry modes/file names were later superseded; the adopting project MUST re-derive current names from its own repository.",
         "Deduplication is per-directory and byte-based; semantically equivalent but differently formatted files both load.",
-        "No guarantee that a derived index converges immediately; authorization and existence must not be inferred from it.",
-        "The tmux location plugin is opt-in; shipped profile trees do not mount it by default (the TUI opts in). A pane moved mid-turn is reflected next turn. The prepended listener's append may remain if a later pre-step listener cancels or fails. The published invariant registers no runtime check because a reading is a per-turn external snapshot. Pixel sizes and sibling-pane contents are excluded."
+        "No guarantee that a derived index converges immediately; authorization and existence must not be inferred from it."
       ]
     },
     {
@@ -2682,6 +2662,116 @@
         "\"Untrusted\" judgments are source-specific; the adopting project must document which local sources are trusted.",
         "Address validation cannot make a remote service safe; target access policy may be delegated and must be stated.",
         "Sanitizer coverage is not proof against all content classes; limitations must be preserved."
+      ]
+    },
+    {
+      "id": "rationale-feature-2.tmux-location-context",
+      "title": "Inject a durable tmux location only from a verified pane and only when it changes",
+      "sources": [
+        {
+          "path": ".agents/notes/archived/feature/2026-07-27-tmux-location-context.md",
+          "start": 1,
+          "end": 62,
+          "kind": "history"
+        },
+        {
+          "path": "packages/context/tmux-context/src/index.ts",
+          "start": 1,
+          "end": 275,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/context/tmux-context/README.md",
+          "start": 32,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/context/tmux-context/README.md",
+          "start": 64,
+          "end": 66,
+          "kind": "instruction"
+        }
+      ],
+      "problem": "Shell-derived location context is easy to fake or duplicate: $TMUX/$TMUX_PANE are inherited by ordinary terminals, per-step polling spends tokens without new information, and process-local suppression state is lost across compaction or process resume.",
+      "triggers": [
+        "A surface-specific agent should orient itself to its own tmux session, window, pane and layout.",
+        "A plugin injects shell-derived context into durable history."
+      ],
+      "obligations": [
+        "Treat tmux location as an opt-in, surface-specific enrichment; shipped profile trees need not mount it, and the TUI opts in explicitly.",
+        "Pull once on step === 1 of each turn through the ctx.shell executor service, never raw child_process, so deployment sandbox and policy apply and the plugin owns no subprocess code.",
+        "Accept a pane only when the process's controlling tty (ps -o tty= -p <pid>) matches $TMUX_PANE's #{pane_tty}; the presence of $TMUX/$TMUX_PANE is not evidence that this process lives in that pane.",
+        "No-op when ctx.shell, tmux environment, the tty match, the expected field count or a non-empty pane id is absent; contain an executor rejection as a warning instead of failing the turn.",
+        "Read only this process's own session/window/pane/active flags and window layout; never capture sibling-pane contents or pixel sizes.",
+        "Inject one durable source-attributed user/message only when the rendered stable state block changes; resolve the previous state from a durable session projection rebuilt from user/message events, not a process-local cache, so resume and compaction preserve suppression. The volatile turn preamble is excluded from the comparison.",
+        "The optional refreshIntervalMs is a non-negative safe integer floor validated at plugin load; a pane moved or resized mid-turn is reflected on the next turn."
+      ],
+      "actors": [
+        "context plugin",
+        "agent pre-step listener",
+        "shell executor",
+        "session projection"
+      ],
+      "steps": [
+        "Prepend an agent/pre-step listener; after the downstream decision, act only when the decision is not reject, the signal is not aborted, and step === 1.",
+        "Read the last injected stable state from the durable tmuxContext projection, if any.",
+        "Skip when a positive refreshIntervalMs has not elapsed since the last injection.",
+        "Run the tty check and one tmux display-message through ctx.shell; parse tab-separated fields and treat any mismatch or malformed reading as no-op.",
+        "Compare the rendered state block with the previous one; on change, prepend one durable user/message with source kind tmux-context and the reading."
+      ],
+      "enforcement": {
+        "mode": "runtime pre-step enrichment plus load-time config validation",
+        "implementation": "Source implementation read at the fixed commit: packages/context/tmux-context agent/pre-step listener, ctx.shell query with ps/tty guard, tmuxContext session projection, optional refreshIntervalMs. Source package tests were not executed here; adoption remains planned.",
+        "trust": "The agent process owns its pid/tty; ctx.shell owns execution policy; the injected text is lower-authority attributed context, not a system/developer instruction.",
+        "failure": "Absent seam/env, tty mismatch, wrong field count, empty pane id, nonzero exit or abort is a no-op; an executor rejection warns and the turn continues.",
+        "exceptions": "Opt-in only; a pane moved mid-turn is reflected next turn; the reading is a per-turn external snapshot with no cross-event invariant; a prepended append may remain if a later pre-step listener cancels or fails, with no rollback."
+      },
+      "applicability": "Surface-specific agents that need durable, reconstructable tmux location context; not a requirement for general instruction loading, and not a license to capture arbitrary shell output.",
+      "relationships": [
+        "rationale-feature-2.authoritative-context-sources",
+        "rationale-feature-2.honest-evidence"
+      ],
+      "migration": {
+        "strategy": "Add an explicit, opt-in pre-step enrichment only where location context is useful; keep the generic instruction/state resolver independent.",
+        "implementation": "Planned; requires the durable projection, ctx.shell access, tty verification, change suppression and load-time interval validation.",
+        "requiredSupport": "A shell executor seam, tmux display-message availability, a durable session projection, and a source-attributed message type."
+      },
+      "reference": "references/rationale-feature-2.md#tmux-location-context",
+      "verification": {
+        "positive": [
+          {
+            "scenario": "In a real tmux pane, step 1 injects one source-attributed durable user/message with session/window/pane/active/layout; later steps in the same turn do not repeat it; an unchanged next turn injects nothing; a moved, renamed or re-laid-out pane injects on the next turn; after resume or compaction the durable projection still suppresses duplicate state.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "A positive refreshIntervalMs suppresses injections within the floor; omitted or 0 injects on every changed turn; negative and non-integer values are rejected at plugin load.",
+            "evidence": "planned"
+          }
+        ],
+        "rejection": [
+          {
+            "scenario": "Launch from a terminal that inherited $TMUX/$TMUX_PANE (for example a VS Code integrated terminal): the controlling tty does not match the pane's #{pane_tty}, so the attempt is a no-op and no stale location is injected.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Read every step, bypass ctx.shell with raw child_process, or keep a process-local suppression cache: the per-turn/ctx.shell/no-process-cache contract fails.",
+            "evidence": "planned"
+          }
+        ],
+        "recovery": [
+          {
+            "scenario": "Missing ctx.shell, missing tmux env, wrong field count, empty pane id, nonzero exit, aborted signal or a contained executor rejection: the attempt is a no-op or warning and the turn continues; a corrupt prior reading (non-text or single-line) does not break suppression; a prepended listener's append may remain if a later pre-step listener cancels or fails, and no rollback is assumed.",
+            "evidence": "planned"
+          }
+        ]
+      },
+      "limitations": [
+        "Only this plugin's own location read is covered; a general shell tool can still produce other context with different trust.",
+        "The reading is a per-turn external snapshot with no cross-event invariant; the removed invariant only restated the producer, so reintroduce a check only for an independent relation another package could violate.",
+        "The tty check is POSIX: where ps -o tty= or #{pane_tty} is unavailable, the plugin is inert.",
+        "Presence of $TMUX/$TMUX_PANE alone is never proof of pane residence.",
+        "The durable projection survives resume/compaction but does not by itself prove live tmux state between turns."
       ]
     }
   ]

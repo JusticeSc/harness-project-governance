@@ -8,7 +8,7 @@
 
 新仓库里最容易失控的不是代码，而是“完成”的定义。Agent 可能读不到项目事实，只凭聊天记录猜进度，把类型检查当作行为验证，或者把“应该能过”写成“已通过”。
 
-本 Skill 给 Agent 一套可执行的治理程序：先读取持久化的需求、验收与下一步动作，按任务路由到带来源的参考，再实施、运行真实检查、记录证据并交接。它不承诺自动修好项目，也不把写好的元数据当成已完成。
+本项目的目标是把 DeepSeek Harness 中可迁移的治理方法做成可自举、用于持续开发的项目初始化包：Skill 指导行动，程序和 CI 承担适合机械执行的要求。当前交付提供带来源的操作参考、可选检查工具，以及知识完整性和项目元数据 CLI；目标项目的规则选择、配置和 CI 接入仍需要明确适配。安装并不等于目标项目已经落实治理。
 
 ## 它带来什么
 
@@ -19,6 +19,10 @@
 - **渐进采用。** 核心只有一个 Skill 和零依赖 CLI；审批、Agent Note、文档门禁等模块按前提条件单独启用。
 
 它不是托管式治理平台、安全审计，也不能替代项目自己的测试与评审。
+
+## 开发状态
+
+当前开发树包含恢复出的、尚未发布的来源修正。安装与单项检查已有可用实现，完整的目标项目自举和自主 Agent 采用尚未建立。本仓库开发的目标、当前证据与下一项产品工作统一记录在 `PROJECT.md`；它与 `AGENTS.md` 不安装到消费者项目。[公开验证记录](PUBLIC-VERIFICATION.md)保留历史发布观察，不是当前检出的新认证。
 
 ## 快速开始（无需 `npm install`）
 
@@ -34,9 +38,9 @@ npm run demo
 
 Windows PowerShell 中使用相同命令。`npm run demo` 会在临时目录创建一个一次性示例项目，初始化治理、根据示例填写元数据、运行真实的 Node 应用与测试命令、故意破坏功能以观察拒绝、恢复后再打印状态并演示交接。它是一段本地可重复的走查：通过 demo 证明工作流能跑通，不证明其他仓库或自主 Agent 已经采用。
 
-可直接查看[示例应用与验收测试](examples/task-board/README.md)，以及[本次验证结果和边界](PUBLIC-VERIFICATION.md)。临时演示目录会自动删除，不修改你的项目。
+可直接查看[示例应用与验收测试](examples/task-board/README.md)，以及[历史发布观察和边界](PUBLIC-VERIFICATION.md)。临时演示目录会自动删除，不修改你的项目。
 
-当前检出上，`verify` 输出 `governance: 1195 mechanisms in 55 domains; references and anchors verified`。这个数字描述已提取的机制账，不代表上游每一行源码都被审阅，也不代表机制账完整无缺。
+当前开发树上，`verify` 输出 `governance: 1196 mechanisms in 55 domains; references and anchors verified`。这个数字描述已提取的机制账，不代表上游每一行源码都被审阅，也不代表机制账完整无缺。
 
 ## 把 Skill 安装到目标仓库
 
@@ -62,11 +66,11 @@ node .agents/skills/harness-project-governance/bin/governance.mjs status .
 
 ```text
 遵循 .agents/skills/harness-project-governance/SKILL.md。
-运行 `node .agents/skills/harness-project-governance/bin/governance.mjs status .`，并读取 .governance/requirements.md 与 state.json。
-如果 .governance/ 不存在，只根据仓库中的事实初始化。
-修改前，把可观察的验收条件写入 state.acceptance，并按任务路由到相应参考。
-然后实施任务，运行 policy.checks 中的真实命令，逐条报告命令与退出码。
-没有运行的检查写“未验证”；不要只凭元数据宣称工作已完成。
+先查项目是否已有唯一状态 owner（如 PROJECT.md、任务板或交接文件）；有则读它，不再新建第二套。
+用户要求初始化治理，或任务需要跨会话继续/交接/压缩前保存时，读取或创建 .governance/requirements.md 与 state.json；单会话内的多步改动不因此新建状态文件。
+修改前，把可观察的验收条件写进当前状态 owner 或本次交付，并按任务路由到相应参考。
+然后实施任务，用 `governance check` 执行 policy.checks 中登记的真实命令，逐条报告命令与退出码。
+没有运行的检查写“未验证”；不要只凭元数据宣称工作已完成，也不要执行记录中已被当前请求撤销的动作。
 ```
 
 评审或高风险变更可以使用：
@@ -85,6 +89,7 @@ node .agents/skills/harness-project-governance/bin/governance.mjs status .
 | `cite <id或片段>` | 输出匹配机制的标题、参考路径、所属域和来源数量。 | 输出参考正文或来源摘录。 |
 | `init [仓库]` | 创建缺失的 `.governance/` 元数据文件，从不覆盖。 | 替项目填写事实。 |
 | `status [仓库]` | 报告缺失的项目、需求、验收、负责人、检查项与下一步动作。 | 运行检查或认证完成。 |
+| `check [仓库] [--policy 路径]` | 按策略中的 `checks` 顺序执行已配置命令，逐项报告退出码；任一失败退出 1；策略缺失、无效或检查为空退出 2。默认策略和显式 `--policy` 都按仓库根与策略文件的真实路径校验归属，不新建状态文件。 | 推导检查、证明语义完整或平台强制；通过 symlink/junction 读取真实位置在仓库外的策略。 |
 
 对已安装的 Skill 示例：
 
@@ -98,6 +103,35 @@ node .agents/skills/harness-project-governance/bin/governance.mjs cite decisions
 
 它不读取固定提交的上游仓库，不重新核对引用的源码行，不判断参考语义是否正确，不检查可选工具是否配置，也不能证明目标项目遵守了程序。
 
+## 最小采用走查
+
+先选一条目标仓库已经在乎的不变量，再按状态归属选择入口：
+
+- **已有状态 owner**：继续在该 owner 中维护需求、验收与下一动作；不要运行 `init`。在旁边保存检查清单，例如 `governance-checks.json`：
+
+  ```json
+  {
+    "checks": {
+      "docs": "node .agents/skills/harness-project-governance/tools/doc-gates/verify-doc-budgets.mjs"
+    }
+  }
+  ```
+
+  ```bash
+  node .agents/skills/harness-project-governance/bin/governance.mjs check . --policy governance-checks.json
+  ```
+
+- **没有状态 owner，且决定采用 `.governance/` 协议**：
+
+  ```bash
+  node .agents/skills/harness-project-governance/bin/governance.mjs init .
+  # init 首次退出 2：按真实项目填写 policy、requirements 和 state
+  node .agents/skills/harness-project-governance/bin/governance.mjs status .
+  node .agents/skills/harness-project-governance/bin/governance.mjs check .
+  ```
+
+以上预算命令还需要 `.doc-gates/doc-budgets.json`，例如 `{"README.md":60}`；60 是示例，不是默认政策。两条路径都先观察通过，再故意超过上限确认退出 1，恢复后再次通过。将**同一条已验证的 `check` 命令**接入项目现有 CI（既有 owner 路径保留 `--policy`）。工作流文件存在不等于远端 required check 已生效；`check` 只执行登记命令，不替项目选择规则。策略命令以本机权限执行，和项目脚本一样需要信任。
+
 ## 可选模块
 
 - `tools/github-approval/`：可选的加权审批安装器与工作流包，需要 Node.js；生产归属分析另需 Python >= 3.10 和 Pygments。安装器只写入文件，不修改 GitHub 分支保护，也不代替人工批准；见 [references/github-approval.md](references/github-approval.md)。
@@ -110,11 +144,12 @@ node .agents/skills/harness-project-governance/bin/governance.mjs cite decisions
 
 ```text
 SKILL.md                 Agent 操作程序、硬规则与任务路由
-bin/governance.mjs       verify / list / cite / init / status；零依赖
+bin/governance.mjs       verify / list / cite / init / status / check；零依赖
 knowledge/*.json         机器可读机制账（55 个域）
 references/*.md          分域解释、来源区间与迁移说明
 tools/                   可选的 GitHub 审批、Agent Note 与文档门禁模块
 scripts/                 install-skill 与仓库 demo/smoke 辅助脚本
+research/fixtures/       仅供仓库使用的可复现采用快照与验收证据
 package.json             Node >= 22.19.0；MIT；private 包
 LICENSE                  本包许可
 SOURCE-LICENSE.txt       固定上游来源归属与 MIT 声明
@@ -125,6 +160,7 @@ SOURCE-LICENSE.txt       固定上游来源归属与 MIT 声明
 ```bash
 npm run verify
 npm run smoke
+npm run test-adoption
 ```
 
 `npm run smoke` 检查全新打包与安装路径，包括拒绝覆盖已有 Skill 席位。可选文档门禁另需：
@@ -136,6 +172,9 @@ npm run test-doc-gates
 
 只报告实际运行过的命令及其退出码。
 
+独立编写的消费项目契约验收、首次失败与修复记录见[公开采用快照](research/fixtures/adoption-cli/README.md)，不需要安装 Skill 或依赖即可运行。`test-adoption` 是仓库贡献者命令，research 夹具不进入 npm 运行包或 Agent 安装座；重跑验证的是应用行为，不是重新启动自主 Agent 会话。[方法说明](METHODS.zh.md)另行区分这些观察、生产采用与完整来源迁移。
+
+
 ## 接入你的项目
 
 从零依赖核心开始，再按仓库特点接入需要的治理检查：
@@ -144,7 +183,7 @@ npm run test-doc-gates
 - **按项目选择检查。** 为文档、Agent Note 与审批模块配置实际规则，并接入项目自己的检查命令和 CI；GitHub 审批与分支保护由项目策略统一管理。
 - **方便获取与分发。** 可以直接使用本仓库，或下载 [Releases 页面](https://github.com/JusticeSc/harness-project-governance/releases)的离线包。
 
-核心安装与演示流程已在 Windows、Linux 的 Node.js 22.19 和 24 上通过验证。可复跑命令与各模块的适用范围见[验证说明](PUBLIC-VERIFICATION.md)。详细操作参考以中文为主，同时提供英文 CLI 输出和入门文档。
+[历史发布记录](PUBLIC-VERIFICATION.md)保留了 Windows/Linux、Node.js 22.19/24 的核心安装与演示观察，不代表本轮对当前开发树重新跑过该平台矩阵。详细操作参考以中文为主，同时提供英文 CLI 输出和入门文档。
 
 ## 许可与致谢
 

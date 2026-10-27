@@ -68,13 +68,13 @@
 - 双语漂移：以英文正文为准重译，并重新生成 sidecar；不要手改哈希。
 
 **例外.**
-- model-agnostic 包可经 `scripts/verify-package-readme-model-experience.ts` 的 allowlist 免除 Model Experience。
-- 确实没有限制的包可经 `scripts/verify-package-readme-limitations.ts` 的 allowlist 免除限制节。
-- 观察到的例外：`native/system/packages/linux-x64/README.md:1-11@687f282e` 与 `python/README.md:1-20@687f282e` 没有这两节；源正文没有解释它们由哪个 allowlist 覆盖，因此只能记录为观察事实，不能推断豁免理由。
+- model-agnostic 包可经 `scripts/verify-package-readme-model-experience.ts` 的 `NO_MODEL_EXPERIENCE_SECTION`（7 个审计条目）免除 Model Experience；简化模型体验可走 `SENTENCE_MODEL_EXPERIENCE`。
+- 确实没有限制的包可经 `scripts/verify-package-readme-limitations.ts` 的 `NO_LIMITATIONS` 免除限制节；源仓当前只有 `packages/util/brand`。
+- `native/system/packages/linux-x64/README.md:1-11@687f282e` 与 `python/README.md:1-20@687f282e` 没有这两节，原因是两个检查器都只枚举 `packages/*/*/package.json`，这两个路径不在检查范围内；它们不是被 allowlist 豁免。来源没有为它们登记豁免。
 
 **[迁移设计]** 在采用项目里把模板、检查脚本与 allowlist 一起落地；检查脚本只保证“节存在/格式对”，内容质量仍由 owner 评审。allowlist 必须可审计：路径、理由、owner、复核日期、退出条件，避免变成永久豁免。
 
-**[证据限制]** 检查脚本本体未读，不能证明它检查了内容质量；没有运行脚本，不能证明 CI 真的执行。
+**[证据限制]** 两个检查器已读：`deepseek-harness/scripts/verify-package-readme-model-experience.ts:32-40@687f282e`（allowlist 表）与 `deepseek-harness/scripts/verify-package-readme-model-experience.ts:333-393@687f282e`（枚举 `packages/*/*/package.json`、缺节失败）；`deepseek-harness/scripts/verify-package-readme-limitations.ts:19-86@687f282e`（唯一 canonical 标题、至少一条 bullet、allowlist 失效即失败）。本域未运行它们，不能证明 CI 真的执行或当前树通过；purpose/configuration/extension points 仍只靠评审。
 
 ---
 
@@ -123,18 +123,19 @@
 
 **源规则（义务）.**
 
-1. 非实验运行时包必须有产品用途，或在 `scripts/product-package-policy.ts` 中有显式分类；SDK、build、test、declaration 基础设施有单独分类。`deepseek-harness/packages/README.md:86-89@687f282e`。
+1. 非实验包必须满足以下之一：默认运行路径可达、可选运行路径可达，或在 `scripts/product-package-policy.ts` 中有显式分类。分类共六种：`optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`。可选可达本身是有效产品用途，不因没有默认挂载就额外要求分类。`deepseek-harness/packages/README.md:86-89@687f282e`、`deepseek-harness/scripts/verify-product-use.ts:249-257@687f282e`。
 2. 实验状态独立于是否发布、是否可安装、是否可选交付。`deepseek-harness/packages/README.md:86-89@687f282e`。
 3. 实验包只有在被显式挂载时才激活。browser-use 的原文是 “This published experimental package activates only when explicitly mounted.” `deepseek-harness/packages/experimental/browser-use-playwright-mcp/README.md:12-12@687f282e`。
 4. shipped profile 不默认挂载实验包。CUA 的原文是 “Enable this experimental provider through explicit source composition on macOS 14 or later. Windows support is in development. Shipped profiles do not mount it.” `deepseek-harness/packages/experimental/cua-macos/README.md:28-28@687f282e`。inspector bundle 则是 “off by default in Plugin Manager”。`deepseek-harness/packages/experimental/inspector-profile/README.md:12-12@687f282e`。
 5. Plugin Manager 把实验插件放在单独入口，不与稳定内置插件混排。`deepseek-harness/packages/client/ui-plugin-manager/README.md:30-30@687f282e`。
+6. `verify-product-use.ts` 从 shipped profile / web on-demand / CLI / desktop / web 入口收集默认与可选可达集；只有同时不在两种可达集、且没有 policy 条目的非实验包才以 “no product runtime use” 失败。默认可达的非 `web-distribution` 包不得再登记为 optional/sdk/etc.；`web-distribution` 必须默认可达；分类与目录必须匹配（例如 `test` 仅 `packages/test-support/*`）。`deepseek-harness/scripts/verify-product-use.ts:234-269@687f282e`。
 
 **实施步骤.**
 
-1. 查 package policy 分类：产品运行时、SDK、build、test、declaration 基础设施。
+1. 查 `scripts/product-package-policy.ts` 分类：`optional`（显式选择才可达）、`sdk`、`build`、`test`、`web-distribution`、`declarations`。
 2. 如果是实验包，确认 shipped profile 不挂载，并写出显式启用步骤（profile patch / source composition）。
 3. 在 README 与 Plugin Manager 元数据中标注 experimental，不只靠目录名。
-4. 发布前检查默认 profile 的挂载列表，确认没有意外加入实验包。
+4. 发布前运行/检查 `verify-product-use`：确认默认 profile 没有意外挂载实验包，并核对默认与可选可达集；二者均不可达的非实验包必须有有效分类，不为消除错误而无意加入默认挂载。
 5. 写清退出实验的条件（例如平台支持完成）。
 
 **角色与完成信号.**
@@ -144,15 +145,16 @@
 
 **失败处理.**
 - 实验包进了默认 profile：立即从默认列表移除，补显式启用文档，并检查是否有用户已依赖默认行为。
-- 分类缺失：运行 package policy 检查；不要用目录位置代替分类。
+- 非实验包既无默认/可选运行可达性，又缺显式分类：核对产品入口或补充真实角色分类；不要用目录位置代替分类，也不要把“非默认”误当成“无产品用途”。
 
 **例外.**
 - 实验包可以发布、可安装，只是不默认激活。
-- 显式分类为基础设施的包不要求产品用途。
+- 显式分类为非默认角色的包不要求默认可达；`web-distribution` 是例外，它必须默认可达。
+- `packages/util/brand` 是唯一登记为没有 Known Limitations 节的包（allowlist 理由：无状态类型助手没有 deferred work）。`deepseek-harness/scripts/verify-package-readme-limitations.ts:19-21@687f282e`。
 
 **[迁移设计]** 建立包状态表（实验性、发布形态、默认挂载、owner、退出条件），默认 profile 变更必须引用它；状态从同一源生成 Plugin Manager 分组，避免两处标注。
 
-**[证据限制]** 未读 `scripts/product-package-policy.ts`；未启动 profile，不能证明默认挂载的真实行为。
+**[证据限制]** 已读 `deepseek-harness/scripts/product-package-policy.ts:1-49@687f282e`（六类与逐包理由）与 `deepseek-harness/scripts/verify-product-use.ts:60-269@687f282e`（可达性收集、stale 分类、目录约束）。本域未运行该检查，不能证明当前树通过或 CI 真的执行；未启动 profile，不能证明默认挂载的真实运行行为。
 
 ---
 
@@ -293,7 +295,7 @@
 2. 超时只约束调用方等待，不等于终止工作；PTC 明确 “An enabled deadline covers runtime setup and execution … It is not a CPU meter.” `deepseek-harness/packages/ptc-runtime/ptc-runtime-node/README.md:92-92@687f282e`。
 3. 取消要在资源获取后再次检查，避免提供者在取消后仍启动进程。PTC “Cancellation is checked again after confinement, so a provider returning after cancellation cannot start the program.” `deepseek-harness/packages/ptc-runtime/ptc-runtime-node/README.md:110-110@687f282e`。
 4. 输出有字符/字节上限；诊断与截断提示可超出主上限，但必须有界。pwsh 的 `maxOutputChars` 默认 16,000，固定诊断追加在后。`deepseek-harness/packages/shell/tool-pwsh-persistent/README.md:50-53@687f282e`；`deepseek-harness/packages/shell/tool-pwsh/README.md:163-163@687f282e`。
-5. 请求体、日志字段与队列有独立上限。connection 的 `maxRequestBodyBytes` 默认 300 MiB；session-log 的 `maxBytes` 默认 8 MiB，超限事件会阻塞后续。`deepseek-harness/packages/client/connection/README.md:80-80@687f282e`；`deepseek-harness/packages/session/session-log-deepseek/README.md:30-31,42-42@687f282e`。
+5. 请求体、日志字段与队列有独立上限。connection 的 `maxRequestBodyBytes` 默认 300 MiB；session-log 的 `maxBytes` 默认 8 MiB，超限事件会阻塞后续。**该请求体上限只约束 buffered `/api` 路由**：opt-in streaming 路由接收带背压的分块并绕过聚合 cap，由各路由自行负责持久化、取消和存储配额。`deepseek-harness/packages/client/connection/README.md:80-80@687f282e`；`deepseek-harness/packages/session/session-log-deepseek/README.md:30-31,42-42@687f282e`。
 6. 队列/预算语义要写清：round cap 不是资源预算，token/时间/配额仍各自独立。`deepseek-harness/packages/goal/goal-round-driver/README.md:128-128@687f282e`。
 7. 浏览器工具的 per-call timeout 有默认值，且继承的 `PLAYWRIGHT_MCP_*` 不能覆盖配置。`deepseek-harness/packages/experimental/browser-use-playwright-mcp/README.md:46-48@687f282e`。
 

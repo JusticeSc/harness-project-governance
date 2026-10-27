@@ -1,0 +1,154 @@
+
+> governance-adoption-project@0.0.0 test
+> node --test test/cli.test.mjs
+
+✔ missing-file listing and first add (TASKS_FILE) (354.8457ms)
+✔ missing-file listing and first add (default path) (353.8291ms)
+✔ TASKS_FILE selects its file rather than cwd/tasks.json (281.2287ms)
+✔ add trims titles, preserves Chinese, spaces and quotes, and persists across processes (679.8461ms)
+✔ list filters status and numerically sorts existing unsorted records (138.8163ms)
+✔ an all-done file lists no open tasks (138.5841ms)
+✔ an existing empty array is valid and starts ids at one (203.0769ms)
+✔ add uses the existing maximum id, including completed records, rather than length or position (140.6343ms)
+✔ done updates the requested record in an unsorted file without changing other records (208.5658ms)
+✖ safe-integer boundary: allocate the final id, reject exhaustion without modifying bytes, and complete that id (212.8552ms)
+✔ invalid invocation: no command (70.6636ms)
+✔ invalid invocation: unknown command (69.65ms)
+✔ invalid invocation: flag in command position (70.5268ms)
+✔ invalid invocation: list unknown flag (72.9404ms)
+✔ invalid invocation: list positional argument (73.1407ms)
+✔ invalid invocation: list empty extra argument (70.715ms)
+✔ invalid invocation: list extra argument after flag (75.8165ms)
+✖ invalid invocation: list duplicate flags are extra arity (71.6834ms)
+✔ invalid invocation: list unknown flag after all (69.3167ms)
+✔ invalid invocation: add missing title (69.2103ms)
+✔ invalid invocation: add extra title (70.9622ms)
+✔ invalid invocation: add trailing unknown flag (75.4424ms)
+✔ invalid invocation: done missing id (69.3914ms)
+✔ invalid invocation: done extra argument (70.8236ms)
+✔ invalid invocation: done trailing unknown flag (69.6954ms)
+✔ invalid invocation: done flag instead of id (69.2737ms)
+✔ invalid invocation: done nonexistent positive id (70.24ms)
+✔ invalid invocation: add empty title (76.8999ms)
+✔ invalid invocation: add spaces title (74.316ms)
+✔ invalid invocation: add ASCII whitespace title (69.3505ms)
+✔ invalid invocation: add Unicode whitespace title (71.9178ms)
+✔ invalid invocation: done invalid id "" (72.4792ms)
+✔ invalid invocation: done invalid id "0" (69.4064ms)
+✔ invalid invocation: done invalid id "-0" (71.9587ms)
+✔ invalid invocation: done invalid id "-1" (75.7395ms)
+✔ invalid invocation: done invalid id "+1" (69.1591ms)
+✔ invalid invocation: done invalid id "1.0" (68.7787ms)
+✔ invalid invocation: done invalid id "1.5" (70.5086ms)
+✔ invalid invocation: done invalid id ".5" (71.5562ms)
+✔ invalid invocation: done invalid id "1e0" (70.2701ms)
+✔ invalid invocation: done invalid id "0x1" (68.7993ms)
+✔ invalid invocation: done invalid id "1x" (69.4548ms)
+✔ invalid invocation: done invalid id "1 2" (68.8784ms)
+✔ invalid invocation: done invalid id " 1" (69.3247ms)
+✔ invalid invocation: done invalid id "1 " (69.8031ms)
+✔ invalid invocation: done invalid id "1\n" (70.8269ms)
+✔ invalid invocation: done invalid id "NaN" (69.5877ms)
+✔ invalid invocation: done invalid id "Infinity" (69.7452ms)
+✔ invalid invocation: done invalid id "١" (76.4879ms)
+✔ invalid invocation: done invalid id "１" (70.3914ms)
+✔ invalid invocation: done invalid id "9007199254740992" (69.5651ms)
+✔ invalid invocation: done invalid id "999999999999999999999999999999999999" (74.2365ms)
+✔ invalid invocations and a nonexistent done id do not create a missing data file (332.1015ms)
+✔ invalid persisted data: empty file (275.731ms)
+✔ invalid persisted data: whitespace-only file (274.7329ms)
+✔ invalid persisted data: truncated JSON (271.8467ms)
+✔ invalid persisted data: invalid JSON token (272.7278ms)
+✔ invalid persisted data: trailing comma (270.6928ms)
+✔ invalid persisted data: multiple JSON values (279.987ms)
+✔ invalid persisted data: null root (267.539ms)
+✔ invalid persisted data: object root (278.906ms)
+✔ invalid persisted data: string root (274.5363ms)
+✔ invalid persisted data: number root (273.6587ms)
+✔ invalid persisted data: boolean root (276.2498ms)
+✔ invalid persisted data: overflowing numeric id (273.0843ms)
+✔ invalid persisted data: null record (270.8492ms)
+✔ invalid persisted data: array record (269.1748ms)
+✔ invalid persisted data: string record (276.5188ms)
+✔ invalid persisted data: number record (268.9805ms)
+✔ invalid persisted data: boolean record (270.4438ms)
+✔ invalid persisted data: empty object (267.5484ms)
+✔ invalid persisted data: missing id (269.1505ms)
+✔ invalid persisted data: missing title (276.3207ms)
+✔ invalid persisted data: missing status (273.5027ms)
+✔ invalid persisted data: extra property (268.8176ms)
+✔ invalid persisted data: string id (266.3864ms)
+✔ invalid persisted data: null id (268.2948ms)
+✔ invalid persisted data: boolean id (269.8269ms)
+✔ invalid persisted data: zero id (270.4693ms)
+✔ invalid persisted data: negative id (271.3565ms)
+✔ invalid persisted data: fractional id (270.8632ms)
+✔ invalid persisted data: unsafe id (268.918ms)
+✔ invalid persisted data: empty title (284.589ms)
+✔ invalid persisted data: whitespace title (269.3953ms)
+✔ invalid persisted data: Unicode whitespace title (268.6261ms)
+✔ invalid persisted data: null title (270.4147ms)
+✔ invalid persisted data: numeric title (269.8658ms)
+✔ invalid persisted data: array title (276.0989ms)
+✔ invalid persisted data: object title (267.7519ms)
+✔ invalid persisted data: unknown status (269.0583ms)
+✔ invalid persisted data: wrong-case status (270.8727ms)
+✔ invalid persisted data: padded status (271.6972ms)
+✔ invalid persisted data: null status (271.9628ms)
+✔ invalid persisted data: numeric status (274.1319ms)
+✔ invalid persisted data: duplicate ids with different titles and statuses (270.4295ms)
+ℹ tests 95
+ℹ suites 0
+ℹ pass 93
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17571.211
+
+✖ failing tests:
+
+test at test\cli.test.mjs:207:1
+✖ safe-integer boundary: allocate the final id, reject exhaustion without modifying bytes, and complete that id (212.8552ms)
+  AssertionError [ERR_ASSERTION]: Command must fail
+      at failure (file:///<consumer>/test/cli.test.mjs:59:12)
+      at file:///<consumer>/test/cli.test.mjs:218:5
+      at withFixture (file:///<consumer>/test/cli.test.mjs:44:5)
+      at TestContext.<anonymous> (file:///<consumer>/test/cli.test.mjs:208:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 0,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at test\cli.test.mjs:265:3
+✖ invalid invocation: list duplicate flags are extra arity (71.6834ms)
+  AssertionError [ERR_ASSERTION]: Unexpected exit status: 
+  
+  0 !== 2
+  
+      at failure (file:///<consumer>/test/cli.test.mjs:61:12)
+      at file:///<consumer>/test/cli.test.mjs:268:7
+      at withFixture (file:///<consumer>/test/cli.test.mjs:44:5)
+      at TestContext.<anonymous> (file:///<consumer>/test/cli.test.mjs:266:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

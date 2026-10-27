@@ -1,0 +1,15 @@
+
+> governance-adoption-project@0.0.0 test
+> node --test test/cli.test.mjs test/reopen.test.mjs
+
+ℹ tests 101
+ℹ suites 0
+ℹ pass 101
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17624.3404
+
+
+Wall time: 18.19 seconds

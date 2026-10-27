@@ -634,7 +634,7 @@
 
 **反模式**：编辑归档笔记「跟上」当前行为；部分取代却删旧笔记；重新提案忽略记录的拒绝理由。
 
-**源记录**：flush 的 superseded cadence、Web steer 的部分取代、Workspace recency 的 owner gap、id/JSONL/E2B/desktop/preset 的取代或重新引入条件、proposed 55–58、rejected 59–61；归档/生命周期政策来自 `.agents/notes/README.md`。
+**源记录**：flush 的 superseded cadence、Web steer 的部分取代、Workspace recency 的 owner gap、id/JSONL/E2B/desktop/preset 的取代或重新引入条件，以及四条 proposed（`2026-09-17-defer-office-background-scheduling.md`、`2026-09-19-provider-only-instruction-reads.md`、`2026-09-19-shell-env-key-declarations.md`、`2026-09-19-trim-session-query-convenience-api.md`）与三条 rejected（`2026-06-20-truncate-interrupted-turns.md`、`2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md`、`2026-07-26-dependency-swaps-rejected-by-nih-audit.md`）；归档/生命周期政策来自 `.agents/notes/README.md` 与 `.agents/notes/AGENTS.md`。
 
 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:26-35@687f282e
 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:46-50@687f282e
@@ -652,6 +652,8 @@
 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e
 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:35-37@687f282e
 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:74-78@687f282e
+来源：deepseek-harness/.agents/notes/README.md:38-50@687f282e
+来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
 
 <a id="reviewable-boundaries"></a>
 ### 4.16 `rationale-simplification-2-reviewable-boundaries` — 可审查边界

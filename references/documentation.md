@@ -71,15 +71,15 @@
 <a id="authoring-quality"></a>
 <!-- mechanism-ids: documentation-tutorial-vs-reference, documentation-page-skeleton -->
 
-**源义务。** 页面顺序遵循 `structure-hierarchy.md`：YAML `title` 与 `description`；语言切换行；`## Summary`；`## Table of Contents`；正文 H2；`## Dev Note`。标题只保留一个一级标题；文件名来自稳定主题，不按列表位置命名。每个 H2 一节，H3 只拆真实子主题。`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:4-47@687f282e`
+**源义务。** 在格式所有者允许时，人工页按YAML元数据、H1、双语切换行、Summary、目录、正文和最终Dev Note组织；生成片段、Agent Note、事故复盘和解析器定义格式遵循各自具名骨架。包README的元数据测试要求`kind`和非空`description`，不统一要求`title`字段。`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:19-30@687f282e`、`deepseek-harness/scripts/doc-standard.spec.ts:142-159@687f282e`
 
-**源义务。** `## Summary` 是面向读者的短摘要，写“读者能用它做什么、何时选它、主要代价、最重要边界”，一到五句；不得写“本文介绍……”式元叙述或内部身份。`## Table of Contents` 的锚点必须匹配 H2；新页面由模板生成时按模板顺序，重排需有结构理由。`## Dev Note` 是强制最后一节，可写 `None.`；它记录维护者知道但正文不宜展开的工程事实，不写实施流水账。`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:49-87@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/style.md:5-49@687f282e`
+**源义务。** Summary用三至五个解释性句子说明读者能做什么、为何关心、运行模型和重要边界；英文包README另有100词门禁，不能当作所有页面的普遍阈值。目录指向H2。Dev Note是显式非权威的活动工作上下文，允许假设、粗略备选、进度与未决；稳定行为、限制和已接受理由归普通所有者。关闭后提升持久结论、保存适当决策/复盘或删除已解决讨论。包README最后两个H2是Model Experience与Known Limitations and Deferred Work，最终Dev Note置于限制节内H3。空白写`None.`，具名机器/解析器格式可省略。`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:19-30@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:79-87@687f282e`
 
 **源义务。** 标题是描述具体主题的名词短语，不是口号、问句或“深入理解 X”。首段在展开前给出导航：这段是什么、读者何时用、下一节去哪。`deepseek-harness/.agents/skills/dsh-doc/SKILL.md:123-124@687f282e`
 
 **源义务。** 写完教程后做新手测试：只读首屏能否判断是否来对地方；跳过目录能否在三次点击内到达目标；是否在不假设内部历史的情况下可完成。`deepseek-harness/.agents/skills/dsh-doc/references/review.md:10-17@687f282e`
 
-**迁移设计。** 采用方可以项目化 H2 名称，但必须保留骨架合同：“摘要、目录、正文、开发者注记”的顺序、一页一主题和首段导航。模板必须与检查器同源：要么由检查器强制标题形态，要么明确这些只是评审规则，不能因模板不同而省略章节。**证据边界。** 上述骨架中只有部分由 `doc-standard.spec` 间接检查，教程顺序与新手测试仍靠人审。
+**迁移设计。** 保留读者首屏导航、稳定内容与非权威活动上下文的分层；章节名称和元数据按目标格式所有者确定。模板与实际执行合同一致，具名例外不强套另一格式。**证据边界。** 包README元数据/选定骨架受`doc-standard.spec`检查，Summary语义、新手测试和其余格式仍需评审；结构通过不是内容正确。
 
 ## 5. 包 README 合同
 
@@ -172,7 +172,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 **源义务（反 slop 清单）。** 审查以下九类：重复规则；历史越层；正文/图中的实现状态标注；手抄目录、JSDoc、测试/包/状态清单；推理流水账；兄弟方法旁重复理由；段落墙；强调膨胀；已实现 Agent Note 中的规格语。`deepseek-harness/docs/AGENTS.md:65-71@687f282e`
 
-**源义务（一处一段）。** 每个散文段落在源文件中占一个物理行；使用编辑器软换行。标题、列表项、引用保持写作要求的单行形态；代码、表格等结构保持原格式，代码注释遵守 linter 列宽。**实际自动边界：** `verify-md-wrap` 只拒绝跨行的 AST `paragraph`，包括列表/引用内段落；不检查 `heading` 节点，也不 blanket 排除生成区域。标题规则仍须评审，不能把它误标为该脚本自动保证。`deepseek-harness/docs/AGENTS.md:41@687f282e`、`deepseek-harness/scripts/verify-md-wrap.ts:40-86@687f282e`
+**源义务（一处一段）。** 每个散文段落在源文件中占一个物理行；使用编辑器软换行。标题保持单行是评审义务；列表/引用内形成 `paragraph` 的正文由自动门禁检查，非 `paragraph` 结构保持原格式，代码注释遵守 linter 列宽。**实际自动边界：** `verify-md-wrap` 只拒绝跨行的 AST `paragraph`，包括列表/引用内段落；不检查 `heading` 节点，也不 blanket 排除生成区域。标题规则仍须评审，不能把它误标为该脚本自动保证。`deepseek-harness/docs/AGENTS.md:41@687f282e`、`deepseek-harness/scripts/verify-md-wrap.ts:40-86@687f282e`
 
 **源义务（预算）。** `scripts/doc-budgets.manifest.json` 对常驻文档设上限；`verify-doc-budgets` 拒绝超限或清单指向的缺失文件。超限时按“迁移到其他层→压缩→有理由地提高上限”顺序处理；上限是护栏不是缩减目标。低于目标时至少保留 5% 余量；高于目标时冻结上限，直到迁移或压缩把文档带回目标以下；只有在文档仍有空间时才降低上限。未列入预算的层级由评审治理，不是自动豁免。`deepseek-harness/docs/AGENTS.md:51-63@687f282e`、`deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e`
 
@@ -233,6 +233,8 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 **源义务（范围与排除）。** 配对范围是仓库内人类文档，包括包 README、指南和 Agent Note。生成参考的英文真源没有语言切换行；中文对应页由生成器渲染并写记录。排除项包括 `vendor/`、`node_modules`、网站生成物、归档 Agent Note、部分历史/发布记录。排除必须显式，不能在发现模式下用“看起来像生成物”推断。`deepseek-harness/docs/i18n/README.md:45-69@687f282e`、`deepseek-harness/scripts/verify-translation-pairing.ts:99-170@687f282e`
 
 **源义务（记录格式）。** `.i18n.yaml` 按英文标题 slug 路径分节；每节三行：`/key`、`  en: <16-hex>`、`  zh: <16-hex>`，键唯一、顺序固定。渲染必须带 canonical 头注释、恢复命令 `pnpm run verify-translation-pairing --write <source>`、稳定排序和恰好一个尾换行。diff 区分“当前新增节（unconfirmed）”“任一侧变更”“记录中已被删除的节”；只有两侧当前哈希与记录都一致才算确认。`deepseek-harness/scripts/translation-pairing-record.ts:1-299@687f282e`、`deepseek-harness/docs/i18n/README.md:21-43@687f282e`
+
+**源调用范围。** 不带pair参数的普通只读检查覆盖工作树语料；命名pair只检查该pair，`--cached`必须带pair路径且读取暂存内容。`--all`只与`--write`同用，不是额外的全量只读模式；不能与命名pair混用。先评审当前内容，再重录已确认pair；全量重录会把未审内容记为已确认，不是翻译修复或语义证明。范围不同的通过结果不得互换。`deepseek-harness/scripts/translation-pairing.ts:252-280@687f282e`
 
 **迁移设计。** 只有项目事实类别中确实没有中文对侧时，才能声明单语并记录非激活条件；不能创建空 `.zh.md` 或跳过记录来冒充完成。若维护双语，范围内每一对文档都必须有三文件、切换行、结构签名和记录；可以分批排期，但未迁移页必须显式列为单语/未配对，不能声称双语覆盖。
 
@@ -414,7 +416,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 **源义务（失败关闭，分族）。** 生成器不是统一的“空扫描/未知输入都失败”，实际准入面如下。配置：遍历 `packages/*/*/package.json`，缺 `name` 或入口 `src/index.ts` 缺失/不可读失败；有 `os` 与 `cpu` 的 per-platform 原生包跳过。按默认类/函数、导出 `apply`、否则 library 分类，abstract 默认类为 seam；config 参数必须是命名类型引用且 config 类型必须在本包。粘贴包内传递类型闭包；同名声明冲突、包内声明与导入冲突、既非本地声明也非导入/全局类型失败；导入类型只记 ref，不要求可粘贴；每个粘贴类型检查成员 JSDoc。运行时 schemastery 仅接受可静态遍历的 object/array/intersect/union/refinement/const alias；递归 alias、非 plain key、动态表达式、无法解析的 intersect/union 元素失败。schema key 在声明类型上确定缺失时失败；未知类型路径记为 `unknown` 而不是报缺失；composed 包必须在本轮扫描中。工具：`assertManifestComplete` 要求 `packages/*/tool-*` 全部在 `TOOL_PACKAGES`；每个条目在独立 Context 中启动并必须在 `finally` dispose，`assertToolsHarvested` 要求至少注册一个工具；每个工具必须有 source mapping；默认 config 之外，无默认的必填 config 字段必须由生成器选分支并在页面注记，`examples/` 不在范围。失败信息解释 PENDING/inject 常见原因。文档图：服务角色分类必须无缺失/过期，且索引逐页声明 generated/hybrid/curated 模式；事件矩阵由真实 TypeScript Program 收集，声明事件必须有 dispatcher（Client 声明因只种 Host 聚合程序而豁免），未声明但出现的 event string 必须单列；事件收集器测试覆盖 local/alias/global script 与文件系统 memo。CLI：实际启动 launcher 的每个 `--help`，使用独立临时 Harness/agents homes、禁用遥测/颜色并清除 NODE_OPTIONS/FORCE_COLOR；空输出、stderr 诊断、超时/非零退出失败。按 `Commands:` 遍历嵌套与 alias，同文帮助去重并列出全部 invocation；启动器、plugin、每个 profile 的短名与 `--profile` 形式都覆盖；`--check` 同时查英文/中文/sidecar，内容差异即 stale，读取失败直接抛错且不会通过。Session：从 `SESSION_FORMAT_VERSION` 读当前版本，迁移清单从 0 到 current 每个版本恰一条相邻迁移；`from/to` 必须非负安全整数且 `to=from+1`，包名/目录匹配，metadata 无未知字段，source codec 延续前驱 target 且依赖前驱包，catalog 以 peer+dev 依赖 Session；生成的 catalog 用直接 import，独立于已挂载插件。持久化：`SessionEventMap` 顶层接口必须只在本包导出且唯一，成员必须是显式 payload 的 string-literal property，禁止 `plugin:` 命名空间、继承和重复；envelope 类型必须单家、导出、有文档、无 `@mode`；`SurfaceEventType` 必须恰有一个字面量联合，成员不得指向未声明事件，且不能与 `messageProjection` 同时声明。生成事件对/插件记录/运行时 known-types 与 schema JSON；`--check` 对缺失/不可读/不同都按 stale。`deepseek-harness/scripts/gen-config-catalog.ts:1-1074@687f282e`、`deepseek-harness/scripts/gen-tool-catalog.ts:1-898@687f282e`、`deepseek-harness/scripts/gen-doc-graphs.ts:1-1861@687f282e`、`deepseek-harness/scripts/gen-cli-help.ts:1-298@687f282e`、`deepseek-harness/scripts/gen-session-format-catalog.ts:1-261@687f282e`、`deepseek-harness/scripts/gen-persistence-catalog.ts:1-267@687f282e`、`deepseek-harness/scripts/persistence-catalog-source.ts:134-310@687f282e`
 
-**源义务（新鲜度与证据）。** 每个入口都有 `--check`：默认写文件，`--check` 逐字节比较已提交内容并失败于 stale；成功后打印计数，便于发现扫描意外变窄。`--check` 只证明 bytes 与当前生成结果一致，不证明生成结果完整或语义正确；空语料/未知输入覆盖并不统一——配置、CLI、Session、Persistence 有专用 spec（Persistence 为 `packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306`），doc-graphs spec 覆盖事件收集器与 memo 而非完整页面；tool 的专用 spec 尚未在本轮确认。不能宣称所有生成器都有空扫描失败。`deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e`、`deepseek-harness/scripts/gen-tool-catalog.ts:850-898@687f282e`、`deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e`、`deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e`、`deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e`、`deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e`、`deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e`
+**源义务（新鲜度与证据）。** 每个入口都有 `--check`：默认写文件，`--check` 逐字节比较已提交内容并失败于 stale；成功后打印计数，便于发现扫描意外变窄。`--check` 只证明 bytes 与当前生成结果一致，不证明生成结果完整或语义正确；空语料/未知输入覆盖并不统一——配置、CLI、Session、Persistence 有专用 spec（Persistence 为 `packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306`），doc-graphs spec 覆盖事件收集器与 memo 而非完整页面；tool 的专用 spec 为 `packages/core/tools/tests/gen-tool-catalog.spec.ts:1-158`，覆盖真实树收集、空清单漏包、启动零工具、PATH 独立与 render，但没有空磁盘扫描用例。不能宣称所有生成器都有统一的空扫描失败。`deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e`、`deepseek-harness/scripts/gen-tool-catalog.ts:850-898@687f282e`、`deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e`、`deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e`、`deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e`、`deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e`、`deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e`、`deepseek-harness/packages/core/tools/tests/gen-tool-catalog.spec.ts:1-158@687f282e`
 
 **源义务（Persistence 专用 spec 证据）。** 该 306 行 spec 覆盖：`SessionEventMap` 仅一个 owning 包导出，非 owning/未导出/两处导出/`extends`/重复/非字面量/方法式/无显式 payload 类型/无描述/`@mode`（含额外缩进）/`plugin:` 命名空间都是硬错误，且违规聚合为一条错误；envelope 四类型 `SessionEventType`、`SurfaceEventType`、`SurfaceOp`、`SessionEvent` 必须存在、单家、导出、有描述、无 `@mode`，并按规范顺序报告；`SurfaceEventType` 必须恰为一个闭合 string-literal union，成员不得指向未声明事件，`@messageProjection` 与 surface 操作互斥；render 输出 generated header、declaration fence 与 surface/log-only 标记。`deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e`
 
@@ -492,11 +494,11 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 **源义务（受检语料）。** 所有 Markdown 门禁共享 GFM 解析与行模型：散文行排除围栏/缩进代码块和 HTML 注释，保留 1-based 行号与原文本；围栏保留 info string 与 `closed`，mdast 在 EOF 静默闭合的围栏不得当成已闭合；标题支持 ATX/Setext，slug 用渲染文本（原始 HTML 注释不进入）。链接目标用作者源偏移定位，兼容 `<...>`、转义、嵌套括号和引用定义，定位失败抛错。仓库发现只模型化 `*`、`?`、`**`；字符类、brace/extglob、反斜杠、`..`、空段、尾随 `**` 显式抛错，不能静默返回空集；`**` 只展开真实目录，最终段可匹配文件/符号链接，最终段的断链/环链在 realpath 处失败，非最终 literal 断链匹配为空（与 node glob 一致）；多个 pattern 共享目录列表，按 canonical realpath 去重符号链接。归档 Agent Note 不作为源扫描，但指向它们的链接仍作为目标检查。`deepseek-harness/scripts/markdown.ts:1-277@687f282e`、`deepseek-harness/scripts/repo-files.ts:1-295@687f282e`
 
-**源义务（相对链接）。** 当前文件用相对 Markdown 链接；历史引用用 tag 或 PR 号。`verify-md-links` 只检查本地目标：查询串/片段剥掉后目标必须存在；外部 URL、协议相对 `//host` 和根绝对 `/path` 被排除。目标是非 Markdown 文件时（如 `file.ts#L10`），片段交给渲染器，不判锚点。`deepseek-harness/docs/AGENTS.md:73-75@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:34-73@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:204-233@687f282e`
+**源义务（相对链接）。** 当前文件用相对 Markdown 链接；历史引用用 tag 或 PR 号。`verify-md-links` 只检查本地目标：查询串/片段剥掉后目标必须存在；外部 URL、协议相对 `//host` 和根绝对 `/path` 被排除。目标是非 Markdown 文件时（如 `file.ts#L10`），片段交给渲染器，不判锚点。`deepseek-harness/docs/AGENTS.md:75-77@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:34-73@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:204-233@687f282e`
 
 **源义务（锚点）。** 锚点按 GitHub slug 规则解析：转小写、删去字母/数字/下划线/空格/连字符以外的字符、空格变连字符；显式 `<a id="...">` 也算目标，但 fenced/inline code 和 HTML 注释里的锚点不算。重复标题按 GitHub 占用集加 `-1`、`-2`；匹配大小写敏感。标题改名会破坏入站锚点，必须同改引用；没有自动别名放行表。`deepseek-harness/scripts/verify-md-links.ts:99-160@687f282e`
 
-**源义务（禁止网站路由）。** Markdown 中不要写 `/docs/...` 之类的站内绝对路由；这些链接在 GitHub 上不可解析，且检查器会跳过根绝对路径。写源相对链接，网站投影负责转换。`deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:31-50@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:45-73@687f282e`
+**源义务（禁止网站路由，评审）。** Markdown 中不要写 `/docs/...` 之类的站内绝对路由；这些链接在 GitHub 上不可解析，且检查器会跳过根绝对路径，因此该禁令只能由写作评审执行，不是 `verify-md-links` 的自动拒绝。写源相对链接，网站投影负责转换。`deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:60-64@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:45-73@687f282e`
 
 **源义务（源注释引用）。** 源码注释/字符串中的文档路径必须是从仓库根开始的完整 `docs/...` 路径，带扩展名，不能 `./`/`../`；`verify-doc-refs` 扫描非 vendor、非 `lib`、非 `.d.ts` 的源码，去重符号链接后验证目标存在。`deepseek-harness/scripts/verify-doc-refs.ts:1-45@687f282e`
 
@@ -545,8 +547,8 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 ## 16. 仓库引用与网站投影
 
 来源：deepseek-harness/scripts/verify-md-links.ts:1-254@687f282e
-来源：deepseek-harness/docs/AGENTS.md:73-75@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:31-50@687f282e
+来源：deepseek-harness/docs/AGENTS.md:75-77@687f282e
+来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:60-64@687f282e
 来源：deepseek-harness/scripts/verify-md-links.spec.ts:1-29@687f282e
 来源：deepseek-harness/scripts/verify-md-links.spec.ts:64-140@687f282e
 来源：deepseek-harness/scripts/verify-md-links.ts:204-254@687f282e
@@ -559,6 +561,8 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 <!-- mechanism-ids: documentation-repository-reference-policy, documentation-website-publication-manifest, documentation-website-link-projection, documentation-website-raw-llms -->
 
 **源义务（仓库引用策略）。** `verify-repository-references` 拒绝维护文件中指向实际 Git 对象的提交号（7 到 40 位十六进制、且对象存在于本地对象库）和 `github.com/deepseek-harness` 组织 URL；只排除 `vendor/` 与 `.agents/notes/archived/`，并对 kit 仓库 URL 有一个精确例外。历史引用用 tag 或 PR 号。检测按“唯一前缀”解析对象，浅克隆中不存在的对象无法匹配，因此不能把绿门禁当成“没有提交号”。`deepseek-harness/scripts/verify-repository-references.ts:1-155@687f282e`
+
+**执行边界。** 组织URL检查先使用`canonicalReferenceText`标准化，但提交候选仍直接在原始行上匹配`commitCandidate`再对照本地提交集合。不能把URL解码的抗绕过能力误记为提交号检查也先解码。`deepseek-harness/scripts/verify-repository-references.ts:46-54@687f282e`
 
 **源义务（公开仓库链接）。** 维护文件不得出现旧仓库 `deepseek-ai/deepseek-harness-sdk`；检测会先解码 `%2F`、`%23`、`%3A`、HTML 实体等转义再判断，防止用编码绕过。它只排除归档来源，不禁止 `deepseek-harness/...` 简写。`deepseek-harness/scripts/verify-public-repository-links.ts:1-99@687f282e`
 
@@ -612,19 +616,19 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 **拒绝与恢复。** 普通检查无违规退出0；检测到提交引用、禁用链接或词项退出1并定位文件/行；配置缺失、空语料、不可读文件或 Git 前提缺失退出2。改为可维护的 tag/PR、允许的完整 URL 或具体措辞后，重跑同一普通命令直到0。`--list` 即使列出违规也退出0，只供诊断，不能作为 CI 阻断。仅本地对象库存在且前缀唯一的 commit 才拒绝；blob、歧义前缀及浅历史中缺失的对象不算已识别提交，仍须完整历史前提。
 
-**实测与未闭合部分。** 执行器读取文本或符号链接的存储目标，不跟随链接读外部文件。源组织链接与提交/术语扫描 NUL 载荷，旧仓库链接的读取路径跳过 NUL；上例逐 URL 声明保留此区别。`verification/evidence/raw/repository-references-git-discovery-installed.json` 保存物理隐藏安装座、模块hash、完整探针及18条真实顶层 npm 调用：新文件提交/组织拒绝，同文件跟踪后旧链接/术语拒绝，被忽略新文件排除但被强制跟踪后拒绝，NUL 分界、中文历史生成区、畸形标记、前导零路径、精确 schema 仅术语豁免及修复恢复。只复制模块与包清单，不是完整 Skill 安装。上一批独立复核为 correct（80独立探针，含8条安装座 npm 命令），只绑定上一批修复字节；本批Git发现/逐URL/精确历史扩展的独立复核为 correct：`_working/audit/reference-discovery-runtime-independent.json`，74条真实安装座 npm 探针全部符合预期且无偏差，17个冻结文件前后hash一致。完整目标覆盖、源脚本自身必需仓库区域守卫、完整来源等效、平台必需检查、远端链接存活、语义用词质量及 C1–C6 仍未闭合。
+**历史实测与证据边界。** 执行器读取文本或符号链接的存储目标，不跟随链接读外部文件。源组织链接与提交/术语扫描 NUL 载荷，旧仓库链接的读取路径跳过 NUL；上例逐 URL 声明保留此区别。`verification/evidence/raw/repository-references-git-discovery-installed.json` 保存物理隐藏安装座、模块hash、完整探针及18条真实顶层 npm 调用：新文件提交/组织拒绝，同文件跟踪后旧链接/术语拒绝，被忽略新文件排除但被强制跟踪后拒绝，NUL 分界、中文历史生成区、畸形标记、前导零路径、精确 schema 仅术语豁免及修复恢复。只复制模块与包清单，不是完整 Skill 安装。上一批独立复核为 correct（80独立探针，含8条安装座 npm 命令），只绑定上一批修复字节；本批Git发现/逐URL/精确历史扩展的独立复核为 correct：`_working/audit/reference-discovery-runtime-independent.json`，74条真实安装座 npm 探针全部符合预期且无偏差，17个冻结文件前后hash一致。这些历史观察不证明当前目标覆盖、源脚本自身必需仓库区域守卫、完整来源等效、平台必需检查、远端链接存活或语义用词质量。
 
 `verification/evidence/raw/repository-references-required-areas-exact-before.json` 保存首版错误接受目录替代精确文件的真实失败；最终实现区分两种匹配。28项回归与10条物理隐藏安装座npm调用分别记录在 `verification/evidence/raw/repository-references-required-areas-exact-regressions.json` 和 `verification/evidence/raw/repository-references-required-areas-installed-current.json`。省略或空数组不启用守卫，不能据此声称取得同等发现保证；这些局部证据也不是全来源等效或真实CI证明。本批守卫待独立复核，上一批74项正确结论不覆盖新增字节。来源：deepseek-harness/scripts/verify-concrete-terms.ts:52-62@687f282e
 
 **策略文件自身。** 示例与实际策略文件都包含禁用URL字面量；若语料覆盖策略文件（如 `roots: ["."]` 且未排除 `.doc-gates`），普通检查会拒绝策略文件自身并退出1（独立复核控制记录 `.doc-gates/repository-references.json:12/24/44`）。实际采用方把策略路径加入 `excludePrefixes` 或收窄 `roots`，使声明与被检正文分开；整树示例必须配正确排除才能直接使用。
 
-**源义务（发布清单）。** 网站发布由 `website/docs.ts` 的显式清单控制，不从文件系统推断。每个发布页声明源、路由、语言、对侧页、镜像页、图片/别名等；`docsPages` 只列人工维护的源文档，生成页必须由生成器登记，不能手加。移动/改路由必须同时改清单，保持原子性。`deepseek-harness/website/AGENTS.md:1-23@687f282e`、`deepseek-harness/website/docs.ts:1-123@687f282e`、`deepseek-harness/scripts/project-doc-site.ts:1-263@687f282e`
+**源义务（发布清单）。** 发布面由`website/docs.ts`的显式清单控制，不从文件系统自动推断。清单选择人工页及部分生成参考；生成器拥有生成内容，清单拥有发布选择。移动源、路由、语言、对侧及别名要同步维护，不能靠手改生成站补洞。`deepseek-harness/website/AGENTS.md:1-23@687f282e`、`deepseek-harness/website/docs.ts:403-428@687f282e`
 
-**源义务（链接投影）。** 每个源文档相对链接按源路径和目标类型重写为站点路由；片段按 canonical 锚点转换；图片改写到站点资源路径；缺少目标时失败，不得生成死链；源映射用于编辑链接。Markdown 中不得写网站路由，投影器负责唯一转换。`deepseek-harness/scripts/project-doc-site.ts:263-577@687f282e`、`deepseek-harness/scripts/verify-doc-site-fragments.ts:1-181@687f282e`
+**源义务（链接投影）。** 已存在的仓库相对目标若已发布则映射站点路由，否则回退配置的公开仓库ref；`DOCS_REPOSITORY_REF`缺省为`master`，不是不可变版本绑定。实际发布也故意选`master`：公开仓库历史不同、只保留最近的tag，追随旧tag会使旧部署链接失效；代价是旧页面的源链接可随分支前移。图片可由资源放置回调处理；无法解析的相对目标失败，站点片段另查。`rewriteMarkdown`跳过外部/绝对URL及空路径，不是自动拒绝所有绝对链接。`deepseek-harness/scripts/project-doc-site.ts:30-38@687f282e`、`deepseek-harness/scripts/project-doc-site.ts:134-190@687f282e`、`deepseek-harness/.github/workflows/docs-pages.yml:23-31@687f282e`、`deepseek-harness/scripts/verify-doc-site-fragments.ts:1-181@687f282e`
 
 **源义务（raw 与 llms）。** `rawDocsPages` 允许的页面生成 `.md` 原始孪生文件，根路由也提供 canonical raw；`llms.txt` 从同一清单生成；开发中间件在重写前提供 raw；预构建不得覆盖手写页面；合成片段也过链接门禁。`deepseek-harness/website/docs.ts:123-591@687f282e`、`deepseek-harness/website/build.ts:1-86@687f282e`
 
-**操作步骤（网站改动）。** 确认页面在 `docsPages` 中；改源文档与清单；运行 `pnpm run docs:check`（投影测试 + 构建 + 片段检查）；检查生成的 `website/.generated` 只含预期文件。**失败处理。** 缺目标、锚点不匹配或路由冲突时，先改源链接/清单，不要在生成站手补。**例外。** 纯内部页面可不发布，但必须在清单外且不被其他发布页链接。
+**操作步骤（网站改动）。** 显式选择发布页，原子维护源与清单；运行`pnpm run docs:check`并核对生成物。引用未发布目标时确认仓库路径存在、所配置的公开ref可访问且符合该项目发布策略；不必为每个被引用目标新建站点路由。不可变引用是额外要求，需显式提供可用的公开不可变ref并验证，不能从默认`master`推断。**失败处理。** 根据缺目标、片段或路由诊断修源/清单，不手补生成站。**例外。** 内部页可不发布而被公开页通过配置ref的源链接引用；这不授权自动发布私有或草稿内容。
 
 **迁移设计。** 采用方若不用 VitePress，仍应保留“发布清单是唯一入口”和“链接投影单向转换”两点。不要用文件系统 glob 自动发布，否则草稿、归档和内部页会泄露。
 
@@ -751,7 +755,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 **第四步：建立双语（如需要）。** 先定义完整三文件契约，然后覆盖范围内所有页面；可以分批迁移，但未迁移页必须显式列为单语/未配对。记录必须绑定两侧内容，而不是只存时间戳。不要用“翻译完成”代替结构一致。
 
-**第五步：建立生成参考。** 每个生成器必须有未知输入失败、空扫描失败、`--check` 和稳定输出路径；生成区域用共享常量标记。中文侧只通过生成/配对更新。
+**第五步：建立生成参考。** 每个生成器必须有 `--check` 和稳定输出路径；逐族声明未知输入、空扫描与清单变窄时的行为，适用时必须失败，不能把某一族的 guard 推及全部；生成区域用共享常量标记。中文侧只通过生成/配对更新。
 
 **第六步：建立评审与归档。** 决策记录按生命周期分目录；归档用哈希清单只追加；升级指南只在用户需要动作时写。为每个门禁写正例、拒绝例和恢复说明。
 
@@ -813,8 +817,8 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 - `documentation-package-readme-model-experience`：`deepseek-harness/scripts/verify-package-readme-model-experience.ts:1-638@687f282e`、`deepseek-harness/docs/cookbook/adding-a-package.md:1-170@687f282e`
 - `documentation-package-readme-limitations`：`deepseek-harness/scripts/verify-package-readme-limitations.ts:1-95@687f282e`
 - `documentation-comments-export-jsdoc`：`deepseek-harness/scripts/verify-export-jsdoc.ts:1-607@687f282e`、`deepseek-harness/packages/core/agent/tests/verify-export-jsdoc.spec.ts:1-561@687f282e`
-- `documentation-generated-reference-freshness`：`deepseek-harness/scripts/gen-persistence-catalog.ts:1-267@687f282e`、`deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e`、`deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e`、`deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e`、`deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e`、`deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e`
-- `documentation-markdown-links`：`deepseek-harness/scripts/verify-md-links.ts:1-254@687f282e`
+- `documentation-generated-reference-freshness`：`deepseek-harness/scripts/gen-persistence-catalog.ts:1-267@687f282e`、`deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e`、`deepseek-harness/packages/core/tools/tests/gen-tool-catalog.spec.ts:1-158@687f282e`、`deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e`、`deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e`、`deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e`、`deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e`
+- `documentation-markdown-links`：`deepseek-harness/scripts/verify-md-links.ts:1-254@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:204-254@687f282e`、`deepseek-harness/docs/AGENTS.md:75-77@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:60-64@687f282e`、`deepseek-harness/scripts/verify-md-links.spec.ts:1-29@687f282e`、`deepseek-harness/scripts/verify-md-links.spec.ts:64-140@687f282e`
 - `documentation-doc-typecheck`：`deepseek-harness/scripts/doc-typecheck.ts:1-252@687f282e`、`deepseek-harness/scripts/doc-typecheck-paths.ts:1-24@687f282e`
 - `documentation-type-equiv`：`deepseek-harness/docs/subsystems/README.md:74-76@687f282e`
 - `documentation-subsystem-page-ownership`：`deepseek-harness/docs/subsystems/README.md:1-76@687f282e`

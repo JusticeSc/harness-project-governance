@@ -1,6 +1,6 @@
 # 升级指南（upgrade guide）治理参考
 
-本文件覆盖 DeepSeek Harness 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`（下称“源”）中 `docs/upgrade-guide/**` 的完整治理形态：触发、同改动写入、路径与三件套、frontmatter、标题节序、500 词上限、Change/Migration 内容、双语配对、校验器边界、评审责任、版本目录分类，以及迁移到其他仓库时的设计参数。读者触发条件：判断一次破坏是否需要升级指南、写/改指南、处理版本 bump 或回滚、审查指南 PR、移植或重建 `verify-upgrade-guides`、解释“门禁绿灯”到底证明了什么。
+本文件覆盖 DeepSeek Harness 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`（下称“源”）中 `docs/upgrade-guide/**` 的主要治理形态：触发、同改动写入、路径与三件套、frontmatter、标题节序、500 词上限、Change/Migration 内容、双语配对、校验器边界、评审责任、版本目录分类，以及迁移到其他仓库时的设计参数。它是静态提取的迁移参考，不证明目标项目已经配置并执行相关治理。读者触发条件：判断一次破坏是否需要升级指南、写/改指南、处理版本 bump 或回滚、审查指南 PR、移植或重建 `verify-upgrade-guides`、解释“门禁绿灯”到底证明了什么。
 
 约定：
 
@@ -53,7 +53,7 @@
 
 `dsh-create-upgrade-guide` 的 frontmatter description 把触发写成：当变更破坏一个外部可感知表面（CLI、profiles、`cordis.yml` 或 settings 键、持久用户数据、SDK 或 wire API、已发布包入口），或改动一个未发布升级指南已经覆盖的表面时，写或更新 `docs/upgrade-guide/v<version>/<item>/guide.md`（`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:2-3@687f282e`）。根 `AGENTS.md` 把它提升为常驻命令：每个外部可感知的破坏性变更立即记录到升级指南（`deepseek-harness/AGENTS.md:11@687f282e`）。
 
-正文给出的判定句是：“只为一个仓库外的人在升级后能观察到的破坏写指南”（`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:10-12@687f282e`）。列举的五类是：
+正文给出的判定句是：“只为一个仓库外的人在升级后能观察到的破坏写指南”（`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:10-12@687f282e`）。SKILL.md 列举的五类（主要类别，不是封闭清单）是：
 
 1. `dsh` 命令、flag、profile 名；
 2. `cordis.yml`、patch、overlay、settings 键或它们接受的取值；
@@ -63,7 +63,7 @@
 
 （`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:14-18@687f282e`）
 
-【源事实】语料还包含不在这五类逐字列举中的条目：Desktop 测试更新策略弹窗的本地开关（`v0.2.1-alpha.1/desktop-test-auth-popup`）、Desktop 字号快捷键保留（`v0.2.1-alpha.2/desktop-font-size-shortcuts`）、Web/Desktop 的 New Session 行为（`v0.2.1-alpha.1/new-session-generations`）。因此实际操作标准是“仓库外用户可观察”，五类是主要类别而非封闭集合；该解释来自语料，不是脚本可验证事实。
+【源事实】语料还包含不在这五类逐字列举中的条目：Desktop 测试更新策略弹窗的本地开关（`v0.2.1-alpha.1/desktop-test-auth-popup`）、Desktop 字号快捷键保留（`v0.2.1-alpha.2/desktop-font-size-shortcuts`）、Web/Desktop 的 New Session 行为（`v0.2.1-alpha.1/new-session-generations`）。这些是“仓库外用户可观察”判定的示例，不是 SKILL.md 新增的类别，也不能把五类改写成封闭清单。实际操作标准是“仓库外用户升级后能观察到”；该解释来自语料，不是脚本可验证事实。
 
 ### 1.2 唯一明示的免写例外
 
@@ -83,10 +83,12 @@ Session 格式或声明式持久类型的变化有两条并行记录：仍要走
 
 【源义务】“立即写”指在识别到破坏的同一次改动中写，不推迟到 release 准备（`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:8@687f282e`）。
 
+【迁移设计】表中的“评审/发布审计”角色是本参考为落地补的职责分工；源 SKILL.md 只规定谁写、写什么，没有定义发布负责人或审计流程。可以把这些角色写进目标项目流程，但不要声称源仓库已有该自动/强制机制。
+
 ### 1.4 失败处理与证据限制
 
 - 漏写不会被 `verify-upgrade-guides` 发现：目录整体缺失时它返回空；有树但少一个 item 也照样通过（`deepseek-harness/scripts/verify-upgrade-guides.ts:55-57@687f282e`）。
-- 评审发现漏写：在引入破坏的同一 PR 内补三件套，重录配对，跑 §10 的三个命令。
+- 评审发现漏写：在引入破坏的同一 PR 内补三件套，重录配对，跑 §9.5（配对）与 §10.3（形态/链接）列出的命令。
 - 【证据限制】本域没有“源码变更 → 指南”的自动映射证据，也没有审计全部历史 release；触发完整性只能由评审或额外检查器证明。
 
 ### 1.5 迁移设计
@@ -131,9 +133,11 @@ vX/** 冻结；Y 的新破坏写入 vY/<item>；不再修改 vX
 
 ### 2.3 角色、完成信号与失败处理
 
+【迁移设计】下列职责分工是把源规则落到流程时补的角色；SKILL.md 没有定义“评审”或“发布负责人”的正式职责。
+
 - 作者：判断目录、写入/更新/删除；完成信号是“目录版本等于写入时根版本，且只描述一个 release”。
 - 评审：核对是否原位更新、是否误改冻结目录、回滚是否删除、是否存在重复 item。
-- 发布负责人：bump 后确认旧目录不再变化；新破坏没有落进旧目录。
+- 发布负责人（迁移设计角色）：bump 后确认旧目录不再变化；新破坏没有落进旧目录。
 
 常见失败：
 
@@ -147,7 +151,7 @@ vX/** 冻结；Y 的新破坏写入 vY/<item>；不再修改 vX
 
 ### 2.4 校验边界
 
-【源事实】`verify-upgrade-guides` 不读取 `package.json`，不比较目录版本，不检测冻结/跨度/原位更新/删除（`deepseek-harness/scripts/verify-upgrade-guides.ts:55-75@687f282e`）。它只对已存在文件做形态检查。生命周期完全由评审与发布流程保证。
+【源事实】`verify-upgrade-guides` 不读取 `package.json`，不比较目录版本，不检测冻结/跨度/原位更新/删除（`deepseek-harness/scripts/verify-upgrade-guides.ts:55-75@687f282e`）。它只对已存在文件做形态检查。生命周期是人工流程：同改动、原位更新、回滚删除和冻结都不能从静态目录结果推断，只能由评审/发布流程记录。
 
 【证据限制】固定提交是只读快照：能看到 `v0.2.1-alpha.4` 与根版本 `0.2.1-rc.2` 的差异，但看不到“某次更新是否发生在同改动”“某份指南是否被原位更新过”的过程证据；Git 历史未审计。
 
@@ -199,15 +203,17 @@ vX/** 冻结；Y 的新破坏写入 vY/<item>；不再修改 vX
 - `docs/upgrade-guide/v0.1.7/item/notes.md`（第四种文件）
 - `docs/upgrade-guide/v0.1.7/item/extra/guide.md`（额外层级）
 
+【已交付】移植回归还增加 `docs/upgrade-guide/v0.1.7+build/item/guide.md`（build metadata）作为第七类布局拒绝；源测试没有这个 fixture，但源正则同样拒绝。
+
 ### 3.3 正例与缺失边界
 
-【源事实】测试确认：空树返回空；预发布版本目录、CRLF 文件、内容不被该门解析的 `guide.i18n.yaml` 都通过（`deepseek-harness/scripts/verify-upgrade-guides.spec.ts:54-62@687f282e`）。空树通过意味着**删除整棵目录树不会触发这个门**；迁移时必须补“必需文件/变更映射”检查或评审清单。
+【源事实】测试确认：空树返回空；预发布版本目录、CRLF 文件、内容不被该门解析的 `guide.i18n.yaml` 都通过（`deepseek-harness/scripts/verify-upgrade-guides.spec.ts:54-62@687f282e`）。正例中的 CRLF item 只放了 `guide.md`，因此**一个 item 缺 `guide.zh.md` 或 `guide.i18n.yaml` 也会通过布局门**：它只验证已存在文件的文件名，不要求三件套齐全，也不校验配对。空树通过意味着**删除整棵目录树不会触发这个门**；迁移时必须补“必需文件/变更映射”检查或评审清单，并把配对缺失交给独立配对门。
 
 ### 3.4 迁移设计
 
 【迁移设计】若使用其他目录键，保留“固定文件名集 + 无索引/无附件 + 递归拒绝未知文件”。如果目标项目把指南放在站点内容目录，仍需一个独立的物理布局门，否则作者会把图片、索引和草稿放进同目录。
 
-【已交付】`node <skill>/tools/doc-gates/verify-upgrade-guides.mjs --guide-root <dir>` 就是该门；`--guide-root` 只改根路径，路径正则（semver/kebab/三件套文件名）不变。退出码 0/1/2 与源一致，空树仍通过并打印提示。
+【已交付】`node <skill>/tools/doc-gates/verify-upgrade-guides.mjs --guide-root <dir>` 就是该门；`--guide-root` 只改根路径，路径正则（semver/kebab/三件套文件名）不变。移植版退出码为 0（通过/空树）、1（违规）、2（参数、根或解析依赖不可用）；源 CLI 只显式使用 0/1，2 是移植版增加的调用失败通道，不要反推源也有 2。空树仍通过并打印提示。
 
 【额外建议】在 CI 外再加一个“目录文件清单”断言（例如期望 3×N 个文件），因为布局门只检查已存在文件的名字，不检查某个 item 是否少了中文或记录。
 
@@ -231,7 +237,7 @@ description: "The externally perceptible surface that breaks and what replaces i
 【源事实】`verify-upgrade-guides`：
 
 1. 用 `/^---\r?\n([\s\S]*?)\r?\n---\r?\n/u` 提取首个 frontmatter；不匹配直接报 `must start with YAML frontmatter`（`deepseek-harness/scripts/verify-upgrade-guides.ts:30-31@687f282e`）。
-2. 用 js-yaml `JSON_SCHEMA` 解析；对象必须是普通对象，数组/null 报 `frontmatter must be a YAML object`（`:32-33`）。
+2. 用 js-yaml `JSON_SCHEMA` 解析；对象必须是普通对象，数组/null 报 `frontmatter must be a YAML object`（`:32-33`）。**YAML 语法错误没有被捕获**：异常会从 `guideViolations` 抛出，命令不会把它转成一条违规，也不是移植版的退出码 2 调用错误路径。
 3. 键名排序后必须恰好等于 `description,kind`；多/少/缺都报 `frontmatter keys must be exactly description, kind; got ...`（`:35-36`）。
 4. `kind !== 'upgrade-guide'` 报错（`:37`）。
 5. `description` 不是字符串或 trim 后为空报错（`:38`）。
@@ -269,10 +275,12 @@ description: "The externally perceptible surface that breaks and what replaces i
 
 （`deepseek-harness/scripts/verify-upgrade-guides.ts:40-46@687f282e`）
 
+这不是独立的“H1 计数”断言，而是对整段 depth<=2 outline 的形状比较：首项只检查 `# ` 前缀（H1 文本不校验），两个 H2 的文本与顺序必须逐字相等。“恰好一个 H1”是长度约束的后果。
+
 因此：
 
 - 第二个 `#`、任何额外 `##`（References、Notes、Background）、改名、单复数变化、顺序颠倒都会失败。
-- `###` 及更深标题不参与该检查，可以在节内使用；但语料 42 个 item 全部没有 H3，默认应保持扁平。模板也只给了 H1/H2。
+- `###` 及更深标题不参与该检查，可以在节内使用；但它们不能替代 Change/Migration。语料 42 个 item 全部没有 H3，默认应保持扁平；模板也只给了 H1/H2。
 - 语言切换行是段落，不是标题，不会触发额外 H2；但它是配对合同要求的 switcher，见 §9。
 - 中文文件用自己的期望节名，不会接受英文 `## Change`（测试 `deepseek-harness/scripts/verify-upgrade-guides.spec.ts:112-120@687f282e`）。
 
@@ -294,7 +302,7 @@ headings must be one "#" title followed by "## Change", "## Migration"; got "# .
 
 【迁移设计】把“影响 → 行动”两节视为合同；若目标产品确实需要“回滚”节，把它作为 Migration 的一个步骤，而不是第三个 H2。若必须增加固定节，先扩展校验器和所有既有指南，否则会立刻产生全树红灯。
 
-【已交付】标题门在 `tools/doc-gates/verify-upgrade-guides.mjs`：`depth <= 2` 的 mdast heading 切片与精确字符串比较；第二种语言用 `--sections guide.zh.md=<H2>,<H2>` 声明节名（文件集合仍由布局正则固定）。
+【已交付】标题门在 `tools/doc-gates/verify-upgrade-guides.mjs`：`depth <= 2` 的 mdast heading 切片与精确字符串比较；`--sections guide.md=<H2>,<H2>` / `--sections guide.zh.md=<H2>,<H2>` 可替换这两个固定文件期望的节名，但不能新增 `guide.ja.md` 之类的 locale 文件名——`--sections guide.de.md=...` 会以 2 退出，布局正则也只接受 `guide.md`/`guide.zh.md`/`guide.i18n.yaml`。若目标真的要第三语言文件，必须改代码、正则与回归，不是加一个参数。
 
 【证据限制】脚本不检查标题是否具体、H3 的内容/顺序，也不检查语言切换行的存在（那是配对门的事）。
 
@@ -337,7 +345,9 @@ source.split(/\s+/u).filter(Boolean).length
 2. 把源码复述替换为文件/符号链接；
 3. 把理由移到 Agent Note 或决策记录；
 4. 把重复机械步骤抽成脚本/CLI，并让指南只写调用与确认；
-5. 不要提高阈值。源仓库没有给指南设置“可申请提高预算”的路径；与普通文档的 `doc-budgets.manifest.json` 不同，升级指南的 500 词上限在 verifier 中硬编码（`deepseek-harness/scripts/verify-upgrade-guides.ts:18@687f282e`），且指南不在 `doc-budgets.manifest.json` 中（`deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e`）。
+5. 不要把“提高阈值”当作默认补救。源技能要求超出时外移；源仓库把 500 硬编码在 verifier 中（`deepseek-harness/scripts/verify-upgrade-guides.ts:18@687f282e`），指南也不在 `doc-budgets.manifest.json` 的预算体系内（`deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e`）。本域**没有发现**针对该上限的书面提额程序，但“未发现”不等于源仓库禁止提额，也不能证明存在某个程序；不要写成“源仓库没有提额路径”。
+
+【迁移设计】迁移版的 `--max-words` 是显式参数，不是“可以悄悄放宽”的开关。若提高一个已生效项目的上限，要有 owner 论证并记录在变更说明中（可借用源仓库 `doc-budgets` 的 “Raise … justify the manifest diff in the PR” 纪律，`deepseek-harness/docs/AGENTS.md:53-59@687f282e`，但该纪律属于常规文档预算，不是升级指南的现成程序）。500 是源项目参数，不是普适常数。
 
 ### 6.4 迁移设计
 
@@ -357,12 +367,14 @@ source.split(/\s+/u).filter(Boolean).length
 
 ### 7.2 可操作的四元结构
 
+【迁移设计】源义务只有三项：旧行为、新行为、谁受影响。下面的“症状”是语料正例归纳出的可操作补充，不是 SKILL.md 逐字列出的独立义务。
+
 把 Change 写成四件事：
 
-1. **旧行为**：在哪个版本/条件下是什么；
-2. **新行为**：从下一版本起变成什么；
-3. **受影响者**：谁会在升级后观察到（客户端调用方、profile 作者、插件作者、Desktop/Web 用户……）；
-4. **症状**：错误码、警告字符串、缺失的工具/页面、加载/编译失败、默认值变化。
+1. **旧行为**（源义务）：在哪个版本/条件下是什么；
+2. **新行为**（源义务）：从下一版本起变成什么；
+3. **受影响者**（源义务）：谁会在升级后观察到（客户端调用方、profile 作者、插件作者、Desktop/Web 用户……）；
+4. **症状**（示例推断）：错误码、警告字符串、缺失的工具/页面、加载/编译失败、默认值变化。
 
 语料正例：
 
@@ -372,6 +384,8 @@ source.split(/\s+/u).filter(Boolean).length
 - `web-listener-trust-config`：注入 `webRuntime` 的 profile 会等待一个永不挂载的服务，读取 `ctx.webRuntime.trustedHosts` 的表达式求值失败，必需 Connection 无法启动（`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/web-listener-trust-config/guide.md:1-36@687f282e`）。
 
 ### 7.3 不该出现的内容
+
+【迁移设计/示例推断】以下是评审与写作建议，不是 SKILL.md 的逐字禁令；源技能只在超过 500 词时明确要求把理由外移。
 
 - 设计理由、替代方案、评审讨论 → Agent Note 或链接；
 - 完整源码/类型定义 → 链接或最小片段；
@@ -404,14 +418,16 @@ source.split(/\s+/u).filter(Boolean).length
 
 ### 8.3 规则清单
 
-1. 每一步只做一个决定/一个编辑；按读者执行顺序编号。
+【源义务】1、3、4 直接来自 SKILL.md/模板；“编号列表”“链接 owner 文档”“不要求编辑历史 Session”“备份/恢复”“失败分支”是模板示例、源语料正例或从根 AGENTS.md 的 released Session data 规则推导的落地要求。
+
+1. 每一步只做一个决定/一个编辑；按读者执行顺序排列。模板骨架用编号列表展示，但源义务只要求“有序”，没有独立要求必须是编号列表。
 2. 写清路径、键、命令、符号；不要用“相关配置”“相应文件”。
-3. 能用一个更短的 before/after 说清时用片段；不要把整份源码贴进来。
+3. 能用一个更短的 before/after 说清时用片段；不要把整份源码贴进来。这是条件性要求，不是每步都必须有片段。
 4. 必须有一个“如何确认”步骤：命令输出、重启后日志、编译结果或行为观察。
 5. 需要 owner 细节时链接对应 README/子系统页；不要复述。
-6. 不得要求编辑历史 Session 记录；自动迁移场景可写“无需手动编辑”。
-7. 对破坏性/不可逆操作写备份与恢复路径。
-8. 对失败分支给出识别与处理（例如 `sandbox-unavailable` 与文件操作被拒绝分开处理）。
+6. 不得要求读者移动、覆盖或删除已提交的 Session 代际；源根 `AGENTS.md` 的 released Session data 规则禁止这类操作（`deepseek-harness/AGENTS.md:7-9@687f282e`）。自动迁移场景可写“无需手动编辑”。
+7. 对破坏性/不可逆操作写备份与恢复路径；`from-default-profile-replaces-target` 的正例就是先复制 `cordis.patch.yml` 再执行替换（`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.2/from-default-profile-replaces-target/guide.md:1-20@687f282e`）。
+8. 对失败分支给出识别与处理（例如 `sandbox-unavailable` 与文件操作被拒绝分开处理）；这是语料正例，不是源技能逐字要求。
 
 ### 8.4 评审与证据限制
 
@@ -433,7 +449,7 @@ source.split(/\s+/u).filter(Boolean).length
 - 结构镜像：heading 深度与顺序、列表种类/起始/条目数、表格行列数、语义链接目标（含 query/fragment）、verbatim 代码块一一对应（`:25-26`）。
 - 任意一侧改动后，同一次 PR 更新另一侧，并用 `pnpm run verify-translation-pairing --write <pair>` 重录；`--write` 只对完整 pair 生效且必须点名已确认的 pair，`--write --all` 是显式的 corpus-wide 形式（`:22`、`:42`；`deepseek-harness/scripts/verify-translation-pairing.ts:145-171@687f282e`）。
 - 不同步的 pair 通过对照已编辑侧的 diff 对 counterpart 做最小补丁来更新，绝不整篇重译；配对门会点名每个变化的 section（`deepseek-harness/docs/i18n/README.md:22@687f282e`）。
-- 用户显式调用扩展工作流时，`pnpm run gen-translation-brief <pair>` 从“内容能产生已记录条目”的最新提交恢复最后确认文本，按最窄安全粒度组装更新；`--apply` 只能在结构校验后拼接仅代码围栏变化的补丁（`:22`）。
+- 用户显式调用扩展工作流时，`pnpm run gen-translation-brief <pair>` 从“内容能产生已记录条目”的最新提交恢复最后确认文本，按最窄安全粒度组装更新；`--apply` 只能在结构校验后拼接仅代码围栏变化的补丁（`:22`）。这是源仓扩展能力，本包未移植；目标项目不要假设该命令存在。
 - 记录按 section 分行，使 Git 默认文本合并可以组合不同 section 的改动；只有同一 section 两侧都改了被哈希内容时才冲突；解决 Markdown 冲突后重录该 pair（`:22`）。
 - `docs/**` 在配对范围内，升级指南没有排除项（`deepseek-harness/docs/i18n/README.md:48@687f282e`；`deepseek-harness/docs/i18n/README.md:65@687f282e`）。
 - 升级指南的校验器明确不拥有中文配对：`verify-upgrade-guides` 的模块注释写明 “verify-translation-pairing owns the Chinese sibling's pairing record”（`deepseek-harness/scripts/verify-upgrade-guides.ts:1-5@687f282e`），实现中也不解析 `guide.i18n.yaml`（`:70-72`）。
@@ -469,7 +485,9 @@ source.split(/\s+/u).filter(Boolean).length
 
 - 枚举 `**/*.md`、`**/*.i18n.yaml` 等模式，再按语料谓词过滤（`deepseek-harness/scripts/verify-translation-pairing.ts:76-83@687f282e`、`:119-122`）。
 - Check 1（`:188-196@687f282e`）要求每个非排除 source 存在 `.zh.md`；Check 2（`:198-203`）以 `.zh.md` 与 `.i18n.yaml` 的并集为锚点，捕获半删除的 pair；后续检查哈希与规范形式（`:252-257`）。
-- `--write` 对完整 pair 计算并写入记录；点名的 pair 缺 counterpart 时直接失败，`--all` 则跳过无 counterpart 的 source（`:145-171`）。
+- `--write` 对完整 pair 计算并写入记录；点名的 pair 缺 counterpart 时以 2 退出（源实现如此），`--all` 则跳过无 counterpart 的 source（`:145-171`）。
+- `--list` 是 corpus-only 状态报告，不接受 pair paths 或其他 flag，且永不失败；`--cached <pairs...>` 读 Git index 字节做只读检查，必须点名已暂存的 pair，不能与 `--write` 组合（`deepseek-harness/scripts/translation-pairing.ts:259-279@687f282e`，CLI 头注释另见 `scripts/verify-translation-pairing.ts:5-9`）。
+- scoped 的 `--cached`/显式 pair 路径是有意只查指定范围；corpus 级检查是另一次调用。`--write --all` 会重录每个完整 pair，包括未逐一人工确认的内容，因此“写成功”不是语义确认；重录后仍需评审（E02）。
 - 记录必须 canonical，且与当前内容重算结果一致，否则报 `not in canonical form (re-record with --write)`（`:255-257`）。
 - 中文文件缺 backlink、英文 authored 文件缺中文链接、结构签名不符都会失败（`deepseek-harness/docs/i18n/README.md:32-34@687f282e`）。
 - 失败输出会点名每个变化的 section；修复用“对 counterpart 的最小补丁”，不是整篇重译（`:22`）。
@@ -480,7 +498,7 @@ source.split(/\s+/u).filter(Boolean).length
 
 1. 判断是缺文件、结构漂移，还是仅内容过期；
 2. 缺文件补齐 counterpart 与记录；结构漂移按镜像修正；仅内容过期则对照已编辑侧 diff 做最小补丁，不整篇重译；
-3. 只有用户显式要求扩展工作流时才运行 `pnpm run gen-translation-brief <pair>`；`--apply` 仅用于结构校验后的仅代码围栏变更；
+3. 源仓在用户显式要求扩展工作流时可运行 `pnpm run gen-translation-brief <pair>`；`--apply` 仅用于结构校验后的仅代码围栏变更。该命令未随本包移植，目标项目改用最小手工补丁，不要假设它存在；
 4. 修正 switcher；中文用 `[English](guide.md) | 中文`，英文用 `English | [中文](guide.zh.md)`；
 5. 运行 `pnpm run verify-translation-pairing --write <guide.md>`（点名该 pair；corpus 用 `--write --all`）；
 6. 运行 scoped 检查与 corpus 级检查；
@@ -494,7 +512,7 @@ source.split(/\s+/u).filter(Boolean).length
 
 ### 9.5 随包命令与目标语料配置（可执行，不是规格）
 
-本包交付了源 `scripts/verify-translation-pairing.ts` 及其依赖模块（`translation-pairing`、`translation-pairing-record`、`translation-pairing-git`、`translation-links`、`markdown`）的原生 Node ESM 移植：`tools/doc-gates/verify-translation-pairing.mjs`。保留的源语义：三文件 pair 完整性、以 `.zh.md`/`.i18n.yaml` 并集为锚点的半删除检测、canonical 记录与 `out of sync` diff、两侧 switcher 方向、链接 locale、generated region 归一化后等价、结构签名（heading 深度/顺序、列表、表格、代码块）、scoped `--write` 与显式 `--all`、`--list`、`--cached`（读 Git index 字节）。**未移植**：`gen-translation-brief`。
+本包交付了源 `scripts/verify-translation-pairing.ts` 及其依赖模块（`translation-pairing`、`translation-pairing-record`、`translation-pairing-git`、`translation-links`、`markdown`）的原生 Node ESM 移植：`tools/doc-gates/verify-translation-pairing.mjs`。保留的源语义：三文件 pair 完整性、以 `.zh.md`/`.i18n.yaml` 并集为锚点的半删除检测、canonical 记录与 `out of sync` diff、两侧 switcher 方向、链接 locale、generated region 归一化后等价、结构签名（heading 深度/顺序、列表、表格、代码块）、scoped `--write` 与显式 `--all`、`--list`、`--cached`（读 Git index 字节）。flag 约束与源一致：`--list` 只做 corpus 状态报告且不失败；`--cached` 必须点名已暂存的 pair 且不能与 `--write` 组合；点名 `--write` 缺 counterpart 时退出 2，`--write --all` 跳过无 counterpart 的 source。**未移植**：`gen-translation-brief`；目标项目没有等价命令，最小补丁需手工完成。命令本身不会挂进任何 CI；本包 CI 的 documentation-tools job 只跑 `test-doc-gates` 回归，没有在真实消费者语料上运行配对门。
 
 语料参数化：源仓把 `docs/**`、README 与根文档集合硬编码为产品事实；移植版要求目标项目自己声明语料，缺省路径 `.doc-gates/translation-pairing.json`：
 
@@ -515,11 +533,11 @@ source.split(/\s+/u).filter(Boolean).length
 ```bash
 npm install --prefix <skill>/tools/doc-gates --ignore-scripts   # 固定 js-yaml / mdast / GFM 解析依赖
 node <skill>/tools/doc-gates/verify-translation-pairing.mjs                       # corpus 级检查
-node <skill>/tools/doc-gates/verify-translation-pairing.mjs --list                # 每 pair 状态
+node <skill>/tools/doc-gates/verify-translation-pairing.mjs --list                # 每 pair 状态；corpus-only，永不失败
 node <skill>/tools/doc-gates/verify-translation-pairing.mjs docs/upgrade-guide/v1.0.0/flag-swap/guide.md
 node <skill>/tools/doc-gates/verify-translation-pairing.mjs --write docs/upgrade-guide/v1.0.0/flag-swap/guide.md
 node <skill>/tools/doc-gates/verify-translation-pairing.mjs --write --all
-node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrade-guide/v1.0.0/flag-swap/guide.md
+node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrade-guide/v1.0.0/flag-swap/guide.md   # 读 Git index；需已暂存 pair，不能配 --write
 ```
 
 退出码：0 一致（或已写入记录）、1 违规、2 调用/配置/依赖不可用。`--repo <dir>` 可指向另一仓库根（默认当前工作目录）。命令本身不挂载到任何 CI：目标必须把它接进 corpus 级 CI 步骤，并用 `--cached <pair>` 做 pre-commit，才可声称阻断。
@@ -528,15 +546,16 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ## 10. `verify-upgrade-guides` 到底检查什么 {#upgrade-guides.verifier-scope}
 
-### 10.1 自动检查清单（可证明）
+### 10.1 自动检查与边界（可证明）
 
 | 检查 | 行为 | 依据 |
 |---|---|---|
 | 树不存在 | 返回 `[]`，命令通过 | `deepseek-harness/scripts/verify-upgrade-guides.ts:55-57@687f282e` |
 | 路径/文件名 | 只允许 `v<semver>/<kebab>/guide.{md,zh.md,i18n.yaml}`；递归扫描；多余文件报错 | `:21-22`、`:59-68` |
-| frontmatter | 从首行开始、YAML 对象、键集恰为 `description,kind`、`kind: upgrade-guide`、description 非空 | `:30-38` |
-| 标题 | 恰好一个 H1 + 对应语言的两个 H2，顺序与文本精确 | `:40-46` |
+| frontmatter | 从首行开始、YAML 对象、键集恰为 `description,kind`、`kind: upgrade-guide`、description 为非空字符串；YAML 语法错误会抛出而不是产生诊断 | `:30-38` |
+| 标题 | depth<=2 outline 的形状：首项以 `# ` 开头、其后两个精确 H2 且顺序一致；不单独统计 H1 数量，不校验 H1 文本 | `:40-46` |
 | 词数 | 英文 `guide.md` ≤500 个空白 token（含 frontmatter）；中文不计数 | `:16-28` |
+| 缺文件 | 不检查：一个 item 缺 `guide.zh.md` 或 `guide.i18n.yaml` 仍通过；只校验已存在文件名 | `:59-72` |
 | CRLF | 接受 | 测试 `deepseek-harness/scripts/verify-upgrade-guides.spec.ts:54-62@687f282e` |
 | 预发布版本 | 接受（`v0.1.7-rc.2`） | 测试 `:54-62` |
 | `guide.i18n.yaml` 内容 | 不解析，只匹配文件名 | 测试 `:59`；实现 `:70-72` |
@@ -552,6 +571,7 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 - 双语是否语义一致/术语正确（配对门只查哈希与结构）；
 - 指南内部相对链接是否可解析（由 `verify-md-links` 单独检查）；
 - 是否存在重复 item、缺失条目或覆盖空洞；
+- 某个 item 是否缺 `guide.zh.md` 或 `guide.i18n.yaml`（布局门只检查已存在文件）；
 - 目录中缺少整个 item（布局门只检查已存在文件）。
 
 【源事实】布局门在缺失整棵树时返回空，因此删除 `docs/upgrade-guide` 不会让它变红（`deepseek-harness/scripts/verify-upgrade-guides.ts:56-57@687f282e`，测试 `deepseek-harness/scripts/verify-upgrade-guides.spec.ts:54-55@687f282e`）。这意味着“绿色”不能证明指南存在。
@@ -566,6 +586,8 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 【迁移设计】本包把该形态门交付为 `tools/doc-gates/verify-upgrade-guides.mjs`，并在 `package.json` 暴露 `verify-upgrade-guides`（`node tools/doc-gates/verify-upgrade-guides.mjs`）与 `test-doc-gates`（回归测试）。它是**目标可激活**的门：命令存在、可失败、可复现，但不会自动出现在目标 CI 里。采用方要自行加入真实 CI/钩子步骤，并保存一次真实失败输出；命令名与包内 `verify-upgrade-guides` 是迁移设计，不是源仓的 `pnpm` 脚本名。
 
+本包 CI 只有 `documentation-tools` job 运行 `test-doc-gates`（对临时 fixture 的回归），没有对真实消费者语料运行形态门或配对门；因此当前包不能声称“目标门已在消费者 CI 激活”。门禁接线也不是 forge 必需检查：仓库里的命令、workflow 或本地通过都不等于分支保护会阻断合并。
+
 【额外建议】本地脚本失败不等于 forge 阻断。要声称“合并会被阻止”，需要记录 CI 必需检查/分支保护的真实配置与一次被阻止的运行；本域没有查询远端配置。
 
 ### 10.4 迁移设计：把门禁拆成两层
@@ -576,7 +598,7 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 2. **覆盖/语义评审层**：增加 §11 的评审清单；若条件允许，再加一个“变更标签 → guide item 存在”的补偿检查。
 3. **独立门**：链接解析、双语配对、Markdown 换行、TS 代码块编译分别由各自的门负责，不要在升级指南门里重复实现；配对门见 §9.5。
 
-【额外建议】为移植后的校验器保留与原实现同构的测试：合法树、六类布局违规、五类 frontmatter 违规、六类标题违规、词数上/下界、空树、CRLF、预发布版本、i18n 内容不被解析。这样“已知盲区”本身也有回归保护。本包的 `research/doc-gates.test.mjs` 就是这组回归测试（需要先安装 `tools/doc-gates` 的固定依赖，未安装时显式 skip 而不是假绿）。
+【额外建议】为移植后的校验器保留与原实现同构的测试：合法树、源测试的六类布局加 build metadata 第七类、五类 frontmatter、五个 heading 用例加中文节名用例、词数上/下界、空树、CRLF、预发布版本、i18n 内容不被解析。这样“已知盲区”本身也有回归保护。本包的 `research/doc-gates.test.mjs` 就是这组回归测试（需要先安装 `tools/doc-gates` 的固定依赖，未安装时显式 skip 而不是假绿）。
 
 ---
 
@@ -584,9 +606,11 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ### 11.1 为什么必须有这一层
 
-【源事实】自动门只覆盖 §10.1；触发、版本、生命周期、语义、双语质量、步骤有效性都不在脚本里。把这些当作已由门禁保证，会把风险留到用户升级时。源仓库把散文标准、术语和翻译质量明确交给评审（`deepseek-harness/docs/i18n/README.md:44@687f282e`；`deepseek-harness/docs/AGENTS.md:45@687f282e`）。
+【源事实】自动门只覆盖 §10.1；触发、版本、生命周期、语义、双语质量、步骤有效性都不在脚本里。把这些当作已由门禁保证，会把风险留到用户升级时。源仓库把散文标准、术语和翻译质量明确交给评审（`deepseek-harness/docs/i18n/README.md:44@687f282e`；`deepseek-harness/docs/AGENTS.md:45-47@687f282e`）。
 
 ### 11.2 评审清单
+
+【迁移设计】下面是目标项目的评审清单，不是源仓库已存在或自动执行的检查表；其中“发布前审计”和“发布负责人”是落地角色。
 
 对包含外部可观察破坏的 PR：
 
@@ -596,16 +620,18 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 - [ ] **frontmatter**：恰好 `kind`/`description`；description 是一句且点名破坏与替换。
 - [ ] **标题**：具体；恰好一个 H1 + 两节；中文节名正确。
 - [ ] **Change**：旧行为/新行为/受影响者/可观察症状齐全；没有把理由或实现细节混进来。
-- [ ] **Migration**：编号有序；文件/键/命令/符号精确；有确认步骤；不可逆操作有备份/恢复；不要求编辑历史 Session。
+- [ ] **Migration**：步骤有序；文件/键/命令/符号精确；有确认步骤；不可逆操作有备份/恢复；不要求读者编辑已提交的 Session 代际。
 - [ ] **双语**：三件套齐全；switcher 正确；结构镜像；`--write` 已运行；中文语义/术语经人工复核。
 - [ ] **命令**：记录 `pnpm run verify-upgrade-guides`、`pnpm run verify-translation-pairing <guide.md>`、`pnpm run verify-md-links` 的输出；发布前跑 `doc-sync`。
 - [ ] **证据表述**：在结论中区分“自动验证”和“人工判断”；不把绿灯写成“完整/正确”。
 
 ### 11.3 角色与失败处理
 
+【迁移设计】源仓库在本域只规定写作与触发规则，没有给出下列角色的正式授权流程；“发布负责人”是落地角色，不应当作源仓库自动义务。
+
 - 作者：在评审前完成自检与命令运行；对无法执行的平台步骤提供替代证据与限制。
 - 评审者：有权拒绝缺少指南、错误版本、跨 release、回滚残留、不可执行步骤；必要时在 fixture 中执行 Migration。
-- 发布负责人：发版前审计指南覆盖；把缺口记录为发布风险并修复。
+- 发布负责人（迁移设计角色）：发版前审计指南覆盖；把缺口记录为发布风险并修复。
 
 失败处理：
 
@@ -637,10 +663,12 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ### 12.2 语料证据的含义
 
+【语料推断】以下是从 6 个目录与 42 个 item 的形态归纳出的操作结论，不是 SKILL.md 的逐字规则；不要把“无破坏的 release 不建目录”“item 不跨版本复制”写成源仓库校验器会强制的模板。
+
 - 只为发生外部破坏的 release 建目录：根版本 `0.2.1-rc.2` 没有目录，最新目录是 `v0.2.1-alpha.4`。
 - 同一 release 的多条破坏拆成多个 item：`v0.2.1-alpha.1` 有 22 个，`v0.2.0-rc.2` 有 6 个，`v0.1.7-rc.2` 有 2 个。
 - 版本号不是“最终发布才写”的标记：语料中的指南写在 alpha/rc 阶段，说明指南随开发中的破坏产生。
-- 不复制具体版本序列：采用方应使用自己的版本来源（根 `package.json`、release tag、train 编号），但保留“目录 = 写入时 release 边界 + 单跨度 + bump 后冻结”。
+- 【迁移设计】不复制具体版本序列：采用方应使用自己的版本来源（根 `package.json`、release tag、train 编号），但保留“目录 = 写入时 release 边界 + 单跨度 + bump 后冻结”。
 
 ### 12.3 失败与迁移
 
@@ -666,13 +694,13 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 2. **模板**：frontmatter + H1 + Change + Migration + switcher。
 3. **写入规则**：触发面清单、同改动、原位更新、回滚删除、bump 冻结、单跨度、500 词/目标语言上限。
 4. **校验器**：路径/文件名、frontmatter、标题、词数；空树/i18n 不解析的行为要显式记录。
-5. **独立门**：链接解析；若双语，配对检查；若含 TS 片段，类型检查。
+5. **独立门**：链接解析；若双语，配对检查；若含 TS 片段，类型检查。本包的 `verify-md-links` 需要目标项目用 `.doc-gates/markdown-links.json`（`roots`/`files`/`archiveRoots`）声明语料，且同样不会自动挂进 CI。
 6. **评审清单**：§11；这是覆盖触发与语义的唯一层。
 7. **补偿检查**（建议）：变更标签/文件路径 → 指南存在的映射。
 
 ### 13.2 校验器实现规格（按源语义）
 
-【迁移设计】以下规格**已由 `tools/doc-gates/verify-upgrade-guides.mjs` 实现**，此处保留为可审阅的语义摘要，不是待移植的待办。参数化差异只有三处，均在文件头注释中列出：`GUIDE_ROOT` 与仓库根变为 `--guide-root`/`--root`，每语言节名可经 `--sections` 覆盖，词数上限可经 `--max-words` 覆盖；默认值等于源常量。
+【迁移设计】以下规格**已由 `tools/doc-gates/verify-upgrade-guides.mjs` 实现**，此处保留为可审阅的语义摘要，不是待移植的待办。参数化差异：`GUIDE_ROOT` 与仓库根变为 `--guide-root`/`--root`，每语言节名可经 `--sections` 覆盖（只限 `guide.md`/`guide.zh.md` 两个固定文件名），词数上限可经 `--max-words` 覆盖；默认值等于源常量。移植版还增加调用失败退出码 2（参数、根、解析依赖），源 CLI 只显式使用 0/1；这不是源行为。
 
 ```text
 GUIDE_ROOT = docs/upgrade-guide
@@ -699,7 +727,7 @@ collect(root):
 关键边界：
 
 - frontmatter 正则允许 CRLF；`---` 必须在文件开头。
-- frontmatter 缺失或 YAML 不是对象时函数提前返回，不再检查标题；YAML 语法错误未被捕获，会抛异常而不是产生诊断。键集/kind/description 的错误不会阻止标题检查，一次运行可能同时列出这些类别。
+- frontmatter 缺失或 YAML 不是对象时函数提前返回，不再检查标题；YAML 语法错误未被捕获，源与移植版都会抛异常而不是产生诊断（移植版不会把它归入退出码 2）。键集/kind/description 的错误不会阻止标题检查，一次运行可能同时列出这些类别。
 - 标题比较是字符串完全相等；H3+ 忽略。
 - 词数统计整份 source，包含 frontmatter 与代码块。
 - `guide.i18n.yaml` 只匹配文件名，不解析内容。
@@ -709,7 +737,7 @@ collect(root):
 - 版本号、42 个 item 名、具体错误码/包名：这些是源产品事实，不是治理模板。
 - 中文/英文节名：如果目标项目主语言不是中文，替换为对应语言，但保留“每语言一套精确节名”的机制。
 - 门禁命令名：替换为目标项目脚本名；语义保留。
-- 500 词：可调，但保留“含元数据计数 + 超限外移而非加预算”。
+- 500 词：源参数，可为目标项目调整；保留“含元数据计数 + 超限外移”的语义。提高一个已生效项目的上限要有 owner 论证，不是静默放宽；不要把它写成普适常数。
 
 ### 13.4 上线顺序
 
@@ -728,9 +756,9 @@ collect(root):
 
 ### 14.1 形态门
 
-- **正例**：合规树（含预发布目录、CRLF、H3）→ `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 输出 `upgrade guides conform.`，退出 0。
-- **拒绝**：放入 `README.md`、`0.1.7/item/guide.md`、`v0.1/item/guide.md`、`v0.1.7/Item_Name/guide.md`、`v0.1.7/item/notes.md`、`v0.1.7/item/extra/guide.md` → 六条布局违规，退出 1；再分别用错误 frontmatter、错误 heading、501 词 fixture 触发对应消息。
-- **拒绝（调用）**：`--nonsense` 或 `--root` 指向不存在目录 → 退出 2，不当作通过；解析依赖未安装 → 退出 2 并打印安装命令。
+- **正例**：合规树（含预发布目录、CRLF、H3）→ `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 输出 `verify-upgrade-guides: upgrade guides conform.`，退出 0。空树也退出 0，但输出 absent 提示。
+- **拒绝**：放入 `README.md`、`0.1.7/item/guide.md`、`v0.1/item/guide.md`、`v0.1.7/Item_Name/guide.md`、`v0.1.7/item/notes.md`、`v0.1.7/item/extra/guide.md`、`v0.1.7+build/item/guide.md` → 七条布局违规，退出 1；再分别用错误 frontmatter、错误 heading、501 词 fixture 触发对应消息。
+- **拒绝（调用）**：`--nonsense`、`--sections guide.de.md=...` 或 `--root` 指向不存在目录 → 退出 2，不当作通过；解析依赖未安装 → 退出 2 并打印安装命令。YAML 语法错误不在这一路径：它会抛出未捕获异常。
 - **恢复**：移走/重命名违规文件，修正元数据/标题/词数，重跑直到 0。
 
 ### 14.2 空树与完整性盲区
@@ -759,11 +787,12 @@ collect(root):
 3. **产品行为未验证**：指南中的命令、错误码、默认值、平台差异是文档作者声明；本域没有执行登录、插件安装、profile 启动或平台测试。
 4. **历史完整性未审计**：没有“变更日志/release note → 指南”的映射，也没有逐条审计 Git 历史；不能声称每个历史破坏都有指南。
 5. **当前版本目录缺失**：根版本 `0.2.1-rc.2` 没有对应目录；这是合法状态，但“新建当前目录”的行为只能由 SKILL 规则与评审证明。
-6. **CI 强制未验证**：`run-gates.ts`/`package.json` 证明门被注册，不证明 forge 分支保护会阻断合并。
+6. **CI 强制未验证**：`run-gates.ts`/`package.json` 证明门被注册，不证明 forge 分支保护会阻断合并。本包的 `documentation-tools` job 只运行 `test-doc-gates`（临时 fixture 回归），没有对真实消费者语料运行形态门或配对门；因此目标工具尚未在消费者 CI 激活。
 7. **数量口径**：任务说明提到“41 items”，但按分区实际是 42 个 item 目录 × 3 = 126 个文件；本域按 126 个分配路径逐条记录。
-8. **未发现**：`docs/upgrade-guide` 下没有 README、索引或附件；没有生成式指南（所有 guide 三件套均为手写/评审内容，配对记录由命令生成）。
+8. **未发现**：`docs/upgrade-guide` 下没有 README、索引或附件；没有生成式指南（guide.md/guide.zh.md 为手写/评审内容，guide.i18n.yaml 配对记录由命令生成）。
 9. **移植代码已交付但未执行**：`tools/doc-gates/verify-upgrade-guides.mjs`、`verify-translation-pairing.mjs` 及其同源模块、`research/doc-gates.test.mjs` 已写入本包，并通过 `node --check` 语法校验；但本次没有安装 `tools/doc-gates` 的依赖、没有运行测试，也没有在任何目标树上运行这两条命令。§14 的剧本仍是 `planned`，需独立执行者安装依赖后运行并记录真实输出。源仓的 `pnpm`/`vitest`/`doc-sync` 同样未运行。
 10. **未移植的源能力**：`gen-translation-brief`（配对恢复助手）没有移植；它不参与配对门的判定，但源仓的“从最后确认文本恢复最小补丁”工作流在目标项目中没有等价命令。
+11. **目标工具行为未作为源事实**：移植版新增的退出码 2、`--sections` 只支持两个固定文件名、`--max-words` 可覆盖等属于迁移设计；源 CLI 没有这些参数。YAML 语法错误在两边都会抛出异常，不是可列举的违规。
 
 ---
 
@@ -819,7 +848,7 @@ collect(root):
 ## 17. 跨域边界与维护
 
 - **文档域**：拥有 `docs/AGENTS.md`（current-state、one physical line、pairs、wordcount、link 规则）、`docs/i18n/README.md`（三件套合同、记录格式、门禁限制）、`dsh-doc` 的 kind→模板系统、`dsh-prose-standard`。本域引用这些规则，不重复拥有其通用实现。
-- **发布域**：拥有 release 边界、版本 bump、tag 与发布证据，以及 `release-upgrade-guides` 机制。本域补充 42 个 item 的语料形态、配对记录与门禁盲区，不改变发布域的分类。
+- **发布域**：拥有 release 边界、版本 bump、tag 与发布证据，以及 `release-upgrade-guides` 机制。release 事务只是本域版本目录的相邻依赖；本域拥有版本目录形态、三件套与生命周期，不把两者当作同一机制，也不改变发布域的分类。
 - **代理工作流域**：拥有 `dsh-create-upgrade-guide` 的技能入口与工作流编排（`agent-workflows-upgrade-guide`）。本域不改变该分类。
 - **自动化域**：拥有 gate 调度、CI lane 与“失败是否阻断合并”的强制语义。本域只描述脚本注册位置，不声称分支保护。
 
@@ -827,18 +856,18 @@ collect(root):
 
 ---
 
-## 机制→来源引用索引（完整）
+## 机制→来源引用索引（代表区间）
 
-本节按机制列出 `knowledge/` 账中登记的全部来源区间，使用固定提交 `687f282e`。它只补齐可回溯的引用坐标，不新增正文断言；正文解释仍以对应小节为准。
+本节按机制列出代表性来源区间，使用固定提交 `687f282e`。完整 `sources` 数组以 `knowledge/upgrade-guides.json` 为准；本索引不重复全部条目，也不新增正文断言；正文解释仍以对应小节为准。
 
-- `upgrade-guides.required-trigger`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:8-20@687f282e`、`deepseek-harness/docs/AGENTS.md:40-40@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/instruction-home-override/guide.md:1-20@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.0-rc.2/remove-runtime-invariants/guide.md:1-23@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/desktop-test-auth-popup/guide.md:1-18@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.2/desktop-font-size-shortcuts/guide.md:1-18@687f282e`
+- `upgrade-guides.required-trigger`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:2-3@687f282e`、`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:8-20@687f282e`、`deepseek-harness/AGENTS.md:11-11@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/instruction-home-override/guide.md:1-20@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.0-rc.2/remove-runtime-invariants/guide.md:1-23@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/desktop-test-auth-popup/guide.md:1-18@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.2/desktop-font-size-shortcuts/guide.md:1-18@687f282e`
 - `upgrade-guides.same-change-lifecycle`：`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md:1-18@687f282e`
 - `upgrade-guides.item-layout`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:22-28@687f282e`、`deepseek-harness/scripts/verify-upgrade-guides.ts:13-22@687f282e`、`deepseek-harness/scripts/verify-upgrade-guides.spec.ts:54-80@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:3-3@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.zh.md:1-22@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.i18n.yaml:1-16@687f282e`
 - `upgrade-guides.frontmatter`：`deepseek-harness/scripts/verify-upgrade-guides.ts:30-38@687f282e`、`deepseek-harness/scripts/verify-upgrade-guides.spec.ts:82-95@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/working-directory/guide.zh.md:1-25@687f282e`
 - `upgrade-guides.heading-structure`：`deepseek-harness/scripts/verify-upgrade-guides.spec.ts:97-120@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:14-29@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/working-directory/guide.md:1-25@687f282e`
-- `upgrade-guides.word-ceiling`：`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.md:1-31@687f282e`、`deepseek-harness/docs/AGENTS.md:49-59@687f282e`
-- `upgrade-guides.migration-steps`：`deepseek-harness/docs/AGENTS.md:42-42@687f282e`
-- `upgrade-guides.bilingual-pair`：`deepseek-harness/docs/i18n/README.md:42-44@687f282e`、`deepseek-harness/scripts/verify-translation-pairing.ts:185-203@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.zh.md:1-18@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.i18n.yaml:1-16@687f282e`
-- `upgrade-guides.verifier-scope`：`deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e`、`deepseek-harness/scripts/run-gates.ts:804-883@687f282e`、`deepseek-harness/package.json:198-198@687f282e`、`deepseek-harness/scripts/verify-doc-budgets.ts:1-12@687f282e`
-- `upgrade-guides.review-completeness`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:42-48@687f282e`、`deepseek-harness/docs/AGENTS.md:40-47@687f282e`、`deepseek-harness/docs/AGENTS.md:75-77@687f282e`
+- `upgrade-guides.word-ceiling`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:40-46@687f282e`、`deepseek-harness/scripts/verify-upgrade-guides.ts:18-18@687f282e`、`deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.md:1-31@687f282e`、`deepseek-harness/docs/AGENTS.md:49-59@687f282e`
+- `upgrade-guides.migration-steps`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:44-44@687f282e`、`deepseek-harness/AGENTS.md:7-9@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.2/from-default-profile-replaces-target/guide.md:1-20@687f282e`
+- `upgrade-guides.bilingual-pair`：`deepseek-harness/docs/i18n/README.md:9-11@687f282e`、`deepseek-harness/docs/i18n/README.md:22-22@687f282e`、`deepseek-harness/docs/i18n/README.md:40-44@687f282e`、`deepseek-harness/scripts/translation-pairing.ts:259-279@687f282e`、`deepseek-harness/scripts/verify-translation-pairing.ts:5-9@687f282e`、`deepseek-harness/scripts/verify-translation-pairing.ts:185-203@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.zh.md:1-18@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.i18n.yaml:1-16@687f282e`
+- `upgrade-guides.verifier-scope`：`deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e`、`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:48-54@687f282e`、`deepseek-harness/scripts/run-gates.ts:804-883@687f282e`、`deepseek-harness/package.json:127-132@687f282e`、`deepseek-harness/package.json:198-198@687f282e`、`deepseek-harness/scripts/verify-doc-budgets.ts:1-12@687f282e`
+- `upgrade-guides.review-completeness`：`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:42-48@687f282e`、`deepseek-harness/docs/AGENTS.md:45-47@687f282e`、`deepseek-harness/docs/AGENTS.md:75-77@687f282e`
 - `upgrade-guides.version-taxonomy`：`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.1/deepseek-model-discovery/guide.md:1-17@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-identity-watch/guide.md:1-18@687f282e`、`deepseek-harness/docs/upgrade-guide/v0.2.1-alpha.3/plugin-engines-dsh/guide.md:1-21@687f282e`

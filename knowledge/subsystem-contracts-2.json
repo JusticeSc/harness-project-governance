@@ -77,7 +77,7 @@
       "steps": [
         "先确认目标子系统在 packages/ 中的包组和它在 README 表中的现有行",
         "在 docs/subsystems/<name>.md 写标题、English/中文切换、当前契约（类型、语义、wiring）与外部 owner 链接",
-        "在 README 表新增或更新该页的 Page/Owns 行，Owards 只写该页真正拥有的内容",
+        "在 README 表新增或更新该页的 Page/Owns 行，Owns 只写该页真正拥有的内容",
         "把行为叙事移到 architecture.md，把包级细节移到包 README，把理据移到 Agent Note，并在页面留一行链接",
         "若页面有 ctx 服务或事件作用域，交给生成器生成 Cordis API 区；若事件声明由 persistence catalog 拥有，只链接 catalog",
         "同步中文页并按配对流程重录 .i18n.yaml"
@@ -85,8 +85,8 @@
       "enforcement": {
         "mode": "instruction + review",
         "implementation": "docs/AGENTS.md 的层级表规定 subsystems 行只放类型定义、语义与生成的 Cordis API，行为叙事指向 architecture.md；docs/subsystems/README.md 的 Page/Owns 表是人工维护的页面索引。verify-subsystem-pages 只检查包组 README 到页面的链接和豁免，不检查每个页面是否出现在索引表，也不检查内容是否越层。",
-        "trust": "页面是否存在、包组链接是否可见可机械检查；层级归属、Owards 边界、索引完整性以及是否复制了别层内容只能评审。",
-        "failure": "缺少索引行、Owards 写错或把行为叙事塞进子系统页不会让现有门失败；后果是读者找到过期或重复的契约。",
+        "trust": "页面是否存在、包组链接是否可见可机械检查；层级归属、Owns 边界、索引完整性以及是否复制了别层内容只能评审。",
+        "failure": "缺少索引行、Owns 写错或把行为叙事塞进子系统页不会让现有门失败；后果是读者找到过期或重复的契约。",
         "exceptions": [
           "README 表本身是人工维护的索引入口，不由生成器产出",
           "页面可以在开头链接外部 owner（包 README、Agent Note、architecture）而不复制其内容",
@@ -104,7 +104,7 @@
       ],
       "migration": {
         "strategy": "retain-and-parameterize",
-        "implementation": "保留“页面拥有词汇/类型、architecture 拥有行为、包 README 拥有实现细节、Note 拥有理据”的分层；把目录名、索引文件名、包组 glob 与 Owards 表列名参数化。不要照搬 66 行索引；在目标仓库按实际子系统重建，并保留“一页一 owner”的约束。",
+        "implementation": "保留“页面拥有词汇/类型、architecture 拥有行为、包 README 拥有实现细节、Note 拥有理据”的分层；把目录名、索引文件名、包组 glob 与 Owns 表列名参数化。不要照搬 66 行索引；在目标仓库按实际子系统重建，并保留“一页一 owner”的约束。",
         "requiredSupport": [
           "一个可写的 subsystem 页面目录与索引文件",
           "包组到页面的可解析链接约定（相对路径或生成映射）",
@@ -116,7 +116,7 @@
         "positive": [
           {
             "scenario": "在目标仓新增一个子系统页，补 README 索引行，并让包组 README 链接它",
-            "evidence": "README 表出现该页且 Owards 只描述词汇/类型；页面不含跨子系统行为叙事",
+            "evidence": "README 表出现该页且 Owns 只描述词汇/类型；页面不含跨子系统行为叙事",
             "verifier": "人工评审 + pnpm run verify-subsystem-pages（只证明链接存在）"
           }
         ],
@@ -137,7 +137,7 @@
       },
       "limitations": [
         "页面索引完整性没有机械校验：verify-subsystem-pages 只扫描包组 README 的链接，不扫描 docs/subsystems 页面是否都在 README 表中。",
-        "Owards 边界是否准确无法自动判断；一个包组可以链接任意存在的页面而通过链接门。"
+        "Owns 边界是否准确无法自动判断；一个包组可以链接任意存在的页面而通过链接门。"
       ]
     },
     {
@@ -569,7 +569,7 @@
         "若页面不存在或标记缺失，先修页面骨架/映射，再重跑"
       ],
       "enforcement": {
-        "mode": "automatic-gate",
+        "mode": "automatic-gate（源仓 doc-sync 的字节新鲜度门禁；目标等价投影器与自动门待集成/运行验证）",
         "implementation": "scripts/gen-cordis-catalog.ts 的 computeOutputs 聚合映射/标记/分区问题，spliceRegion 校验精确标记，walkPartitionProblems 双向校验渲染与声明，main 的 --check 比较所有实际输出；renderPageRegion 保留原始方法/事件 JSDoc，生成具名 heading、signature fence 与文件链接。当前输出集合没有 .i18n.yaml；头部自动重录声明没有 writer。源 doc-sync 注册 cordis-catalog；目标等价 API 投影器及该自动门尚缺实际集成/运行证据。",
         "trust": "源映射、标记数量、实际输出字节新鲜度与 locale 路径重写有程序承载；方法/事件 JSDoc 完整性另由上游投影规则约束。区域外语义、产品运行时权限/持久化和注释中的 sidecar 自动重录不由这个输出循环证明；结构解析不等于生成器运行或目标强制。",
         "failure": "退出码 1；错误包括 `expected exactly 1 cordis-surface region, found N BEGIN/M END`、`cordis-surface END marker precedes its BEGIN`、`service ctx.<key> ... has no SERVICE_PAGE entry`、`SERVICE_PAGE maps 'ctx.<key>' but the projection discovers no such service`、`gen-cordis-catalog: stale — <files>. Run pnpm run gen-cordis-catalog and commit the result.`",

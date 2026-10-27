@@ -486,7 +486,7 @@
       "obligations": [
         "每篇新 Agent Note 必须触发一次范围内审计：搜索覆盖同一决策、机制或被否决替代方案的活跃 Note",
         "对每个候选判定 full supersession、partial supersession 或 none，并记录依据",
-        "full 且为 implemented 三件套：在同一 PR 内归档",
+        "full且为implemented：同PR按语义条件处置；合并保全全部独有理据/替代/后果/必需验证/覆盖缺口并修入链后可删除完整三件套；仅满足归档条件的才归档，不能一律归档",
         "partial：两篇都保持活跃并交叉链接，更新所有仍现行的事实",
         "已无价值的 proposal：按 rejected 生命周期拒绝并给诚实原因，不得归档",
         "交叉引用使用相对 Markdown 链接，禁止裸散文或编号",
@@ -500,7 +500,7 @@
       "steps": [
         "用决策主题、机制名与被否替代方案作为检索词，搜索活跃生命周期树",
         "打开每个候选，判断是整篇被取代、部分事实仍现行，还是无关",
-        "full：判定旧篇是否满足删除条件；否则按归档三件套同 PR 归档",
+        "full：先判删除/受控合并删除/合格归档；未吸收且仍有未来约束价值的独有理据需保留并交叉链接，不能因full标签直接归档；feature移除还须逐项核对README:52的生产代码、配置、schema、持久/线格式、迁移、兼容、文档及支持性测试缺席条件",
         "partial：在两篇中互相加相对链接，并更新仍现行的事实",
         "proposal 已无价值：移动为 rejected，状态行写一句话原因",
         "在 PR 报告列出每个候选的判定与去向"
@@ -525,7 +525,7 @@
       ],
       "migration": {
         "strategy": "先建立“新 Note → 检索 → 判定 → 同 PR 处置”的流程，再逐步清理存量。",
-        "implementation": "在子树 AGENTS.md 写审计义务；在 PR 模板加“被检旧 Note 与判定”栏；给 full/partial/none 三个判定词固定含义；把归档命令写成步骤。",
+        "implementation": "在子树AGENTS.md写审计义务，PR模板列被检旧Note、full/partial/none、语义去向及依据；归档与保全独有内容后的合并删除是不同路径，不能把full等同于必须归档。",
         "requiredSupport": [
           "可搜索的活跃决策树",
           "判定词表",
@@ -535,25 +535,43 @@
       },
       "reference": "references/decisions.md#supersession-audit",
       "verification": {
-        "status": "unexecuted (author phase; integration runs repository checks)",
+        "status": "planned manual classification/review scenarios; source archive CLI execution is a separate mechanical-seal guarantee",
         "positive": [
-          "每个新增 Note 的 PR 报告列出被检旧 Note 与 full/partial/none 判定",
-          "full 的 implemented 旧篇在同一 PR 中出现在 archived/ 且封印通过"
+          {
+            "scenario": "每个新增Note的PR报告列出被检旧Note与full/partial/none判定、独有义务和实际语义去向。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "满足归档条件的full旧篇同PR归档并过封印；符合受控合并删除条件的旧篇在现役owner保全全部独有内容、修入链后同PR删除完整三件套，两条路径分别评审。",
+            "evidence": "planned"
+          }
         ],
         "rejection": [
-          "构造一个 full supersession 却未归档旧篇的 PR，评审应拒绝",
-          "构造一个 partial 却被删除的语料，链接与事实审计应暴露缺失"
+          {
+            "scenario": "full旧篇既未按裁决归档/合并删除、又无仍需保留的现行约束理由，或合并遗漏独有理据/验证/覆盖缺口，评审拒绝。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "partial仍删旧篇，或feature尚有持久数据/兼容/配置/schema/支持性测试却声称完全移除，评审拒绝。",
+            "evidence": "planned"
+          }
         ],
         "recovery": [
-          "漏审：合并前补审；已合并则在下次触碰该主题时补齐并交叉链接",
-          "误归档：源仓无解封程序，需维护者显式决策，不能自行编辑归档"
+          {
+            "scenario": "合并前补审并按语义修正去向；误删从版本控制恢复完整三件套及入链，先恢复遗漏的独有义务再重新评审。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "误归档不能擅改封印或自行解封；源无解封程序，须维护者显式决策，并将现行权威置于活跃owner。",
+            "evidence": "planned"
+          }
         ],
         "evidence": "源仓无自动覆盖审计工具；只有技能文字与评审记录。作者阶段未运行任何命令。"
       },
       "limitations": [
         "“搜索完整”无法机械证明；审计质量完全依赖作者与评审。",
         "没有工具统计“哪些旧 Note 从未被审计”，也没有覆盖率指标。",
-        "阈值（full vs partial）是语义判断，源仓不提供形式化判据。"
+        "full/partial有明确语义条件及feature全缺席要求，但没有自动全量语义判定器；不能把格式/封印通过当取代审计正确。"
       ]
     },
     {
@@ -1137,8 +1155,9 @@
         "executor": "tools/agent-notes/verify-archived-agent-notes.mjs",
         "builder": "research/build-agent-note-runtime.mjs",
         "behavior": "首次封印按可信基线Git blob证明完整implemented三元组已搬移；两语言只许插入Archived行，侧车重新校验。可信对象格式从已有ls-tree的40/64位完整ID推导，无额外对象格式探测；旧式侧车仍为SHA-1。可信基线中的既有未封印历史每个artifact都须存在且原字节相同，整组三元组遗漏拒绝；当前伪造空manifest或新seal不跳过库存/原文比对。",
+        "evidenceRoot": "harness-project-governance/（本 Skill 的本地开发工作区根；verification/ 与 _working/ 不在 npm 发布包 files 白名单内，安装消费方无法解析这些路径）",
         "evidence": ["verification/evidence/raw/p1-first-seal-regressions.json", "verification/evidence/raw/p1-first-seal-installed.json", "verification/evidence/raw/p1-resumed-first-seal-installed.json", "verification/evidence/raw/p1-first-seal-sha256-before.json", "verification/evidence/raw/p1-first-seal-sha256-after.json", "verification/evidence/raw/p1-first-seal-sha256-installed.json", "_working/audit/p1-first-seal-sha256-independent-recheck.json", "verification/evidence/raw/p1-first-seal-git-capability-before.json", "verification/evidence/raw/p1-first-seal-git-capability-after.json", "verification/evidence/raw/p1-first-seal-git-capability-installed.json", "_working/audit/p1-first-seal-git-capability-independent-recheck.json", "verification/evidence/raw/p1-historical-bootstrap-before.json", "verification/evidence/raw/p1-historical-bootstrap-after.json", "verification/evidence/raw/p1-historical-bootstrap-installed.json"],
-        "limits": "修复前SHA-1/SHA-256历史整组遗漏均被真实CLI误接受；修复后12项回归通过，包含伪造空当前清单仍拒绝、拒绝不写与原字节恢复。新离线npm包的默认安装路径下，两格式消费者各完成30条实际命令，包含3次遗漏拒绝及恢复；仅证明当前归档模块，不冒充完整C3或独立闭合。旧10项/各23命令仍是历史版本事实。真实Git为2.48.1.windows.1，不代表旧Git矩阵/最低版本认证。required CI、平台阻断及CRLF兼容未证明；基线建立前已丢失的历史不可由该基线重建。CI必须提供受信变更前基线，不能用已包含恶意变更的HEAD当历史证明。"
+        "limits": "修复前SHA-1/SHA-256历史整组遗漏均被真实CLI误接受；修复后12项回归通过，包含伪造空当前清单仍拒绝、拒绝不写与原字节恢复。新离线npm包的默认安装路径下，两格式消费者各完成30条实际命令，包含3次遗漏拒绝及恢复；仅证明当前归档模块，不冒充完整C3或独立闭合。旧10项/各23命令仍是历史版本事实。真实Git为2.48.1.windows.1，不代表旧Git矩阵/最低版本认证。required CI、平台阻断及CRLF兼容未证明；基线建立前已丢失的历史不可由该基线重建。CI必须提供受信变更前基线，不能用已包含恶意变更的HEAD当历史证明。上述 evidence 路径只在本 Skill 开发工作区可解析，不随发布包分发；它们是本地观测记录，不能当作 C5/C3 独立验收证据。"
       }
     },
     {

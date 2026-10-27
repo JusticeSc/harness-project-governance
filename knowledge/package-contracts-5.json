@@ -663,15 +663,39 @@
           "kind": "instruction"
         },
         {
+          "path": "packages/storage/storage-sqlite/README.md",
+          "start": 76,
+          "end": 78,
+          "kind": "instruction"
+        },
+        {
           "path": "packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts",
           "start": 1,
           "end": 290,
           "kind": "test"
         },
         {
+          "path": "packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts",
+          "start": 128,
+          "end": 169,
+          "kind": "test"
+        },
+        {
           "path": "packages/storage/storage-sqlite/src/schema.ts",
           "start": 21,
           "end": 54,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/schema.ts",
+          "start": 101,
+          "end": 106,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/storage/storage-sqlite/src/index.ts",
+          "start": 135,
+          "end": 149,
           "kind": "implementation"
         }
       ],
@@ -690,7 +714,7 @@
         "acknowledgement 不等于落盘：feedback 明确说明确认只表示条目进入日志。",
         "不完整历史必须保留为不完整：job 生命周期追加失败只警告，消费方不得把缺失当完整。",
         "AC close 必须排空已提交更新、冲刷持久化并只释放被寻址的 Agent scope；已持久化会话仍可 list/resume。",
-        "A failed storage open must leave the durable medium unstamped and must not expose a partially materialized service; close drains an in-flight failing open. Presence of a shared metadata table is not proof that the unit schema is complete."
+        "storage 打开失败必须让介质保持未标记：`PRAGMA user_version` 只在 `units` 与 `unit_globals` 成功创建后最后写入；失败后的重开必须重试物化。`units` 元数据表已存在不代表 unit schema 完整——测试用占位 index 让 `unit_globals` 创建失败，断言 `user_version` 仍为 0，清理阻塞后可成功重开。close 等待进行中的 open/物化结算，不暴露半成品服务。"
       ],
       "actors": [
         "会话后端作者",
@@ -761,7 +785,7 @@
         ],
         "note": "作者未运行故障注入。"
       },
-      "limitations": "README 声明三屏障；具体后端批处理窗口与磁盘持久性不由这些 README 保证。"
+      "limitations": "README 声明三屏障；具体后端批处理窗口与磁盘持久性不由这些 README 保证。storage 的未标记/重开语义由 schema.ts 与测试钉住，但没有在此执行故障注入或真实磁盘掉电测试。"
     },
     {
       "id": "package-contracts-5.serialized-writes-and-atomic-publication",

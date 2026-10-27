@@ -428,7 +428,7 @@
 **证据与限制**：外部代理/网关仍可能记录；无部署脱敏规则时可外发完整内容。撤回不证明远端抹除；旧授权批次按 SDK 关闭期限处置，不能声称切换 disabled 即取消在途请求或存在 durable outbox。
 
 **源义务**：正向授权、当前反馈门控默认、硬 opt-out、可信启动边界、逐能力的默认消费者移除与显式重能力（session search、PTY、teams、worktree）。归档默认禁用/FULL 不覆盖当前实现。
-**源引用**：历史遥测决策见下；当前以 `deepseek-harness/packages/bundle/base/cordis.patch.yml:205-221@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/src/index.ts:31-63@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/README.md:32-68,142-144@687f282e` 为准。后继 Note `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-32@687f282e` 仍残留省略插件 mode=DISABLED 的旧句，不能机械照搬。
+**源引用**：历史遥测决策见下；当前以 `deepseek-harness/packages/bundle/base/cordis.patch.yml:205-221@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/src/index.ts:31-63@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/README.md:32-68,142-144@687f282e` 为准。硬 opt-out 的实现：`deepseek-harness/packages/boot/app-boot/src/profile-context.ts:29-64@687f282e` 在加载前把非空值转成 disabled patch，`deepseek-harness/apps/cli/src/profile-boot.ts:314-322@687f282e` 传入启动环境值；相关模式/拒绝测试见 `deepseek-harness/packages/session/session-telemetry-otel/tests/otel.spec.ts:732-773@687f282e`（本包未执行）。后继 Note `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-32@687f282e` 仍残留省略插件 mode=DISABLED 的旧句，不能机械照搬。
 
 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-telemetry-default-off.md:12-20@687f282e
 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-02-session-search-not-shipped-default.md:12-18@687f282e

@@ -338,7 +338,7 @@
 
 **失败处理/例外**：同步调用、已移交所有权的执行、明确不在范围内的外部进程不适用。平台不支持时不能宣称强保证；降级要可观察。`durable` 若未来出现，必须先有恢复契约，不能只改枚举值。
 
-**证据边界**：源 Note 含 archived 的进程范围设计、execution world 和已实现的 PTC 复用/持久模式；本提取未在 Linux/Windows 执行终止或残留测试。
+**证据边界**：源 Note 含 archived 的进程范围设计、execution world 和已实现的 PTC 复用/持久模式；本提取未在 Linux/Windows 执行终止或残留测试；验证矩阵全部标记为 planned。
 
 **尾部补充**：启动失败是歧义的，不能重放命令，否则可能执行两次；只缓存一次成功的深度探测，并在每个符合条件调用前重新检查 manager 可达性。启动失败只能由 owner 发出的终止信号推断，不能只看 request 是否被消费。range 结算不能从未知或 malformed 的 manager 结果推断：未上报的进程数保持未决，异常组合使 `waitForExit()` 拒绝；只有当请求已消费或 launcher 已退出且 unit 仍 active 却无进程等条件成立时，才停止遗留 unit。平台回退是观察性的：终止顶层 shell 前后扫描后代，等待 PID 身份围栏内的后代；macOS leader 退出后无法枚举 reparent 的子进程是显式限制。终端取消保留 send reservation 直到在途写结算，再向 foreground group 发信号；stale inspection 不能释放 reservation，被拒绝的写不发信号，absolute deadline 保持 armed，close 拒绝新的 public signal 并把 quiescence 交给 handle。per-spawn selector 只是 locator，不是凭据或持久格式；wire 记录闭合，缺失/多余/类型错误/未知字段都 fail closed，父进程的首个取消原因原样保留且不传到 wire。长工作流用显式 null 保留调用方控制的生存期，共享沙箱不引入新账本或配额；取消不等待脚本协作退出，dispose 等待子进程清理，provider 管理范围仍限制可声称的保证。共享转换来源的尾部只界定该转换自己的准入边界：source reservation 只计二进制字节，Remote base64 展开、引擎 RSS、调用方保留输出与 PDF.js 页面内存明确不在限内，因此不能当作受管执行范围的成本保证；其验证覆盖 pre-read admission、内容合并、优先级、取消隔离、延迟释放、LRU/别名上限、陈旧版本与转换器替换，loader 组合和 native 转换检查独立于展示消费者验证同一 provider；以上验证均由源 Note 报告，本提取未执行。
 
@@ -555,7 +555,7 @@
 
 **失败处理/例外**：focused test 与 custom embedding 同样获得始终开启的存储语义，不靠可选插件。`readonly` 仅是编译期提示；冻结单个记录不证明跨记录序列、嵌套、tool pairing 或请求重建正确，那些关系由独立规则验证。不支持值在写入前拒绝。
 
-**证据边界**：来源是 implemented Note 的存储/投影契约；本次未运行目标 Session、严格模式修改或 request-side 隔离场景，不能从文本修正推导目标已执行强制。
+**证据边界**：来源是 implemented Note 的存储/投影契约；本次未运行目标 Session、严格模式修改或 request-side 隔离场景，不能从文本修正推导目标已执行强制；验证矩阵全部标记为 planned。
 
 **来源**：`deepseek-harness/.agents/notes/implemented/architecture/2026-06-11-dev-invariants-over-deep-readonly.md:1-52@687f282e`。
 

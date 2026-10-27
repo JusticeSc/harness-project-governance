@@ -13,6 +13,19 @@ const extras = [
   'research/type-equiv.test.mjs', 'research/subsystem-pages.test.mjs',
   'research/package-readme-summaries.test.mjs', 'research/package-readme-limitations.test.mjs',
   'research/repository-references.test.mjs',
+  'AGENTS.md', 'PROJECT.md', 'METHODS.zh.md',
+  'research/fixtures/adoption-cli/.gitignore',
+  'research/fixtures/adoption-cli/README.md',
+  'research/fixtures/adoption-cli/CONTRACT.md',
+  'research/fixtures/adoption-cli/package.json',
+  'research/fixtures/adoption-cli/bin/tasks.mjs',
+  'research/fixtures/adoption-cli/test/cli.test.mjs',
+  'research/fixtures/adoption-cli/test/reopen.test.mjs',
+  'research/fixtures/adoption-cli/observations.json',
+  'research/fixtures/adoption-cli/evidence/initial-acceptance.txt',
+  'research/fixtures/adoption-cli/evidence/recovered-acceptance.txt',
+  'research/fixtures/adoption-cli/evidence/continuation-acceptance.txt',
+  'research/fixtures/adoption-cli/evidence/live-continuation.txt',
 ]
 const files = [...new Set([...packageFiles(root), ...extras])].sort()
 // Validate the complete source selection before creating output.
@@ -24,4 +37,4 @@ for (const file of files) {
   copyFileSync(join(root, file), target)
 }
 console.log(`Exported ${files.length} allowlisted public files to ${destination}`)
-console.log('Research tests only; no working records, toolchains, evidence stores, credentials or source checkout included.')
+console.log('Development entry, bounded adoption evidence and regression fixtures included; no private archives, working stores, credentials or source checkout copied.')

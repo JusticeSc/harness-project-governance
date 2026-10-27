@@ -104,7 +104,8 @@
       },
       "applicability": [
         "when: 有结构化 wire 视图和多个渲染点; 有共享 primitive 包或组件目录; 存在 keyed 行与通用回退两条路径",
-        "whenNot: 只有单一渲染点且没有跨位置一致性要求; 后端只提供最终 HTML 或纯文本，没有可派生结构"
+        "whenNot: 只有单一渲染点且没有跨位置一致性要求; 后端只提供最终 HTML 或纯文本，没有可派生结构",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-progressive-fallback-parity",
@@ -270,7 +271,8 @@
       },
       "applicability": [
         "when: 有渐进增强、懒加载或视口渲染的 UI; 有全局 CSS 能力守卫",
-        "whenNot: 纯同步、无能力分支的静态页面; 增强臂与降级臂结构完全相同、没有激活瞬间"
+        "whenNot: 纯同步、无能力分支的静态页面; 增强臂与降级臂结构完全相同、没有激活瞬间",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-single-render-derivation",
@@ -412,7 +414,8 @@
       },
       "applicability": [
         "when: 有可重放的会话日志或快照; 存在多种阅读模式或展示格式; transcript 会因恢复、压缩、resize 或主题切换重建",
-        "whenNot: 没有持久历史、每次都是全新渲染的一次性页面; 展示值本身就是需要持久化的用户配置"
+        "whenNot: 没有持久历史、每次都是全新渲染的一次性页面; 展示值本身就是需要持久化的用户配置",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-temporal-truthfulness",
@@ -564,7 +567,8 @@
       },
       "applicability": [
         "when: 界面显示时间、耗时或统计; 数据可能是窗口化或分页的; memo 行需要跨午夜更新",
-        "whenNot: 一次性快照、没有历史窗口或日历边界; 纯装饰性文案不承载测量含义"
+        "whenNot: 一次性快照、没有历史窗口或日历边界; 纯装饰性文案不承载测量含义",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-derived-view-state",
@@ -711,7 +715,8 @@
       },
       "applicability": [
         "when: 列表同时支持键盘与指针; 存在行内动作或可下钻项; 使用 aria-activedescendant 或 roving focus",
-        "whenNot: 纯静态展示列表，没有选中态; 完全依赖平台原生控件的菜单"
+        "whenNot: 纯静态展示列表，没有选中态; 完全依赖平台原生控件的菜单",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-bounded-panel-reachability",
@@ -837,7 +842,8 @@
       },
       "applicability": [
         "when: 面板有明确宽高上限; 内容可能超过可视区域; 存在必须保持可见的选中项或输入控件",
-        "whenNot: 内容很短、不会触发边界的小面板; 可以无限滚动且没有配置上限的页面"
+        "whenNot: 内容很短、不会触发边界的小面板; 可以无限滚动且没有配置上限的页面",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-single-focus-ownership",
@@ -967,7 +973,8 @@
       },
       "applicability": [
         "when: 有持久反馈或评价事件; 客户端与 Host 分包且不能值导入; 分类需要被消费方分组",
-        "whenNot: 纯自由文本、没有分类需求的一次性反馈; 没有持久化或跨版本回放的临时表单"
+        "whenNot: 纯自由文本、没有分类需求的一次性反馈; 没有持久化或跨版本回放的临时表单",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-feedback-target-cas",
@@ -1098,7 +1105,8 @@
       },
       "applicability": [
         "when: 反馈按消息身份寻址; 存在并发编辑或冲突版本; 控件按消息数量挂载",
-        "whenNot: 只有 Session 级反馈、没有消息目标; 单用户单标签页且无并发写入"
+        "whenNot: 只有 Session 级反馈、没有消息目标; 单用户单标签页且无并发写入",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-feedback-taxonomy",
@@ -1213,7 +1221,8 @@
       },
       "applicability": [
         "when: 两个工具行为可互换; 结果卡按 card 标签分派; 跨平台需要一致呈现",
-        "whenNot: 工具结果语义不同、无法共享解析; 只有单一平台或单一 shell"
+        "whenNot: 工具结果语义不同、无法共享解析; 只有单一平台或单一 shell",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-single-render-derivation",
@@ -1341,7 +1350,8 @@
       },
       "applicability": [
         "when: 有插件贡献终端提示符或状态行; 需要合并重绘且避免渲染期插件求值; 需要明确 ANSI 信任边界",
-        "whenNot: 纯 Web DOM 提示符，使用 CSS token; 固定提示符、没有插件贡献"
+        "whenNot: 纯 Web DOM 提示符，使用 CSS token; 固定提示符、没有插件贡献",
+        "provenance: 来源为固定提交的归档 Agent Note（history）；这是条件性迁移经验，不是现行产品政策或普适硬约束，移植时须在目标实现重验。"
       ],
       "relationships": [
         "ui-surface-contracts-single-render-derivation",

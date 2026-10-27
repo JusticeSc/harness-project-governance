@@ -7,6 +7,12 @@
       "title": "本地检查与 CI 穷尽覆盖的分工边界",
       "sources": [
         {
+          "path": ".github/workflows/ci.yml",
+          "start": 416,
+          "end": 431,
+          "kind": "config"
+        },
+        {
           "path": "AGENTS.md",
           "start": 84,
           "end": 120,
@@ -39,7 +45,7 @@
       ],
       "obligations": [
         "本地只跑与改动表面相关的检查；不默认跑全量测试，也不为提交/推送重复已通过的检查（AGENTS.md:117-119）",
-        "CI 拥有穷尽覆盖率、构建产物 smoke 与 Node 22.19/24.26 兼容矩阵（AGENTS.md:118；docs/development.md:147）",
+        "CI 拥有穷尽覆盖率、构建产物smoke与明确兼容矩阵；当前源ci.yml的兼容项是Node 22.19、24.9、26，具体版本是源项目参数而非迁移不变量（.github/workflows/ci.yml:416-431）",
         "覆盖率门禁使用 test:coverage 而不是 test（AGENTS.md:119）",
         "在声称完成前，先 build:artifacts，再 build:check 或完整 build（AGENTS.md:120）",
         "钩子只跑快速检查点；不跑 tests/snapshots/docs/builds/hygiene（lefthook.yml:1-4；docs/development.md:147）",
@@ -1727,7 +1733,7 @@
       },
       "applicability": "声明多 Node 版本支持的仓库。具体版本必须来自实际 engines 政策。",
       "relationships": [
-        "dependsOn: automation-failover-switches",
+        "dependsOn: automation-ci-runner-failover",
         "related: automation-pr-job-inventory",
         "crossDomain: Node 运行时域拥有 loader 行为; 供应域拥有 pnpm lockfile"
       ],
@@ -3108,53 +3114,7 @@
           }
         ]
       },
-      "limitations": "契约测试证明“配置符合断言”，不证明 GitHub 实际按断言执行；远端行为需真实 run 证据。",
-      "notes": [
-        "这",
-        "些",
-        "是",
-        " ",
-        "N",
-        "o",
-        "d",
-        "e",
-        " ",
-        "v",
-        "m",
-        "/",
-        "字",
-        "符",
-        "串",
-        "结",
-        "构",
-        "断",
-        "言",
-        "，",
-        "不",
-        "证",
-        "明",
-        " ",
-        "G",
-        "i",
-        "t",
-        "H",
-        "u",
-        "b",
-        " ",
-        "A",
-        "c",
-        "t",
-        "i",
-        "o",
-        "n",
-        "s",
-        " ",
-        "实",
-        "际",
-        "执",
-        "行",
-        "。"
-      ]
+      "limitations": "契约测试证明“配置符合断言”，不证明 GitHub 实际按断言执行；远端行为需真实 run 证据。"
     },
     {
       "id": "automation-wine-windows-gates",

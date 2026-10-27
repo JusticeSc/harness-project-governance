@@ -1322,7 +1322,7 @@
             "evidence": "planned"
           },
           {
-            "obligation": "NLAR_REQUIRE_LANDLOCK=1 且 probe=unusable 时失败",
+            "obligation": "NALR_REQUIRE_LANDLOCK=1 且 probe=unusable 时失败",
             "evidence": "planned"
           }
         ],
@@ -2145,7 +2145,7 @@
         "同一 channel 并发发布"
       ],
       "obligations": [
-        "Desktop 发布只能从 master dispatch，不能从 PR/tag",
+        "Desktop 发布工作流的 dispatch ref 必须是 refs/heads/master，不能由 PR、其他分支或 tag 事件触发；这不限制被选中打包 run 的 sourceRef（它仍可为分支或匹配版本的 dsh-v* tag，见 release-desktop-version-artifacts）",
         "preflight 解析精确 package run/attempt；拒绝名字含 unsigned 或 unnotarized-debug 的 artifact",
         "prepare 与 publish 都在无上传凭据下跑 --check；approval 摘要在 publish 再次校验",
         "production 使用 desktop-production environment；其他使用 desktop-test",
@@ -3481,7 +3481,7 @@
           }
         ]
       },
-      "limitations": "checker 不证明解释符合运行时；未执行 CLI/doc-sync；finalized helper 已读但未运行；当前 v4 只锁 5 条 accepted record，不能据其推断全部 V4 记录已定稿；checkpoint 不证明已发布，覆盖旧文件不由代码阻止。；严格解析/分类只证明结构与被记录的决策，不证明 prose 语义、reader 行为或运行时兼容；JSON 与文本模式的失败表现不同；未执行 CLI/doc-sync。"
+      "limitations": "checker 不证明解释符合运行时；未执行 CLI/doc-sync，finalized helper 已读但未运行；当前 v4 只锁 5 条 accepted record，不能据其推断全部 V4 记录已定稿；checkpoint 不证明已发布，覆盖旧文件不由代码阻止；严格解析/分类只证明结构与被记录的决策，不证明 prose 语义、reader 行为或运行时兼容；JSON 与文本模式的失败表现不同。"
     },
     {
       "id": "release-persistence-schema-policy",

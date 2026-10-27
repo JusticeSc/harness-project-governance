@@ -653,7 +653,7 @@ pnpm run doc-sync
 - 拒绝：在评审中仅凭 `vN.md` 声称"V2→V3 迁移安全"→评审拒绝，要求 codec/spec 测试证据。
 - 恢复：补跑迁移/回放测试并记录输出，或在结论中降级为"未验证"。
 
-## 7. 双语记录与配对哈希：只覆盖人工正文 {#persistence-historical-finalized.bilingual-pairing}
+## 7. 双语记录与配对哈希：围栏代码块与 BEGIN/END GENERATED 区之外 {#persistence-historical-finalized.bilingual-pairing}
 
 ### 触发
 
@@ -671,9 +671,9 @@ pnpm run doc-sync
 
 ### 源义务
 
-1. **每对文档有配对记录**：`vN.i18n.yaml` 按 heading section 记录英文/中文块的哈希，范围是"代码块与生成区之外"的内容（`deepseek-harness/docs/persistence-changes/historical-formats/README.i18n.yaml:1-3@687f282e`、`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:1-3@687f282e`）。
+1. **每对文档有配对记录**：`vN.i18n.yaml` 按 heading section 记录英文/中文块的哈希。实际剔除范围是**围栏代码块**与 `<!-- BEGIN GENERATED <slug> -->` / `<!-- END GENERATED <slug> -->` 区；`generatedRegions()` 只识别这一种标记语法；其他标记家族不被识别，其内容（除其中的围栏代码块）仍进入哈希（`deepseek-harness/scripts/translation-pairing.ts:20-25@687f282e`、`:47-83@687f282e`；`deepseek-harness/scripts/translation-pairing-record.ts:148-162@687f282e`）。sidecar 头部把范围概括为“代码块与生成区之外”，该概括只在生成区使用上述语法时成立（`deepseek-harness/docs/persistence-changes/historical-formats/README.i18n.yaml:1-3@687f282e`、`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:1-3@687f282e`）。
 2. **机器声明两侧相同**：`yaml persistence-format` 声明必须在 `vN.md` 与 `vN.zh.md` 完全一致；README 明确 pair 有"identical declaration"（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:42-42@687f282e`）。
-3. **生成区与代码块不参与配对哈希，翻译区块仍会不同**：`vN.md` 的完整类型区在 `<details>` + 生成标记内；配对记录按 heading 记录"代码块与生成区之外"的人工块哈希。简单类型（如 `"1"`）两侧没有可翻译内容，`en == zh`（`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:35-37@687f282e`）；事件类型含 `required`/`必需`、`Sources`/`来源` 等标签，两侧哈希不同（`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:182-184@687f282e`）。不要用"哈希相等"判断生成区或声明是否一致；机器声明一致性与 schema 完整性由 `verify-persistence-formats` 检查。
+3. **围栏代码块与识别到的生成区不参与配对哈希，其他生成标记仍参与；翻译区块仍会不同**：`vN.md` 的完整类型区在 `<details>` + `persistence-format-schema` 标记内，但该标记不是 `generatedRegions()` 识别的 `BEGIN/END GENERATED` 语法，因此它的标题、表格与 SHA 行进入配对哈希，只有围栏代码块被剔除。简单类型（如 `"1"`）两侧没有可翻译内容，`en == zh`（`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:35-37@687f282e`）；事件类型含 `required`/`必需`、`Sources`/`来源` 等标签，两侧哈希不同（`deepseek-harness/docs/persistence-changes/historical-formats/v0.i18n.yaml:182-184@687f282e`）。不要用"哈希相等"判断生成区或声明是否一致；机器声明一致性与 schema 完整性由 `verify-persistence-formats` 检查。
 4. **改一边必须同步另一边并重录**：头注释给出命令 `pnpm run verify-translation-pairing --write <file>`（`deepseek-harness/docs/persistence-changes/historical-formats/README.i18n.yaml:4-5@687f282e`）。
 5. **`verify-persistence-formats --write` 刷新生成 Markdown 与配对记录**，并保留人工说明、机器声明、schema（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:70-70@687f282e`）。
 6. **默认验证拒绝过期配对记录**；`doc-sync` 验证翻译与本地链接（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:70-70@687f282e`）。
@@ -692,7 +692,7 @@ pnpm run doc-sync
 
 【本域复核】用配对解析器逐条解析四份 sidecar 的全部 427/427/447/479 个键，并从当前双语文本重算：与文件记录 0 差异，键层级为 2 个根键、8 个一级 heading、2 个二级、415-467 个生成类型。`v0`/`v1`/`v2`/`v3` 的 en≠zh 分别为 266/266/279/298，en==zh 分别为 161/161/168/181。
 
-【源实现事实·与上述义务的偏差】"配对哈希剔除生成区"这一条对**历史格式页不成立**：`generatedRegions()` 只识别 `<!-- BEGIN GENERATED <slug> -->` / `<!-- END GENERATED <slug> -->` 形式的标记（`deepseek-harness/scripts/translation-pairing.ts:20-25@687f282e`、`deepseek-harness/scripts/translation-pairing.ts:47-83@687f282e`），而历史页用的是 `<!-- persistence-format-schema:start/end -->`。对 `v0.md` 逐行变异实测：改指纹表某行 digest、改类型定义旁的 SHA-256 行、改类型标题、改 anchor id，都会改变对应 section 的 en 哈希；只有围栏代码块（` ```yaml persistence-format `）被剔除。因此对这些页面，生成区**参与**配对记录，`vN.i18n.yaml` 的头部说明与"只覆盖人工正文"的表述在这四份文件上偏乐观（证据：`verification/evidence/raw/p1-historical-payload-structure.json#/pairingCoverageProbe`）。这不是要求改源文档的理由——源标记形式与检查器行为一致且能通过验证——但迁移时必须知道：想真正排除生成区，标记必须用 `BEGIN/END GENERATED` 形式。
+【源实现事实·标记语法边界】"配对哈希剔除生成区"只对 `BEGIN/END GENERATED` 标记成立，对**历史格式页不适用**：`generatedRegions()` 只识别 `<!-- BEGIN GENERATED <slug> -->` / `<!-- END GENERATED <slug> -->` 形式的标记（`deepseek-harness/scripts/translation-pairing.ts:20-25@687f282e`、`deepseek-harness/scripts/translation-pairing.ts:47-83@687f282e`），而历史页用的是 `<!-- persistence-format-schema:start/end -->`。对 `v0.md` 逐行变异实测：改指纹表某行 digest、改类型定义旁的 SHA-256 行、改类型标题、改 anchor id，都会改变对应 section 的 en 哈希；只有围栏代码块（` ```yaml persistence-format `）被剔除。因此对这些页面，生成区**参与**配对记录，sidecar 头部与"只覆盖人工正文"的表述在这四份文件上只是概括而非边界（证据：`verification/evidence/raw/p1-historical-payload-structure.json#/pairingCoverageProbe`）。这不是要求改源文档的理由——源标记形式与检查器行为一致且能通过验证——但迁移时必须知道：想真正排除生成区，标记必须用 `BEGIN/END GENERATED` 形式。
 
 ### 步骤
 
@@ -728,7 +728,7 @@ pnpm run doc-sync
 
 - 纯生成 section 若没有可翻译表格/标签，两侧哈希可能相等；含 `required`/`必需`、`Sources`/`来源` 等标签的 section 两值不同是正常翻译差异，不能据此判断生成区错误。
 - 代码块内容不参与配对哈希，但仍需两侧语义一致。
-- 配对哈希只覆盖"块外文本"，不覆盖代码块内的命令/字段名。
+- 配对哈希只覆盖被剔除的围栏代码块与识别到的生成区之外的内容，不覆盖代码块内的命令/字段名；未被 `generatedRegions()` 识别的生成区仍被覆盖。
 
 ### 证据边界
 
@@ -738,7 +738,7 @@ pnpm run doc-sync
 
 ### 迁移设计
 
-【迁移设计】配对记录生成器按 heading slug 递归记录 `{en, zh}` 哈希；生成区用标记剔除；提供 `--write` 与只读检查两种模式。把"机器声明必须一致"作为独立检查，不要依赖配对哈希。
+【迁移设计】配对记录生成器按 heading slug 递归记录 `{en, zh}` 哈希；剔除围栏代码块与工具识别的生成标记区间（默认只认 `BEGIN/END GENERATED`；其他标记不会自动豁免）；提供 `--write` 与只读检查两种模式。把"机器声明必须一致"作为独立检查，不要依赖配对哈希。
 
 【额外建议】给配对记录加 `generatorVersion`，避免升级哈希算法后全量误报；对生成区标记做嵌套/闭合检查。
 

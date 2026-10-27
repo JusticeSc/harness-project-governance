@@ -53,8 +53,7 @@
         "状态写入与策略校验 job 必须 checkout 仓库默认分支，而不是 PR head；status job 使用 persist-credentials: false。",
         "PR head 只作为 API 数据读取：reviews、comments、files、commits、head SHA；不 checkout、不执行 PR 中的脚本。",
         "review-event 交接工作流 permissions 为空对象，只做 echo；真正的权限与状态写入留在 publisher。",
-        "策略变更只有在合并进默认分支后才对该 PR 的后续运行生效；不能用 PR 内未合并的策略评估自身。",
-        "P1 建议（源仓库未强制）：对 .github/workflows/**、.github/review-ownership/**、.github/issue-management/** 配置 CODEOWNERS 或等价 owner review，因为 issue-policy/issue-lifecycle 的 workflow YAML 本身来自 PR head。"
+        "策略变更只有在合并进默认分支后才对该 PR 的后续运行生效；不能用 PR 内未合并的策略评估自身。"
       ],
       "actors": [
         "GitHub Actions runner",
@@ -94,7 +93,7 @@
           "GitHub Actions",
           "固定 SHA 的 actions/checkout、actions/create-github-app-token、actions/setup-python",
           "可保护默认分支的 GitHub 权限",
-          "建议 CODEOWNERS 或 ruleset 对 .github/** 要求 owner review"
+          "额外建议（源仓库未强制执行）：对 .github/workflows/**、.github/review-ownership/**、.github/issue-management/** 配置 CODEOWNERS 或等价 owner review，因为 issue-policy/issue-lifecycle 的 workflow YAML 本身来自 PR head"
         ]
       },
       "reference": "references/collaboration.md#trusted-default-branch",
@@ -388,7 +387,7 @@
         "trust": "GitHub collaborator 权限与 review 状态是权威；策略文件由维护者合并后生效。",
         "failure": "policy 解析失败、分页超限、permission API 非 404 错误 → error；404 也 error。",
         "exceptions": [
-          "DISMISSED review 不撤销更早的 APPROVED。",
+          "DISMISSED 会清除该 reviewer 的既有决策，包括更早的 APPROVED；COMMENTED/PENDING 只跳过，不替换或撤销既有决策。",
           "作者/bot 不因权限高而计分。",
           "review 只取当前有效决策；但旧 commit 的 approval 是否失效取决于 forge 的 dismiss stale 设置。"
         ]
