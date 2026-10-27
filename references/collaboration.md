@@ -1204,12 +1204,12 @@ points = min(requiredPoints, defaultPoints + (requiredPoints - defaultPoints) ×
 
 ---
 
-## 机制→来源引用索引（完整）
+## 机制→来源引用索引（补充）
 
-本节按机制列出 `knowledge/` 账中登记的全部来源区间，使用固定提交 `687f282e`。它只补齐可回溯的引用坐标，不新增正文断言；正文解释仍以对应小节为准。
+本节补充部分机制的来源坐标，使用固定提交 `687f282e`；各机制完整登记区间以 `knowledge/collaboration.json` 的 `sources` 为准。它不新增正文断言，正文解释仍以对应小节为准。
 
 - `collaboration-trusted-default-branch`：`deepseek-harness/.github/review-ownership/README.md:44-56@687f282e`、`deepseek-harness/scripts/ci-workflow.spec.ts:1234-1331@687f282e`、`deepseek-harness/.github/issue-management/policy.test.mjs:894-957@687f282e`
-- `collaboration-approval-eligibility`：`deepseek-harness/.github/review-ownership/check-approval.mjs:118-133@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:154-233@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:235-290@687f282e`
+- `collaboration-approval-eligibility`：`deepseek-harness/.github/review-ownership/approval-policy.json:1-12@687f282e`、`deepseek-harness/.github/review-ownership/README.md:21-29@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.mjs:30-80@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.mjs:118-133@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.mjs:214-260@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.mjs:456-468@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:154-233@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:235-290@687f282e`
 - `collaboration-author-credit`：`deepseek-harness/.github/review-ownership/author-weight.test.mjs:1-47@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:501-525@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:570-667@687f282e`
 - `collaboration-ownership-weighted`：`deepseek-harness/.github/review-ownership/check-approval.test.mjs:392-463@687f282e`、`deepseek-harness/.github/review-ownership/blame-ownership.test.mjs:8-52@687f282e`
 - `collaboration-delegation`：`deepseek-harness/.github/review-ownership/check-approval.mjs:184-310@687f282e`、`deepseek-harness/.github/review-ownership/check-approval.test.mjs:669-1131@687f282e`
@@ -1225,13 +1225,13 @@ points = min(requiredPoints, defaultPoints + (requiredPoints - defaultPoints) ×
 
 ## 来源索引（固定提交）
 
-来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:292-345@687f282e
-来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:347-370@687f282e
-来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:476-487@687f282e
-来源：deepseek-harness/.github/review-ownership/test_blame_production.py:1-43@687f282e
-来源：deepseek-harness/.github/review-ownership/test_blame_production.py:216-217@687f282e
-来源：deepseek-harness/.github/issue-management/policy.test.mjs:370-380@687f282e
-来源：deepseek-harness/.github/issue-management/policy.test.mjs:1011-1077@687f282e
-来源：deepseek-harness/.github/issue-management/policy.test.mjs:124-147@687f282e
-来源：deepseek-harness/.github/issue-management/policy.test.mjs:1040-1054@687f282e
-来源：deepseek-harness/scripts/change-scope.spec.ts:1-98@687f282e
+- 来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:292-345@687f282e
+- 来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:347-370@687f282e
+- 来源：deepseek-harness/.github/review-ownership/check-approval.test.mjs:476-487@687f282e
+- 来源：deepseek-harness/.github/review-ownership/test_blame_production.py:1-43@687f282e
+- 来源：deepseek-harness/.github/review-ownership/test_blame_production.py:216-217@687f282e
+- 来源：deepseek-harness/.github/issue-management/policy.test.mjs:370-380@687f282e
+- 来源：deepseek-harness/.github/issue-management/policy.test.mjs:1011-1077@687f282e
+- 来源：deepseek-harness/.github/issue-management/policy.test.mjs:124-147@687f282e
+- 来源：deepseek-harness/.github/issue-management/policy.test.mjs:1040-1054@687f282e
+- 来源：deepseek-harness/scripts/change-scope.spec.ts:1-98@687f282e

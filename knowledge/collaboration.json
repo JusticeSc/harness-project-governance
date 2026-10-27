@@ -334,6 +334,12 @@
         },
         {
           "path": ".github/review-ownership/check-approval.mjs",
+          "start": 214,
+          "end": 260,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/review-ownership/check-approval.mjs",
           "start": 456,
           "end": 468,
           "kind": "implementation"
@@ -351,7 +357,7 @@
           "kind": "test"
         }
       ],
-      "problem": "如果把任何 approve 都计分，作者、只读用户、bot 或已被后续 review 覆盖的旧决策都可能制造虚假多数。",
+      "problem": "如果把任何 approve 都计分，作者、只读用户或已被后续 review 覆盖的旧决策都可能制造虚假多数；按 bot 身份一律排除或把已失去协作者资格的 404 当作求值错误，又会误判审批。",
       "triggers": [
         "每次 publisher 评估",
         "策略文件变更合并后",
@@ -362,10 +368,10 @@
         "requiredPoints 与 defaultPoints 必须是正整数；reviewerPoints 的 login 合法、大小写不敏感唯一、points 为正整数。",
         "reviewer 必须对仓库有 admin 或 write 权限；只读用户即使 APPROVED 也不计分。",
         "PR 作者自己的 approval 永不计分，即使作者是 admin。",
-        "type=Bot 或 login 以 [bot] 结尾的账号不计分。",
+        "bot 与人类评审人使用相同的当前权限和决策规则；type=Bot 或 login 以 [bot] 结尾本身不影响计分，作者自己的 review 仍排除。",
         "每个 reviewer 只取当前有效决策：按 GitHub 返回顺序，DISMISSED 清除该 reviewer 的既有决策（包括更早的 APPROVED）；COMMENTED/PENDING 不替换决策。",
         "review 列表分页取全；达到 3000 条记录上限即失败，不能接受部分历史。",
-        "reviewer permission API 404 视为错误，不能当作 0 分权限。"
+        "reviewer permission API 404 视为 none，该评审人进入 ignoredReviewers 且不计分；其他权限读取错误抛出，不能降级为无权限。"
       ],
       "actors": [
         "publisher",
@@ -378,17 +384,17 @@
         "解析 approval-policy.json。",
         "拉取 reviews 全部分页，构造有效决策 map。",
         "对每个 APPROVED login 查询 collaborator permission。",
-        "过滤作者、bot、非 write/admin，累加 points。",
+        "过滤作者和非 write/admin 参与者，按有效 approval 累加 points；bot 不单独过滤。",
         "与 requiredPoints/author credit 比较。"
       ],
       "enforcement": {
         "mode": "implementation in trusted publisher",
         "implementation": "parseApprovalPolicy、effectiveReviewDecisions、reviewerPermission 与 listRecords 在默认分支执行。",
         "trust": "GitHub collaborator 权限与 review 状态是权威；策略文件由维护者合并后生效。",
-        "failure": "policy 解析失败、分页超限、permission API 非 404 错误 → error；404 也 error。",
+        "failure": "policy 解析失败、分页超限、permission API 非 404 错误 → error；404 只将该评审人视为无权限，不使求值失败。",
         "exceptions": [
           "DISMISSED 会清除该 reviewer 的既有决策，包括更早的 APPROVED；COMMENTED/PENDING 只跳过，不替换或撤销既有决策。",
-          "作者/bot 不因权限高而计分。",
+          "作者不因权限高而计分；非作者 bot 与人类使用相同的 write/admin 资格规则。",
           "review 只取当前有效决策；但旧 commit 的 approval 是否失效取决于 forge 的 dismiss stale 设置。"
         ]
       },
@@ -413,13 +419,13 @@
         "status": "planned",
         "positive": [
           {
-            "scenario": "2 个 1 分或 1 个 2 分 approval 达到 2 分；admin/write 用户计分；只读用户被忽略。",
+            "scenario": "2 个 1 分或 1 个 2 分 approval 达到 2 分；admin/write 用户（含非作者 bot）计分；只读或权限查询 404 的用户进入 ignoredReviewers 且不计分，积分不足时保持 pending 而不是 error。",
             "evidence": "planned"
           }
         ],
         "rejection": [
           {
-            "scenario": "作者 approve、bot approve、只读用户 approve、404 权限、未知 policy 字段必须不计分或报错。",
+            "scenario": "作者与只读用户的 approve 不计分；未知 policy 字段或非 404 权限读取错误必须使求值失败，不能把读取失败当作无权限后继续。",
             "evidence": "planned"
           },
           {

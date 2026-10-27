@@ -15,6 +15,8 @@
 - Record the bounded next-development slice and trusted workspace handoff; explain the pinned source repository's instruction, evidence, review and decision lifecycle without treating target-added protocols as source behavior.
 - Fix ten broken METHODS cross-links by converting seven reference headings from renderer-specific `{#...}` markers to the existing explicit HTML-anchor format. Preserve mechanism IDs and substantive reference text; no runtime capability or new governance module is added.
 - Remove the maintainer's execution-state document from the tracked repository root and public-export allowlist. Keep session progress in a separate development workspace outside the product checkout; public developer instructions and documentation do not prescribe a private handoff path. Existing Git history is not rewritten.
+- Correct the approval-eligibility ledger to match the pinned source and unchanged runtime: a permission lookup returning 404 ignores that reviewer, other permission failures remain errors, and non-author bots use the same write/admin and effective-review rules as humans. Add the decisive source range and clarify the reference index's supplemental scope.
+- Record a failed simplification-routing candidate against the existing CLI consumer. The survey reached the added reference, but the implementation executor skipped it despite a visible trigger; withdraw the candidate rather than treating passing application tests as autonomous-adoption acceptance.
 - Local observations do not certify complete semantic consolidation, autonomous adoption across repositories or remote enforcement.
 
 ## 1.0.0 — First public demonstration release
