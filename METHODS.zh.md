@@ -293,3 +293,28 @@ npm run smoke     # SMOKE PASSED: 23 real command scenarios
 
 这些仍有明确边界：覆盖率只证明执行到代码，不证明交付可用；没有对应凭据的真实 API 测试会跳过；回放快照不等于新模型实测；配对 hash 不证明翻译正确；归档内容不再维持新鲜度。源仓要求评审这些缺口，而不是把绿色退出码当完整治理保证。本次核对仅证明这些规则和执行接线存在，不证明其远端保护已配置或每个 Agent 都遵守。[测试证据](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/docs/testing.md#L7-L29)、[语义评审](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.agents/skills/dsh-code-review/SKILL.md#L30-L57)。
 
+
+## 13. A06 定向对照：准确性纠正与未通过的简化路由候选
+
+本次复用保全语义结果中的 27 个 agent-workflows 与 15 个 collaboration 原 ID、独有义务和适用条件，对照当前知识账、参考与 Skill 入口；只对会改变判断的疑点回读固定来源，不重新认证全部 1196 条记录。单文件超限拒绝、技能文件计数、artwork/catalog 分工、DISMISSED 清除旧决策和接续触发的旧修正已被吸收，不重新制造相同待办。重复的评审和原生 stack 导航保留原 ID 与独立条件。
+
+### 审批资格：纠正来源误述，不新增执行能力
+
+`collaboration-approval-eligibility` 的知识账曾将 permission API 404 写成求值错误，并一律排除 bot；已有参考和已交付运行程序并非如此。固定来源只排除作者自己的 review，其余参与者按当前 write/admin 权限和有效决策处理；404 返回 none，忽略该评审人，其他权限读取错误仍使求值失败。[资格与计分实现](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.github/review-ownership/check-approval.mjs#L214-L260)、[404 分支](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.github/review-ownership/check-approval.mjs#L456-L468)、[源 404 用例](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.github/review-ownership/check-approval.test.mjs#L216-L233)。
+
+本次只修正知识账及来源导航，不改审批 runtime，也不把错误的保全候选当作源义务。通过本地 HTTP 模拟器调用真实 `createGitHubApi`、fetch 与 `runApprovalCheck`，观察了八个场景：404 的审批者被忽略、积分不足发布 pending；两种 bot 身份在有写权限且非作者时计分；403/500 发布 error 并抛出；权限恢复后 success；作者自己的 bot review 被排除；有写权限的 bot 变更请求仍阻断为 pending。没有访问 GitHub、使用真实凭据或验证服务端保护；这不是审批模块的新能力证明。
+
+### 简化路由：有入口不等于实际执行
+
+`agent-workflows-simplification` 的操作程序已在 [§18](references/agent-workflows.md#aw-18)，但 Skill 没有简化任务的专门触发项。候选仅在 description 增加“简化与删除评估”，并在路由表增加指向现有 §18 与 engineering 的简化/删除/收窄/基础设施替换入口；不复制源程序、不新增检查器。
+
+修改前固定两类场景与相同任务输入，从[现有 CLI 消费快照](research/fixtures/adoption-cli/README.md)建立四个隔离临时消费者，分别安装原版和候选 Skill。调查任务仅评估删除 reopen、移除外部 JSON 逐条验证，不授权实施；实施任务只授权把 list 的至多一个可选参数由循环改成直接分支，保持公开契约。执行者只获目标树、安装 Skill 和任务，没有收到 §18 提示或协调者中途补充。验收同时要求实际加载专项义务、遵守范围、定位既有 owner、保持行为并留下准确状态；应用测试绿色不能代替前一项。
+
+| 场景 | 原版观察 | 候选观察 | 验收判断 |
+|---|---|---|---|
+| 仅调查两项简化 | 检索了参考标题，未完整读取 §18；拒绝损失公开能力或数据验证，仅更新既有 PROJECT | 自主读取 §18，追踪公开 CLI 消费路径和外部输入边界，拒绝两项建议，仅更新既有 PROJECT | 候选调查路径满足本次条件，不构成普遍路由保证 |
+| 实施局部 list 简化 | 未读取专项参考；完成授权改动并记录未运行检查 | 读到了新增触发项，但仍未读取任何专项参考就修改代码 | 候选实施路径未通过预定的路由验收 |
+
+协调者外部核对四个消费者的 11 份既有快照文件、两个调查场景的应用代码及所有原测试断言不变，没有新建第二状态/决策 owner，原数据样本未改。四组各实际运行八条 CLI 命令，观察过滤/排序、参数拒绝后字节不变、reopen/done 恢复与非法持久数据拒绝。两个实施结果分别运行原有 `npm test`，均为 101 通过、0 失败、0 跳过。这些只支持应用行为和范围保持，不抵销实施执行者漏读参考的失败。
+
+执行轨迹证明新增路由已可见但没有被执行；事后执行者也承认跳过分类/路由。它把局部机械任务和“不需新状态文件”泛化为“不必读参考”的原因只是事后推测，不是已隔离的因果证明。按“规则已明确但未遵守”的失效类别处理，不追加同义提醒、不更换执行者反复碰运气，也不降低验收条件。**仅补路由的候选已撤回，未纳入交付 Skill；本次行为切片未通过，路由与实际执行的缺口仍开放。** 没有把独立测试通过、自用观察或准确性修正称为自主采用、自举或整体迁移完成。临时消费者与探针不进入产品，原消费快照及历史证据保持不变。
