@@ -20,7 +20,7 @@ It is not a hosted governance service, a security audit, or a substitute for you
 
 ## Development status
 
-This checkout contains recovered, unpublished source-claim corrections. Its installation and individual checks are usable; an integrated target-project bootstrap and autonomous adoption are not yet established. Contributor goals, current evidence and the next product task have one owner: `PROJECT.md` in the development checkout. That maintainer record and `AGENTS.md` are not installed into consumer projects. [Public verification](PUBLIC-VERIFICATION.md) preserves historical release observations, not a fresh certification of this checkout.
+This checkout contains recovered, unpublished source-claim corrections. Its installation and individual checks are usable; an integrated target-project bootstrap and autonomous adoption are not yet established. Maintainer execution progress and next actions belong in the Git-ignored local `_working/PROJECT.md`, not a tracked root document or public export. A fresh clone does not need that private record to run or develop the product; follow `AGENTS.md`, the current request and repository facts. `AGENTS.md` is not installed into consumer projects. [Public verification](PUBLIC-VERIFICATION.md) preserves historical release observations, not a fresh certification of this checkout.
 
 ## Quickstart (no `npm install`)
 

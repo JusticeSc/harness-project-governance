@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Local task-list CLI. Node built-ins only; see README.md and PROJECT.md for the contract.
+// Local task-list CLI. Node built-ins only; see README.md and CONTRACT.md for the contract.
 import { readFileSync, writeSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
