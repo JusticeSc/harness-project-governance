@@ -188,7 +188,8 @@
 
 **例外/限制.** 源仓没有 `archived → implemented` 的恢复程序，也没有“撤销归档”门禁路径；`dsh-archive-agent-notes` 的 description 提到 restoring，但正文只定义归档/删除判决。**[边界]** 恢复只能作为采用项目的扩展设计：解除封印意味着破坏 append-only 信任，应新建 Note 并保留归档原文，而不是改归档。
 
-## 6. M05 取代审计与交叉链接 {#supersession-audit}
+<a id="supersession-audit"></a>
+## 6. M05 取代审计与交叉链接
 
 > 机制 ID：`decisions-supersession-audit`
 
@@ -242,7 +243,8 @@
 
 **证据限制.** 机械门禁只查格式与路径，不查事实是否与代码同步；源仓靠评审清单而非自动比对。
 
-## 8. M07 删除、保留与归档判决 {#delete-keep-archive}
+<a id="delete-keep-archive"></a>
+## 8. M07 删除、保留与归档判决
 
 > 机制 ID：`decisions-delete-keep-archive`
 
@@ -338,7 +340,8 @@
 
 **证据限制.** 源校验器首次封印没有搬移前正文比对；目标执行器已增加可信 Git 原文比对，操作与初始历史导入条件见[实际归档模块](agent-notes.md#3-冻结归档与可信历史)。本地实测不等于 required CI 或独立关闭。
 
-## 11. M10 冻结信任与封印语义 {#frozen-trust}
+<a id="frozen-trust"></a>
+## 11. M10 冻结信任与封印语义
 
 > 机制 ID：`decisions-frozen-archive-trust`
 
@@ -375,7 +378,8 @@
 - 归档只校验 sidecar 的旧式两行 blob 记录；活跃语料已改为按标题分节的记录格式，因此归档 sidecar 不能用现行配对门禁重录。**[源规则]** `deepseek-harness/docs/i18n/README.md:34@687f282e`、实现对比见 coverage。
 - 校验器不检查 `Archived:` 是否等于实际归档时间；它只要求合法日期且不早于文件名日期。**[边界]**
 
-## 12. M11 Postmortem 准入 {#postmortem-admission}
+<a id="postmortem-admission"></a>
+## 12. M11 Postmortem 准入
 
 > 机制 ID：`decisions-postmortem-admission`
 

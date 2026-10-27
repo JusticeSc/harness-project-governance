@@ -12,6 +12,8 @@
 - Exercise the installed Skill in a persistent sibling test consumer with independent implementation, contract-only acceptance, retained first failures, recovery and cold-session continuation. Reuse the consumer's owner and test/CI entry; keep local evidence separate from hosted CI or external production adoption claims.
 - Preserve the consumer's code, independent assertions and sanitized historical outputs as a standalone repository-only adoption fixture. Add `npm run test-adoption` to the existing CI matrix and explicit public-export allowlist, without adding research content to the npm runtime or installed Skill.
 - Correct pre-merge source-contract descriptions: scope automatic provider selection to Web rather than implying LLM route inference, and recognize optional product reachability alongside default reachability or explicit package classification.
+- Record the bounded next-development slice and trusted workspace handoff; explain the pinned source repository's instruction, evidence, review and decision lifecycle without treating target-added protocols as source behavior.
+- Fix ten broken METHODS cross-links by converting seven reference headings from renderer-specific `{#...}` markers to the existing explicit HTML-anchor format. Preserve mechanism IDs and substantive reference text; no runtime capability or new governance module is added.
 - Local observations do not certify complete semantic consolidation, autonomous adoption across repositories or remote enforcement.
 
 ## 1.0.0 — First public demonstration release

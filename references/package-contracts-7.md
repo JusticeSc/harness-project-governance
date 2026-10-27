@@ -285,7 +285,8 @@
 
 ---
 
-## 7. 预算、超时与取消：默认值必须配硬上限 {#package-contracts-7.budget-limits}
+<a id="package-contracts-7.budget-limits"></a>
+## 7. 预算、超时与取消：默认值必须配硬上限
 
 **什么时候读.** 新增外部进程、网络请求、模型调用、长输出、请求体或可取消操作。
 
