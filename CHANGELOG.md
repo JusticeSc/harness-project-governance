@@ -11,6 +11,7 @@
 - Narrow the target-added state protocol to cross-session continuity, handoff, compaction or explicit governance initialization; a multi-step single-session change no longer activates `.governance`, and continuation must reuse the existing state owner and honor withdrawn actions.
 - Exercise the installed Skill in a persistent sibling test consumer with independent implementation, contract-only acceptance, retained first failures, recovery and cold-session continuation. Reuse the consumer's owner and test/CI entry; keep local evidence separate from hosted CI or external production adoption claims.
 - Preserve the consumer's code, independent assertions and sanitized historical outputs as a standalone repository-only adoption fixture. Add `npm run test-adoption` to the existing CI matrix and explicit public-export allowlist, without adding research content to the npm runtime or installed Skill.
+- Correct pre-merge source-contract descriptions: scope automatic provider selection to Web rather than implying LLM route inference, and recognize optional product reachability alongside default reachability or explicit package classification.
 - Local observations do not certify complete semantic consolidation, autonomous adoption across repositories or remote enforcement.
 
 ## 1.0.0 — First public demonstration release

@@ -337,7 +337,7 @@
         "发布说明与采用者文档"
       ],
       "obligations": [
-        "非实验运行时包必须有产品用途，或在 `scripts/product-package-policy.ts` 中显式分类；分类值只有 `optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`，每项必须写非空 reason。",
+        "非实验包必须默认运行可达、可选运行可达，或在 `scripts/product-package-policy.ts` 中显式分类；可选可达本身是有效产品用途，不额外要求默认挂载或分类。分类值只有 `optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`，每项必须写非空 reason。",
         "实验状态独立于是否发布、是否可安装、是否可选交付；不能把“已发布”当成“稳定”。",
         "实验包只有在被显式挂载时才激活；shipped profile 不应默认挂载它。",
         "Plugin Manager 把实验插件放在单独入口，不与内置稳定插件混排。",
@@ -356,12 +356,12 @@
         "如果是实验包，确认 shipped profile 不挂载，并写出显式启用步骤。",
         "在 README 与 Plugin Manager 元数据中标注 experimental，不依赖目录名传达状态。",
         "发布前检查默认 profile 的挂载列表，确认没有意外加入实验包。",
-        "运行 `pnpm run verify-product-use`（或等价的 `ci-static` 聚合），确认未分类、过期或类别不符的条目失败。"
+        "运行 `pnpm run verify-product-use`（或等价的 `ci-static` 聚合）：默认与可选均不可达且无分类的非实验包失败，过期或类别不符的 policy 条目也失败。"
       ],
       "enforcement": {
         "mode": "static product-use verifier + package policy + profile review + UI grouping",
         "implementation": "`packages/README.md:86-89` 规定非实验运行时包必须有产品用途或显式分类，并链接 `scripts/product-package-policy.ts`；该文件定义六个 category 与逐项 reason，`scripts/verify-product-use.ts` 检查 policy 条目、default/optional 可达性和类别/路径匹配；`scripts/run-gates.ts` 的 `ci-static` 以 `product-use` gate 调用 `verify-product-use`，CI 的静态 job 运行 `pnpm run check:ci:static`；`ui-plugin-manager` 单列 Experimental plugins。",
-        "trust": "分类与产品用途由静态 CI gate 机械检查（未分类、过期、类别不符会退出非零）；本域未执行该 gate，不能声称当前树通过。shipped profile 的实际启动结果仍需运行验证。",
+        "trust": "分类与产品用途由静态 CI gate 机械检查（默认/可选均不可达且无分类、policy 过期或类别不符会退出非零）；本域未执行该 gate，不能声称当前树通过。shipped profile 的实际启动结果仍需运行验证。",
         "failure": "误把实验包放进默认 profile 会扩大未验证能力的暴露面；状态标注缺失会让采用者以为能力已稳定；过期 policy 条目既可能遮蔽 default use，也可能让已移除的包继续被当作例外。",
         "exceptions": [
           "`optional` 不得用于 `packages/test-support/`；`test` 只接受 `packages/test-support/`；`sdk` 只接受 `packages/sdk/client`；`build` 只接受 `packages/typert/generator`；`web-distribution` 只接受 `packages/client/web` 或 `packages/client/ui-dockkit`；`declarations` 只接受 `packages/util/package-manifest`",
@@ -377,7 +377,7 @@
       "migration": {
         "strategy": "建立一张包状态表，把实验性、发布形态、默认挂载拆成独立列；默认 profile 变更必须引用这张表。",
         "implementation": [
-          "在 CI 中加入 package policy 检查，未分类的运行时包失败。",
+          "在 CI 中加入 package policy 检查：非实验包既无默认/可选运行可达性、又无显式角色分类时失败。",
           "为每个实验包写明显式启用步骤与退出实验的条件。",
           "把 shipped profile 的包列表纳入发布评审。",
           "Plugin Manager 的实验分组从同一状态源生成。"

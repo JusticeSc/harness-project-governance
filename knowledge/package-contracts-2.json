@@ -1896,6 +1896,18 @@
           "kind": "instruction"
         },
         {
+          "path": "packages/llm/llm/src/index.ts",
+          "start": 956,
+          "end": 964,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/llm/llm/src/index.ts",
+          "start": 1016,
+          "end": 1019,
+          "kind": "implementation"
+        },
+        {
           "path": "packages/web/README.md",
           "start": 1,
           "end": 55,
@@ -1950,6 +1962,8 @@
         "后端只实现 seam 并注册 provider，不定义第二套公共词汇；消费者只依赖 seam 或门面",
         "消费者拥有业务语义与默认值（命令含义、deadline、模型可见呈现），seam 只拥有机制（进程、调用、注册、释放）",
         "同一路由重复注册必须失败（如 `DUPLICATE_ADAPTER`），不得静默覆盖；不同路由的多个 provider 可以共存，由请求/配置选择，未选中的 provider 仍注册但不得静默接管。",
+        "提供方选择遵循各 seam 自身合同；LLM 按请求 config.provider 精确查注册表，无匹配路由即 NO_ADAPTER，不因只注册一个 adapter 而推断路由。",
+        "Web 特有：对本次 search/fetch 能力，无配置 id 且恰好一个 provider 可用时自动选择，多个可用时 WEB_PROVIDER_AMBIGUOUS；配置 id 缺失或不可用时明确失败、不改选其他 provider。此缺省选择不是所有 seam 的通用保证。",
         "后端不可用时 fail closed 或返回结构化错误，不得静默降级到未配置实现",
         "服务本身无配置、无 wire 代码的包（llm、web、subprocess）不得长出 provider 特定分支"
       ],

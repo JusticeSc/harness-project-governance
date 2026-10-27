@@ -123,19 +123,19 @@
 
 **源规则（义务）.**
 
-1. 非实验包必须默认可达，或在 `scripts/product-package-policy.ts` 中有显式分类；分类共六种：`optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`。`deepseek-harness/packages/README.md:86-89@687f282e`。
+1. 非实验包必须满足以下之一：默认运行路径可达、可选运行路径可达，或在 `scripts/product-package-policy.ts` 中有显式分类。分类共六种：`optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`。可选可达本身是有效产品用途，不因没有默认挂载就额外要求分类。`deepseek-harness/packages/README.md:86-89@687f282e`、`deepseek-harness/scripts/verify-product-use.ts:249-257@687f282e`。
 2. 实验状态独立于是否发布、是否可安装、是否可选交付。`deepseek-harness/packages/README.md:86-89@687f282e`。
 3. 实验包只有在被显式挂载时才激活。browser-use 的原文是 “This published experimental package activates only when explicitly mounted.” `deepseek-harness/packages/experimental/browser-use-playwright-mcp/README.md:12-12@687f282e`。
 4. shipped profile 不默认挂载实验包。CUA 的原文是 “Enable this experimental provider through explicit source composition on macOS 14 or later. Windows support is in development. Shipped profiles do not mount it.” `deepseek-harness/packages/experimental/cua-macos/README.md:28-28@687f282e`。inspector bundle 则是 “off by default in Plugin Manager”。`deepseek-harness/packages/experimental/inspector-profile/README.md:12-12@687f282e`。
 5. Plugin Manager 把实验插件放在单独入口，不与稳定内置插件混排。`deepseek-harness/packages/client/ui-plugin-manager/README.md:30-30@687f282e`。
-6. `verify-product-use.ts` 从 shipped profile / web on-demand / CLI / desktop / web 入口收集默认与可选可达集；默认可达的非 `web-distribution` 包不得再登记为 optional/sdk/etc.，缺失的分类以 “no product runtime use” 失败；`web-distribution` 必须默认可达；分类与目录必须匹配（例如 `test` 仅 `packages/test-support/*`）。`deepseek-harness/scripts/verify-product-use.ts:234-269@687f282e`。
+6. `verify-product-use.ts` 从 shipped profile / web on-demand / CLI / desktop / web 入口收集默认与可选可达集；只有同时不在两种可达集、且没有 policy 条目的非实验包才以 “no product runtime use” 失败。默认可达的非 `web-distribution` 包不得再登记为 optional/sdk/etc.；`web-distribution` 必须默认可达；分类与目录必须匹配（例如 `test` 仅 `packages/test-support/*`）。`deepseek-harness/scripts/verify-product-use.ts:234-269@687f282e`。
 
 **实施步骤.**
 
 1. 查 `scripts/product-package-policy.ts` 分类：`optional`（显式选择才可达）、`sdk`、`build`、`test`、`web-distribution`、`declarations`。
 2. 如果是实验包，确认 shipped profile 不挂载，并写出显式启用步骤（profile patch / source composition）。
 3. 在 README 与 Plugin Manager 元数据中标注 experimental，不只靠目录名。
-4. 发布前运行/检查 `verify-product-use`：确认默认 profile 挂载列表没有意外加入实验包，且没有未分类的非实验包。
+4. 发布前运行/检查 `verify-product-use`：确认默认 profile 没有意外挂载实验包，并核对默认与可选可达集；二者均不可达的非实验包必须有有效分类，不为消除错误而无意加入默认挂载。
 5. 写清退出实验的条件（例如平台支持完成）。
 
 **角色与完成信号.**
@@ -145,7 +145,7 @@
 
 **失败处理.**
 - 实验包进了默认 profile：立即从默认列表移除，补显式启用文档，并检查是否有用户已依赖默认行为。
-- 分类缺失：运行 package policy 检查；不要用目录位置代替分类。
+- 非实验包既无默认/可选运行可达性，又缺显式分类：核对产品入口或补充真实角色分类；不要用目录位置代替分类，也不要把“非默认”误当成“无产品用途”。
 
 **例外.**
 - 实验包可以发布、可安装，只是不默认激活。

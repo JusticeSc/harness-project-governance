@@ -46,6 +46,8 @@
 
 当前交付记录为 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)。代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 的 [push CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [PR CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 各 5 个作业全部通过；交接提交 `9ac69192e03f521ec8e24802989578b5b90890fc` 的两组 CI 也通过。本地独立审查、verify/demo、23 场景 smoke、101 项消费验收、87 项文档回归和 191 文件独立导出验证均已完成，公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。本轮按新授权在自审及当前 CI 无阻塞后采用普通 merge commit 合并，保留上述证据提交；实际合并时间和结果以 PR 的合并记录为准。CI 通过不等于 required check 或生产采用。
 
+本轮合并前复核发现并修正两处来源合同误述：Web 的缺省 provider 选择不适用于 LLM 等所有 seam；可选运行可达性本身也是有效产品用途。已核对三个相关源文件的 blob 与固定来源提交一致，同步修正 knowledge/reference 与 changelog。修正后 `verify`、两处具名 `cite` 和 23 场景离线安装 smoke 均实际通过；针对这两处的只读复核已关闭问题。未修改源仓、模板或无关本地文件。
+
 `next_action`：核对上述 PR 的主线集成结果，合并完成后从最新 `main` 回到 METHODS 第 9 节第 2 项的完整性与迁移决策。先对照保全的 `A06-agent-governance-part1.result.json` 中独有义务与 limits，以及当前 agent-workflows/decisions 的 owner，区分已吸收、仍缺作用、需补源证据或应退出；只为影响下一项产品修改的具体疑点取证，不重建历史账本、不从头遍历模块，也不为测试应用无关加功能。公开消费快照是代码归属，原消费项目只作历史载体；产品状态只维护本文件，总产品目标仍未完成。
 
 新会话操作顺序：
