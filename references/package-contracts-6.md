@@ -124,7 +124,8 @@
 
 ---
 
-## 3. Model Experience 披露：模型看到什么、token 成本、KV cache 影响 {#package-contracts-6.model-experience-disclosure}
+<a id="package-contracts-6.model-experience-disclosure"></a>
+## 3. Model Experience 披露：模型看到什么、token 成本、KV cache 影响
 
 **何时读**：包会注册工具、提示词段、runtime context、session event，或运行时会切换工具/提示词。
 
@@ -331,7 +332,8 @@
 
 ---
 
-## 9. 模型面工具结果契约 {#package-contracts-6.model-facing-tool-result-contract}
+<a id="package-contracts-6.model-facing-tool-result-contract"></a>
+## 9. 模型面工具结果契约
 
 **何时读**：新增工具、改结果格式、返回大输出或跨会话数据。
 

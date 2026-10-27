@@ -262,3 +262,34 @@ npm run smoke     # SMOKE PASSED: 23 real command scenarios
 
 公开命令、文件哈希、过程故障和脱敏输出见 [observations.json](research/fixtures/adoption-cli/observations.json) 及 [evidence/](research/fixtures/adoption-cli/evidence/)。绝对本机路径替换为 `<consumer>`，内部 artifact 链接移除，失败、断言与结果不改写。该公开副本随 Git 仓库与 public export 提供，不进入 npm 运行包或 Agent 安装座。它是人工预置测试载体中的有界独立采用观察，不是外部生产采用、完整迁移或所有工具链认证；原产品总目标仍未完成。
 
+## 12. DeepSeek Harness 怎样治理仓库开发
+
+本节介绍固定来源 `687f282e8625c6b8d11ff58211a90524be2e4317` 如何组织自身开发，不把它的运行时 goal/plan/todo 功能或本项目新增的通用状态协议当成仓库制度。本轮只读核对了源 HEAD 与干净工作树，并定向复读下列原文；未运行源仓测试、构建、CI 或服务端分支保护。
+
+### 规则、流程、检查与事实分开归属
+
+| 层次 | 源项目的安排 | 作用与边界 |
+|---|---|---|
+| 常驻入口 | 根与子树 AGENTS，修改 packages 前读架构，文档按 docs 的规则定位 | 入口保留短规则和链接，不复制全部背景；子树只补当地规则。[根入口](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/AGENTS.md#L1-L13) |
+| 唯一事实归属 | 架构解释系统关系，subsystems 管类型与语义，包 README 管配置/行为/限制，Note 管理由，cookbook 管步骤 | 一个事实只有一个家，其他位置引用；不把工作计划混进已实现决策。[分层表](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/docs/AGENTS.md#L15-L36) |
+| 场景化执行 | Skills 承载预推送、审查、错误处理等专门流程；先看当前差异和相关规范 | 不是每次运行全部程序，审查也不能凭规则记忆或只看 diff。[审查入口](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.agents/skills/dsh-code-review/SKILL.md#L8-L36) |
+| 可执行检查 | package 脚本、run-gates 聚合、CI 各作业共同形成实际执行链 | 脚本存在不等于进入 CI；必须核对 aggregate 与 workflow 的调用。图校验拒绝空集合、重复 id、未知依赖和环。[图校验](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/scripts/run-gates.ts#L921-L944) |
+| 证据与放行 | 本地按变更面选检查，CI 管穷尽覆盖及平台矩阵，人工审查管含义与真实行为 | 失败修原因，不用扩大例外掩盖；CI 的 all-checks verdict 明确汇总其列出的阻塞作业。[本地责任](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/AGENTS.md#L113-L120)、[CI 汇总](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.github/workflows/ci.yml#L730-L763) |
+| 决策生命周期 | proposed、implemented、rejected 与独立冻结 archive；允许满足条件后的合并或删除 | implemented 跟随真实实现更新事实；被否定的决定不能原地改成相反结论，归档不是当前权威。[Note 规则](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.agents/notes/README.md#L7-L52) |
+
+### 一项改动如何走完
+
+1. 先核实当前要求、PR 的真实 base/head 和影响范围，再按变更路径找到负责文档、接口与相关 Skill，不先铺开全树阅读。
+2. 修改实现及全部受影响消费者，同步 README/JSDoc/相关类型文档；只有代码、测试与现有说明不能解释的持久取舍，才在同一 PR 新增或更新 Agent Note。机械或局部调整并非一律写 Note。
+3. 按风险选择证据：行为与失败路径测试、模型/用户可见输出的 snapshot 或 expected output、发布入口的 built smoke、提供方的真实 API，以及文档生成一致性。公共 API 尚未稳定并不允许遗失消费者；已发布 Session 数据则另受不可重写历史代际和迁移约束。
+4. 本地运行相关检查并报告实际命令；CI 按登记的依赖图执行静态、构建消费者、覆盖率、性能与平台等分工。人工审查追踪接口两侧、拒绝路径、生命周期与副作用，检查自动化不能保证的语义。
+5. 通过审查和相应检查后集成；更新仍有效的负责说明。实施后的 Note 写已交付事实，不永久保留施工清单；已取代记录保留独有理由和重新引入条件，再依规则合并、删除或冻结归档。
+
+来源：[变更面与语义审查](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.agents/skills/dsh-code-review/SKILL.md#L8-L61)、[测试分层](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/docs/testing.md#L7-L29)、[兼容与迁移](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/AGENTS.md#L5-L11)、[同批文档与历史选择](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/AGENTS.md#L158-L177)。
+
+### 为什么不只是“规范很多”
+
+它把不同错误放到不同处理位置：编译器约束类型，注册的脚本检查可机械约束，生成器的 check 检查已提交文档/清单是否跟得上代码，快照和真实入口验证对外行为，评审判断理由和含义是否正确。文档分层与预算控制常驻上下文，不把所有规则同时塞给执行者；预算超限先迁到负责层、再压缩，不以删掉必要条件凑词数。[文档与预算](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/docs/AGENTS.md#L38-L59)。
+
+这些仍有明确边界：覆盖率只证明执行到代码，不证明交付可用；没有对应凭据的真实 API 测试会跳过；回放快照不等于新模型实测；配对 hash 不证明翻译正确；归档内容不再维持新鲜度。源仓要求评审这些缺口，而不是把绿色退出码当完整治理保证。本次核对仅证明这些规则和执行接线存在，不证明其远端保护已配置或每个 Agent 都遵守。[测试证据](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/docs/testing.md#L7-L29)、[语义评审](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/.agents/skills/dsh-code-review/SKILL.md#L30-L57)。
+

@@ -8,7 +8,7 @@
 
 ## 当前开发位置与内容边界
 
-唯一继续开发的产品目录为本仓库根目录，`main` 是集成基线；恢复审阅分支 `review/recovered-governance-adoption-20261027` 用于 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)，不作为长期第二主线。恢复起点是公开 main 的 `a4fa504c17b302367633585ef37bb9c73ee101c6`。用户现已明确授权自审无阻塞后通过该 PR 合并，取代此前仅创建 PR、暂不合并的范围；不直接推 main、不发布版本、不修改分支保护。原恢复副本只留档。
+唯一继续开发的产品目录为本仓库根目录，`main` 是唯一集成与续接基线。恢复交付已通过 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1) 合并，原审阅分支不作为长期第二主线。当前代码基线为合并提交 `c8ce97d0a47047112a03afd4bf50b0e5d952ebe0`；本轮只记录后续方案、收尾工作空间并介绍来源治理，不启动下一项产品实现。不直接推 main、不发布版本、不修改分支保护；原恢复副本只留档。
 
 本树保留公开 Git 路径集合内的运行内容、既有回归测试和 CI。旧研究计划、认证执行器、临时夹具、部分账本、重建收据及前代项目留在 Recovery 中，不作为现役任务。历史记录可以用于查证，不能决定下一步。当前状态只维护本文件。
 
@@ -44,16 +44,34 @@
 
 ## 交接与续接
 
-当前交付记录为 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)。代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 的 [push CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [PR CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 各 5 个作业全部通过；交接提交 `9ac69192e03f521ec8e24802989578b5b90890fc` 的两组 CI 也通过。本地独立审查、verify/demo、23 场景 smoke、101 项消费验收、87 项文档回归和 191 文件独立导出验证均已完成，公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。本轮按新授权在自审及当前 CI 无阻塞后采用普通 merge commit 合并，保留上述证据提交；实际合并时间和结果以 PR 的合并记录为准。CI 通过不等于 required check 或生产采用。
+当前停点：[PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1) 已于 2026-10-27 通过普通 merge commit `c8ce97d0a47047112a03afd4bf50b0e5d952ebe0` 合并到 `main`，原提交历史保留。[合并后的主线 CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40504939213) 五个作业全部通过，覆盖 Ubuntu/Windows × Node 22.19.0/24 的核心、消费项目验收及文档工具回归。公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。这不等于 required check、生产采用或整体迁移完成。
 
-本轮合并前复核发现并修正两处来源合同误述：Web 的缺省 provider 选择不适用于 LLM 等所有 seam；可选运行可达性本身也是有效产品用途。已核对三个相关源文件的 blob 与固定来源提交一致，同步修正 knowledge/reference 与 changelog。修正后 `verify`、两处具名 `cite` 和 23 场景离线安装 smoke 均实际通过；针对这两处的只读复核已关闭问题。未修改源仓、模板或无关本地文件。
+合并前已修正 Web provider 缺省选择被泛化、产品用途漏掉可选运行可达性两处误述；源文件与固定提交 blob 一致，knowledge/reference/changelog 同步。修正后 verify、两处 cite、23 场景安装 smoke 通过，定向复核已关闭问题。本轮不重复恢复、安装或同类演示。
 
-`next_action`：核对上述 PR 的主线集成结果，合并完成后从最新 `main` 回到 METHODS 第 9 节第 2 项的完整性与迁移决策。先对照保全的 `A06-agent-governance-part1.result.json` 中独有义务与 limits，以及当前 agent-workflows/decisions 的 owner，区分已吸收、仍缺作用、需补源证据或应退出；只为影响下一项产品修改的具体疑点取证，不重建历史账本、不从头遍历模块，也不为测试应用无关加功能。公开消费快照是代码归属，原消费项目只作历史载体；产品状态只维护本文件，总产品目标仍未完成。
+### 已确认的下一项交付
+
+用户已确认采用“小而完整的治理义务 → 产品行为切片”，不是继续扩充测试应用，也不是全量重审 1196 条记录：
+
+1. 复用保全的 `A06-agent-governance-part1.result.json` 的独有义务与 limits，对照当前 agent-workflows/decisions 的 owner；重点核对触发、归属、例外和自动/人工边界。区分已吸收、仍缺作用、需补证据或应退出；只为会改变判断的疑点补源证据，保留原 ID 与独立条件。
+2. 从中选择一个真正影响采用的缺口，给出迁移决定并完成必要产品修改。缺操作路径就修 Skill 的触发、路由和步骤；确有可机械检查的义务才接程序/CI。纯来源误述按准确性纠正，不冒充新增能力；不以新增说明代替所需行为变化，不为每条规则造检查器。
+3. 使用现有消费载体验证本次新增或改变的场景。涉及 Agent 理解、路由或接续时观察真实执行，不拿应用测试通过替代；不重做已证明的全部演示。产物为有依据的迁移决定、必要修改和对应验证，经短分支/小 PR 审查及相关检查后纳入 main。若本组已完整吸收，明确关闭，不硬加功能。
+
+本轮只将此方案记录在案并收尾，不实施该切片。
+
+### 工作空间可信边界
+
+- 产品仓库在收尾检查时已与远端 `main` 同为 `c8ce97d`。原显示修改的五个 LICENSE/示例文件，Git 规范化内容均与 HEAD 相同；只刷新索引消除假脏，原始文件 SHA-256 前后不变，没有丢弃用户内容。测试遗留的 `_working/*-tests` 与 `verification/.tmp/repository-references` 均为空，已用仅接受空目录的 `rmdir` 清理；没有递归删除未知内容。未发现本轮 `.tmp*`、tarball 或 dist 遗留；已安装的可选文档依赖保留，锁文件未改。
+- 原始 `../deepseek-harness/` 的 HEAD 为固定来源 `687f282e8625c6b8d11ff58211a90524be2e4317`，本轮只读 Git 检查未发现工作树改动；这是来源身份与文件状态核对，不是全树语义认证或其 CI 运行证明。`../standards-template/` 是非 Git 目录，保持只读，不初始化或改造其历史。
+- `../governance-adoption-project/` 是保留原样的本地实验载体，无远端、无 Git 提交，不将其中未跟踪的应用与安装座当作待发布内容。实现、两个套件、package、原数据、安装 Skill/CLI 的七个哈希均与原收据相同。公共代码归属是本仓库 `research/fixtures/adoption-cli/`；不另开一条开发主线，也不自动重启旧动作。
+- 当前状态只维护本文件；来源说明与证据边界见 METHODS，不再建立第二份计划或 `.governance`。本轮文档收尾走独立短分支与 PR，最终同步/检查以其主线提交和 GitHub 记录为准，不把待提交文字当成已落地。
+- 本轮定向链接检查发现 METHODS 中十处跳转所依赖的七个 reference 标题仅有 `{#...}` 标记；已按既有显式 HTML-anchor 格式修正文档定位，保留机制 ID 和实质正文。不改运行逻辑、不把文档修复冒充新治理能力；检查输出与集成结果随本轮文档 PR 留存。
+
+`next_action`：下一轮从最新 `main` 接手，先读取 A06 保全结果与当前 agent-workflows/decisions 的相关 owner，选定一个会改变采用行为的具体缺口并决定迁移；不从头遍历模块、不重建历史账本、不为测试 CLI 无关加功能。此次记录与工作空间收尾后暂停产品实现，等待下一次开发请求；总产品目标仍未完成。
 
 新会话操作顺序：
 
 1. 从工作空间入口进入本仓库，读本文件；确认最新用户要求是否改变范围。本文件是现役状态，旧文件中的 nextAction、C1–C6、权限与完成声明不自动生效。
-2. 先读 `METHODS.zh.md` 的当前结论与具名缺口；需要追查时才读下方原始材料，不先扫描全部会话、重新恢复数据或遍历源模块。源引用目标固定提交为 `687f282e8625c6b8d11ff58211a90524be2e4317`，不要与本产品公开 Git 底座混淆；本次选择性源码复读没有重新认证整个源 checkout 的提交身份。
+2. 先读 `METHODS.zh.md` 的当前结论与具名缺口；需要追查时才读下方原始材料，不先扫描全部会话、重新恢复数据或遍历源模块。源引用固定提交为 `687f282e8625c6b8d11ff58211a90524be2e4317`，本轮已只读核对 source HEAD 与干净工作树；这不代表重新完成整个来源树的语义审计，也不要与产品仓库提交混淆。
 3. 若只是确认环境，从本仓库运行 `node bin/governance.mjs verify`；该命令不证明语义完整或采用成功。仅因代码/环境变化或实际问题补相关验证，不因换会话重做已完成的恢复与安装。
 4. 按实际成果更新本文件。无需当前会话、Eval 变量、临时任务 ID、聊天中的授权暗示或额外状态系统；本地证据不可达时明确缺什么，继续利用当前树可达成果，不伪造遗失账本。
 
