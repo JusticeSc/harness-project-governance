@@ -258,7 +258,7 @@ npm run smoke     # SMOKE PASSED: 23 real command scenarios
 
 原实验的 CI 调用同一 `npm test`，协调者仅扩展该入口以包含 reopen 套件，没有新增平行 runner。当时实际运行只有本地 Windows / Node 24.19.0，托管运行与服务端 required check 未观察。公开快照现通过根命令 `npm run test-adoption` 接入本仓库既有核心 CI 矩阵。
 
-首次公开代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 已创建 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)；其 [push](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [pull_request](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 运行各 5 个作业全部通过：Ubuntu/Windows × Node 22.19.0/24 的四组核心与公开消费验收，以及文档工具回归。这是代码快照的远端执行观察，不是重新运行原模型会话，也不证明 required check、生产采用或保护规则；未合并 main 或发布版本。
+首次公开代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 已创建 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)；其 [push](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [pull_request](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 运行各 5 个作业全部通过：Ubuntu/Windows × Node 22.19.0/24 的四组核心与公开消费验收，以及文档工具回归。这是代码快照的远端执行观察，不是重新运行原模型会话，也不证明 required check、生产采用或保护规则。该收据对应首次公开阶段，不包含其后的主线合并；合并结果以 PR #1 的合并记录为准，不包含版本发布。
 
 公开命令、文件哈希、过程故障和脱敏输出见 [observations.json](research/fixtures/adoption-cli/observations.json) 及 [evidence/](research/fixtures/adoption-cli/evidence/)。绝对本机路径替换为 `<consumer>`，内部 artifact 链接移除，失败、断言与结果不改写。该公开副本随 Git 仓库与 public export 提供，不进入 npm 运行包或 Agent 安装座。它是人工预置测试载体中的有界独立采用观察，不是外部生产采用、完整迁移或所有工具链认证；原产品总目标仍未完成。
 

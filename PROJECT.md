@@ -8,7 +8,7 @@
 
 ## 当前开发位置与内容边界
 
-唯一继续开发的产品目录为本仓库根目录，当前审阅分支为 `review/recovered-governance-adoption-20261027`。底座是公开 main 的 `a4fa504c17b302367633585ef37bb9c73ee101c6`；叠加保全恢复内容及后续修订。用户已授权整理公开改动、推送新分支并创建 PR；不直接改 main、不发布版本、不修改分支保护。原恢复副本只留档，不作为开发位置。
+唯一继续开发的产品目录为本仓库根目录，`main` 是集成基线；恢复审阅分支 `review/recovered-governance-adoption-20261027` 用于 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)，不作为长期第二主线。恢复起点是公开 main 的 `a4fa504c17b302367633585ef37bb9c73ee101c6`。用户现已明确授权自审无阻塞后通过该 PR 合并，取代此前仅创建 PR、暂不合并的范围；不直接推 main、不发布版本、不修改分支保护。原恢复副本只留档。
 
 本树保留公开 Git 路径集合内的运行内容、既有回归测试和 CI。旧研究计划、认证执行器、临时夹具、部分账本、重建收据及前代项目留在 Recovery 中，不作为现役任务。历史记录可以用于查证，不能决定下一步。当前状态只维护本文件。
 
@@ -44,9 +44,9 @@
 
 ## 交接与续接
 
-当前停点：恢复内容与本轮新增已提交到审阅分支并推送，已创建 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)，保持待审阅、未合并。代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 的 [push CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [PR CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 各 5 个作业全部通过：Ubuntu/Windows × Node 22.19.0/24 的四组核心与消费验收，加文档工具回归。公开代码、契约与脱敏历史输出见 [采用快照](research/fixtures/adoption-cli/README.md)，本地独立审查及 verify/demo/23 场景 smoke/101 项消费验收/87 项文档回归、191 文件独立导出验证均已完成。未修改 main、发布版本或更改保护规则；CI 通过不等于 required check 或生产采用。
+当前交付记录为 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)。代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 的 [push CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [PR CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 各 5 个作业全部通过；交接提交 `9ac69192e03f521ec8e24802989578b5b90890fc` 的两组 CI 也通过。本地独立审查、verify/demo、23 场景 smoke、101 项消费验收、87 项文档回归和 191 文件独立导出验证均已完成，公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。本轮按新授权在自审及当前 CI 无阻塞后采用普通 merge commit 合并，保留上述证据提交；实际合并时间和结果以 PR 的合并记录为准。CI 通过不等于 required check 或生产采用。
 
-`next_action`：回到 METHODS 第 9 节第 2 项的完整性与迁移决策。先对照保全的 `A06-agent-governance-part1.result.json` 中独有义务与 limits，以及当前 agent-workflows/decisions 的 owner，区分已吸收、仍缺作用、需补源证据或应退出；只为影响下一项产品修改的具体疑点取证，不重建历史账本、不从头遍历模块，也不为测试应用无关加功能。保持本 PR 待审阅，不自行合并或发布。公开消费快照是代码归属，原消费项目只作历史载体；产品状态只维护本文件，总产品目标仍未完成。
+`next_action`：核对上述 PR 的主线集成结果，合并完成后从最新 `main` 回到 METHODS 第 9 节第 2 项的完整性与迁移决策。先对照保全的 `A06-agent-governance-part1.result.json` 中独有义务与 limits，以及当前 agent-workflows/decisions 的 owner，区分已吸收、仍缺作用、需补源证据或应退出；只为影响下一项产品修改的具体疑点取证，不重建历史账本、不从头遍历模块，也不为测试应用无关加功能。公开消费快照是代码归属，原消费项目只作历史载体；产品状态只维护本文件，总产品目标仍未完成。
 
 新会话操作顺序：
 
