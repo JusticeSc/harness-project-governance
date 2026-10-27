@@ -14,7 +14,7 @@
 - Correct pre-merge source-contract descriptions: scope automatic provider selection to Web rather than implying LLM route inference, and recognize optional product reachability alongside default reachability or explicit package classification.
 - Record the bounded next-development slice and trusted workspace handoff; explain the pinned source repository's instruction, evidence, review and decision lifecycle without treating target-added protocols as source behavior.
 - Fix ten broken METHODS cross-links by converting seven reference headings from renderer-specific `{#...}` markers to the existing explicit HTML-anchor format. Preserve mechanism IDs and substantive reference text; no runtime capability or new governance module is added.
-- Remove the maintainer's execution-state document from the tracked repository root and public-export allowlist. Preserve the local handoff in Git-ignored `_working/PROJECT.md`; update developer entrypoints and public documentation so a fresh clone does not depend on private runtime state. Existing Git history is not rewritten.
+- Remove the maintainer's execution-state document from the tracked repository root and public-export allowlist. Keep session progress in a separate development workspace outside the product checkout; public developer instructions and documentation do not prescribe a private handoff path. Existing Git history is not rewritten.
 - Local observations do not certify complete semantic consolidation, autonomous adoption across repositories or remote enforcement.
 
 ## 1.0.0 — First public demonstration release
