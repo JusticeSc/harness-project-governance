@@ -206,7 +206,7 @@ npm run smoke     # SMOKE PASSED: 23 real command scenarios
 
 额外直接运行 `check`：无 `.governance/`、`policy.checks` 为空、检查命令为空字符串均退出 2；三个配置命令按顺序执行，第二项失败后第三项仍执行，汇总 `2/3 configured checks passed` 并整体退出 1。临时目录均删除。
 
-第一条只查内容解析、ID/参考/锚点和来源字段形状，不回读源码语义；`cite` 只证明具名方法的实际检索路径；`demo` 是显式本地走查，`smoke` 是打包/隔离安装路径。没有运行可选工具全套、独立采用、真实 API、UI 或远端 CI/保护，也没有提交、推送或发布。
+第一条只查内容解析、ID/参考/锚点和来源字段形状，不回读源码语义；`cite` 只证明具名方法的实际检索路径；`demo` 是显式本地走查，`smoke` 是打包/隔离安装路径。截至本节本地验证完成时，尚未运行可选工具全套、独立采用、真实 API、UI 或远端 CI/保护，也未提交、推送或发布。其后的持久采用及公开 PR/CI 观察另见第 11 节，不追溯改写本阶段证据。
 
 交付文件另经一次性导航核验：M01–M53 候选编号无缺项，本报告本地链接与锚点无缺失。只证明介绍入口可遍历，不证明逐义务语义覆盖或采用效果；未创建永久检查器或另一份状态账。
 
@@ -256,7 +256,9 @@ npm run smoke     # SMOKE PASSED: 23 real command scenarios
 
 本次正确选择是复用已有 owner 和 `npm test`，无需仅为调用 `governance check` 再登记同一个命令。状态协议的跨会话触发确实成立，但既有 owner 优先，不应解释成“没有触发所以不用记录”。文档门禁等模块本轮没有对应需求，未启用；文档数量或是否私有不是其通用启用前提。协调者已纠正执行者记录中的这些理由，不为单次解释偏差再叠加制度。
 
-原实验的 CI 调用同一 `npm test`，协调者仅扩展该入口以包含 reopen 套件，没有新增平行 runner。当时实际运行只有本地 Windows / Node 24.19.0，托管运行与服务端 required check 未观察。公开快照现通过根命令 `npm run test-adoption` 接入本仓库既有核心 CI 矩阵；其新远端结果须以 PR/Actions 的实际运行另行核对，不追溯写成原实验已经通过。
+原实验的 CI 调用同一 `npm test`，协调者仅扩展该入口以包含 reopen 套件，没有新增平行 runner。当时实际运行只有本地 Windows / Node 24.19.0，托管运行与服务端 required check 未观察。公开快照现通过根命令 `npm run test-adoption` 接入本仓库既有核心 CI 矩阵。
+
+首次公开代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 已创建 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)；其 [push](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [pull_request](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 运行各 5 个作业全部通过：Ubuntu/Windows × Node 22.19.0/24 的四组核心与公开消费验收，以及文档工具回归。这是代码快照的远端执行观察，不是重新运行原模型会话，也不证明 required check、生产采用或保护规则；未合并 main 或发布版本。
 
 公开命令、文件哈希、过程故障和脱敏输出见 [observations.json](research/fixtures/adoption-cli/observations.json) 及 [evidence/](research/fixtures/adoption-cli/evidence/)。绝对本机路径替换为 `<consumer>`，内部 artifact 链接移除，失败、断言与结果不改写。该公开副本随 Git 仓库与 public export 提供，不进入 npm 运行包或 Agent 安装座。它是人工预置测试载体中的有界独立采用观察，不是外部生产采用、完整迁移或所有工具链认证；原产品总目标仍未完成。
 

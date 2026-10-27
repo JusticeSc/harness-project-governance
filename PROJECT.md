@@ -44,9 +44,9 @@
 
 ## 交接与续接
 
-当前停点：恢复内容与本轮新增已经独立审查；审查发现的公开验收文件截断已从保留原件完整恢复，两份套件及实现/package 的 SHA-256 与原实验记录一致。本地 verify、demo、23 场景 smoke、101 项消费验收和 87 项文档工具回归通过；191 文件 public export 的 verify 与 101 项消费验收也通过。直接 CLI 观察拒绝退出 2 且数据哈希不变、恢复后逐字节一致。公开代码/契约/脱敏历史日志位于 [research/fixtures/adoption-cli/](research/fixtures/adoption-cli/README.md)。现在准备提交、推送并创建 PR；托管 CI 尚待实际观察。
+当前停点：恢复内容与本轮新增已提交到审阅分支并推送，已创建 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1)，保持待审阅、未合并。代码提交 `1dc21f2c3780ead13200e2fe28d7854bfc4a0015` 的 [push CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499694944) 与 [PR CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40499715302) 各 5 个作业全部通过：Ubuntu/Windows × Node 22.19.0/24 的四组核心与消费验收，加文档工具回归。公开代码、契约与脱敏历史输出见 [采用快照](research/fixtures/adoption-cli/README.md)，本地独立审查及 verify/demo/23 场景 smoke/101 项消费验收/87 项文档回归、191 文件独立导出验证均已完成。未修改 main、发布版本或更改保护规则；CI 通过不等于 required check 或生产采用。
 
-`next_action`：提交并推送审阅分支，创建 PR 并观察真实 CI，随后记录链接与实际结果。PR 交付后再回到 METHODS 第 9 节第 2 项的完整性与迁移决策，不给测试应用无关加功能。公开消费快照是此后的代码归属，工作区外原消费项目只作历史载体；产品状态只维护本文件。总产品目标、生产采用与 required check 不因本次 PR 自动完成。
+`next_action`：回到 METHODS 第 9 节第 2 项的完整性与迁移决策。先对照保全的 `A06-agent-governance-part1.result.json` 中独有义务与 limits，以及当前 agent-workflows/decisions 的 owner，区分已吸收、仍缺作用、需补源证据或应退出；只为影响下一项产品修改的具体疑点取证，不重建历史账本、不从头遍历模块，也不为测试应用无关加功能。保持本 PR 待审阅，不自行合并或发布。公开消费快照是代码归属，原消费项目只作历史载体；产品状态只维护本文件，总产品目标仍未完成。
 
 新会话操作顺序：
 
