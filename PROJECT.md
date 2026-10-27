@@ -8,7 +8,7 @@
 
 ## 当前开发位置与内容边界
 
-唯一继续开发的产品目录为本仓库根目录，`main` 是唯一集成与续接基线。恢复交付已通过 [PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1) 合并，原审阅分支不作为长期第二主线。当前代码基线为合并提交 `c8ce97d0a47047112a03afd4bf50b0e5d952ebe0`；本轮只记录后续方案、收尾工作空间并介绍来源治理，不启动下一项产品实现。不直接推 main、不发布版本、不修改分支保护；原恢复副本只留档。
+唯一继续开发的产品目录为本仓库根目录，`main` 是唯一集成与续接基线；每次续接取最新 `main`，不把恢复提交或某次收尾收据的 SHA 当成永久现役基线。原审阅分支不作为长期第二主线。不直接推 main、不发布版本、不修改分支保护；原恢复副本只留档。最近完成的交付与下一项工作见下方“交接与续接”。
 
 本树保留公开 Git 路径集合内的运行内容、既有回归测试和 CI。旧研究计划、认证执行器、临时夹具、部分账本、重建收据及前代项目留在 Recovery 中，不作为现役任务。历史记录可以用于查证，不能决定下一步。当前状态只维护本文件。
 
@@ -44,9 +44,11 @@
 
 ## 交接与续接
 
-当前停点：[PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1) 已于 2026-10-27 通过普通 merge commit `c8ce97d0a47047112a03afd4bf50b0e5d952ebe0` 合并到 `main`，原提交历史保留。[合并后的主线 CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40504939213) 五个作业全部通过，覆盖 Ubuntu/Windows × Node 22.19.0/24 的核心、消费项目验收及文档工具回归。公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。这不等于 required check、生产采用或整体迁移完成。
+当前停点：已通过 [PR #2](https://github.com/JusticeSc/harness-project-governance/pull/2) 完成下一步方案留档、可信工作空间收尾、来源治理说明，以及七个 reference 锚点对应的十处文档跳转修复。该 PR 已合并，[合并后主线 CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40511259609) 五个作业全部通过，覆盖 Ubuntu/Windows × Node 22.19.0/24 的核心、消费项目验收及文档工具回归。A06 产品切片尚未启动；后续仅交接文字更正不另立产品阶段，续接仍取最新 `main`，具体提交与检查以 GitHub 实际记录为准。这不等于 required check、生产采用或整体迁移完成。
 
-合并前已修正 Web provider 缺省选择被泛化、产品用途漏掉可选运行可达性两处误述；源文件与固定提交 blob 一致，knowledge/reference/changelog 同步。修正后 verify、两处 cite、23 场景安装 smoke 通过，定向复核已关闭问题。本轮不重复恢复、安装或同类演示。
+历史恢复交付：[PR #1](https://github.com/JusticeSc/harness-project-governance/pull/1) 于 2026-10-27 通过普通 merge commit `c8ce97d0a47047112a03afd4bf50b0e5d952ebe0` 合并，原提交历史保留，[当时的主线 CI](https://github.com/JusticeSc/harness-project-governance/actions/runs/40504939213) 五个作业通过。`c8ce97d` 是历史恢复基线，不是当前 HEAD 或续接定位。公开代码/契约/脱敏输出见[采用快照](research/fixtures/adoption-cli/README.md)。
+
+PR #1 合并前已修正 Web provider 缺省选择被泛化、产品用途漏掉可选运行可达性两处误述；源文件与固定提交 blob 一致，knowledge/reference/changelog 同步。修正后 verify、两处 cite、23 场景安装 smoke 通过，定向复核已关闭问题。不因交接文字更正重复恢复、安装或同类演示。
 
 ### 已确认的下一项交付
 
@@ -56,15 +58,15 @@
 2. 从中选择一个真正影响采用的缺口，给出迁移决定并完成必要产品修改。缺操作路径就修 Skill 的触发、路由和步骤；确有可机械检查的义务才接程序/CI。纯来源误述按准确性纠正，不冒充新增能力；不以新增说明代替所需行为变化，不为每条规则造检查器。
 3. 使用现有消费载体验证本次新增或改变的场景。涉及 Agent 理解、路由或接续时观察真实执行，不拿应用测试通过替代；不重做已证明的全部演示。产物为有依据的迁移决定、必要修改和对应验证，经短分支/小 PR 审查及相关检查后纳入 main。若本组已完整吸收，明确关闭，不硬加功能。
 
-本轮只将此方案记录在案并收尾，不实施该切片。
+该方案已在 PR #2 记录在案，收尾未实施该切片；当前仍暂停产品实现，等待下一次开发请求。
 
 ### 工作空间可信边界
 
-- 产品仓库在收尾检查时已与远端 `main` 同为 `c8ce97d`。原显示修改的五个 LICENSE/示例文件，Git 规范化内容均与 HEAD 相同；只刷新索引消除假脏，原始文件 SHA-256 前后不变，没有丢弃用户内容。测试遗留的 `_working/*-tests` 与 `verification/.tmp/repository-references` 均为空，已用仅接受空目录的 `rmdir` 清理；没有递归删除未知内容。未发现本轮 `.tmp*`、tarball 或 dist 遗留；已安装的可选文档依赖保留，锁文件未改。
+- PR #2 收尾完成时已核对产品仓库本地与远端 `main` 一致且工作树干净，具体合并与 CI 收据见上方链接；每次续接仍以最新 `main` 核对，不把该次证据当成永远不变的 HEAD。原显示修改的五个 LICENSE/示例文件，Git 规范化内容均与 HEAD 相同；只刷新索引消除假脏，原始文件 SHA-256 前后不变，没有丢弃用户内容。测试遗留的 `_working/*-tests` 与 `verification/.tmp/repository-references` 均为空，已用仅接受空目录的 `rmdir` 清理；没有递归删除未知内容。该次未发现 `.tmp*`、tarball 或 dist 遗留；已安装的可选文档依赖保留，锁文件未改。
 - 原始 `../deepseek-harness/` 的 HEAD 为固定来源 `687f282e8625c6b8d11ff58211a90524be2e4317`，本轮只读 Git 检查未发现工作树改动；这是来源身份与文件状态核对，不是全树语义认证或其 CI 运行证明。`../standards-template/` 是非 Git 目录，保持只读，不初始化或改造其历史。
 - `../governance-adoption-project/` 是保留原样的本地实验载体，无远端、无 Git 提交，不将其中未跟踪的应用与安装座当作待发布内容。实现、两个套件、package、原数据、安装 Skill/CLI 的七个哈希均与原收据相同。公共代码归属是本仓库 `research/fixtures/adoption-cli/`；不另开一条开发主线，也不自动重启旧动作。
-- 当前状态只维护本文件；来源说明与证据边界见 METHODS，不再建立第二份计划或 `.governance`。本轮文档收尾走独立短分支与 PR，最终同步/检查以其主线提交和 GitHub 记录为准，不把待提交文字当成已落地。
-- 本轮定向链接检查发现 METHODS 中十处跳转所依赖的七个 reference 标题仅有 `{#...}` 标记；已按既有显式 HTML-anchor 格式修正文档定位，保留机制 ID 和实质正文。不改运行逻辑、不把文档修复冒充新治理能力；检查输出与集成结果随本轮文档 PR 留存。
+- 当前状态只维护本文件；来源说明与证据边界见 METHODS，不再建立第二份计划或 `.governance`。PR #2 文档收尾已合并；后续交接文字更正仍走独立短分支与 PR，具体同步/检查以 GitHub 记录为准，不把待提交文字当成已落地。
+- PR #2 的定向链接检查发现 METHODS 中十处跳转所依赖的七个 reference 标题仅有 `{#...}` 标记；已按既有显式 HTML-anchor 格式修正文档定位，保留机制 ID 和实质正文。本地链接检查通过，GitHub 实际渲染确认七个锚点存在；收据保存在 PR #2。不改运行逻辑、不把文档修复冒充新治理能力。
 
 `next_action`：下一轮从最新 `main` 接手，先读取 A06 保全结果与当前 agent-workflows/decisions 的相关 owner，选定一个会改变采用行为的具体缺口并决定迁移；不从头遍历模块、不重建历史账本、不为测试 CLI 无关加功能。此次记录与工作空间收尾后暂停产品实现，等待下一次开发请求；总产品目标仍未完成。
 
