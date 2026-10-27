@@ -28,8 +28,9 @@
         "expectedUnsupported 与 unversionedProtocolFixtures 的每个键都必须对应真实发现的语料；例外清单不能指向不存在的文件。",
         "无版本协议夹具必须不声明 version、文件名代际为 0，且不得同时出现在历史拒绝清单中。",
         "历史拒绝例外必须满足 sourceVersion 小于当前 SESSION_FORMAT_VERSION，并等于清单记录的 sourceVersion；恢复必须抛出 SessionFormatUnsupportedMigrationError，消息必须与清单 reason 完全相等。",
-        "当前代际语料不得获得历史拒绝例外；任何其他恢复异常都必须失败并带语料路径，不能把损坏伪装成受支持的历史拒绝。",
-        "无论恢复成功还是拒绝，读取结束后必须逐字节比较源文件，证明测试没有改写提交的语料。"
+        "当前代际语料不得获得历史拒绝例外；任何其他恢复异常都必须失败，且断言消息以语料相对路径为 key，不能把损坏伪装成受支持的历史拒绝。被抛异常自身的文本不要求包含语料路径。",
+        "无论恢复成功还是拒绝，读取结束后必须逐字节比较源文件，证明测试没有改写提交的语料。",
+        "源测试自带六项合成拒绝策略自测（未列入 refusal、成功开始恢复、reason 改变、普通 Error 伪装、sourceVersion 不符、当前代际豁免）和一项精确 typed refusal 接受案例。这些自测验证拒绝策略本身，不是对真实语料增删或字节变异的证据。"
       ],
       "actors": [
         "语料作者",
@@ -46,9 +47,9 @@
       ],
       "enforcement": {
         "mode": "ci",
-        "implementation": "session-format-corpus.spec.ts 的 committedSessionFixtures 发现与文件名校验、declaresFormat/header 代际比较、assertRestoration 的 typed error 与 exact-reason 断言，以及 finally 中的源字节不变断言；inventory 提供 expectedUnsupported 与 unversionedProtocolFixtures。",
-        "trust": "文件名、header、清单闭合、错误类型与 reason、字节不变均可机械验证；某个历史拒绝是否在语义上合理、exception 是否应继续存在仍需格式 owner 评审。",
-        "failure": "非法文件名、缺失/多余 version、文件名与 header 代际不一致、清单键悬空、协议夹具带版本、当前代际被列为 unsupported、错误类型或 reason 不匹配、损坏被当作历史拒绝，都会使测试失败并指出语料路径。",
+        "implementation": "session-format-corpus.spec.ts 的 committedSessionFixtures 发现与文件名校验、declaresFormat/header 代际比较、assertRestoration 的 typed error 与 exact-reason 断言，以及 finally 中的源字节不变断言；inventory 提供 expectedUnsupported 与 unversionedProtocolFixtures；corpus unsupported policy describe 另以 stub refusal 覆盖六种策略拒绝与一种精确接受。",
+        "trust": "文件名、header、清单闭合、错误类型与 reason、字节不变均可机械验证；合成自测只验证 assertRestoration 的拒绝策略，不替代真实语料变更测试；某个历史拒绝是否在语义上合理、exception 是否应继续存在仍需格式 owner 评审。",
+        "failure": "非法文件名、缺失/多余 version、文件名与 header 代际不一致、清单键悬空、协议夹具带版本、当前代际被列为 unsupported、错误类型或 reason 不匹配、损坏被当作历史拒绝、源字节变化，都会使测试失败；断言以语料相对路径为 key，但不要求被抛异常文本含路径。",
         "exceptions": [
           "无版本协议夹具可豁免 header.version，但必须显式列在 unversionedProtocolFixtures 且文件名代际为 0。",
           "测试只读取发现的语料；未被该发现范围覆盖的会话文件不在本门禁内。"
@@ -81,11 +82,19 @@
           {
             "scenario": "用一个当前代际语料和一个已登记历史拒绝语料分别运行：当前语料正常恢复，历史语料只抛出清单中的 typed error 与精确 reason。",
             "evidence": "planned"
+          },
+          {
+            "scenario": "运行 corpus unsupported policy：未列入 refusal、成功开始恢复、reason 改变、普通 Error 伪装、sourceVersion 不符、当前代际豁免六项合成自测均被拒绝，精确 typed historical refusal 被接受；这些是合成用例，不声明真实语料已通过。",
+            "evidence": "planned"
           }
         ],
         "rejection": [
           {
             "scenario": "构造 filename 与 header 代际不一致、清单键不存在、当前代际被列为 unsupported、错误 reason 不匹配、或损坏被当作历史拒绝的夹具，测试必须失败。",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "真实语料的删除/重命名、清单悬空和源字节改写的变异负例尚未执行；六项合成自测只覆盖 assertRestoration，不构成这些负例的证据。",
             "evidence": "planned"
           },
           {
@@ -100,7 +109,7 @@
           }
         ]
       },
-      "limitations": "本次只读测试，未运行 vitest，也未检查 inventory 内容之外的语料语义；发现范围限定为 snapshots/、packages/ 与 scripts/snapshots/python-sdk-single-exe/，其他目录的会话文件不会受到该测试保护。"
+      "limitations": "本次只读测试，未运行 vitest，也未检查 inventory 内容之外的语料语义；六项拒绝策略自测已存在于源测试，但本次未执行，真实语料变异/删除的负例也未执行；发现范围限定为 snapshots/、packages/ 与 scripts/snapshots/python-sdk-single-exe/，其他目录的会话文件不会受到该测试保护。"
     }
   ]
 }

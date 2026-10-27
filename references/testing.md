@@ -81,7 +81,7 @@
 2. 对每个获取的资源写出五个事实：**所有者、原子分配方式、可观察就绪信号、注册的清理、静止完成信号**。
 3. 不要因为一个夹具缺隔离就把整套串行化；缩小独占范围或改分配方式。串行 block 保护不了另一个文件、进程或 job。`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:25-27@687f282e`。
 4. 配置层显式设 worker/分区：coverage 的 instrumented 分区数、exempt heavy、snapshot 并发、Web snapshot worker、gate 并发。`deepseek-harness/scripts/run-gates.ts:210-260@687f282e`。
-5. 对进程全局的测试使用 process-bound 项目/独立 fork；不要与 thread-safe 用例混跑。`deepseek-harness/vitest.config.ts:166-230@687f282e`。
+5. 对进程全局的测试使用 process-bound 项目/独立 fork；不要与 thread-safe 用例混跑。两个项目都用 `pool: 'forks'`。源 `vitest.config.ts:186-200@687f282e` 的注释记录 Node 24 从 worker threads 进入 CJS lexer 时在 macOS/Linux/Windows 均出现 `v8::ToLocalChecked Empty MaybeLocal` in `cjs_lexer::Parse`；该注释没有给出精确受影响版本区间或上游 issue，升级 Node 后必须重新取得复现或测试证据再改变 fork 策略，不能把这条快照观测当作永久平台事实。`deepseek-harness/vitest.config.ts:166-230@687f282e`。
 
 **角色与完成信号.** 作者建模并写资源所有权；评审者按四层追问“另一个 job 同时跑会怎样”；完成信号是并发运行下仍通过，且清理后宿主没有残留。
 
@@ -437,7 +437,7 @@
 
 **步骤.**
 1. **源平面是默认**：每个 Vitest config 都把 `vite-tsconfig-paths` 指向 `tsconfig.base.json`；bare workspace import 解析到 `src`，绝不通过 package `exports` 到 built `lib/`——过期的 lib 会加载第二份 module singleton。`deepseek-harness/docs/testing.md:43-45@687f282e`。
-2. **构建平面显式选择**：lib-mode 子进程、built smokes、`DSH_EXAMPLE_MODE=lib`；`built-bin-smoke` 只在 `ci-consumers` 里、依赖 `build` 后运行，覆盖真实 package-name import 到 `lib/` 的入口。`deepseek-harness/scripts/run-gates.ts:885-914@687f282e`。
+2. **构建平面显式选择**：lib-mode子进程、built smokes、`DSH_EXAMPLE_MODE=lib`。`built-bin-smoke`注册于`ci-primary`、`ci-artifacts`、`ci-consumers`及Windows observational等路径，分别等待`build`或该lane声明的builtTree前提，并非只属于consumers。`deepseek-harness/scripts/run-gates.ts:420-425@687f282e`、`deepseek-harness/scripts/run-gates.ts:510-555@687f282e`、`deepseek-harness/scripts/run-gates.ts:637-645@687f282e`
 3. **构建检查不是构建**：`build:check` 只对现有 artifacts 跑 `tsc -p` 两个 aggregate，检查 tests/scripts/benchmarks/website；它不编译 reference，也不会重建缺失/过期的 `build:artifacts`；缺失会以编译器错误出现。`deepseek-harness/docs/development.md:94-120@687f282e`。
 4. 正确顺序：改包源码 → `pnpm run build:artifacts`（或 `pnpm run build`）→ `pnpm run build:check`；只改测试/脚本类型时，在最新 artifacts 上跑 `build:check`。`deepseek-harness/AGENTS.md:117-121@687f282e`。
 5. **构建记录绑定公共值**：`build`/`build:artifacts` 写入版本、7 位 commit、dirty 标记（`build:official` 省略 dirty）；release packing 和 built Web tests 拒绝缺失或被后续 partial build 改动的记录。`deepseek-harness/docs/development.md:112-120@687f282e`。
@@ -604,7 +604,7 @@
 **证据限制.** record 捕获的是当时 provider 输出；refresh 只证明新输出与旧输入一致，不证明产品正确。replay 不证明真实 wire（M26）。
 
 10. **按适配器与 composition 分支核对 replay/live 补丁**：headless 按“基础 `cordis.yml` → 选中 composition 的 live `cordis.yml` 或 replay `cordis.snapshot.yml` → 基础 `model.cordis.yml` → 可选场景 `runtime.cordis.yml`”组合；选中基础 composition 且为 live 时不重复追加它。SDK 必须先分支：`composition` 以 `sdk-` 开头时，保留该 owner 的 `cordis.yml`，replay **再追加**同 owner 的 `cordis.snapshot.yml`，不追加默认 `model.cordis.yml`；其他 transport-neutral composition 才使用默认基础、选中 live/replay overlay、默认 model 的顺序，默认 owner 的 live 不重复追加。不能将通用 launcher 的“replay 替换选中 patch”套到 SDK 专用分支：launcher 的 `profileArgs()` 使用 `[base, replayPatchPath(selected)]`，app-boot 的 `resolveConfigPath()` 则只在 replay 改写请求 config 的 basename；两者各有自己的调用范围。`deepseek-harness/snapshots/session/headless.snapshot.ts:1252-1262@687f282e`、`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:551-562@687f282e`、`deepseek-harness/packages/test-support/session-snapshot/src/launcher.ts:343-369@687f282e`、`deepseek-harness/packages/boot/app-boot/src/index.ts:95-112@687f282e`。
-11. **overlay 语义审阅仍未闭合**：最初范围核对发现223份 overlay 没有 inspected 记录（104 `cordis.yml`、104 `cordis.snapshot.yml`、11 `runtime.cordis.yml`，以及各1份 `child.cordis.yml`、`model.cordis.yml`、`profile.patch.yml`、`paging.patch.yml`）。本批仅新增 `paging.patch.yml:1-7` 的实际阅读和 fixture 角色记录，其余222份仍无逐文件阅读记录。组合顺序有代码引用，不等于全部配置语义或与 manifest composition 名称的一致性已验证；简单行扫描也不能代替 YAML 或语义审查。
+11. **overlay 语义审阅仍未闭合**：overlay 文件仍没有逐文件语义审阅记录；本参考只保留这一未闭合事实，具体批次读取清单属于研究取证，不作为操作参考的机制属性。组合顺序有代码引用，不等于全部配置语义或与 manifest composition 名称的一致性已验；简单行扫描也不能代替 YAML 或语义审查。
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/web/tests/scaffold.ts:132-140@687f282e`、`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:1097-1145@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:1135-1192@687f282e`
 
@@ -873,19 +873,19 @@
 
 **触发.** 前端渲染/滚动/长会话性能；并发浏览器压力；性能预算变更。
 
-**前提.** 有独立的 perf/stress 配置；机器/浏览器版本可记录；预算已校准。
+**前提.** 有独立perf/stress诊断配置，机器、浏览器和负载可记录；不要把手动诊断误认成预算型CI门禁。
 
 **步骤.**
-1. `test:web:perf` 先 build，再跑 `vitest.web.perf.config.ts`（`DSH_SNAPSHOT=replay`），与普通 Web lane 分开。`deepseek-harness/package.json:80-82@687f282e`、`deepseek-harness/vitest.web.perf.config.ts:1-21@687f282e`。
+1. `test:web:perf`先build，再以`DSH_SNAPSHOT=replay`运行`vitest.web.perf.config.ts`。该高基数诊断配置明确位于所有默认Vitest清单之外，因此也不进入CI执行lane。`deepseek-harness/package.json:81-83@687f282e`、`deepseek-harness/vitest.web.perf.config.ts:5-19@687f282e`
 2. `test:web:stress` 先 build，再跑 `vitest.web-stress.config.ts`，用于并发/浏览器进程压力；它是 opt-in，不作为默认门禁。`deepseek-harness/package.json:83-85@687f282e`、`deepseek-harness/vitest.web-stress.config.ts:1-15@687f282e`。
-3. 性能断言用预算/分位数，不用“比上次快”这种无基线比较；预算变更要有校准记录。
+3. 必需预算型性能门禁由`benchmarks/`另行拥有，测量用户路径、采用校准常量并输出报告；不能将本节手动诊断的计时当作CI阻断。若目标要新增预算门禁，按下一节benchmark机制独立落实。`deepseek-harness/benchmarks/AGENTS.md:3-18@687f282e`
 4. 压力结论只补充确定性回归，不替代它；压力通过不能证明没有 race。`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:109-115@687f282e`。
 
-**角色与完成信号.** 作者维护预算/负载；评审者检查机器信息与预算来源；完成信号是 perf lane 在预算内、stress 明确标注 opt-in。
+**角色与完成信号.** 作者维护诊断负载，评审者核对机器、测量边界及结论；完成信号是选定手动诊断确实执行且结果被分析，perf/stress的opt-in身份明确。预算型benchmark通过是另一份证据。
 
 **失败处理.** 超预算：先看机器/浏览器/负载，再判断产品回归；不要直接放宽。压力失败：定位资源竞争，不要改成串行掩盖。
 
-**例外.** 本机数字不能当作发布容量；需要 CI 单独 runner/校准。
+**例外.** 本机数字不能当作发布容量。目标如另接CI诊断runner属于显式迁移设计，不是源Web perf既有自动保证；预算型必需门禁另按benchmark机制证明。
 
 **证据限制.** 源仓能证明 lane 和配置；不能证明任意机器上的绝对性能。
 
@@ -1162,9 +1162,9 @@
 6. **trusted real API 层**：只对 trusted PR 和 master push 跑 `--scenario sdk-live --installed-wheel`；两轮真实工具调用，第一轮创建文件并检查，第二轮复制 host-only 随机挑战内容到新 receipt 且不改源文件；两轮都要精确 sentinel 和 model-requested tool call，外部字节比较检查文件。`deepseek-harness/python/development.md:47-48@687f282e`、`deepseek-harness/.github/workflows/build-exe-for-python-sdk.yml:381-453@687f282e`。
 7. **缺 secret 失败，不 skip**：real API preflight 检查 `DEEPSEEK_API_KEY_EXTERNAL`，为空直接 `exit 1`/throw；fork 和 Dependabot PR 只跑完整 keyless installed-wheel 路径，不拿 key。`deepseek-harness/.github/workflows/build-exe-for-python-sdk.yml:392-410@687f282e`、`deepseek-harness/python/development.md:47-48@687f282e`。
 8. **CI 编排**：PR 的 `python-sdk` job 在 Python 3.10 跑完整 keyless pytest；`python-runtime` 依赖 `python-sdk`，PR 覆盖 Linux/Windows x64，master 由 `ci-master.yml` 覆盖 Linux ARM64 + macOS；最终 aggregate job 的 `needs` 包含 `python-sdk`/`python-runtime`，任一未成功即失败。`deepseek-harness/.github/workflows/ci.yml:486-521@687f282e`、`deepseek-harness/.github/workflows/ci.yml:753-758@687f282e`、`deepseek-harness/.github/workflows/ci-master.yml:42-50@687f282e`。
-9. **诊断保留（声明的策略 vs 已实现的行为）**：把 `DSH_OFFICE_TEST_ARTIFACTS` 指向一个新目录时，`scripts/smoke-python-runtime.py` 的 Office smoke 会把输入文档、PNG 批次、manifest 与 `error.txt` 写进该目录，并排除临时运行时文件（`scripts/fixtures/office-render.py:14-41` 的 `workspace` 助手：先 `mkdir(exist_ok=False)`，失败时写 `error.txt`，`finally` 里只复制 `color-blocks.{docx,pptx,xlsx}` 与 `cli-*`/`node-pptx` 批次的 PNG/manifest）。`python/development.md:32` 另外声明“CI 在成功和失败都上传这些文件”，但固定提交的工作流没有任何 step 设置该变量，也没有 `upload-artifact` 调用；因此**本地保留可证，CI 上传是未实现的声明**。采用方若需要该义务，必须自己加“设置变量 + 上传 artifact（含失败分支）”的工作流步骤，不能引用本文当作已具备的保证。`deepseek-harness/python/development.md:32@687f282e`、`deepseek-harness/scripts/smoke-python-runtime.py:971-977@687f282e`、`deepseek-harness/scripts/fixtures/office-render.py:14-41@687f282e`。
+9. **诊断保留（声明的策略 vs 已实现的行为）**：把 `DSH_OFFICE_TEST_ARTIFACTS` 指向一个新目录时，`scripts/smoke-python-runtime.py` 的 Office smoke 会把输入文档、PNG 批次、manifest 与 `error.txt` 写进该目录，并排除临时运行时文件（`scripts/fixtures/office-render.py:14-41` 的 `workspace` 助手：先 `mkdir(exist_ok=False)`，失败时写 `error.txt`，`finally` 里只复制 `color-blocks.{docx,pptx,xlsx}` 与 `cli-*`/`node-pptx` 批次的 PNG/manifest）。`python/development.md:32` 另外声明“CI 在成功和失败都上传这些文件”，但固定提交的工作流没有任何 Office step 设置该变量或上传这些诊断文件（其他 `upload-artifact` 用于 benchmark report、wheel/发行包等，不是 Office 诊断目录；本批对 `.github/workflows/**` 做了结构性检索匹配 `DSH_OFFICE_TEST_ARTIFACTS|upload-artifact`）；因此**本地保留可证，Office CI 上传是未实现的声明**。采用方若需要该义务，必须自己加“设置变量 + 上传 artifact（含失败分支）”的工作流步骤，不能引用本文当作已具备的保证。`deepseek-harness/python/development.md:32@687f282e`、`deepseek-harness/scripts/smoke-python-runtime.py:971-977@687f282e`、`deepseek-harness/scripts/fixtures/office-render.py:14-41@687f282e`。
 
-**角色与完成信号.** Python SDK 作者、CI 维护者、发布/安全负责人。完成信号是：pytest + 干净 venv keyless black-box 通过；需要真实 provider 时 trusted real API 通过；artifact 和场景差异可查；fork 无 key 时仍跑 keyless 且不假绿。
+**角色与完成信号.** Python SDK 作者、CI 维护者、发布/安全负责人。完成信号是：pytest + 干净 venv keyless black-box 通过；需要真实 provider 时 trusted real API 通过；设置 `DSH_OFFICE_TEST_ARTIFACTS` 后本地诊断目录与场景差异可查；fork 无 key 时仍跑 keyless 且不假绿。**源仓 CI 不设置该变量也不上传 Office artifact，所以“CI 上可查 artifact”不是可用的完成信号。**
 
 **失败处理.** wheel 安装失败先查本地发行物/版本固定；入口解析失败查 runtime resolution 和发行物内容；real API 失败先确认 secret/配额/网络，再判断产品；缺 secret 按阻塞处理，不改成 skip。
 
@@ -1206,7 +1206,7 @@
 
 ### 阶段 4：Web、bench、e2e
 1. 建真实浏览器 lane；语义/ARIA 断言；CI replay 只读。
-2. 建 perf/stress opt-in lane；预算与机器记录。
+2. 建手动perf/stress opt-in诊断lane，保留机器/负载/测量记录；不声称其默认进入CI预算阻断。
 3. 建 benchmark 目录/配置/报告；CI idle runner；内存案例独立。
 4. 建 e2e workflow：key 自跳过、preflight、fork/Dependabot 排除、secret 最小作用域、端点固定、telemetry 关闭。
 

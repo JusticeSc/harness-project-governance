@@ -43,7 +43,7 @@
 | `agent-workflows-handoff` | `#aw-11` | 交接 |
 | `agent-workflows-continuation-extension` | `#aw-11` | 用户要求的连续会话补充（非源义务） |
 | `agent-workflows-ui-review` | `#aw-12` | UI/UX 与响应式 |
-| `agent-workflows-artwork` | `#aw-13` | 官方插件美术 |
+| `agent-workflows-artwork` | `#aw-13` | 官方插件美术与 catalog 准入 |
 | `agent-workflows-browser-evidence` | `#aw-14` | 浏览器证据与 GIF |
 | `agent-workflows-translation` | `#aw-15` | 翻译工作流 |
 | `agent-workflows-provider-evidence` | `#aw-16` | Provider 真实 API 证据 |
@@ -287,7 +287,7 @@
 | 18 | `dsh-trim-cot-leakage` | 审计/修复“泄漏的推理轨迹”式散文 | 一条测试、8 类分类法、keep 规则、召回探针 | `references/examples.md`、`references/recall-batteries.md` | `dsh-prose-standard` |
 | 19 | `record-browser-gif` | 被要求录制浏览器演示 GIF；每个改变产品可见 GUI 的 PR | 真实服务器/真实模型流程的 GIF + attach 发布 | `scripts/encode_gif.py`、`scripts/test_encode_gif.py` | 浏览器控制工作流、ffmpeg/ffprobe |
 
-来源：上表 19 个 `SKILL.md` 的 frontmatter 与正文；逐条路径见 `knowledge/agent-workflows.json` 的 `sources`。技能总文件数：19 个 `SKILL.md` + 10 个 references + 8 个 templates + 2 个 scripts = 39 个受版本控制文件。
+来源：上表 19 个 `SKILL.md` 的 frontmatter 与正文；逐条路径见 `knowledge/agent-workflows.json` 的 `sources`。技能内容文件：19 个 `SKILL.md` + 10 个 references + 8 个 templates + 2 个 scripts = 39 个；目录级 `.agents/skills/.gitignore` 另计，因此该目录在固定提交下共有 40 个受版本控制文件。
 
 ### 3.3 frontmatter 与路由
 
@@ -868,12 +868,13 @@ gh stack merge <boundary-pr> --yes --merge
 
 `【迁移设计，非源义务】` 源仓库没有“新会话继续未完成任务”的通用协议；它依赖 Agent Notes、Dev Note、scratch 和 git 历史。若目标用户要求“刷新会话后继续”，必须作为**新增能力**明确标注，不得冒充源机制。最低可用设计：
 
-1. 一个受版本控制的任务状态文件（例如 `docs/scratch/<topic>.md` 或 `.agents/handoff/<task>.md`），字段：owner、目标、当前分支/commit、已完成、未完成、阻塞、下一命令、证据路径、过期/复核日期。
-2. 写入时机：任务暂停、交接、上下文压缩前；不是每个小步骤。
-3. 读取时机：新会话开始时先读状态文件与 owning Agent Note，再读代码；不要只读聊天摘要。
-4. 完成信号：状态文件中的“下一命令”可被独立执行；“未完成”项有明确 owner。
-5. 失败处理：状态与实际 git/文件不一致时，以仓库状态为准并更新状态文件；不要用状态文件覆盖代码事实。
-6. 证据限制：这是迁移设计，源仓库未验证；不能用它声称源工作流具备连续会话保证。
+1. 一个受版本控制的任务状态文件（例如 `docs/scratch/<topic>.md`、`.agents/handoff/<task>.md` 或项目已有状态 owner），字段：owner、目标、当前分支/commit、已完成、未完成、阻塞、下一命令、证据路径、过期/复核日期。
+2. 启用信号是跨上下文边界：用户要求继续/暂停/交接，压缩前保存，或同一目标确需多个会话或另一位执行者。单会话内的小改动，即使有多步验收，也不仅为“以后可能有用”而新建状态文件；用户明确要求初始化治理元数据时，初始化本身是任务。
+3. 写入时机：任务暂停、交接、上下文压缩前；不是每步都写。
+4. 读取时机：新会话开始时先读状态文件与 owning Agent Note，再读代码；不要只读聊天摘要。
+5. 完成信号：状态文件中的“下一命令”可被独立执行；“未完成”项有明确 owner；当前请求已撤销的动作不在队列。
+6. 失败处理：状态与实际 git/文件或用户当前请求不一致时，以仓库状态和当前请求为准并更新状态文件；不要用状态文件覆盖代码事实或复活已撤销动作。
+7. 证据限制：这是迁移设计，源仓库未验证；不能用它声称源工作流具备连续会话保证。
 
 ### 11.7 执行卡片（交接）
 
@@ -959,9 +960,9 @@ gh stack merge <boundary-pr> --yes --merge
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/scripts/gen-official-bundle-catalog.ts:41-127@687f282e`
 
-## 13. 官方插件美术工作流
+## 13. 官方插件美术与官方 bundle catalog 准入
 
-`【源义务】` 触发：官方与官方 experimental 插件图标、`PluginArtwork` 字形、可选特性预览。**不适用于**工具栏或动作图标（那属于 `dsh-client-ui-ux`）。来源：`dsh-official-plugin-artwork/SKILL.md:6-8`。
+`【源义务】` 触发：官方与官方 experimental 插件图标、`PluginArtwork` 字形、可选特性预览；仅当维护官方 on-demand bundle catalog 时，另触发 §13.1 的打包子程序。**不适用于**工具栏或动作图标（那属于 `dsh-client-ui-ux`）。来源：`dsh-official-plugin-artwork/SKILL.md:6-8`。
 
 `【源义务】` 可选特性预览先读 `docs/cookbook/adding-a-plugin-preview.md`；它拥有可选性、图片数量、设计画布、显示尺寸与位置、语言变体、资源上限、验收，以及 SVG 预览的内嵌栅格例外；小图标仍只允许几何。检查真实特性、保留其产出资源、内置预览放 Plugin Manager client assets 目录及其内部双语映射。来源：`dsh-official-plugin-artwork/SKILL.md:10-12`。
 
@@ -980,12 +981,27 @@ gh stack merge <boundary-pr> --yes --merge
 
 `【源义务】` 评审与验证（`dsh-official-plugin-artwork/SKILL.md:35-41`）：不确定几何前给几个编号替代；替代标签贯穿评审；现有文件或生成草稿不等于设计批准；比较物放 gitignored 目录，不放产品包。新旧 artwork 与未改参考并排、明暗主题、实际 row/card 尺寸与放大都看。运行 `pnpm run verify-package-meta`、`pnpm run constraints`、`pnpm run verify-official-bundle-catalog`；陈旧目录用 `pnpm run gen-official-bundle-catalog` 重新生成，不手改。结构检查不替代视觉评审。构建受影响产物并通过 `dsh web` 看真实页面；批量批准细化后再重启缓存 metadata 的 Host；两主题验证 entry 与嵌套 component rows。GUI PR 遵循 UI 测试策略与 `record-browser-gif`。新字形落地前取得设计者批准。
 
-### 执行卡片
+### 13.1 官方 bundle catalog 准入（条件性打包子程序）
 
-- **前置条件**：有真实特性与 manifest；有现有 artwork 参考；有设计者批准通道。
-- **步骤**：读预览指南（若需要）→ 检查特性 → 画/改 → 导出 → 跑三个门禁 → 真实页面明暗主题验证 → 设计批准 → GIF。
-- **责任者**：美术实现者；设计者（批准）。
-- **完成信号**：`verify-package-meta`、`constraints`、`verify-official-bundle-catalog` 通过；实际尺寸可读；透明与两主题正确；设计批准。
+`【源义务｜条件性打包】` 当目标仓库存在官方 on-demand bundle 目录时，`gen-official-bundle-catalog.ts` 还承担 catalog 准入与新鲜度；这是与视觉美术并列的独立子程序，不能把它的通过当成美术合格，也不能用美术批准替代它。
+
+- 名单必须非空且无重复，默认取安装侧 `ON_DEMAND_BUNDLES`；生成器扫描 `packages/*/*/package.json`、`apps/*/package.json`、`vendor/*/package.json`，重名 workspace 包直接失败。
+- 成员必须是 `packages/` 下、以 `@deepseek-ai/dsh-` 命名、非 private 且声明 `dsh.bundle.patch` 的公开 bundle；并且不得出现在 `@deepseek-ai/dsh` 的 dependencies/optionalDependencies/peerDependencies 闭包中。
+- 元数据只从包资源读取，不 import 或激活 provider：`locale/{en,zh}.json` 的 `meta.title`/`meta.description` 必须非空；插件 meta 必须有 icon，且 title/description 的 en/zh 文本都非空；`meta.error` 直接失败。
+- 生成文件 `packages/boot/app-boot/src/official-bundles.generated.ts` 是确定性 source-plane 产物：header 写明生成命令与 do not edit；localized 对象按语言键排序，字符串经 TypeScript printer 单引号转义。
+- 同步只容忍 ENOENT，其他读取错误抛出；内容相同不写；`--check` 发现 stale 时抛错并提示 `pnpm gen-official-bundle-catalog`，否则写文件。
+- `package.json` 的 `verify-official-bundle-catalog` 就是 `gen-official-bundle-catalog.ts --check`。
+
+来源：`deepseek-harness/scripts/gen-official-bundle-catalog.ts:1-40@687f282e`、`deepseek-harness/scripts/gen-official-bundle-catalog.ts:41-127@687f282e`、`deepseek-harness/package.json:215-216@687f282e`。
+
+`【证据限制】` 该子程序只证明名单、成员、元数据与生成文件结构，不证明视觉美术、provider 运行行为或真实安装；未执行生成器或 `--check`。
+
+### 13.2 执行卡片
+
+- **前置条件**：有真实特性与 manifest；有现有 artwork 参考；有设计者批准通道；仅当维护官方 on-demand catalog 时才需要 catalog 子程序。
+- **步骤**：读预览指南（若需要）→ 检查特性 → 画/改 → 导出 → 跑 `verify-package-meta`/`constraints` → 维护 catalog 时另跑 `verify-official-bundle-catalog` → 真实页面明暗主题验证 → 设计批准 → GIF。
+- **责任者**：美术实现者；设计者（批准）；catalog 维护者（仅条件适用）。
+- **完成信号**：`verify-package-meta`、`constraints` 通过；维护 catalog 时 `verify-official-bundle-catalog` 也通过；实际尺寸可读；透明与两主题正确；设计批准。
 - **失败处理**：目录陈旧用生成器；SVG 被 `<img>` 拒绝时去掉脚本/外部引用；裁剪或不可读时改几何而不是加特例。
 - **例外**：预览用内嵌栅格是文档化例外；图标不得用。
 - **证据限制**：自动检查只覆盖元数据/结构；视觉质量需人与真实页面。

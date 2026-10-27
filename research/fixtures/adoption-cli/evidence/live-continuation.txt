@@ -1,0 +1,17 @@
+{"id":1,"title":"核对 \"安装采用\"","status":"open"}
+[{"id":1,"title":"核对 \"安装采用\"","status":"open"}]
+ecd98105a5dedd401d321c4867f94a560ba50def605ae6aedfeb3676a074be01  .adoption-runs/reopen-smoke.json
+
+
+tasks: reopen: task 999 not found
+usage: node bin/tasks.mjs add "<title>"
+       node bin/tasks.mjs list [--all]
+       node bin/tasks.mjs done <id>
+       node bin/tasks.mjs reopen <id>
+
+
+Command exited with code 2
+
+ecd98105a5dedd401d321c4867f94a560ba50def605ae6aedfeb3676a074be01  .adoption-runs/reopen-smoke.json
+{"id":1,"title":"核对 \"安装采用\"","status":"done"}
+Recovered data matches original bytes

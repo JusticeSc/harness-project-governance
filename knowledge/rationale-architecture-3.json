@@ -4,7 +4,7 @@
   "noteClass": "architecture",
   "partition": "rationale-architecture-3",
   "noteCount": 94,
-  "evidencePolicy": "Only the assigned English and Chinese Note bodies, their sidecars, the fixed partition, and the two research briefs were read. Sources cite full Note line ranges at the fixed commit; implementation, tests, runtime, builds, lint, formatters and remote calls were not executed. Proposed notes are marked as proposals, archived notes as history; cross-domain links remain unbound until the owning source is inspected.",
+  "evidencePolicy": "Only the assigned English and Chinese Note bodies, their sidecars, the fixed partition, and the two research briefs were read. Sources cite full Note line ranges at the fixed commit; implementation, tests, runtime, builds, lint, formatters and remote calls were not executed. Proposed notes are marked as proposals, archived notes as history; cross-domain links remain unbound until the owning source is inspected. Bare Mxx short forms in these relationships mean this partition's arch3-Mxx records, independently of the same numbers in other material; any cross-domain edge must use a full record ID.",
   "mechanisms": [
     {
       "id": "rationale-architecture-3.arch3-M01",
@@ -1307,7 +1307,7 @@
       },
       "applicability": "适用于多平台共享同一应用组合的系统；单平台可直接启动，但仍应把 platform override 限定在组合层。",
       "relationships": [
-        "M04 的 root；M14 启动清理；M29 VFS/懒加载；M44 镜像"
+        "M04 的 root；M14 启动清理；M29 VFS/懒加载"
       ],
       "migration": {
         "strategy": "先统一 app-boot 路径，再迁移各平台；把 pack-time dump 替换为运行时组合",
@@ -3184,7 +3184,7 @@
       },
       "applicability": "适用于多 Workspace、文件预览/上传的本地或 Web 应用；单用户单目录可简化，但仍需路径规范化。",
       "relationships": [
-        "M22 二进制；M27 读取；M30 上传/安装"
+        "M22 二进制；M27 读取；M30 桌面安装包页面"
       ],
       "migration": {
         "strategy": "先把路径/权限收进服务，再迁移预览/上传",

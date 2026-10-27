@@ -427,20 +427,20 @@
 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-24-recursive-python-sdk-session-notifications.md:1-30@687f282e
 
 <a id="compile-time-pin"></a>
-## 20. Compile Time Pin
+## 20. Compile-time checkpoint pin and explicit /compact event pairing
 
 **机制 ID**：`rationale-bug-fix-2-compile-time-pin`
 
-**中文摘要**：跨包字面量用 type-only leaf 声明在编译期钉住；删除死契约；用显式 summaryEventSeq 配对，而不是相邻关系或解析出的展示文本。
+**中文摘要**：源 Note 含两个独立合同：(1) 客户端 `COMPACT_PLUGIN` 用 type-only leaf 的 `CompactionCheckpointSource['plugin']` 在编译期钉住，type-only import 必须过 client purity gate，死 fold/contract 删除；(2) 成功的命名 `/compact` 只按持久 `command/done` 的 `summaryEventSeq` 与唯一已加载 checkpoint 配对，不按相邻关系或解析出的展示文本。
 
-**何时适用/前提**：当变更、迁移、事故或评审涉及该机制，或某个消费者准备重复、绕过、按形状推断这条规则时。核心触发事实：Cross-package literals must be pinned by a type-only leaf declaration at compile time, and dead contracts removed; /compact pairs by authoritative summaryEventSeq, not adjacency or parsed presentation text.
+**何时适用/前提**：变更 checkpoint plugin id、客户端类型/纯度边界，或手动 `/compact` 与 checkpoint 的配对；需要真实窗口/分页与 cold resume。
 
 **机制义务（提取要点；保留关键英文措辞）**：
-- Pin cross-package literal relationships at compile time.
-- Delete dead fold/contract code rather than keeping a second interpretation.
-- Pair events by an explicit authoritative reference.
+- Compile-time pin：type-only leaf 声明 `CompactionCheckpointSource['plugin']` 钉住客户端字面量；`COMPACT_PLUGIN` 赋值在 plugin id 改名时是编译错误；import 保持 type-only 并补 tsconfig path/reference。
+- Compile-time pin：删除死 fold/contract 代码，不保留第二解释；行为测试用 checkpoint/provenance 记录驱动 compaction Definition。
+- Event pairing：只配对成功命名 `/compact` 的 `CommandResult.sourceEventSeq`/持久 `command/done` 引用与恰好一个 `CompactionSummaryNode.summaryEventSeq`；歧义或缺失配对为空，pre-field 日志保留两行 soft-fall。
 
-**机制特定失败/例外/证据限制**：按上方共用失败处理与证据限制执行；源文未给出额外例外。
+**机制特定失败/例外/证据限制**：两个合同触发、owner 和证据不同，不能拿一个的证明当另一个的。裸 shape rule 会接受改名；value import 被 purity gate 拒绝。上下文注入可落在 command 与 checkpoint 之间；窗口 cut 丢失 cited summary event 时字段不可用，后续页补齐，不迁移旧日志。源 Note archived/implemented；当前代码绑定未验证，全部场景 planned。
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-web-transcript-log-ordered-projection.md:1-79@687f282e`
 
@@ -700,9 +700,9 @@
 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-17-durable-web-queue-recovery.md:1-54@687f282e
 
 <a id="durable-artifact-register"></a>
-## 33. Durable Artifact Register
+## 33. Compaction checkpoints use an English engineering register
 
-**机制 ID**：`rationale-bug-fix-2-durable-artifact-register`
+**机制 ID**：`rationale-bug-fix-2-durable-artifact-register`（历史 ID 保留；该 ID 的 “artifact register” 不是本机制主题，不表示 artifact 生命周期）
 
 **中文摘要**：英文内部工程 checkpoint 要求位于 trailing COMPACTION_INSTRUCTION 的首句；叙述翻译、exact literals（含 signature/非 ASCII）保留。summary request 的 system/tools/history 与 routed request byte-identical，不是所有后续 turn 的 prefix 不变。
 
@@ -1395,13 +1395,14 @@
 
 **中文摘要**：验证器只对自己的 npm install 传 --cache consumerRoot/.npm-cache；finally 随消费者删除；不删共享缓存、不改全局环境；强制终止残留是显式限制。
 
-**何时适用/前提**：packed-install verifier 拥有 disposable consumer，需显式 per-install cache、finally cleanup、真实 offline npm 与独立 env/npmrc canaries。目标 C3 producer 已对 install 单独传 cache，并清理自己的 workspace/tmp-root，日志留在外部。
+**何时适用/前提**：packed-install verifier 拥有 disposable consumer，需显式 per-install cache、finally cleanup、真实 offline npm 与独立 env/npmrc canaries。源 Note 只证明源 verifier 的 install invocation 与 finally cleanup；本治理工作区的 C3 producer/evidence 是独立 target 工作，不是源行为或已发布 C3 认证。
 
 **机制义务（提取要点；保留关键英文措辞）**：
 - Pass explicit --cache consumerRoot/.npm-cache only to owned npm install; win env/npmrc without changing installed executable environment.
 - Finally remove owned consumer/cache on success/install failure/entry failure; preserve shared host state/global config and unrelated npm consumers.
+- 源自动保证只覆盖源 verifier；target producer、installed-entry 观察和 `verification/evidence/*` 属于 target-package 工作区证据。
 
-**机制特定失败/例外/证据限制**：forced kill 阻止 finally 可残留，不承诺 crash recovery/清除旧共享缓存/其他生产者不耗尽磁盘；接受重复下载。真实 Windows npm 的4个回归及故障修正后新消费者均通过，移除 cache 参数的隔离副本在2个私有缓存断言上失败。原始输出见 `verification/evidence/raw/resumed-c3-private-cache-recovery.json`，变异证据见 `verification/evidence/resumed-c3-cache-mutation-control-complete.json`。目标保留 --ignore-scripts，以 installed entry 观察缓存，不冒充源 lifecycle/POSIX shim 测试；无全局 TMPDIR 改写不等于禁止 npm 合法临时写入。全包刷新和独立 C3 审计仍缺失。
+**机制特定失败/例外/证据限制**：forced kill 阻止 finally 可残留，不承诺 crash recovery/清除旧共享缓存/其他生产者不耗尽磁盘；接受重复下载。真实 Windows npm 的4个回归及故障修正后新消费者均通过，移除 cache 参数的隔离副本在2个私有缓存断言上失败。原始输出见 `verification/evidence/raw/resumed-c3-private-cache-recovery.json`，变异证据见 `verification/evidence/resumed-c3-cache-mutation-control-complete.json`；这些是 target-package 工作区证据，公开导出不包含 evidence store，不能声称随包发布或从包内独立复现。目标保留 --ignore-scripts，以 installed entry 观察缓存，不冒充源 lifecycle/POSIX shim 测试；无全局 TMPDIR 改写不等于禁止 npm 合法临时写入。全包刷新和独立 C3 审计仍缺失。
 
 **引用**：`deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-06-packed-install-private-npm-cache.md:1-29@687f282e`
 
@@ -2269,7 +2270,7 @@
 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e
 
 <a id="transient-vs-permanent-error"></a>
-## 108. Transient Vs Permanent Error
+## 108. Transient Vs Permanent Error: TUI adapter deferral, Windows atomic replace, Windows lock probe
 
 **机制 ID**：`rationale-bug-fix-2-transient-vs-permanent-error`
 
@@ -2286,7 +2287,7 @@
 
 **计划验证**：TUI：未注册 provider 的 mount 静默 park，不相关 commit 不打印，route commit 到达后完成；target 变化清除 stale wait；detach 后 commit 不再重入。Windows 原子替换：注入 EACCES/EBUSY/EPERM，推进 fake timer，观察同一 temp sibling 与 caller lock 下最多八次重试（不把初次尝试算成重试），最终成功；其他 code/OS 立即失败；耗尽后移除 temp、重抛最终错误、target 不变。锁探测：holder 在 contender lstat 前释放时，一次 unconfirmed EPERM 重试成功；第二次 unconfirmed 失败重抛；confirmed contention 继续等待；POSIX 不变；不取代 credential-registration 写入串行化。证据状态：`planned`。
 
-**机制特定失败/例外/证据限制**：POSIX 行为不变；持续的 Windows 权限失败可能在一次退避后才报告。此获取锁规则不取代现有凭据注册笔记对写入串行化的所有权。The source records unresolved, unverified or explicitly non-promised behavior; preserve it rather than upgrading it to a guarantee.
+**机制特定失败/例外/证据限制**：三个独立子合同共享的只是分类主题，触发、owner、retry bound 与 recovery 不同；不得把一个子合同的证据、平台结论或重试次数搬到另一个。TUI deferral 只针对 context-window 的 `NO_ADAPTER` 启动竞态，不是所有 adapter error；atomic replace 只重试命名 Windows rename code；lock acquisition 只允许一次 unconfirmed EPERM，不是通用权限重试。POSIX 行为不变；持续的 Windows 权限失败可能在一次退避后才报告。此获取锁规则不取代现有凭据注册笔记对写入串行化的所有权。The source records unresolved, unverified or explicitly non-promised behavior; preserve it rather than upgrading it to a guarantee.
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-tui-adapter-registration-race.md:1-30@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-windows-atomic-replace-retry.md:1-28@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-14-windows-lock-release-probe.md:1-22@687f282e`
 
@@ -2308,8 +2309,12 @@
 - Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write
 - blank key materializes reference-free profile
 - deletion removes only the exact page-derived configured+writable reference, unsets credential before profile, both idempotent
+- 设置成功后先用返回的 redacted descriptor 替换比较子树/revision，再 `credentials.set`；真正的并发变更仍报 `settings-conflict`。
+- 删除保留 custom/environment/missing/unidentified credential；稳定显示身份为 `Display Name (route-id)`，对话框说明 key 是否移除并拥有失败。
 
-**机制特定失败/例外/证据限制**：按上方共用失败处理与证据限制执行；源文未给出额外例外。
+**计划验证**：设置成功、credential 失败 → 草稿 key/card 保留，重试零 settings ops、仅 credential write；空 pi-ai key → 无 derived `apiKeyEnv`、native discovery 可用；精确 page-derived configured+writable 删除 → 先 credential 后 profile、两次幂等；stale revision 重试 → `settings-conflict` 而非 replay；custom/env/missing/unidentified → 拒绝删除并保留；设置后崩溃 → 已提交设置 + 可观察 pending 第二阶段，重试只补 credential，不 rollback；删除 settings-stage 失败 → row/frozen target 留待重试。证据状态：`planned`。
+
+**机制特定失败/例外/证据限制**：设置与凭据两个 durable store 不是原子事务；进程崩溃可停在两段之间，但顺序与幂等让状态可观察、可重试，不能声称 rollback。没有 cross-domain transaction RPC。源 Note archived/implemented；当前代码绑定未验证，全部场景 planned。
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-provider-credential-lifecycle.md:1-28@687f282e`
 

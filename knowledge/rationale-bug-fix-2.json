@@ -1497,7 +1497,7 @@
     },
     {
       "id": "rationale-bug-fix-2-compile-time-pin",
-      "title": "Compile Time Pin",
+      "title": "Compile-time checkpoint pin and explicit /compact event pairing",
       "sources": [
         {
           "path": ".agents/notes/archived/bug-fix/2026-07-30-web-transcript-log-ordered-projection.md",
@@ -1506,16 +1506,16 @@
           "kind": "history"
         }
       ],
-      "problem": "Cross-package literals must be pinned by a type-only leaf declaration at compile time, and dead contracts removed; /compact pairs by authoritative summaryEventSeq, not adjacency or parsed presentation text.",
+      "problem": "The source note owns two independent contracts. (1) A cross-package literal is pinned by a type-only leaf declaration at compile time: the client's `COMPACT_PLUGIN` is typed from `CompactionCheckpointSource['plugin']`, so renaming the Service Definition plugin id is a compile error; the import must remain type-only and pass the client purity gate, and dead fold/contract code is deleted rather than kept as a second interpretation. (2) A successful named `/compact` pairs with exactly one loaded `CompactionSummaryNode` by the authoritative `summaryEventSeq` persisted in `command/done`, never by adjacency, parsed presentation text, or a nearest-row guess.",
       "triggers": [
-        "A change, migration, incident or review concerns Compile Time Pin.",
+        "A change, migration, incident or review concerns the checkpoint plugin literal, the client purity/type-only boundary, or manual `/compact` to checkpoint pairing.",
         "A consumer would duplicate, bypass or re-derive the rule instead of using its owner.",
-        "The source failure mode is reachable: Cross-package literals must be pinned by a type-only leaf declaration at compile time, and dead contracts removed; /compact pairs by authoritative summaryEventSeq, not adjacency or parsed…"
+        "The source failure mode is reachable: Cross-package literals must be pinned by a type-only leaf declaration at compile time, and dead contracts removed; /compact pairs by authoritative summaryEventSeq, not adjacency or parsed presentation text."
       ],
       "obligations": [
-        "Pin cross-package literal relationships at compile time.",
-        "Delete dead fold/contract code rather than keeping a second interpretation.",
-        "Pair events by an explicit authoritative reference."
+        "Compile-time pin: pin the client's checkpoint plugin literal to the host-side `CompactionCheckpointSource['plugin']` through a type-only leaf declaration; keep the import type-only so the client purity gate still passes, and add the tsconfig path/reference the erased import needs.",
+        "Compile-time pin: delete dead fold/contract code rather than keeping a second interpretation; the behavioral test drives the compaction Definition with checkpoint/provenance records.",
+        "Event pairing: pair only a successful named `/compact` whose `CommandResult.sourceEventSeq`/persisted `command/done` reference equals exactly one loaded `CompactionSummaryNode.summaryEventSeq`; ambiguous or missing references pair nothing, and pre-field logs keep the two-row soft-fall."
       ],
       "actors": [
         "owning component author",
@@ -1549,24 +1549,32 @@
       "verification": {
         "positive": [
           {
-            "scenario": "Normal path: Pin cross-package literal relationships at compile time. Assert the documented completion signal.",
+            "scenario": "Rename the compaction Service Definition plugin id and run the client typecheck: the `COMPACT_PLUGIN` assignment fails with a type error, proving the literal is pinned from the leaf declaration; the ordinary build still accepts the type-only import through the client purity gate.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Drive a successful named `/compact` whose persisted reference equals exactly one loaded checkpoint, with an injected context event between the command and the checkpoint: the transcript renders one compact disclosure at the checkpoint flow position, and a cold resume of the same window renders identically.",
             "evidence": "planned"
           }
         ],
         "rejection": [
           {
-            "scenario": "Negative control: Delete dead fold/contract code rather than keeping a second interpretation. Assert the old or bypassing implementation fails.",
+            "scenario": "Replace the pin with a bare shape rule or a value import of the client-forbidden package: the shape rule accepts a renamed plugin id, and the value import is rejected by the client purity gate.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Pair the nearest `/compact` row with the next checkpoint, or parse item/token counts from settlement text: an interleaved injection or ambiguous reference must pair nothing, and the structured summary fields remain authoritative.",
             "evidence": "planned"
           }
         ],
         "recovery": [
           {
-            "scenario": "Failure path: Pair events by an explicit authoritative reference. Assert the stated preservation, fallback, quarantine or fail-loud outcome.",
+            "scenario": "After the intentional plugin rename, update the leaf declaration/type-only import and rerun the client typecheck. For a window cut that omitted the cited summary event, a later page supplies it and fills the marker fields; pre-field persisted logs keep the former two-row soft-fall without migration.",
             "evidence": "planned"
           }
         ]
       },
-      "limitations": "Extracted from the Agent Note body and its Chinese counterpart only; linked implementation, configuration and test files were not inspected, and verification remains planned.",
+      "limitations": "Extracted from the Agent Note body and its Chinese counterpart; the linked implementation, client purity-gate configuration and tests were not inspected, and all verification remains planned. The stable ID names only the compile-time pin, but the source note contains two separate contracts (compile-time literal pin and `/compact` event pairing) with different triggers and evidence: keep them explicit and do not treat one contract's proof as the other's. The source note is archived/implemented; its current-code binding is unverified.",
       "sourceState": [
         "implemented/archived"
       ]
@@ -2484,7 +2492,7 @@
     },
     {
       "id": "rationale-bug-fix-2-durable-artifact-register",
-      "title": "Durable Artifact Register",
+      "title": "Compaction checkpoints use an English engineering register",
       "sources": [
         {
           "path": ".agents/notes/archived/bug-fix/2026-07-31-english-compaction-checkpoints.md",
@@ -2495,7 +2503,7 @@
       ],
       "problem": "The compactor's trailing instruction asks for an English internal engineering checkpoint while preserving exact literals, not an English-only conversation or ASCII-only output. The requirement is the FIRST SENTENCE OF THAT INSTRUCTION, not text the checkpoint must repeat. Prefix identity compares summarization input against the routed request, not arbitrary post-compaction next turns.",
       "triggers": [
-        "A change, migration, incident or review concerns durable artifact register.",
+        "A change, migration, incident or review concerns the compaction checkpoint instruction, its engineering register, or the summarization request's prefix alignment.",
         "A consumer would duplicate, bypass or re-derive the rule instead of using its owner.",
         "The source failure mode is reachable: COMPACTION_INSTRUCTION requires an English engineering-register checkpoint, translating narrative but preserving exact paths/commands/errors/identifiers/quoted wording…"
       ],
@@ -2558,7 +2566,7 @@
           }
         ]
       },
-      "limitations": "English8-29 read. Corrected already-concrete but source-inaccurate scenarios: opening contract belongs to trailing instruction, comparison to routed request not future turns, and no invented automatic output refusal. The Note includes signatures/non-ASCII literal and direct-summary snapshot boundaries. Target prompt/request bindings and actual real-loop/output proof missing; prior Chinese provenance historical; source recovery absent not C5 waiver.",
+      "limitations": "English8-29 read. The stable ID and anchor retain the historical label 'durable-artifact-register', which is not this mechanism's subject: the source note governs a compaction checkpoint's English engineering register and request-prefix alignment, not an artifact register or artifact lifecycle. Corrected already-concrete but source-inaccurate scenarios: opening contract belongs to trailing instruction, comparison to routed request not future turns, and no invented automatic output refusal. The Note includes signatures/non-ASCII literal and direct-summary snapshot boundaries. Target prompt/request bindings and actual real-loop/output proof missing; prior Chinese provenance historical; source recovery absent not C5 waiver.",
       "sourceState": [
         "implemented/archived"
       ]
@@ -5098,41 +5106,41 @@
         "Regression owner runs real offline npm/local tarball, observes actual private _cacache before cleanup and checks success/install-failure/entry-failure plus env/npmrc canaries. Source observes via lifecycle hook; target preserves --ignore-scripts and observes from the installed entry instead. Forced kill remains a no-finally boundary."
       ],
       "enforcement": {
-        "mode": "automatic",
-        "implementation": "Source verifier explicitly overrides install cache and finally removes owned consumer. Target research/build-c3-evidence.mjs now gives only installed-npm-install --cache ${GOVERNANCE_WORKSPACE_ROOT}/.npm-cache; runConsumer finally removes owned workspace/tmp-root while retaining logs outside both. Actual Windows offline npm controls show environment/npmrc override, executable environment preservation and success/install-failure/entry-failure cleanup; independent C3 audit and current full-package refresh remain outstanding.",
-        "trust": "Verifier owns only its invocation consumer/cache; shared user cache/global settings belong to other processes and must survive. Artifact publication has separate authority.",
-        "failure": "Install/entry failure propagates while finally removes owned cache; forced termination that prevents finally may leave it. No shared-cache deletion or crash-recovery guarantee.",
-        "exceptions": "Does not reclaim existing ambient cache, stop other producers' disk exhaustion or avoid repeat downloads. Source executable regression follows POSIX runner, not Windows command-shim proof."
+        "mode": "automatic source verifier cache ownership; target C3 producer is separate",
+        "implementation": "Source effect: the packed-install verifier passes `--cache <consumerRoot>/.npm-cache` only to its own npm install and its existing `finally` removes that cache with the consumer after success, install failure or executable failure, without changing the installed executable's environment or shared host state. Target effect (separate, not source proof): this governance workspace's `research/build-c3-evidence.mjs` passes the cache only to installed-npm-install and `runConsumer` finally removes its owned workspace/tmp root; `verification/evidence/*` records are workspace-local target artifacts excluded from the public export, not independently reproducible from the shipped package.",
+        "trust": "The source note establishes only the source verifier's invocation and cleanup contract. The target producer, its evidence files and the installed-entry probes are target claims with their own scope; they do not certify source behavior, full-package binding or independent C3. No reproducible target commit/export is recorded for these workspace-local files, so they are not shipped or independently repeatable from the package.",
+        "failure": "Install/entry failure propagates while finally removes the owned cache; forced termination that prevents finally may leave it. No shared-cache deletion or crash-recovery guarantee.",
+        "exceptions": "Does not reclaim existing ambient cache, stop other producers' disk exhaustion or avoid repeat downloads. Source executable regression follows the POSIX runner, not Windows command-shim proof."
       },
       "applicability": "Apply when the same trigger, effect and trust boundary exist. Parameterize component names, paths, limits and platform spellings; do not apply as a slogan when the trigger is absent.",
       "relationships": [],
       "migration": {
         "strategy": "Owner-first migration: make the owning boundary authoritative, migrate every consumer, retain only source-mandated compatibility, and add a negative control.",
-        "implementation": "Explicit per-install cache and failure-safe owned-consumer cleanup are implemented in the actual C3 producer, not merely its child environment. Existing consumer sandbox remains; executable cache variables are not rewritten to the install-only cache. Behavioral regression imports the real plan/orchestrator and runs real local-tarball npm plus the installed Node entry.",
+        "implementation": "Source contract: explicit per-install cache and failure-safe owned-consumer cleanup in the packed-install verifier. Separate target work in this governance workspace: the C3 producer passes the cache only to its install and cleans its owned consumer; this is not source behavior or shipped C3 certification. Behavioral regression imports the real plan/orchestrator and runs real local-tarball npm plus the installed Node entry in the target environment.",
         "requiredSupport": "For target adoption, implement an explicit per-install cache and failure-safe cleanup of only the owned consumer, then execute positive, install-failure, entry-failure and recovery scenarios against the real target entry. Earlier publisher-only C3 tests and raw evidence are not shipped or independently reproducible from this public package; they do not certify target behavior or full-package completeness."
       },
       "reference": "references/rationale-bug-fix-2.md#owned-temporary-state",
       "verification": {
         "positive": [
           {
-            "scenario": "Actual Windows npm installs a tiny local tarball offline with env-cache and separate user-npmrc worlds. Installed entry records private .npm-cache/_cacache content before finally; cache/userconfig/TMPDIR values remain inherited, both unrelated cache trees and userconfig bytes survive, owned consumer/tmp roots disappear and raw logs remain. Target keeps --ignore-scripts; this is installed-entry observation, not source lifecycle or POSIX shim execution.",
-            "evidence": "verification/evidence/raw/resumed-c3-private-cache-recovery.json"
+            "scenario": "Target-package evidence (not re-executed here): actual Windows npm installs a tiny local tarball offline with env-cache and separate user-npmrc worlds. Installed entry records private .npm-cache/_cacache content before finally; cache/userconfig/TMPDIR values remain inherited, both unrelated cache trees and userconfig bytes survive, owned consumer/tmp roots disappear and raw logs remain. Target keeps --ignore-scripts; this is installed-entry observation, not source lifecycle or POSIX shim execution.",
+            "evidence": "target-package workspace evidence (excluded from public export): verification/evidence/raw/resumed-c3-private-cache-recovery.json"
           }
         ],
         "rejection": [
           {
-            "scenario": "An isolated byte-bound producer copy loses only --cache; real offline npm plus installed entry then fail the private-_cacache assertion in both environment and userconfig worlds. Current producer is unchanged, mutated roots are removed and raw failures retained. Earlier incomplete-copy module-load failure is preserved but explicitly not counted as a rejection control.",
-            "evidence": "verification/evidence/resumed-c3-cache-mutation-control-complete.json"
+            "scenario": "Target-package evidence (not re-executed here): an isolated byte-bound producer copy loses only --cache; real offline npm plus installed entry then fail the private-_cacache assertion in both environment and userconfig worlds. Current producer is unchanged, mutated roots are removed and raw failures retained. Earlier incomplete-copy module-load failure is preserved but explicitly not counted as a rejection control.",
+            "evidence": "target-package workspace evidence (excluded from public export): verification/evidence/resumed-c3-cache-mutation-control-complete.json"
           }
         ],
         "recovery": [
           {
-            "scenario": "Actual malformed-tarball npm install fails nonzero without starting the entry; independently a real installed entry exits23. Both propagate failure and finally remove owned workspace/cache/tmp, preserve unrelated caches/config and retain logs. Correct each input/outcome and a fresh consumer actually installs and exits0, then cleans up. Forced termination preventing finally remains outside the guarantee.",
-            "evidence": "verification/evidence/raw/resumed-c3-private-cache-recovery.json"
+            "scenario": "Target-package evidence (not re-executed here): actual malformed-tarball npm install fails nonzero without starting the entry; independently a real installed entry exits23. Both propagate failure and finally remove owned workspace/cache/tmp, preserve unrelated caches/config and retain logs. Correct each input/outcome and a fresh consumer actually installs and exits0, then cleans up. Forced termination preventing finally remains outside the guarantee.",
+            "evidence": "target-package workspace evidence (excluded from public export): verification/evidence/raw/resumed-c3-private-cache-recovery.json"
           }
         ]
       },
-      "limitations": "Primary English8-29 reread, prior Chinese declarations historical. Install-only cache wins env/npmrc without changing executable env; no shared/global mutation, ambient reclamation or forced-kill recovery guarantee. Actual target Windows npm and installed-entry probe do not claim source POSIX shim/lifecycle-hook execution. A spurious no-TMP-write assertion was removed after actual npm compile-cache output demonstrated that source promises no global TMPDIR rewrite, not zero legitimate temporary writes; cache/config canaries and environment checks remain. Current full-package binding and independent C3 certification are still missing.",
+      "limitations": "Primary English8-29 reread, prior Chinese declarations historical. Install-only cache wins env/npmrc without changing executable env; no shared/global mutation, ambient reclamation or forced-kill recovery guarantee. Actual target Windows npm and installed-entry probe do not claim source POSIX shim/lifecycle-hook execution. A spurious no-TMP-write assertion was removed after actual npm compile-cache output demonstrated that source promises no global TMPDIR rewrite, not zero legitimate temporary writes; cache/config canaries and environment checks remain. Current full-package binding and independent C3 certification are still missing. The target producer and verification/evidence files are workspace-local target artifacts excluded from the public export; they are not shipped, not source behavior, and not independently reproducible from this package. The source automatic claim is limited to the source verifier's own install invocation and finally cleanup.",
       "sourceState": [
         "implemented"
       ]
@@ -8185,7 +8193,7 @@
     },
     {
       "id": "rationale-bug-fix-2-transient-vs-permanent-error",
-      "title": "Transient Vs Permanent Error",
+      "title": "Transient vs permanent error: TUI adapter deferral, Windows atomic replace, and Windows lock probe are independent",
       "sources": [
         {
           "path": ".agents/notes/archived/bug-fix/2026-07-30-tui-adapter-registration-race.md",
@@ -8213,11 +8221,9 @@
         "The source failure mode is reachable: NO_ADAPTER on mount is treated as transient: park silently and re-resolve on the registry's commit notification, never suppress permanently, clear stale wait on target change…"
       ],
       "obligations": [
-        "event-driven deferral for known startup races while preserving the permanent-failure signal. classify transient vs permanent at the narrowest shared primitive",
-        "preserve atomicity and final state on exhaustion. On Windows exclusive-create EPERM is ambiguous because the holder can release before a later lstat",
-        "withFileLock therefore allows exactly one unconfirmed EPERM retry per acquisition using the existing backoff/deadline",
-        "rethrows a second unconfirmed failure",
-        "keeps confirmed contention waiting"
+        "TUI adapter deferral: treat a `NO_ADAPTER` rejection of the model-context resolution as a transient state; park silently and re-resolve on the next `llm/adapters-updated` commit; an unrelated commit stays silent; any target change re-enters resolution and clears the stale wait; every other resolution error still prints; never suppress `NO_ADAPTER` permanently. Reject timer polling, config ordering and Loader coupling.",
+        "Windows atomic replace: `writeFileAtomic` is the narrow shared owner; retry only Windows `EACCES`/`EBUSY`/`EPERM`, up to eight times with 20-200 ms exponential backoff; the same fully written temp sibling remains the rename source; a caller-held writer lock stays held; other codes and other operating systems fail immediately; exhaustion removes the temp sibling, rethrows the final error and leaves the target unchanged; never delete the target first; tests advance fake timers instead of sleeping.",
+        "Windows lock acquisition: exclusive-create `EPERM` is ambiguous because the holder can release before a later `lstat`; `withFileLock` allows exactly one unconfirmed `EPERM` retry per acquisition using the existing backoff/deadline; confirmed contention keeps waiting; a second unconfirmed permission failure rethrows; the protected operation runs only after exclusive creation succeeds; POSIX behavior is unchanged and this acquisition rule does not supersede the credential-registration write-serialization decision."
       ],
       "actors": [
         "owning component author",
@@ -8225,17 +8231,21 @@
         "regression-test owner"
       ],
       "steps": [
-        "Locate the owning boundary and enumerate every representation and consumer; cite the source ranges recorded in this mechanism.",
-        "Apply the rule at that owner first: event-driven deferral for known startup races while preserving the permanent-failure signal. classify transient vs permanent at the narrowest shared primitive",
-        "Apply the remaining obligations and delete duplicate or legacy paths: preserve atomicity and final state on exhaustion. On Windows exclusive-create EPERM is ambiguous because the holder can release before a later lstat; withFileLock therefore allows exactly one unconfirmed EPERM retry per acquisition using…",
-        "Add positive, rejection and recovery evidence, then record exceptions and unresolved evidence limits."
+        "TUI: subscribe the model controller to `llm/adapters-updated`; park only a `NO_ADAPTER` context-window rejection, re-resolve on each commit, clear the wait on target change, and detach the listener with the channel.",
+        "Windows atomic replace: inject each retried code into the rename, advance fake timers through the eight-attempt 20-200 ms policy, keep one temp sibling and the caller's writer lock, then assert success or exhaustion cleanup.",
+        "Windows lock: force the holder to release before the contender's `lstat`; allow one unconfirmed EPERM retry per acquisition, keep confirmed contention waiting, and rethrow a second unconfirmed failure.",
+        "Keep the three contracts' triggers, owners, retry bounds, platform scope and recovery evidence separate; do not reuse one contract's proof for another."
       ],
       "enforcement": {
-        "mode": "source policy + review + regression/benchmark evidence (source tests were not executed here)",
-        "implementation": "Owning boundary enforces: event-driven deferral for known startup races while preserving the permanent-failure signal. classify transient vs permanent at the narrowest shared primitive; preserve atomicity and final state on exhaustion. On Windows exclusive-create EPERM is ambiguous because the holder can release before a later lstat; withFileLock therefore allows exactly one unconfirmed EPERM retry per acquisition using the existing…",
-        "trust": "Only the declared owner is authoritative; consumers may present or transport the result but must not re-derive or widen it.",
-        "failure": "Fail loud or reject before side effects; do not fabricate a fallback or silently drop evidence.",
-        "exceptions": "Only the documented exceptions and factual non-activation triggers; no undocumented exception."
+        "mode": "source policy + per-contract tests + review (source tests were not executed here)",
+        "implementation": "Three independent owners: the TUI model controller owns `NO_ADAPTER` deferral and the registry subscription; `writeFileAtomic` owns bounded Windows replacement retry and temp cleanup; `withFileLock` owns one unconfirmed Windows EPERM acquisition retry. Each has its own tests or review surface; one contract's implementation does not enforce another.",
+        "trust": "Trust each owner only within its trigger, platform and bound; a TUI deferral test says nothing about atomic replacement, and an atomic-replace test says nothing about lock acquisition or POSIX behavior.",
+        "failure": "Fail loud or reject before side effects; do not fabricate a fallback or silently drop evidence. Persistent permission failures must surface, and permanent `NO_ADAPTER` must remain visible at dispatch.",
+        "exceptions": [
+          "TUI deferral applies only to the context-window `NO_ADAPTER` startup race, not to every adapter error.",
+          "Atomic replacement retries only the named Windows rename codes; lock acquisition allows exactly one unconfirmed EPERM retry, not a general permission-retry loop.",
+          "POSIX behavior is unchanged; the lock acquisition rule does not supersede credential-registration write serialization."
+        ]
       },
       "applicability": "Apply when the same trigger, effect and trust boundary exist. Parameterize component names, paths, limits and platform spellings; do not apply as a slogan when the trigger is absent.",
       "relationships": [],
@@ -8289,7 +8299,7 @@
           }
         ]
       },
-      "limitations": "Extracted from the Agent Note body and its Chinese counterpart only; linked implementation, configuration and test files were not inspected, and verification remains planned. The source records unresolved, unverified or explicitly non-promised behavior; preserve it rather than upgrading it to a guarantee. This acquisition rule does not supersede the credential-registration write-serialization decision. POSIX behavior is unchanged, and a persistent Windows permission failure can incur one backoff before failing.",
+      "limitations": "Extracted from three independent Agent Note bodies and their Chinese counterparts; linked implementation, configuration and test files were not inspected, and all verification remains planned. The three sub-contracts share only a classification theme: TUI adapter deferral is event-driven and unbounded in time, Windows atomic replacement is an eight-attempt rename policy, and Windows lock acquisition is a single unconfirmed-EPERM retry with an existing deadline. Do not transfer a trigger, owner, retry bound, recovery claim or platform conclusion between them. POSIX behavior is unchanged, and a persistent Windows permission failure can incur one backoff before failing. The source records unresolved, unverified or explicitly non-promised behavior; preserve it rather than upgrading it to a guarantee. This acquisition rule does not supersede the credential-registration write-serialization decision.",
       "sourceState": [
         "implemented/archived"
       ]
@@ -8312,10 +8322,13 @@
         "The source failure mode is reachable: Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write…"
       ],
       "obligations": [
-        "make cross-store multi-stage operations resumable from a checkpoint instead of replaying committed stages",
-        "Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write",
-        "blank key materializes reference-free profile",
-        "deletion removes only the exact page-derived configured+writable reference, unsets credential before profile, both idempotent"
+        "Treat the successful settings response as the commit checkpoint: replace the card's comparison subtree and expected revision with the returned redacted descriptor before attempting `credentials.set`; a retry then sends no settings operations and repeats only the credential write.",
+        "A genuine concurrent settings change before the first commit still fails with `settings-conflict`; do not paper over it with a stale revision.",
+        "Trim typed keys at the UI and direct DeepSeek resolver boundaries; a blank normalized pi-ai key materializes an empty, reference-free profile and records no derived `apiKeyEnv`, preserving provider-native discovery.",
+        "Deletion unsets a credential only when the joined row identifies the exact page-derived `<ROUTE>_API_KEY` reference and reports it configured and writable; unset the credential before the user-layer profile so a settings-stage failure leaves the row and frozen target visible for retry; both unsets are idempotent.",
+        "Custom references, environment credentials, missing credentials and targets the join cannot identify are retained for manual management; do not delete a credential the page does not own.",
+        "Use the stable display identity `Display Name (route-id)` (collapsing to the route id when both strings match) for accessible Edit/Delete names and the destructive dialog; the dialog states whether the stored key will be removed and owns operation failures.",
+        "Save and delete are not atomic across settings and credential stores: a process crash between stages leaves committed-stage state plus an observable, retryable second stage; do not claim rollback or a cross-domain transaction."
       ],
       "actors": [
         "owning component author",
@@ -8323,17 +8336,23 @@
         "regression-test owner"
       ],
       "steps": [
-        "Locate the owning boundary and enumerate every representation and consumer; cite the source ranges recorded in this mechanism.",
-        "Apply the rule at that owner first: make cross-store multi-stage operations resumable from a checkpoint instead of replaying committed stages",
-        "Apply the remaining obligations and delete duplicate or legacy paths: Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write; blank key materializes reference-free profile; deletion…",
-        "Add positive, rejection and recovery evidence, then record exceptions and unresolved evidence limits."
+        "Open the Models card and keep its original subtree/revision only until the settings stage is attempted.",
+        "Submit settings; on success, replace the comparison subtree and expected revision with the returned redacted descriptor before calling `credentials.set`.",
+        "If `credentials.set` fails, keep the draft key and card visible; retry must send no settings operations and repeat only the credential write.",
+        "For a blank key, trim it, save an empty reference-free profile and do not derive `apiKeyEnv`; provider-native discovery must remain available.",
+        "For deletion, join the row to the exact page-derived `ROUTE_API_KEY` reference and require configured+writable; unset credential first, then the user-layer profile; retain custom/environment/missing/unidentified credentials.",
+        "After a crash between stages, reload the committed settings and retry the pending credential/profile stage; do not attempt cross-store rollback."
       ],
       "enforcement": {
-        "mode": "source policy + review + target regression evidence (source tests were not executed here)",
-        "implementation": "Owning boundary enforces: make cross-store multi-stage operations resumable from a checkpoint instead of replaying committed stages; Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write; blank key materializes reference-free profile; deletion removes only the exact page-derived configured+writable reference, unsets…",
-        "trust": "Only the declared owner is authoritative; consumers may present or transport the result but must not re-derive or widen it.",
-        "failure": "Preserve the last committed/observed state and surface the gap; do not silently guess or widen scope.",
-        "exceptions": "Only the documented exceptions and factual non-activation triggers; no undocumented exception."
+        "mode": "UI checkpoint and ordered idempotent operations; source component tests reported, not executed here",
+        "implementation": "The Models card owns the settings-stage checkpoint and retry behavior; deletion joins the exact page-derived configured+writable reference and unsets credential before profile. The source note reports component tests but does not name their files; no linked test was inspected or executed here.",
+        "trust": "Only the card's committed settings response plus returned redacted descriptor establishes the checkpoint; a credential or profile success does not retroactively make the other stage atomic.",
+        "failure": "If the second stage fails, preserve the draft/card (save) or row/frozen target (delete) for retry; never replay a committed settings mutation or delete a credential the page does not own. A crash between stages remains retryable but not rolled back.",
+        "exceptions": [
+          "Typed keys are trimmed at the UI and direct DeepSeek resolver boundaries; blank pi-ai keys intentionally save a reference-free profile.",
+          "Custom references, environment credentials, missing credentials and unidentifiable joins are retained for manual management.",
+          "No cross-domain transaction RPC is introduced; atomicity across durable stores is not claimed."
+        ]
       },
       "applicability": "Apply when the same trigger, effect and trust boundary exist. Parameterize component names, paths, limits and platform spellings; do not apply as a slogan when the trigger is absent.",
       "relationships": [],
@@ -8346,24 +8365,44 @@
       "verification": {
         "positive": [
           {
-            "scenario": "Normal path: exercise make cross-store multi-stage operations resumable from a checkpoint instead of replaying committed stages and assert the documentation's completion signal.",
+            "scenario": "Commit settings successfully, then fail `credentials.set`: the draft key and card remain visible, and retry issues zero settings operations and only the credential write; a later success completes the card.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Save a blank pi-ai key: the profile materializes without a derived `apiKeyEnv` reference, and provider-native discovery remains available.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Delete a page-managed provider whose joined row identifies the exact page-derived `ROUTE_API_KEY` as configured and writable: the credential is unset before the user-layer profile, both retries are idempotent, and stable `Display Name (route-id)` names the row and dialog.",
             "evidence": "planned"
           }
         ],
         "rejection": [
           {
-            "scenario": "Negative control: bypass or duplicate the owning boundary, or apply the documented rejected alternative; assert the mechanism refuses, isolates or does not re-derive.",
+            "scenario": "Retry with the stale revision/subtree captured when the card opened: the retry replays committed settings and fails with `settings-conflict`; the checkpoint behavior must instead produce no settings ops.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Blank pi-ai key writes a derived `apiKeyEnv` reference: reject because native provider discovery is suppressed.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Deletion targets a custom, environment-managed, missing, or unidentifiable credential, or a reference not exactly derived by this page: reject the deletion and retain the credential.",
             "evidence": "planned"
           }
         ],
         "recovery": [
           {
-            "scenario": "Failure path: inject the documented failure (Two-stage settings-then-credential save treats the successful settings response as commit checkpoint (new redacted subtree/revision) so retry repeats only the credential write); assert the stated preservation, fallback, retry bound, quarantine, or fail-loud outcome.",
+            "scenario": "Crash between the committed settings stage and the credential stage: reload shows the committed settings plus an observable pending second stage; retry completes only the credential write and does not roll back or replay settings.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Deletion's settings-stage unset fails after the credential unset: the row and frozen target stay visible for retry, and repeated deletion remains idempotent. Ambiguous credentials remain for manual management.",
             "evidence": "planned"
           }
         ]
       },
-      "limitations": "Extracted from the Agent Note body and its Chinese counterpart only; linked implementation, configuration and test files were not inspected, and verification remains planned.",
+      "limitations": "Extracted from the Agent Note body and its Chinese counterpart; linked implementation and test files named only generically were not inspected, and all verification remains planned. Save and delete are not atomic across the settings and credential stores: a crash between stages leaves an observable retryable state, not a rollback, and no cross-domain transaction RPC exists. Source is archived/implemented; current-code binding is unverified.",
       "sourceState": [
         "implemented/archived"
       ]

@@ -14,7 +14,7 @@ description: 把 DeepSeek Harness 式项目治理落到任意代码库：识别�
 
 安装 = 把本 Skill 目录（`SKILL.md`、`references/`、`knowledge/`、`bin/`、`tools/`、`package.json`、`SOURCE-LICENSE.txt`）原样复制到目标仓库的 `.agents/skills/harness-project-governance/`。核心运行时不依赖源仓、发布者路径或网络；可选执行模块的依赖按其参考单独准备。
 
-从公开仓库获取时，先按 [README.zh.md](README.zh.md) 运行 `npm run verify` 与 `npm run demo`；用 `node scripts/install-skill.mjs <目标仓库>` 安装白名单文件，已有安装座会拒绝，不覆盖。演示使用真实小应用、验收失败与恢复，但不是自主 Agent 采用或 C1–C6 完整验收。当前公开版本的证据与边界见 [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md)。
+从公开仓库获取时，先按 [README.zh.md](README.zh.md) 运行 `npm run verify` 与 `npm run demo`；用 `node scripts/install-skill.mjs <目标仓库>` 安装白名单文件，已有安装座会拒绝，不覆盖。演示使用真实小应用、验收失败与恢复，但不证明自主 Agent 已在其他项目中采用。历史公开版本的运行记录与适用边界见 [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md)。
 
 ```bash
 node .agents/skills/harness-project-governance/bin/governance.mjs verify
@@ -22,7 +22,7 @@ node .agents/skills/harness-project-governance/bin/governance.mjs verify
 
 `verify` 只证明交付内容自洽：全部机制可解析、ID 唯一、每项都有存在的参考文件、锚点和来源区间。锚点可来自 Markdown 标题、标题末尾的 `{#id}` 或 HTML 锚点；普通链接和围栏代码中的示例不算定义。它**不**证明目标项目已落实治理。核心命令需要 Node ≥ 22.19，无第三方依赖；可选 GitHub 审批模块另需 Python/Pygments。
 
-`package.json` 将完整运行面列入离线包：可用 `npm pack --ignore-scripts --offline` 打包，再从本地 tarball 安装。Node 核心无第三方依赖；可选审批模块的 Python 依赖单独固定在其 `requirements.txt`。`private: true` 防止误发布到 registry。安装后的命令名为 `harness-governance`；npm 不自动注册 Agent Skill，实际发现仍需上述 `.agents/skills/harness-project-governance/` 布局。研究、审计、验收项目和缓存不进入运行包；打包成功不代表治理已实现或通过 C1–C6。
+`package.json` 将运行面列入离线包：可用 `npm pack --ignore-scripts --offline` 打包，再从本地 tarball 安装。Node 核心无第三方依赖；可选审批模块的 Python 依赖单独固定在其 `requirements.txt`。`private: true` 防止误发布到 registry。安装后的命令名为 `harness-governance`；npm 不自动注册 Agent Skill，实际发现仍需上述 `.agents/skills/harness-project-governance/` 布局。研究、审计、验收项目和缓存不进入运行包；打包成功不代表目标项目已经配置或执行治理检查。
 
 命令：
 
@@ -33,22 +33,38 @@ node .agents/skills/harness-project-governance/bin/governance.mjs verify
 | `cite <id或片段>` | 查机制的标题、参考文件、来源数量；迁移前定位原文。 |
 | `init [仓库]` | 在目标仓库创建 `.governance/`（幂等，不覆盖已有文件）。 |
 | `status [仓库]` | 报告需求、验收、负责人、检查项与下一步的缺口；有缺口退出 2。 |
+| `check [仓库] [--policy 路径]` | 按策略中的 `checks` 顺序执行已配置命令，逐项报告退出码；任一失败退出 1；策略缺失、无效或检查为空退出 2。默认读取 `.governance/policy.json`；已有 owner 时用 `--policy` 指定检查清单，不创建状态文件。两种路径均解析仓库根与策略的真实路径，拒绝通过 symlink/junction 指向仓库外的策略。 |
 
 ## 2. 五条硬规则
 
 1. **结论必须有观察到的证据。** “应该能过”“上次通过”“测试数量够”都不算。写结论时附命令、退出码和输出位置；没运行就写“未验证”。
 2. **区分三种陈述。** 【源义务】源仓可定位的强制规则/门禁/冻结约定；【源事实】源仓现状、阈值、历史例子；【迁移设计】本 Skill 为落地补充、源仓无等价物。不得把迁移设计说成源仓保证。
-3. **一个事实只有一个家。** 需求在 `.governance/requirements.md`，当前状态在 `.governance/state.json`。长期决策默认在 `.governance/decisions/`；若采用 Agent Note 生命周期树，把同一决策及链接迁到其 owner，不维护两份同权威记录。参考文件只解释机制，不复制状态。
+3. **一个事实只有一个家。** 需求在 `.governance/requirements.md`，当前状态在 `.governance/state.json`。但先看目标是否已有状态 owner：既有任务板、Issue 台账、Agent Note 树或交接文件已经承担这件事时，以它为唯一权威，把本文要求迁入该 owner，不新建第二套。长期决策默认在 `.governance/decisions/`；若采用 Agent Note 生命周期树，把同一决策及链接迁到其 owner，不维护两份同权威记录。参考文件只解释机制，不复制状态。
 4. **不静默降级。** 源仓的自动/CI 强制不能改写成“建议”后宣称等效。确需降低保证时，先写决策记录、列明影响，并由用户明确决定。
 5. **远端与不可逆操作先授权。** 分支保护、审批、发布、历史改写只在获授权的隔离仓库/测试环境实测；不碰生产保护、真实凭据或不可逆数据。工作流文件存在不等于远端已验证。
 
-## 3. 每个任务都走同一循环
+## 3. 改动型任务走同一循环
 
-**3.1 接续。** 先运行 `governance status`；读 `.governance/requirements.md` 与 `state.json`。没有 `.governance/` 时先 `init`，再把用户本次的真实目标与验收写进 requirements——不要从聊天记录或检查清单猜进度。
+**3.0 何时启用状态协议。** 本循环的 `.governance` 状态文件是**迁移设计**（源仓没有等价通用协议，见 `agent-workflows-continuation-extension`：`sourceBacked: false`）。状态协议的任务是让进度跨上下文边界存活，**不是**把每次改动变成账本。只在以下情况启用：
+
+- 用户要求初始化治理元数据（此时 `init` 本身就是交付）；
+- 用户明确要求跨会话继续、暂停、交接，或压缩前保存进度；
+- 同一目标确需多个会话或另一位执行者接续。
+
+**只因为任务会改动仓库、或有多条验收条件，不在本轮新建 `.governance`。** 单会话内完成的多步改动把可观察验收写进当前交付和验证结果，不额外制造状态记录。
+
+纯问答、单点查询、只读诊断、一次性代码解释同样**不建立** `.governance`：不要为回答一个问题制造状态文件或运行 `init`。这些任务仍受第 2 节硬规则约束，并以实际命令输出交付。
+
+目标已有唯一状态 owner（任务板、Issue/PR 台账、Note 生命周期树、既有 handoff 文件或 `PROJECT.md`）时，**在既有 owner 上记录**，不新建 `.governance`；只有一个状态记录是权威，另一处只能是指向它的引用。现有记录的“已完成”“nextAction”或归档项都是待核对事实：用户已经撤销或改变的动作按当前请求失效，以仓库/用户当前事实修正记录，不因它写在状态文件里就继续执行。
+
+**3.1 接续。** 已存在 `.governance/` 或目标自定义状态 owner 时，先读它，再运行 `governance status`（仅对 `.governance` 布局有效）；把用户本次的真实目标与验收写进 requirements——不要从聊天记录或检查清单猜进度。需要按 3.0 启用但尚不存在时，用 `init` 创建后再写；不满足 3.0 时只读现有记录，不新建。
+
+`status` 只检查元数据是否齐备：它**不执行** `policy.checks`，也不判断 `nextAction` 是否已被撤销、归档项是否仍是现役。元数据齐全不是执行许可，`phase: complete` 也不证明交付已完成；权限、当前权威与完成状态必须各自核对。接续先核对 git/文件与用户当前请求；记录与仓库事实冲突时以仓库为准，不执行已撤销动作。
+
 **3.2 分类。** 用第 4 节路由表确定变更类型、受影响域、需要触发的机制。跨域变更列出全部受影响域，不只读最显眼的一份参考。
-**3.3 计划。** 把验收写成可观察条件，写入 `state.acceptance`。每条可机械检查的不变量接入目标已有或新增、实际执行的顶层入口；每条变更验收路径安排正常与无效用例，例外窄且有理由，不全局禁用规则。按[持久规则准入](references/decisions.md#durable-rule-admission)核对入口、执行者和拒绝证据；不能机械校验的语义判断单列评审程序。更新 `state.nextAction`。
+**3.3 计划。** 把验收写成可观察条件；启用状态协议时写入 `state.acceptance`，否则在本次交付中列出同一组条件。每条可机械检查的不变量接入目标已有或新增、实际执行的顶层入口；每条变更验收路径安排正常与无效用例，例外窄且有理由，不全局禁用规则。按[持久规则准入](references/decisions.md#durable-rule-admission)核对入口、执行者和拒绝证据；不能机械校验的语义判断单列评审程序。启用时更新 `state.nextAction`。
 **3.4 实施。** 复用目标仓库已有模式；新增约定前先确认没有第二套并存。改动公共符号前查全部调用点。
-**3.5 验证。** 运行目标项目登记在 `policy.checks` 的真实入口命令；失败就停下修，不以缩小范围或跳过检查收场。只报告实际执行过的验证。
+**3.5 验证。** 运行目标项目已有的真实检查入口；采用 `.governance/policy.json` 时可用 `governance check <repo>`，已有状态 owner 且使用独立检查清单时用 `governance check <repo> --policy <路径>`。检查清单只登记命令，不另存需求或进度；命令以本机权限执行，和项目脚本一样需要信任。失败就停下修，不以缩小范围或跳过检查收场。只报告实际执行过的验证。`check` 不推导检查、不证明语义完整或平台强制。
 **3.6 记录与交接。** 更新 `state`（阶段、已完成、未确定、下一动作）；影响长期维护的取舍写 `decisions/`。交接时给下一位执行者可直接继续的命令，而不是“继续完成”。
 
 ## 4. 任务路由

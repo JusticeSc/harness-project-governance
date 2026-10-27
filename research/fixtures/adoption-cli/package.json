@@ -1,0 +1,11 @@
+{
+  "name": "governance-adoption-project",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": {
+    "start": "node bin/tasks.mjs",
+    "test": "node --test test/cli.test.mjs test/reopen.test.mjs"
+  }
+}

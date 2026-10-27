@@ -258,7 +258,9 @@
 
 **失败/例外**：默认会话出现未承诺工具；或可选 provider 仍被基座依赖。安全/审计必需能力不能因“重”关闭；判断标准是产品是否站得住，不是体积 alone。
 
-**源证据**：`deepseek-harness/.agents/notes/archived/simplification/2026-08-03-omit-invariants-from-shipped-config.md:1-31@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md:1-30@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-09-12-ralph-off-in-shipped-defaults.md:1-50@687f282e`；当前 `deepseek-harness/packages/experimental/ralph-bundle/cordis.patch.yml:1-16@687f282e`、`deepseek-harness/packages/experimental/ralph-bundle/README.md:12-12@687f282e`、`deepseek-harness/packages/boot/app-boot/src/profile.ts:225-225@687f282e`。
+**源证据**：`deepseek-harness/.agents/notes/archived/simplification/2026-08-03-omit-invariants-from-shipped-config.md:1-31@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md:1-30@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-09-12-ralph-off-in-shipped-defaults.md:1-50@687f282e`；当前 `deepseek-harness/packages/experimental/ralph-bundle/cordis.patch.yml:1-16@687f282e`、`deepseek-harness/packages/experimental/ralph-bundle/README.md:12-12@687f282e`、`:28-28@687f282e`、`:40-40@687f282e`、`deepseek-harness/packages/boot/app-boot/src/profile.ts:225-225@687f282e`。
+
+**当前形态**：固定提交的 ralph opt-in 是 `experimental/ralph-bundle`，README 要求在 Web/Desktop Plugins 启用；patch 用 insert 建立隔离 `workflowEngine` 的 `optional-ralph` group，内含 `tool-ralph` 与 `workflow-ptc`。Note 的 base/preset `disabled: true` row 配方属写作时形态，不是现状；provider 闭包检查来自独立 Note，不能当作 ralph 证据。
 
 ## rationale-simplification-1-default-roster-single-interface
 
@@ -281,6 +283,8 @@
 **失败/例外**：默认带重复 schema，或 minimal 契约被 base 默认污染。两个接口服务不同能力（结构化编辑 vs 通用写）时可同时保留，但必须说明不是重叠。
 
 **源证据**：`deepseek-harness/.agents/notes/archived/simplification/2026-08-10-default-presets-single-editor.md:1-26@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-09-03-minimal-profiles-persistent-shell-only.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/simplification/2026-09-05-base-default-file-editor.md:1-32@687f282e`；当前 `deepseek-harness/packages/bundle/base/README.md:54-54@687f282e`、`deepseek-harness/packages/bundle/web-app/presets/minimal.patch.yml:12-23@687f282e`、`deepseek-harness/apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:64-68@687f282e`（minimal 当前保留 tool-fs 仅供 image read，已不是 Note 36 的 editor 断言）。
+
+**范围澄清**：Note 的“36 个 recall-only 工具”是它自己的演示配置，不是最小默认内核的要求；当前组合支持工具顺序、`optional` 与 raw-preset `disabled` row，`36` 不来自当前配置。只有“默认不挂载、minimal 自有选择、用 insert 显式启用”是规则，精确数量不是。
 
 ## rationale-simplification-1-pre-release-cutover-no-aliases
 
@@ -614,7 +618,7 @@
 
 **失败/例外**：浏览器可写任意组合/路径；`!!js` 在下一 mount 执行；编辑被旧 generation 忽略。本地 CLI/文件编辑仍可直接改文件；本机制限制远程/浏览器能力。
 
-**源证据**：`deepseek-harness/.agents/notes/archived/simplification/2026-08-08-copy-only-preset-authoring.md:1-31@687f282e`。注意固定提交的 preset registry 未完全保留该 Note 的 `copy/openDocument/remove` 方法名，应把具体 API 当历史，原则仍适用。
+**源证据**：`deepseek-harness/.agents/notes/archived/simplification/2026-08-08-copy-only-preset-authoring.md:1-31@687f282e`；当前实现证据 `deepseek-harness/packages/client/ui-agent-preset/README.md:26-31@687f282e`、`:44-48@687f282e`、`deepseek-harness/apps/web/tests/agent-preset-authoring.e2e.ts:1-109@687f282e`。固定提交的 Settings 是只读 YAML viewer + Creator-mode task，真实浏览器 e2e 断言四个内置 preset、无 textbox/复制/编辑/打开目录/删除，以及 Creator staging；它不验证 OS 权限、外部编辑器或 Creator-mode agent 写入。Note 的 `agentPreset.copy/openDocument/remove` 与 `settings/openAgentPresetDirectory` 是历史设计，具体 API 名不应当前代码。
 
 ## rationale-simplification-1-measured-micro-optimization
 

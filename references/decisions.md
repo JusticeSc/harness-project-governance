@@ -24,7 +24,7 @@
 | 做了一个有长期价值的决策 | M01、M02、M03 | 同 PR 内新增/更新一篇 Agent Note | 分类+格式门禁通过，且 `doc-sync` 绿 |
 | 只是机械/局部改动 | M01 | 不新增 Note；更新既有 owner 的事实 | PR 能说明为何豁免 |
 | 提案要落地或被否决 | M04 | 文件在生命周期目录间移动并重写 | 状态行与目录一致，骨架重写完成 |
-| 新增 Note 前怀疑旧 Note 已被取代 | M05 | 取代审计结论 + 同 PR 归档/保留交叉链接 | 每个候选被判定 full/partial/none |
+| 新增 Note 前怀疑旧 Note 已被取代 | M05 | 取代审计结论 + 同PR受控合并删除/合格归档/有理由保留交叉链接 | 每个候选被判定full/partial/none，独有义务未丢失 |
 | 写完后发现事实漂移 | M06 | 原地更新事实，不改决策 | 路径/符号/默认值与代码一致 |
 | 想删除、归档或合并旧 Note | M07、M08、M09 | 判决 + 三件套操作 + 封印 | `verify-archived-agent-notes` 通过 |
 | 怀疑归档被改 | M10 | 只读审计，报告 seal 变化 | 不修改冻结内容 |
@@ -201,14 +201,14 @@
 **步骤.**
 1. 搜索活跃树中覆盖同一决策、机制或被否决替代方案的旧 Note。**[源规则]** `deepseek-harness/.agents/notes/AGENTS.md:5@687f282e`
 2. 对每个候选判定：full supersession（旧决策整体被取代）、partial（部分事实/机制仍现行）、none。**[源规则]** 同技能。
-3. full 且为 implemented 三件套：同一 PR 内按 M09 归档。**[源规则]** `deepseek-harness/.agents/notes/AGENTS.md:5@687f282e`、`deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:14-16@687f282e`
+3. full且为implemented：同PR按语义条件选择受控合并删除（M08）、合格归档（M09）或暂保留独有未来约束。先保全每条独有理据、替代、后果、必需验证与覆盖缺口，并修全部入链，才可合并删除完整三件套；不是full一律归档。feature移除还须证明代码、配置、schema、持久/线格式、迁移、兼容、文档与支持性测试均无该能力；只删一实现或仍有兼容义务是partial。**[源规则]** `deepseek-harness/.agents/notes/README.md:38-52@687f282e`、`deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:14-29@687f282e`
 4. partial：保持两篇都活跃，并互相交叉链接；更新仍现行的事实。**[源规则]** `deepseek-harness/.agents/notes/AGENTS.md:5@687f282e`、`deepseek-harness/.agents/notes/README.md:50@687f282e`
 5. 旧提案已无价值：不是归档，而是按 rejected 生命周期拒绝并给出诚实原因。**[源规则]** `deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-27@687f282e`
 6. 用相对 Markdown 链接交叉引用 Note，禁止裸散文或编号，保证可机械检查且移动后仍有效。**[源规则]** `deepseek-harness/.agents/notes/README.md:17@687f282e`
 
-**责任者.** 新 Note 作者（审计与同 PR 归档）；`dsh-archive-agent-notes` 技能提供判决标准；评审者抽查。
+**责任者.** 新Note作者负责审计、独有义务保全及同PR语义处置；`dsh-archive-agent-notes`提供判决标准，评审者核对而非替代自动封印检查。
 
-**完成信号.** PR 报告列出每个被检旧 Note 的 full/partial/none 与去向；归档发生在同一 PR。
+**完成信号.** PR报告列每个被检旧Note的full/partial/none、依据和实际去向；合并删除时能在现役owner找到全部独有义务，归档时满足条件且同PR封印。没有自动“审计正确”证明。
 
 **失败处理.** 漏审不算“以后清理”：源仓把 supersession 定义为写入时动作，避免语料债务复利。发现漏审时在合并前补审；已合并则下次触碰该主题时补齐。
 
@@ -531,7 +531,7 @@
 - [ ] 路径的生命周期与 class 是否与决策性质一致？日期是否为首次提出日期？
 - [ ] 前三行、状态语法、`## Problem`、必备 H2、禁用标题、alternatives 是否满足？
 - [ ] 是否把 Note 编辑成了相反决策？若是，是否另建并交叉链接？
-- [ ] 新 Note 是否触发了取代审计？full/partial/none 是否逐项记录？full 是否同 PR 归档？
+- [ ] 新Note是否触发取代审计？full/partial/none是否逐项记录？同PR的保留/合格归档/受控合并删除是否有语义依据，独有义务是否完整保全？
 - [ ] implemented 的路径/符号/默认值是否与当前代码一致？是否出现 changelog 式历史？
 - [ ] 删除是否满足“小型 UI/纯机械”？归档是否满足“完整、低未来指导价值、有历史价值”？是否误用字数/配额？
 - [ ] 合并是否保留了全部独有理据、替代方案、后果、验证与覆盖缺口？是否删除 zh+sidecar 并修链接？

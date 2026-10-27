@@ -383,7 +383,7 @@
 
 ### 5.2 CI 必须证明“同一批字节在多个 Node 上可用”
 
-**【源义务】** 每个平台 job 构建一次，然后对**同一批二进制**测试 Node 24、20、22、26；Linux 还要在无编译器的 `node:24-alpine`、`node:20-alpine`、`node:22-alpine` 容器中测试 musl addon。pack 预演使用当前平台 pack → install → confine；Landlock 内核不满足时整个 leg 失败，不能 skip。
+**【源义务】** 每个平台 job 构建一次，然后对**同一批二进制**测试 Node 24、20、22、26；Linux 还要在无编译器的 `node:24-alpine`、`node:20-alpine`、`node:22-alpine`、`node:26-alpine` 容器中测试 musl addon。pack 预演使用当前平台 pack → install → confine；Landlock 内核不满足时整个 leg 失败，不能 skip。
 
 **责任者**：native 维护者（矩阵/脚本）；发布者（版本、tag、dispatch、审批）；release manager（注册表完成核对）。
 
@@ -718,7 +718,7 @@ macOS 的具体断言不是一次 `codesign --verify`：
 if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 ```
 
-即 Desktop 发布只能从 master dispatch，不能从 PR 或 tag。随后 `preflight-desktop-publish.mjs`：
+即发布工作流的 **dispatch ref** 必须是 master；PR、其他分支或 tag 事件不能触发该工作流。这约束的是 dispatch ref，不是被选中打包 run 的 `sourceRef`：`sourceRef` 仍可为分支或匹配产品版本的 `dsh-v*` tag，并在下文与 `release-desktop-version-artifacts` 中校验。随后 `preflight-desktop-publish.mjs`：
 
 - 校验 repository、run id、attempt 格式；
 - 若未指定 attempt，读取该 run 的最新 attempt；

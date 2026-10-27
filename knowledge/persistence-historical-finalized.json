@@ -899,7 +899,7 @@
     },
     {
       "id": "persistence-historical-finalized.bilingual-pairing",
-      "title": "双语记录与配对哈希：只覆盖人工正文",
+      "title": "双语记录与配对哈希：围栏代码块与 BEGIN/END GENERATED 区之外",
       "sources": [
         {
           "path": "docs/persistence-changes/historical-formats/README.i18n.yaml",
@@ -972,9 +972,21 @@
           "start": 1,
           "end": 4,
           "kind": "instruction"
+        },
+        {
+          "path": "scripts/translation-pairing.ts",
+          "start": 20,
+          "end": 83,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/translation-pairing-record.ts",
+          "start": 148,
+          "end": 162,
+          "kind": "implementation"
         }
       ],
-      "problem": "双语历史文档容易一边更新一边过期；生成区又会让'全文哈希'产生无意义的漂移。机器声明必须两侧完全相同，但翻译文本不应由生成器臆造。需要一种只覆盖人工正文、能定位到 heading、可在编辑后重录的配对记录。",
+      "problem": "双语历史文档容易一边更新一边过期；生成区又会让'全文哈希'产生无意义的漂移。机器声明必须两侧完全相同，但翻译文本不应由生成器臆造。需要一种尽量只覆盖人工正文、能定位到 heading、可在编辑后重录的配对记录；但'只覆盖人工正文'取决于生成标记语法是否被配对工具识别。",
       "triggers": [
         "编辑 vN.md 或 vN.zh.md 任一边",
         "新增历史格式记录",
@@ -983,9 +995,9 @@
         "机器声明两侧不一致"
       ],
       "obligations": [
-        "每对 X.md/X.zh.md 有 X.i18n.yaml，按 heading section 记录英文/中文块哈希，范围是代码块与生成区之外的内容",
+        "每对 X.md/X.zh.md 有 X.i18n.yaml，按 heading section 记录英文/中文块哈希；剔除范围是围栏代码块与 <!-- BEGIN GENERATED <slug> --> / <!-- END GENERATED <slug> --> 区（scripts/translation-pairing.ts 的 generatedRegions 语法）；其他标记家族不被识别，除其中的围栏代码块外，其内容仍进入哈希",
         "yaml persistence-format 机器声明必须在两侧完全一致；pair 文档具备 kind: persistence-format 与配对 sidecar",
-        "配对哈希剔除代码块与生成区；但每个 heading 的人工说明、表格标签与来源行仍会翻译，所以同一 section 的 en/zh 哈希通常不同；相等只说明该 section 两侧没有可见差异（例如只有机器生成的简单类型），不是生成区一致性的证明",
+        "配对哈希只剔除围栏代码块与 BEGIN/END GENERATED 区；历史格式页的 persistence-format-schema 区不被剔除，其标题、表格与 SHA 行会进入哈希（围栏代码块仍剔除）；每个 heading 的人工说明、表格标签与来源行仍会翻译，所以同一 section 的 en/zh 哈希通常不同；相等只说明该 section 两侧没有可见差异（例如只有机器生成的简单类型），不是生成区一致性的证明",
         "改任一边后同步另一边并运行 pnpm run verify-translation-pairing --write <file> 重录",
         "verify-persistence-formats --write 刷新生成 Markdown 与配对记录，保留人工说明、机器声明、schema",
         "默认验证拒绝过期配对记录；doc-sync 验证翻译与本地链接"
@@ -1006,12 +1018,12 @@
       ],
       "enforcement": {
         "mode": "automatic+review",
-        "implementation": "配对生成器按 heading slug 记录 {en,zh} 哈希，剔除代码块与生成区；verify-translation-pairing 默认只读比较并拒绝过期条目；verify-persistence-formats --write 在机器数据验证后刷新生成 Markdown/配对；doc-sync 检查翻译与链接。",
-        "trust": "哈希相等只证明两侧人工块内容同步重录，不证明翻译质量或技术正确性；两值不同不等于错误，只表示该 section 有翻译差异；配对记录不验证 schema/声明一致性。",
+        "implementation": "配对生成器按 heading slug 记录 {en,zh} 哈希，只剔除围栏代码块与 BEGIN/END GENERATED 区；verify-translation-pairing 默认只读比较并拒绝过期条目；verify-persistence-formats --write 在机器数据验证后刷新生成 Markdown/配对；doc-sync 检查翻译与链接。",
+        "trust": "哈希相等只证明两侧被记录的块同步重录（对历史格式页，被记录的块可包含生成区标题/表格/SHA 行），不证明翻译质量或技术正确性；两值不同不等于错误，只表示该 section 有翻译差异；配对记录不验证 schema/声明一致性。",
         "failure": "只改一边、手改哈希或新增 heading 未重录都会导致非零；机器声明不一致是硬错误。",
         "exceptions": "只有机器生成内容、没有可翻译表格/标签的 section 可能 en==zh；含 required/必需、Sources/来源 等标签的 section 两侧哈希不同是正常翻译差异；代码块不参与哈希但仍需语义一致。"
       },
-      "applicability": "适用于任何双语文档 + 生成区的项目。迁移时参数化 heading slug 规则、生成区标记、代码块排除规则、配对文件名与重录命令；若项目只有单语，可省略配对记录，但不能省略'机器声明唯一权威'。",
+      "applicability": "适用于任何双语文档 + 生成区的项目。迁移时参数化 heading slug 规则、生成区标记、代码块排除规则、配对文件名与重录命令；生成标记必须与配对工具的语法一致，否则生成内容仍进入哈希。若项目只有单语，可省略配对记录，但不能省略'机器声明唯一权威'。",
       "relationships": [
         "persistence-historical-finalized.historical-format-coverage：每条历史记录都带配对 sidecar",
         "persistence-historical-finalized.format-snapshot-archive：归档后需补双语记录与配对",
@@ -1020,7 +1032,7 @@
       ],
       "migration": {
         "strategy": "把配对记录做成生成产物：按 heading 提取块外文本，分别 hash en/zh；提供 --write 与只读检查两种模式；机器声明一致性作为独立硬检查，不依赖哈希。",
-        "implementation": "解析 Markdown heading -> slug 路径；剔除 fenced code 与生成标记区间；对每段规范化空白后 hash；写出 {path:{en,zh}}；新增/删除 heading 时重录；verify 模式比较当前哈希与记录。",
+        "implementation": "解析 Markdown heading -> slug 路径；剔除 fenced code 与工具识别的生成标记区间（默认只认 BEGIN/END GENERATED）；对每段规范化空白后 hash；写出 {path:{en,zh}}；新增/删除 heading 时重录；verify 模式比较当前哈希与记录。",
         "requiredSupport": "Markdown 解析器、heading slug 规则、生成区标记、稳定文本规范化、--write/只读双模式、文档链接检查。"
       },
       "reference": "references/persistence-historical-finalized.md#persistence-historical-finalized.bilingual-pairing",
@@ -1059,7 +1071,7 @@
         "配对记录不验证 schema 与声明一致性。",
         "本域对 i18n 文件是全文结构化解析 + 头尾抽样，未逐条人工阅读 400+ 个哈希。",
         "代码块内容不参与配对哈希。",
-        "历史格式页用 <!-- persistence-format-schema:start/end --> 标记，而配对记录只剔除 <!-- BEGIN GENERATED <slug> --> / <!-- END GENERATED <slug> --> 区域（scripts/translation-pairing.ts:20-25,47-83）。变异实测显示这四份 vN.md 的生成区内容会改变配对哈希，所以\"配对只覆盖人工正文\"对这些页面不成立；只有围栏代码块被剔除。"
+        "历史格式页用 <!-- persistence-format-schema:start/end --> 标记，而配对记录只剔除 <!-- BEGIN GENERATED <slug> --> / <!-- END GENERATED <slug> --> 区域（scripts/translation-pairing.ts:20-25,47-83；scripts/translation-pairing-record.ts:148-162）。变异实测显示这四份 vN.md 的生成区内容会改变配对哈希，所以对这些页面只有围栏代码块被剔除；\"配对只覆盖人工正文\"不能当作本域的边界声明。"
       ]
     },
     {

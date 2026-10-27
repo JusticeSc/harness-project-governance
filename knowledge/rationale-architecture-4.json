@@ -1107,7 +1107,8 @@
             "scenario": "降级路径保留可观察的较弱语义；失败清理报告具体残留而不是静默成功",
             "evidence": "planned"
           }
-        ]
+        ],
+        "evidence": "planned: this extraction read Note bodies only and executed no code, tests, builds or remote operations; the Note-reported checks below remain unverified at target."
       },
       "limitations": "来源 Note 描述设计、平台选择与部分实现，未在真实 Linux/Windows 上执行终止/残留测试；systemd 与 Job Object 的可用性、PTY 后代语义和 `durable` 的未来实现均未验证。其中共享转换来源的尾部只界定该转换的准入边界：source reservation 只计二进制字节，Remote base64 展开、引擎 RSS、调用方保留输出与 PDF.js 页面内存明确不在限内，因此不能把这些当作受管执行范围的成本保证。",
       "sources": [
@@ -1952,7 +1953,8 @@
             "scenario": "不支持的值在写入前失败且不产生半条记录；focused/custom composition 也保持相同存储语义；request-side 变更不能通过 deriveMessages 到达存储历史",
             "evidence": "planned"
           }
-        ]
+        ],
+        "evidence": "planned: this extraction read Note bodies only and executed no code, tests, builds or remote operations; the Note-reported checks below remain unverified at target."
       },
       "limitations": "来源 Note 描述已实现的 Session 边界，但本次提取未运行代码；具体 JSON 约束、API 名称和冻结失败模式属于产品实现细节。",
       "sources": [

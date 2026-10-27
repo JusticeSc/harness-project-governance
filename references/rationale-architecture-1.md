@@ -879,7 +879,7 @@
 - 拒绝：normal 不 eligible/耗尽不能继续调度，显式 always 不套该上限；durable inbox 拒绝越界坐标或跨列表重复 MessageId，公共 Inbox 不暴露领取。
 - 恢复：pruning 已推进代际而 summary 随后失败仍可恢复，取消/释放优先；迟到回答被 discard 或 Turn 未准入结束时释放 reservation，允许再次回答而不改写原 pending tool/result。
 
-**限制。** 无法证明所有瞬态都被正确分类，策略表需随 provider 维护。固定提交内旧 Note 与 llm-retry 包 README 在默认次数、turn 边界上有文档漂移；本机制不声称来源一致，normal/always 与 open-turn 包契约见关联机制。
+**限制。** 无法证明所有瞬态都被正确分类，策略表需随 provider 维护。固定提交内旧 Note（2026-06-21）写 normal 默认两次重试，llm-retry README 与 provider-retry 决策写五次，这是已披露的默认次数漂移；本机制不据此确定次数或上限，本次核对未发现 turn 边界冲突。normal/always 与 open-turn 包契约见关联机制。
 
 **来源（固定提交声明依据；不声称本次重核中文全文，也不是已执行的目标产品验证）。**
 - deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e8625c6b8d11ff58211a90524be2e4317（archived）

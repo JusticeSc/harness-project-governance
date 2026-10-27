@@ -1836,7 +1836,7 @@
       "applicability": "Long-lived PRs with merge-forward policy.",
       "relationships": [
         "rationale-process-2/atomic-staging-cutover",
-        "rationale-process-2/merge-forward-checkpoints"
+        "rationale-process-1-pull-request-stack-and-review"
       ],
       "migration": {
         "strategy": "Adopt checkpoint commits and rerun policy before enabling merge queues.",
@@ -3717,7 +3717,7 @@
         "Publish via protected dispatch only."
       ],
       "enforcement": {
-        "mode": "automatic + human dispatch",
+        "mode": "historical design: explicit human dispatch + protected release (inactive at the fixed commit; no active automatic gate)",
         "implementation": "Historical required design: asset workflow plus packaging verifier. Its linked native/libreoffice-wasm package, release workflow and packaging-test files are absent at the fixed commit; the current independent LibreOffice kit owns API/engine qualification and release externally. No portable replacement or target activation is claimed here.",
         "trust": "Build receipts, source materials and a protected release decision are requirements when this mechanism is activated, not proof that the historical in-tree path exists.",
         "failure": "Any provenance mismatch must abort without compiling as fallback; missing real qualification/release machinery is a blocker, not a successful or optional first publication.",
@@ -3852,7 +3852,7 @@
         "Resolve candidates against the local Git object database and reject only unambiguous commits.",
         "Preserve blob hashes, schema digests and branch-name hex; do not fetch the network.",
         "Do not claim remote tag immutability.",
-        "Keep native source manifests pointed at the public source home; during workflow packing project the workflow repository identity into disposable inputs, preserve source manifests, and publish the resulting verified tarballs unchanged. Local packing without workflow context keeps the public metadata."
+        "Keep native source manifests pointed at the public source home; workflow packing must leave tracked source manifests unchanged. The distinct pack-time workflow-identity projection and unchanged-tarball publication belong to the release-artifact/payload owner, with a different trigger and artifact; this reference-form policy neither performs nor verifies packing. Local packing without workflow context keeps the public metadata."
       ],
       "actors": [
         "doc author",
@@ -3863,7 +3863,7 @@
         "Use the allowed form.",
         "Run the reference gate; inspect ambiguous hex matches.",
         "Keep vendor/frozen-note exclusions explicit.",
-        "For native packages, prepare disposable workflow packing inputs with the workflow repository identity while leaving tracked source manifests unchanged; verify and publish that exact artifact."
+        "For native packages, confirm tracked source manifests keep the public source home; the pack-time identity projection and artifact verification belong to the release-artifact/payload owner, not this scanner."
       ],
       "enforcement": {
         "mode": "automatic",
@@ -3879,18 +3879,18 @@
       ],
       "migration": {
         "strategy": "Define allowed forms, scan with an explicit hex taxonomy, then fix violations.",
-        "implementation": "Use tracked/nonignored files plus local Git object classification for references; preserve the separate native-packer identity projection in disposable workflow inputs and verify source immutability/tarball identity at the target owner.",
+        "implementation": "Use tracked/nonignored files plus local Git object classification for references; keep the separate pack-time identity projection out of this scanner and with the release-artifact/payload owner, which verifies source-manifest immutability and tarball identity.",
         "requiredSupport": "Git history availability."
       },
       "reference": "references/rationale-process-2.md#repository-reference-policy",
       "verification": {
         "positive": [
           "A tag/PR reference passes and a relative current link resolves.",
-          "Workflow-native packing records the actual workflow repository in the tarball while source manifests keep the public source home; local packing without workflow context keeps public metadata."
+          "Tracked source manifests keep the public source home after a workflow pack; the pack-time identity projection and unchanged tarball are verified by the release-artifact/payload owner, not here."
         ],
         "rejection": [
           "A bare unambiguous commit hash in maintained prose fails.",
-          "Workflow packing that rewrites tracked source manifests or changes the artifact after identity verification fails."
+          "Workflow packing that rewrites tracked source manifests fails this policy; changing an artifact after identity verification belongs to the release-artifact owner."
         ],
         "recovery": [
           "Replace with the allowed form."
@@ -5201,10 +5201,10 @@
       "reference": "references/rationale-process-2.md#module-evaluation-invariant",
       "verification": {
         "positive": [
-          "An `await` inside main() passes; module-scope await fails."
+          "An `await` inside main(), a method, constructor, accessor, parameter default or class static block passes; a declared bin file (`#!` or manifest bin target) keeps its top-level await as an allowed exception."
         ],
         "rejection": [
-          "A bin exception is honored; a non-bin entry fails."
+          "Module-scope `await`, `for await` or `await using` fails, including inside a top-level if/block/try/loop/switch/conditional/export initializer/computed member name; a non-bin entry receives no exemption."
         ],
         "recovery": [
           "Move async work into main() and rerun."

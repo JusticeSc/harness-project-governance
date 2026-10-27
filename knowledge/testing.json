@@ -194,7 +194,7 @@
         "不要因为一个夹具缺隔离就把整个套件串行；缩小独占范围或改分配方式。",
         "配置层显式设置 worker/分区：coverage instrumented/exempt、snapshot 并发、Web snapshot worker、gate 并发。",
         "进程全局测试使用 process-bound 项目/独立 fork，不与 thread-safe 用例混跑。",
-        "thread-safe 与 process-bound 两个项目都使用 `pool: 'forks'`；Node 24 在 worker thread 的 CJS lexer 会崩溃（macOS/Linux/Windows 均出现 `v8::ToLocalChecked Empty MaybeLocal` in `cjs_lexer::Parse`），不能为省资源回退 threads。",
+        "thread-safe 与 process-bound 两个项目都使用 `pool: 'forks'`；固定源 `vitest.config.ts` 注释记录 Node 24 从 worker threads 进入 CJS lexer 时在 macOS/Linux/Windows 均出现 `v8::ToLocalChecked Empty MaybeLocal` in `cjs_lexer::Parse`，因此不为省资源回退 threads。该注释未给出精确受影响版本区间或上游 issue；升级 Node 后必须重新记录复现/测试证据，才能改回线程。",
         "thread-safe 用 `exclude` 移除 processBoundTests 与 coverageExemptExcludes；process-bound 以显式 `include` 清单运行；两项目共享 execArgv 与 setupFiles。",
         "process-bound 与 thread-safe 的分离目的是 inventory control；两个项目仍由同一次 coverage 调用聚合。"
       ],
@@ -1925,6 +1925,24 @@
       "title": "源平面与构建平面分离，构建产物显式使用",
       "sources": [
         {
+          "path": "scripts/run-gates.ts",
+          "start": 400,
+          "end": 425,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 506,
+          "end": 555,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 626,
+          "end": 645,
+          "kind": "implementation"
+        },
+        {
           "path": "docs/testing.md",
           "start": 37,
           "end": 45,
@@ -1972,7 +1990,7 @@
       ],
       "obligations": [
         "源平面默认：每个 Vitest config 指向 tsconfig.base.json，bare workspace import 解析 src，绝不通过 exports 到 lib；过期 lib 会加载第二份 singleton。",
-        "构建平面显式：lib-mode 子进程、built smokes、DSH_EXAMPLE_MODE=lib；built-bin-smoke 只在 ci-consumers、依赖 build 后运行。",
+        "构建平面显式：lib-mode子进程、built smokes、DSH_EXAMPLE_MODE=lib；built-bin-smoke注册在ci-primary、ci-artifacts、ci-consumers及Windows observational等路径，各自等待build或该lane声明的builtTree前提。",
         "build:check 只对现有 artifacts 跑 tsc，不编译 reference/不重建；缺失/过期以编译器错误出现。",
         "正确顺序：build:artifacts（或 build）→ build:check；只改测试/脚本类型时在最新 artifacts 上 build:check。",
         "构建记录绑定版本/commit/dirty；release/built Web 拒绝缺失或被 partial build 改动的记录。",
@@ -2819,7 +2837,7 @@
         "record 依赖当时 provider 输出。",
         "refresh 可能掩盖回归。",
         "replay 不证明真实 wire。",
-        "补丁组合依适配器分支而定：SDK 的 sdk-* composition 保留 owner/cordis.yml，replay 再追加 owner/cordis.snapshot.yml，不追加默认 model；SDK 的 transport-neutral 分支和 headless 则按默认基础、选中 live/replay overlay、默认 model 组合（默认 owner 的 live 不重复追加）。通用 launcher 的 replay 替换只约束它自己的 selected patch，不能覆盖 SDK 专用分支。最初范围核对发现223个 overlay 无 inspected 记录（104 cordis.yml、104 cordis.snapshot.yml、11 runtime.cordis.yml，child/model/profile/paging 各1）；本批只读 paging.patch.yml:1-7，其余222份仍无逐文件阅读记录，组合代码不证明全部 overlay 语义或 manifest 一致性。"
+        "补丁组合依适配器分支而定：SDK 的 sdk-* composition 保留 owner/cordis.yml，replay 再追加 owner/cordis.snapshot.yml，不追加默认 model；SDK 的 transport-neutral 分支和 headless 则按默认基础、选中 live/replay overlay、默认 model 组合（默认 owner 的 live 不重复追加）。通用 launcher 的 replay 替换只约束它自己的 selected patch，不能覆盖 SDK 专用分支。overlay 文件仍没有逐文件语义审阅记录；该缺口仍是已知限制，组合代码不证明全部 overlay 语义或 manifest 一致性，行扫描也不能代替 YAML/语义审查。"
       ]
     },
     {
@@ -4034,6 +4052,12 @@
       "title": "Web 性能/压力 lane 与默认 UI 套件分离",
       "sources": [
         {
+          "path": "benchmarks/AGENTS.md",
+          "start": 1,
+          "end": 18,
+          "kind": "instruction"
+        },
+        {
           "path": "vitest.web.perf.config.ts",
           "start": 1,
           "end": 21,
@@ -4065,9 +4089,9 @@
         "性能预算变更"
       ],
       "obligations": [
-        "test:web:perf 先 build，再跑 vitest.web.perf.config.ts（DSH_SNAPSHOT=replay），与普通 Web lane 分开。",
+        "test:web:perf先build，再以DSH_SNAPSHOT=replay运行vitest.web.perf.config.ts；该高基数诊断配置明确位于默认Vitest清单和CI执行lane之外。",
         "test:web:stress 先 build，再跑 vitest.web-stress.config.ts，用于并发/浏览器进程压力；opt-in。",
-        "性能断言用预算/分位数，不用无基线比较；预算变更要校准记录。",
+        "预算型必需性能门禁由benchmarks/AGENTS.md另行拥有，使用校准的常量和报告；不能将手动Web perf/stress诊断的计时当作CI预算阻断。",
         "压力结论只补充确定性回归，不替代它。"
       ],
       "actors": [
@@ -4082,9 +4106,9 @@
         "把压力结果与确定性测试分开报告。"
       ],
       "enforcement": {
-        "mode": "独立 config + opt-in 命令 + 预算报告",
+        "mode": "独立手动诊断config与opt-in命令，不是默认CI预算门禁",
         "implementation": "vitest.web.perf.config.ts；vitest.web-stress.config.ts；package scripts；reliability Skill 的 stress 规则。",
-        "trust": "源仓能证明 lane/配置；不能证明任意机器绝对性能。",
+        "trust": "配置证明诊断lane及默认/CI排除边界；不证明预算型benchmark已执行，也不证明任意机器绝对性能。",
         "failure": "超预算先看机器/负载再判断回归；压力失败定位竞争，不串行掩盖。",
         "exceptions": [
           "本机数字不当发布容量",
@@ -4101,13 +4125,13 @@
         "M32 bench hygiene"
       ],
       "migration": {
-        "strategy": "先建独立 perf/stress config 和预算，再接 CI 单独 runner。",
+        "strategy": "保留独立手动perf/stress诊断及机器/负载记录；若目标另需预算型CI性能门禁，按benchmark机制独立设计验证，不冒充源Web诊断的既有自动保证。",
         "implementation": [
           "perf config",
           "stress config",
-          "预算",
+          "诊断测量与报告",
           "机器记录",
-          "CI lane"
+          "如需CI预算门禁则另按benchmark机制落实"
         ],
         "requiredSupport": [
           "Playwright",
@@ -5374,7 +5398,7 @@
         "场景比较 scripts/snapshots/python-sdk-single-exe/ 下 committed expected：prompt/tool schema/model-visible messages、advanced 父子日志、scheduler-recovery；比较不重写录制。",
         "真实 API 只对 trusted PR/master 跑；缺 secret 必须失败而不是自跳过；两次工具轮 + sentinel + 外部字节比较；fork/Dependabot 只跑 keyless。",
         "CI：python-sdk 在 PR 跑 Python 3.10 keyless；python-runtime 依赖 python-sdk，PR 覆盖 Linux/Windows x64，master 覆盖 ARM64/macOS；最终 all-needed 必须成功。",
-        "Office 诊断保留分两层：`scripts/smoke-python-runtime.py` 在 `DSH_OFFICE_TEST_ARTIFACTS` 指向的目录写入输入、PNG 批次、manifest 与 error.txt（`scripts/fixtures/office-render.py` 的 workspace 助手，排除临时运行时文件）；源仓只有 `python/development.md:32` 声明 CI 在成功/失败都上传这些 artifact，固定提交的工作流没有任何 step 设置该变量或调用 upload-artifact，因此该 CI 上传义务在源仓未实现，不能当作已具备的自动保证。",
+        "Office 诊断保留分两层：`scripts/smoke-python-runtime.py` 在 `DSH_OFFICE_TEST_ARTIFACTS` 指向的目录写入输入、PNG 批次、manifest 与 error.txt（`scripts/fixtures/office-render.py` 的 workspace 助手，排除临时运行时文件）；源仓文档（如 `python/development.md:32`）声明 CI 在成功/失败都上传这些 artifact，固定提交的工作流没有任何 Office step 设置该变量或上传这些诊断文件（其他 `upload-artifact` 用于 wheel/benchmark/发行包等，不是 Office 诊断目录），因此该 Office CI 上传义务在源仓未实现，不能当作已具备的自动保证。",
         "bundled runtime 必须把 patch 中未打包的插件作为初始化错误暴露：错误消息包含缺失插件名（如 `@deepseek-ai/dsh-does-not-exist`），不能静默忽略或只记录日志；该断言对每种 runtime mode 参数化运行。"
       ],
       "actors": [
@@ -5437,7 +5461,7 @@
       "verification": {
         "positive": [
           {
-            "check": "pytest、installed-wheel keyless、trusted real API 三层按环境通过，artifact 可查。",
+            "check": "pytest、installed-wheel keyless、trusted real API 三层在对应环境均通过（本记录未执行，见 evidence 的 planned）；Office 诊断仅在 smoke 脚本设置 `DSH_OFFICE_TEST_ARTIFACTS` 时于本地目录可查（源 CI 上传未实现）。",
             "evidence": "planned"
           }
         ],
@@ -5460,7 +5484,7 @@
         "场景覆盖有限。",
         "源仓未证明所有平台同时运行。",
         "测试接受 JsonRpcError、TransportClosedError 或 TimeoutError，断言只要求错误文本包含插件名；它不证明存在单一确定的失败通道。",
-        "`python/development.md:32` 声明的“成功/失败都上传 Office artifact”在固定提交没有对应工作流实现：没有 step 设置 `DSH_OFFICE_TEST_ARTIFACTS`，也没有 upload-artifact。该上传是未落实的意图，不是当前 CI 保证；只有 smoke 脚本的本地保留（`scripts/fixtures/office-render.py:14-41`）可证。"
+        "`python/development.md:32` 声明的“成功/失败都上传 Office artifact”在固定提交没有对应工作流实现：没有任何 Office step 设置 `DSH_OFFICE_TEST_ARTIFACTS`，也没有上传这些诊断文件（其他 `upload-artifact` 用于 wheel/benchmark/发行包等，不是 Office 诊断目录）。该上传是未落实的意图，不是当前 CI 保证；只有 smoke 脚本的本地保留（`scripts/fixtures/office-render.py:14-41`）可证。"
       ]
     }
   ]

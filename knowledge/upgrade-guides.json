@@ -25,12 +25,6 @@
           "kind": "instruction"
         },
         {
-          "path": "docs/AGENTS.md",
-          "start": 40,
-          "end": 40,
-          "kind": "instruction"
-        },
-        {
           "path": "docs/cookbook/reviewing-persistence-type-changes.md",
           "start": 1,
           "end": 22,
@@ -76,8 +70,8 @@
       ],
       "obligations": [
         "只为“仓库外的人升级后能观察到”的破坏写指南；普通发布说明、内部重构、无需用户动作的改进不写",
-        "触发面先按源技能列举的五类核对：命令与 profile、配置键与取值、持久用户数据、SDK/wire API、发布包入口；语料证明 Desktop 设置默认值、快捷键与 Web/Desktop 交互也按“外部可观察”纳入判定",
-        "预稳定内部 API 若所有消费者在同一次改动中更新，不需要指南；这是唯一明示的免写条件",
+        "触发面先按源技能列举的五类核对：命令与 profile、配置键与取值、持久用户数据、SDK/wire API、发布包入口；这份列举不是封闭集合——操作标准是“仓库外的人在升级后能观察到”。语料中的 Desktop 设置默认值、快捷键与 Web/Desktop 交互是这种判定的示例，不是源技能新增的类别；该解释来自语料，不是脚本可验证事实",
+        "预稳定内部 API 若所有消费者在同一次改动中更新，不需要指南；这是 SKILL.md 唯一明示的免写条件（Session 类型变化另需并行记录，见下条）",
         "Session 格式变化仍走 docs/cookbook/reviewing-persistence-type-changes.md 的类型确认；指南只写读者动作，并链接该记录，不复述 schema",
         "一旦识别到破坏就立即记录，不等到 release 准备"
       ],
@@ -238,8 +232,8 @@
         "评审时检查：指南只描述一个 release 的升级，且所在目录与写入时根版本一致"
       ],
       "enforcement": {
-        "mode": "review-with-partial-structure-check",
-        "implementation": "SKILL.md 的 Maintenance 段落给出全部生命周期规则；verify-upgrade-guides 只校验目录形态、frontmatter、节序和词数，不读取 package.json 版本，不检测冻结、跨度、更新或删除。",
+        "mode": "manual-process-reviewed; the automatic gate does not model lifecycle",
+        "implementation": "SKILL.md 的 Maintenance 段落给出全部生命周期规则；这些是人工流程，不能从静态目录结果反推某次写入是否发生在同改动内，也不能证明原位更新或删除动作。verify-upgrade-guides 只校验目录形态、frontmatter、节序和词数，不读取 package.json 版本，不检测冻结、跨度、更新或删除。",
         "trust": "生命周期规则全靠评审；自动门对“写错版本目录/跨 release/未删除回滚指南”保持沉默。",
         "failure": "常见失败：在旧目录继续加条目、bump 后修改冻结目录、回滚后保留指南、把两个 release 的破坏合写为一份。",
         "exceptions": [
@@ -419,7 +413,7 @@
           }
         ]
       },
-      "limitations": "布局门不检查版本目录是否连续、是否与 release 历史一致，也不检查 item 是否重复覆盖同一表面；那些属于版本分类与评审。随包移植保留同一盲区：整个指南根不存在时返回空并通过（命令会打印该事实），删除整棵树不会变红。",
+      "limitations": "布局门只验证已存在文件的文件名：某个 item 只有一个 guide.md、缺 guide.zh.md 或 guide.i18n.yaml 时它仍然通过（源测试的 CRLF/预发布正例就只放了 guide.md）；它也不解析 guide.i18n.yaml、不检查配对，配对缺失由独立配对门负责。布局门不检查版本目录是否连续、是否与 release 历史一致，也不检查 item 是否重复覆盖同一表面；那些属于版本分类与评审。随包移植保留同一盲区：整个指南根不存在时返回空并通过（命令会打印该事实），删除整棵树不会变红。",
       "crossDomainRelationships": [
         "文档域拥有通用 Markdown 路径与链接规则"
       ]
@@ -541,7 +535,7 @@
           }
         ]
       },
-      "limitations": "脚本不检查 description 是否“一句话”、是否点名破坏面，也不检查中英文 description 语义一致。",
+      "limitations": "脚本不检查 description 是否“一句话”、是否点名破坏面，也不检查中英文 description 语义一致；它只证明字段是非空字符串。“一句”是 SKILL.md 的写作要求，不是自动保证。另：YAML 语法错误没有被捕获成一条违规——js-yaml 的异常会直接从 guideViolations/main 抛出（源脚本如此，移植脚本也如此），因此这不是“列出全部诊断后退出”的路径，不能用退出码推断违规已穷尽。",
       "crossDomainRelationships": [
         "文档域拥有 kind→模板映射与全局文档元数据标准"
       ]
@@ -622,7 +616,7 @@
       ],
       "enforcement": {
         "mode": "automatic-structure-gate（源 CI）+ 本包可执行 heading 门（目标激活）",
-        "implementation": "verify-upgrade-guides 用 mdast 解析 body，收集 depth<=2 的 heading 节点文本，要求长度为 expected+1、首项以 \"# \" 开头、其余与 [\"## Change\",\"## Migration\"] 或 [\"## 变更\",\"## 迁移\"] 完全相等。guide.zh.md 使用独立语言配置。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs：同一 mdast（经 tools/doc-gates/markdown.mjs 的 GFM 扩展）、同一 `depth <= 2` 切片与同一字符串比较；语言节名默认等于源配置，可用 `--sections guide.zh.md=<H2>,<H2>` 换成其他语言的精确节名，但文件集合仍由布局正则固定为 guide.md/guide.zh.md。",
+        "implementation": "verify-upgrade-guides 用 mdast 解析 body，收集 depth<=2 的 heading 节点文本，要求长度为 expected+1、首项以 \"# \" 开头、其余与 [\"## Change\",\"## Migration\"] 或 [\"## 变更\",\"## 迁移\"] 完全相等。guide.zh.md 使用独立语言配置。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs：同一 mdast（经 tools/doc-gates/markdown.mjs 的 GFM 扩展）、同一 `depth <= 2` 切片与同一字符串比较；语言节名默认等于源配置，可用 `--sections guide.zh.md=<H2>,<H2>` 替换 guide.md/guide.zh.md 期望的精确节名，但文件集合由布局正则与 CHECKED_FILES 双重固定，`--sections guide.de.md=...` 会以 2 退出——该参数不推广 locale 文件名。",
         "trust": "H1/H2 的数量、文本与顺序可机械证明；标题是否具体、两个节的内容是否充分仍需评审。",
         "failure": "缺标题、两个 H1、改名、额外 H2、顺序颠倒、中文用英文节名都会以 1 退出并打印实际 outline。",
         "exceptions": [
@@ -666,7 +660,7 @@
           }
         ]
       },
-      "limitations": "脚本只比较 depth<=2 的 heading；不检查标题是否过于笼统，也不检查 H3 的内容或顺序。",
+      "limitations": "实现不是独立统计 H1 数量，而是比较整个 depth<=2 outline 的形状：长度必须为期望 H2 数 + 1、首项只需以 \"# \" 开头、其余项要精确等于配置的 H2 文本；因此“一个 H1”是形状的后果，不是一条单独的 H1 计数断言，H1 文本也不校验。脚本也不检查标题是否过于笼统，也不检查 H3 的内容或顺序；H3+ 完全不进入 outline，不能替代 Change/Migration。",
       "crossDomainRelationships": [
         "文档域的通用页面骨架与标题规则"
       ]
@@ -716,6 +710,12 @@
           "start": 49,
           "end": 59,
           "kind": "instruction"
+        },
+        {
+          "path": "scripts/doc-budgets.manifest.json",
+          "start": 1,
+          "end": 9,
+          "kind": "config"
         }
       ],
       "problem": "把设计理由、完整代码和机械步骤塞进指南会让它在最需要执行的时候不可读；没有上限时，作者倾向于用篇幅代替精确性；只限制正文而不限制 frontmatter 会留下绕过空间。",
@@ -728,8 +728,9 @@
         "guide.md 最多 500 个空白分隔 token，frontmatter 与代码块都计入；计数与 wc -w 等价",
         "中文 guide.zh.md 没有词数上限；但这不构成把英文内容倾倒到中文侧的理由，配对仍需语义等价",
         "超过 500 词时：用源码文件/符号链接替代代码复述；把理由移入 Agent Note；把重复机械步骤做成脚本或 dsh 命令并在指南中调用",
-        "不要通过提高阈值解决超限；源技能明确要求外移",
-        "500 词是上限而非常目标；固定工具名/步骤应保持可执行"
+        "500 硬编码在 verifier 中，指南不在 doc-budgets.manifest.json 的预算体系内；这是源事实，不构成“源仓库提供/禁止提额程序”的证明",
+        "500 是源项目参数，不是普适常数：迁移版可显式调整阈值；但提高一个已生效项目的上限需要 owner 论证并记录理由（可借用源仓 doc-budgets 的“Raise 需在 PR 里说明”纪律），不能静默放宽，也不能把“参数可调”误读成源仓库提供了提额程序",
+        "500 词是上限而非宽松目标；固定工具名/步骤应保持可执行"
       ],
       "actors": [
         "作者",
@@ -772,7 +773,7 @@
       "verification": {
         "positive": [
           {
-            "scenario": "构造恰好 500 词的英文 guide.md，`node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 通过；同一对的中文 guide.zh.md 追加 600 个中文词，命令仍通过。",
+            "scenario": "构造恰好 500 词的英文 guide.md，`node <skill>/tools/doc-gates/verify-upgrade-guides.mjs` 通过；同一对的中文 guide.zh.md 追加 600 个以空格分隔的 token，命令仍通过（中文默认无上限）。",
             "evidence": "planned"
           }
         ],
@@ -789,7 +790,7 @@
           }
         ]
       },
-      "limitations": "词数不等于可读性；脚本无法发现“为了压词数删掉失败模式/例外”的退化。源语料最大 497 词（subagent-activations），说明上限是紧约束而非宽松建议；该统计来自 wc -w，未运行校验器。",
+      "limitations": "词数不等于可读性；脚本无法发现“为了压词数删掉失败模式/例外”的退化。源语料最大 497 词（subagent-activations），说明上限是紧约束而非宽松建议；该统计来自 wc -w，未运行校验器。本域只看到 500 被硬编码、指南不在 budget manifest 中，未发现针对该上限的书面提额程序；这只是“未发现”，不能断言源仓库存在或禁止这样的程序。500 是源参数，不是所有项目必须采用的普适值。",
       "crossDomainRelationships": [
         "文档域拥有常规文档的 wordcount 预算与 relocate/condense/raise 规则；升级指南使用更严的固定 500 词上限，不进入 doc-budgets.manifest.json"
       ]
@@ -842,11 +843,11 @@
         "破坏表现为错误码、警告、缺失界面或加载失败"
       ],
       "obligations": [
-        "Change 必须同时给出旧行为、新行为和受影响者（谁观察/谁需要动作）",
-        "症状要可观察：错误码/错误消息、启动警告、缺失工具或页面、编译/加载失败、默认值变化等",
-        "不要把设计理由、替代方案、实现细节写进 Change；理由属于 Agent Note 或链接",
-        "若破坏只在特定平台/安装形态出现，写明范围（如非 Desktop Web、macOS/Linux、测试包）",
-        "若存在不受影响的相关行为，简要说明边界，避免读者过度迁移"
+        "【源义务】Change 必须同时给出旧行为、新行为和受影响者（谁观察/谁需要动作）",
+        "【示例推断】语料正例还把症状写成可观察事实：错误码/错误消息、启动警告、缺失工具或页面、编译/加载失败、默认值变化；这不是 SKILL.md 逐字列出的第四项义务，而是从 42 份指南归纳的写法",
+        "【迁移设计】不要把设计理由、替代方案、实现细节写进 Change；SKILL.md 只在超过 500 词时要求把理由移入 Agent Note，完全排除理由属于更严的目标规则",
+        "【示例推断】若破坏只在特定平台/安装形态出现，语料会写明范围（如非 Desktop Web、macOS/Linux、测试包）；源技能未逐字要求",
+        "【示例推断】若存在不受影响的相关行为，语料会简要说明边界，避免读者过度迁移；源技能未逐字要求"
       ],
       "actors": [
         "作者",
@@ -903,7 +904,7 @@
           }
         ]
       },
-      "limitations": "“准确”依赖对产品的真实行为验证；本域只读文档，未执行任何登录/升级操作，语料中的症状是作者声明。",
+      "limitations": "“准确”依赖对产品的真实行为验证；本域只读文档，未执行任何登录/升级操作，语料中的症状是作者声明。源义务只有旧/新行为与受影响者；“症状”“平台范围”“不受影响边界”和“理由必须外移”是从语料与 500 词规则推导的写法，不是脚本检查或 SKILL.md 的逐字条款。",
       "crossDomainRelationships": [
         "文档域的 current-state 与受控技术英语规则"
       ]
@@ -955,9 +956,9 @@
           "kind": "instruction"
         },
         {
-          "path": "docs/AGENTS.md",
-          "start": 42,
-          "end": 42,
+          "path": "AGENTS.md",
+          "start": 7,
+          "end": 9,
           "kind": "instruction"
         }
       ],
@@ -968,12 +969,11 @@
         "破坏涉及配置、CLI、SDK 或持久数据"
       ],
       "obligations": [
-        "Migration 必须是有序步骤（编号列表），每步点名精确文件、键、命令或符号",
-        "能用一个更短的 before/after 片段说清时用片段；不要把整份源码贴进指南",
-        "必须给出“如何确认迁移成功”的可观察检查（命令输出、重启后日志、编译结果、行为）",
-        "需要 owner 细节时链接对应 README/子系统页，而不是复述",
-        "不得要求编辑历史 Session 记录；对自动迁移的场景可写“无需手动编辑”",
-        "对破坏性/不可逆操作（如替换 profile、删除字段）明确备份或恢复路径"
+        "【源义务】Migration 列出有序步骤，每步点名精确文件、键、命令或符号；模板骨架用编号列表展示，但“必须是编号列表”是模板示例，不是脚本或 SKILL.md 的独立条款",
+        "【源义务】当片段比散文更短时给 before/after；这是条件性要求，不是每步都必须有片段，也不是禁止贴必要的短代码",
+        "【源义务】必须说明如何确认迁移成功（命令输出、重启后日志、编译结果、行为）",
+        "【源义务/相关规则】指南不得要求读者移动、覆盖或删除已提交的 Session 代际；源根 AGENTS.md 的 released Session data 规则这样规定，指南中的读者动作应写成兼容迁移或“无需手动编辑”",
+        "【示例推断】需要 owner 细节时链接对应 README/子系统页；对破坏性/不可逆操作（如替换 profile、删除字段）写明备份或恢复路径，来自语料正例而非脚本检查"
       ],
       "actors": [
         "作者",
@@ -984,8 +984,8 @@
         "按读者操作顺序编号；每步只做一个决定或一个编辑",
         "写清路径/键/命令/符号；需要时给最小 before/after",
         "在最后一步给出确认方法与预期结果",
-        "对可能失败的分支给出错误识别与处理（例如 sandbox-unavailable 与权限拒绝区分）",
-        "评审在 fixture 中逐步执行；不能执行的步骤要求作者补证据或标注前提"
+        "【示例推断】对可能失败的分支给出错误识别与处理（例如 sandbox-unavailable 与权限拒绝区分）；语料正例这样做，源技能未逐字要求",
+        "【迁移设计】评审在 fixture 中逐步执行；不能执行的步骤要求作者补证据或标注前提"
       ],
       "enforcement": {
         "mode": "review-content-with-link-gate",
@@ -1008,7 +1008,7 @@
         "requiredSupport": [
           "可运行的 fixture",
           "目标产品的真实命令",
-          "链接检查器"
+          "链接检查器及其目标语料配置（本包为 `.doc-gates/markdown-links.json`）"
         ]
       },
       "reference": "references/upgrade-guides.md#upgrade-guides.migration-steps",
@@ -1032,7 +1032,7 @@
           }
         ]
       },
-      "limitations": "源语料中的命令与行为未在本域执行；步骤是否在目标版本仍有效，需要产品测试或真实升级演练。",
+      "limitations": "源语料中的命令与行为未在本域执行；步骤是否在目标版本仍有效，需要产品测试或真实升级演练。源义务只覆盖有序步骤、精确标识符、条件性 before/after 与确认；“编号列表”“备份/恢复路径”“失败分支处理”“fixture 执行”来自模板示例、语料正例或迁移设计，不是自动检查项。",
       "crossDomainRelationships": [
         "文档域拥有相对链接与锚点校验（verify-md-links）",
         "各产品域拥有被引用命令/配置的真实语义"
@@ -1050,6 +1050,12 @@
         },
         {
           "path": "docs/i18n/README.md",
+          "start": 22,
+          "end": 22,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
           "start": 24,
           "end": 26,
           "kind": "instruction"
@@ -1058,6 +1064,12 @@
           "path": "docs/i18n/README.md",
           "start": 32,
           "end": 34,
+          "kind": "instruction"
+        },
+        {
+          "path": "docs/i18n/README.md",
+          "start": 40,
+          "end": 40,
           "kind": "instruction"
         },
         {
@@ -1097,6 +1109,12 @@
           "kind": "implementation"
         },
         {
+          "path": "scripts/translation-pairing.ts",
+          "start": 259,
+          "end": 279,
+          "kind": "implementation"
+        },
+        {
           "path": "scripts/verify-upgrade-guides.ts",
           "start": 1,
           "end": 4,
@@ -1125,12 +1143,6 @@
           "start": 1,
           "end": 16,
           "kind": "config"
-        },
-        {
-          "path": "docs/i18n/README.md",
-          "start": 40,
-          "end": 40,
-          "kind": "instruction"
         }
       ],
       "problem": "只发英文会让中文读者无法执行迁移；把中文放在独立仓库或交错双语文件会破坏同步；手工声称“已翻译”无法发现一侧已改而另一侧未改；配对记录若没有结构约束，哈希会掩盖结构漂移。",
@@ -1148,7 +1160,8 @@
         "任意一侧改动后，同一次改动更新另一侧并运行 pnpm run verify-translation-pairing --write <guide.md> 重录记录；不许只改哈希不改内容；--write 必须点名已确认的 pair，--write --all 是显式的 corpus-wide 形式",
         "配对记录按 heading section 保存 en/zh 内容哈希；section i 对应 section i；哈希覆盖 section 内除 fenced code blocks 与 generated regions 外的所有顶层块；这两类必须两侧逐字一致，但相同内容仍会被哈希；没有剩余块的 section 没有条目",
         "不同步的 pair 通过对照已编辑侧的 diff 对 counterpart 做最小补丁来更新，绝不整篇重译；配对门会点名每个变化的 section",
-        "用户显式调用扩展工作流时，pnpm run gen-translation-brief <pair> 从“内容能产生已记录条目”的最新提交恢复最后确认文本，按最窄安全粒度组装更新；--apply 只能在结构校验后拼接仅代码围栏变化的补丁",
+        "用户显式调用扩展工作流时，pnpm run gen-translation-brief <pair> 从“内容能产生已记录条目”的最新提交恢复最后确认文本，按最窄安全粒度组装更新；--apply 只能在结构校验后拼接仅代码围栏变化的补丁。这是源仓扩展能力，本包没有移植；目标项目不运行它，最小补丁仍可手工完成",
+        "【命令语义】--list 是 corpus-only 状态报告且永不失败；--write 要么点名已确认的 pair，要么显式 --write --all；--cached <pair> 读取 Git index 字节做只读检查，需要暂存的 pair 路径且不能与 --write 组合；scoped 检查只覆盖命名 pair，不能替代 corpus 级检查；--write --all 会重录未逐一确认的内容，写成功不等于语义确认",
         "记录按 section 分行，使 Git 默认文本合并可以组合不同 section 的改动；只有同一 section 两侧都改了被哈希内容时才冲突；解决 Markdown 冲突后重录该 pair",
         "结构镜像：heading 深度与顺序、列表种类/起始/条目数、表格行列数、语义链接目标（含 query/fragment）、verbatim 代码块一一对应",
         "一对中文/英文可能作者语言不同，但两侧权威相等，必须说同一件事"
@@ -1161,14 +1174,14 @@
       "steps": [
         "在改动英文的同时写中文 counterpart，保持标题、列表、代码块与链接结构镜像",
         "检查两侧 switcher 位置与形式",
-        "若 pair 不同步，先生成最小 counterpart patch；只有用户显式要求扩展工作流时才运行 gen-translation-brief，且 --apply 仅用于结构校验后的 code-fence-only 变更",
+        "若 pair 不同步，先生成最小 counterpart patch；gen-translation-brief 是源仓扩展能力（本包未移植），目标项目按最小补丁手工更新；--apply 仅用于结构校验后的 code-fence-only 变更",
         "运行 scoped 检查：pnpm run verify-translation-pairing docs/upgrade-guide/v<version>/<item>/guide.md",
         "用 --write 点名该路径重录哈希；只把 yaml diff 当作“确认一致”的可评审动作；corpus 级使用 --write --all",
         "合并前运行 corpus 级配对检查（doc-sync 中的 verify-translation-pairing）"
       ],
       "enforcement": {
         "mode": "automatic-pairing-gate-plus-review（源 CI）+ 本包可执行配对检查/写入器（目标激活）",
-        "implementation": "verify-translation-pairing 枚举 docs/** 等范围内的 *.md 与 *.i18n.yaml，要求每个 source 有 zh，三元组完整/规范，哈希与当前内容一致，switcher 与结构签名匹配；--write 要求点名已确认的 pair（--all 为显式 corpus-wide），只对完整 pair 重录。verify-upgrade-guides 明确不拥有中文配对，只做文件名匹配。本包已交付 tools/doc-gates/verify-translation-pairing.mjs 及其同源模块（translation-pairing / translation-pairing-record / translation-pairing-git / translation-links / markdown）：三文件 pair、半删除锚点、canonical 记录、switcher 方向、链接 locale、generated region 等价、结构签名与 scoped `--write` 均按源语义移植，`--list`/`--cached` 也保留。唯一参数化是语料：源仓的 `docs/**`、README 与根文档集合是产品事实，移植版要求目标项目在自己的 `.doc-gates/translation-pairing.json`（`roots`/`files`/`excluded`/`generatedSources`/`publicRepositoryBlobRoot`）中声明；缺文件或空语料是退出 2，不是静默通过。`gen-translation-brief` 没有移植，属于未交付的源能力。",
+        "implementation": "verify-translation-pairing 枚举 docs/** 等范围内的 *.md 与 *.i18n.yaml，要求每个 source 有 zh，三元组完整/规范，哈希与当前内容一致，switcher 与结构签名匹配；--write 要求点名已确认的 pair（--all 为显式 corpus-wide），只对完整 pair 重录。verify-upgrade-guides 明确不拥有中文配对，只做文件名匹配。本包已交付 tools/doc-gates/verify-translation-pairing.mjs 及其同源模块（translation-pairing / translation-pairing-record / translation-pairing-git / translation-links / markdown）：三文件 pair、半删除锚点、canonical 记录、switcher 方向、链接 locale、generated region 等价、结构签名与 scoped `--write` 均按源语义移植，`--list`/`--cached` 也保留：前者是 corpus-only 状态报告且永不失败，后者要求命名已暂存的 pair、读 Git index 字节做只读检查且不能与 `--write` 组合；`--write` 点名缺 counterpart 的 pair 时源版以 2 退出，corpus 级 `--write --all` 跳过无 counterpart 的 source。唯一参数化是语料：源仓的 `docs/**`、README 与根文档集合是产品事实，移植版要求目标项目在自己的 `.doc-gates/translation-pairing.json`（`roots`/`files`/`excluded`/`generatedSources`/`publicRepositoryBlobRoot`）中声明；缺文件或空语料是退出 2，不是静默通过。`gen-translation-brief` 没有移植，属于未交付的源能力。该命令不会自动出现在目标 CI 中，采用方须自行接线并保存真实失败输出。",
         "trust": "完整性、哈希、switcher、结构可机械证明；两侧是否“说同一件事”、术语与措辞质量由评审承担。",
         "failure": "缺 zh/记录、哈希过期、记录非规范、switcher 缺失、结构签名不符都会使配对门以 1 退出；同一 section 两侧都改哈希内容会造成记录冲突，必须解决 Markdown 后重录；只重录哈希而不能通过评审的劣质翻译仍属违规。",
         "exceptions": [
@@ -1280,6 +1293,12 @@
           "kind": "implementation"
         },
         {
+          "path": ".agents/skills/dsh-create-upgrade-guide/SKILL.md",
+          "start": 48,
+          "end": 54,
+          "kind": "instruction"
+        },
+        {
           "path": "docs/i18n/README.md",
           "start": 44,
           "end": 44,
@@ -1294,12 +1313,13 @@
         "怀疑词数/路径/节序检查是否覆盖某个失败模式"
       ],
       "obligations": [
-        "准确知道自动检查覆盖：路径与文件名、frontmatter 键集/kind/非空 description、H1/H2 文本与顺序、英文 500 词上限",
-        "准确知道未覆盖：是否该有指南、版本目录是否等于写入时根版本、冻结/跨度/原位更新/回滚删除、标题具体性、description 一句话语义、Change 准确性、Migration 可执行性/确认、双语语义、链接解析、重复覆盖",
+        "准确知道自动检查覆盖：路径与文件名、frontmatter 键集/kind/非空 description、depth<=2 标题的整体形状（首项 '# ' + 两个精确 H2）、英文 500 词上限",
+        "准确知道未覆盖：是否该有指南、某个 item 是否缺 guide.md/guide.zh.md/guide.i18n.yaml、版本目录是否等于写入时根版本、冻结/跨度/原位更新/回滚删除、标题具体性、description 一句话语义、Change 准确性、Migration 可执行性/确认、双语语义、链接解析、重复覆盖",
         "整棵树不存在时 collectUpgradeGuideViolations 返回空，删除目录不会触发失败；迁移必须另设“必需文件/变更映射”检查或评审清单",
-        "guide.i18n.yaml 只被布局正则匹配，不被该脚本解析；中文配对由 verify-translation-pairing 独立拥有",
+        "guide.i18n.yaml 只被布局正则匹配，不被该脚本解析；中文配对由 verify-translation-pairing 独立拥有；布局门通过不证明三件套齐全",
         "词数检查包含 frontmatter 与代码块；只统计英文；CRLF 与预发布版本被接受",
-        "把这些边界写进评审证据：绿灯只能证明形态，不能证明完整性或正确性"
+        "frontmatter 的 YAML 语法错误会抛出（未捕获），不会变成一条可列出的诊断；不要把退出码当作“已穷尽所有违规”",
+        "把 SKILL.md:48-54 的三条命令视为源项目的验证入口（形态、配对、链接），不要用一个门代替其余两个"
       ],
       "actors": [
         "门禁维护者",
@@ -1308,18 +1328,19 @@
       ],
       "steps": [
         "确认命令入口：源仓为 pnpm run verify-upgrade-guides（同时挂在 doc-sync 与 test:docs 的快速门列表）；本包为 node tools/doc-gates/verify-upgrade-guides.mjs",
-        "用正例树确认输出 “upgrade guides conform.”；用六类布局/五类 frontmatter/六类 heading/超词 fixture 确认拒绝路径",
-        "显式验证盲区：空树通过、删除某必需指南仍通过、旧版本目录可改、i18n.yaml 内容不解析",
+        "用正例树确认输出 “upgrade guides conform.”；源测试的六类布局、五类 frontmatter、五个 heading 用例加中文节名用例、超词 fixture 都被移植回归覆盖（移植布局回归另含 build metadata 第七类）",
+        "显式验证盲区：空树通过、删除某必需指南仍通过、只放 guide.md 的 item 仍通过、旧版本目录可改、i18n.yaml 内容不解析",
         "把链接与配对交给独立门禁：verify-md-links、verify-translation-pairing；不要在升级门里重复实现",
-        "在评审模板中补上脚本无法判断的检查项"
+        "在评审模板中补上脚本无法判断的检查项",
+        "不要把本包 CI 的 documentation-tools job（只运行 test-doc-gates 回归）当成目标语料已被门禁；真实消费者 CI 尚未激活这些命令"
       ],
       "enforcement": {
         "mode": "automatic-shape-gate-with-documented-blind-spots（源 CI）+ 本包可执行同语义门（目标激活）",
-        "implementation": "verify-upgrade-guides.ts 是纯函数 collectUpgradeGuideViolations + CLI；run-gates 把 upgrade-guides 注册为 quick 门，出现在 docSyncLeafGates 与 docQuickLeafGates 中；package.json 暴露 verify-upgrade-guides、test:docs、doc-sync。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，包含同一 collect 语义（递归枚举、路径正则、frontmatter/YAML、精确 H1/H2、whitespace 词数、空树通过、i18n 不解析、H3+ 忽略、中文不计数）；CLI 在空树时打印 “is absent; nothing to check” 而不是静默通过。它不改写源盲区：删除整棵树仍退出 0。",
+        "implementation": "verify-upgrade-guides.ts 是纯函数 collectUpgradeGuideViolations + CLI；run-gates 把 upgrade-guides 注册为 quick 门，出现在 docSyncLeafGates 与 docQuickLeafGates 中；package.json 暴露 verify-upgrade-guides、test:docs、doc-sync；SKILL.md:48-54 是源项目的三条验证命令。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，包含同一 collect 语义（递归枚举、路径正则、frontmatter/YAML、depth<=2 outline 形状、whitespace 词数、空树通过、i18n 不解析、H3+ 忽略、中文不计数、只检查已存在文件）；CLI 在空树时打印 “is absent; nothing to check” 而不是静默通过。源 CLI 只显式使用 0/1；移植版另加 2（参数、缺根、依赖不可用），不要反推源也有 2。该命令不会自动出现在目标 CI：本包 CI 的 documentation-tools job 只运行 test-doc-gates，没有对真实消费者语料运行形态门。",
         "trust": "形态可机械证明；门禁接线可核对；完整性/准确性不可由该门证明。",
-        "failure": "形态违规以 1 退出；语义/覆盖缺失不会失败；参数错误或解析依赖缺失以 2 退出（不当作通过）。",
+        "failure": "形态违规以 1 退出；语义/覆盖缺失不会失败；YAML 语法错误会以未捕获异常终止而不是进入违规列表；参数错误或解析依赖缺失在移植版以 2 退出（不当作通过）。",
         "exceptions": [
-          "树缺失返回 []；i18n.yaml 不解析；H3+ 不参与 heading 检查；中文不计数；不检查 package.json 版本一致性。"
+          "树缺失返回 []；只检查已存在文件（缺 guide.zh.md/guide.i18n.yaml 的 item 仍通过）；i18n.yaml 不解析；H3+ 不参与 heading 检查；中文不计数；不检查 package.json 版本一致性。"
         ]
       },
       "applicability": "任何移植该门禁的项目。迁移时必须同时移植“已知盲区”清单与补偿检查；只复制脚本会得到虚假的安全感。",
@@ -1345,7 +1366,7 @@
       "verification": {
         "positive": [
           {
-            "scenario": "在合规树上运行 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs`，输出 “upgrade guides conform.” 且退出 0；把同一命令接进目标 CI 后确认它在管道中执行。",
+            "scenario": "在合规树上运行 `node <skill>/tools/doc-gates/verify-upgrade-guides.mjs`，输出 `verify-upgrade-guides: upgrade guides conform.` 且退出 0；把同一命令接进目标 CI 后确认它在管道中执行。",
             "evidence": "planned"
           }
         ],
@@ -1404,7 +1425,7 @@
         },
         {
           "path": "docs/AGENTS.md",
-          "start": 40,
+          "start": 45,
           "end": 47,
           "kind": "instruction"
         },
@@ -1453,7 +1474,7 @@
       ],
       "actors": [
         "代码评审者",
-        "发布负责人",
+        "发布负责人（迁移设计角色；源仓库没有在本域规定这一职责，源域只提供触发与内容规则）",
         "作者（响应评审）"
       ],
       "steps": [
@@ -1513,7 +1534,7 @@
           }
         ]
       },
-      "limitations": "评审质量无法从仓库静态证明；本域未观察任何真实评审记录或发布审计日志，清单来自源规则与脚本盲区的组合。",
+      "limitations": "评审质量无法从仓库静态证明；本域未观察任何真实评审记录或发布审计日志，清单来自源规则与脚本盲区的组合。源仓库没有在本域给出“评审清单”或“发布负责人”的正式程序；这两者是迁移设计角色，不能声称是源仓库已自动执行或已强制的要求。",
       "crossDomainRelationships": [
         "文档域拥有散文标准、术语与翻译评审",
         "发布域拥有发版前审计与发布证据"
@@ -1580,11 +1601,11 @@
         "审计目录数量与 release 是否对应"
       ],
       "obligations": [
-        "版本目录记录“写入时根版本”，一个目录对应一个 release 边界；不要求每个 release 都有目录，只为发生外部破坏的 release 建目录",
-        "指南描述从该目录 release 到下一个 release 的升级，不能跨多个 release",
-        "目录名使用 v<semver>，源校验器接受预发布标识（alpha/rc），不接受 build metadata 或缺少 v 前缀",
-        "item 以变更面命名，同一版本内可以有多条；版本之间不复制同一 item，除非破坏在新的 release 再次发生",
-        "根版本 bump 后旧目录冻结；当前根版本没有对应目录是合法状态（本提交即如此：package.json 为 0.2.1-rc.2，最新目录为 v0.2.1-alpha.4）"
+        "【源义务】版本目录记录写入时根 package.json 的 version，一个目录对应一个 release 边界；指南只描述该 release 到下一个 release，不能跨多个 release",
+        "【源义务】根版本 bump 后旧目录冻结；新的破坏写入新版本目录；回滚则删除对应指南",
+        "【源事实】目录名使用 v<semver>，校验器接受预发布标识（alpha/rc），不接受 build metadata 或缺少 v 前缀；同一版本内可以有多条 item",
+        "【语料推断】固定提交的 6 个目录只为发生过外部可观察破坏的 release 建立，当前根版本没有目录；语料也没有把同一 item 复制到多个版本。这不是 SKILL.md 的逐字条款，而是从目录形态与版本内容归纳的推断",
+        "【源事实】当前根版本没有对应目录是合法状态（本提交即如此：package.json 为 0.2.1-rc.2，最新目录为 v0.2.1-alpha.4）；校验器也不要求目录连续"
       ],
       "actors": [
         "作者",
@@ -1642,7 +1663,7 @@
           }
         ]
       },
-      "limitations": "语料的 6 个目录/42 个 item/126 个文件是目录枚举事实，不能证明每个历史破坏都被覆盖；版本与 release tag 的对应关系未在 Git 历史中逐条核对。",
+      "limitations": "语料的 6 个目录/42 个 item/126 个文件是目录枚举事实，不能证明每个历史破坏都被覆盖；版本与 release tag 的对应关系未在 Git 历史中逐条核对。“只为有破坏的 release 建目录”“不复制 item 到多个版本”“目录不必连续”来自语料形态与校验器实现，不是 SKILL.md 的逐字规则；不要把它们写成源仓库的强制模板。",
       "crossDomainRelationships": [
         "发布域拥有版本号与 tag 的真实来源"
       ]

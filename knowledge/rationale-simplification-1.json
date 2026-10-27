@@ -939,8 +939,8 @@
         },
         {
           "path": "packages/experimental/ralph-bundle/README.md",
-          "start": 12,
-          "end": 12,
+          "start": 1,
+          "end": 50,
           "kind": "instruction"
         },
         {
@@ -1000,11 +1000,11 @@
       "verification": {
         "positive": [
           {
-            "scenario": "默认 Web/headless/sdk/acp 工具目录不含 ralph；显式 bundle 启用后出现。",
+            "scenario": "默认 Web/headless/sdk/acp 工具目录不含 ralph；在 Plugins 启用 `packages/experimental/ralph-bundle` 后出现：其 `cordis.patch.yml` 插入隔离 workflowEngine 的 `optional-ralph` group、`tool-ralph` 与该 group 内的 `workflow-ptc`。这是当前 bundle opt-in，不是 Note 写作时的 base/preset disabled-row 配方。",
             "evidence": "planned"
           },
           {
-            "scenario": "生产安装的依赖闭包不含 Codex/Claude Code provider 载荷；单独安装 bundle 后才出现。",
+            "scenario": "独立 provider 闭包检查（来自 production-dsh provider Note，不是 ralph 证据）：生产安装的依赖闭包不含 Codex/Claude Code provider 载荷；单独安装对应 provider bundle 后才出现。",
             "evidence": "planned"
           }
         ],
@@ -1014,18 +1014,18 @@
             "evidence": "planned"
           },
           {
-            "scenario": "删除 row 而不是 disabled，导致用户 patch 无法恢复；在需要 opt-in 的场景应拒绝。",
+            "scenario": "在仍有 shipped disabled row 的组合里删除 row 而不是 disabled，导致用户 patch 无法恢复；在 bundle 场景则把包从发行中删除，显式用户无法 opt-in。两种都应拒绝。",
             "evidence": "planned"
           }
         ],
         "recovery": [
           {
-            "scenario": "用户启用可选 bundle 后启动失败：检查其依赖 row（如 ralph 需要 workflow engine）是否一并启用。",
+            "scenario": "用户启用可选 bundle 后启动失败：检查 bundle 自带的依赖 group（ralph bundle 的 `workflow-ptc` 与 `tool-ralph` 同组）是否完整；若用户把 bundle 拆成自定义组合，必须同时保留该依赖，不能让用户猜一个不存在的 row。",
             "evidence": "planned"
           }
         ]
       },
-      "limitations": "当前 ralph 已迁到 experimental/ralph-bundle 且默认关闭，具体组合与 Note 写作时不同；应引用原则，不要把旧 base row 当成现状。"
+      "limitations": "固定提交中 ralph 的 opt-in 入口是 `packages/experimental/ralph-bundle`（bundle README 说明在 Web/Desktop Plugins 启用，`cordis.patch.yml` 用 insert 建立隔离 workflowEngine 的 group）；Note 中的 base/preset `disabled: true` row 配方属于写作时形态，不应作为现状断言。positive 的第二条是独立 provider 闭包检查，不能当作 ralph 证据；反之亦然。旧 base row 不得当现状，bundle 的依赖 group 不得被拆散。"
     },
     {
       "id": "rationale-simplification-1-default-roster-single-interface",
@@ -1090,7 +1090,7 @@
       ],
       "steps": [
         "列出默认组合中重叠的工具 schema 及其模型可见成本。",
-        "在 base 选定一个默认接口；minimal 独立声明自己的工具集。",
+        "在 base 选定一个默认接口；minimal 独立声明自己的工具集（当前为平台持久 shell 加 `tool-fs` 的 `readImage`，不是旧 editor 两工具 roster）。",
         "从默认组合移除另一个工具的 row（不是只隐藏 schema），保留包和显式插入路径。",
         "为默认、显式 insert、minimal 三种情况写工具目录/请求测试。",
         "在 README 说明 opt-in 方法和 disabled row 的 patch 限制。"
@@ -1117,11 +1117,11 @@
       "verification": {
         "positive": [
           {
-            "scenario": "默认 SDK/headless 请求不含 str_replace_editor；显式 patch 后出现；minimal 只有其声明接口。",
+            "scenario": "当前 minimal.patch.yml（固定提交）只声明平台选择的持久 shell（bash 或 pwsh）与 `tool-fs` 的 `readImage: true`，不挂 `str_replace_editor`、filesystem tool 或 preset-local `fs-local`；SDK/Web 模型请求只出现这条 roster。Note 36 的 editor-in-minimal 属历史断言，不作为现状。",
             "evidence": "planned"
           },
           {
-            "scenario": "base-backed 默认不含 editor row；自定义组合 insert 后可用。",
+            "scenario": "base-backed 默认不含 editor row；自定义组合 insert `dsh-tool-str-replace-editor` 与同一 service scope 的 filesystem provider 后可用。",
             "evidence": "planned"
           }
         ],
@@ -1142,7 +1142,7 @@
           }
         ]
       },
-      "limitations": "Note 36 写作时 minimal 还挂 editor；后续 Note 43/44 与当前 minimal patch 已改为 shell-only（仅保留 tool-fs 的 readImage）。这是历史漂移，不应把 Note 36 的 minimal 断言当现状。"
+      "limitations": "Note 36 写作时 minimal 还挂 editor；后续 Note 43/44 与当前 minimal patch 已改为 shell-only：平台选择的持久 shell 加 `tool-fs` 的 `readImage: true`，且不挂 preset-local `fs-local`。这是历史漂移：不得把 Note 36 的 minimal 两工具/editor 断言当现状，也不得把当前 minimal 的 readImage 误写成完整 filesystem tool。"
     },
     {
       "id": "rationale-simplification-1-pre-release-cutover-no-aliases",
@@ -2592,48 +2592,64 @@
     },
     {
       "id": "rationale-simplification-1-copy-only-preset-authoring",
-      "title": "预设只复制文件，不通过浏览器传任意组合文本",
+      "title": "预设创作在文件系统完成：浏览器只读查看并启动 Creator-mode",
       "sources": [
         {
           "path": ".agents/notes/archived/simplification/2026-08-08-copy-only-preset-authoring.md",
           "start": 1,
           "end": 31,
           "kind": "history"
+        },
+        {
+          "path": "packages/client/ui-agent-preset/README.md",
+          "start": 20,
+          "end": 52,
+          "kind": "instruction"
+        },
+        {
+          "path": "apps/web/tests/agent-preset-authoring.e2e.ts",
+          "start": 1,
+          "end": 109,
+          "kind": "test"
         }
       ],
-      "problem": "Web 预设编辑器接受任意 YAML，并用 Loader 的 entryListSchema 做“形状检查”；该 dialect 含 !!js，所以形状检查过的文本仍可在下一次 mount 执行任意代码。编辑器本身又弱于用户自己的编辑器，还引入写入竞态。",
+      "problem": "源 Note 记录的旧 Web 预设编辑器接受任意 YAML，并用 Loader 的 `entryListSchema` 做“形状检查”；该 dialect 含 `!!js`，所以形状检查过的文本仍可在下一次 mount 执行任意代码，且编辑器弱于用户自己的编辑器并引入写入竞态。固定提交的当前实现已经移除该编辑器与 copy/open-directory/delete 操作：设置页只读展示声明，创建入口启动 Creator-mode 任务，由 Agent 在文件系统写 bundle；旧的 `agentPreset.copy/openDocument/remove` 与 `settings/openAgentPresetDirectory` 是历史 API 形状，不是当前 UI。",
       "triggers": [
-        "Web/远程界面允许编辑组合/配置文本时",
+        "Web/远程界面准备提供预设创建、编辑、删除或打开目录时",
         "用 schema 校验代替能力边界时",
         "需要把 composition 文件路径/内容暴露给浏览器时",
-        "预设复制/编辑会与运行中 generation 竞争时"
+        "Creator-mode 任务或外部文件编辑会与运行中 generation 竞争时"
       ],
       "obligations": [
-        "作者操作只接收两个 host 解析的 id（from/agentPreset）和可选显示名；路径/组合文本不跨浏览器 wire。",
-        "host 侧整目录复制，symlink 解引用，权限收紧到 owner-only（保留 owner-execute），元数据保留 description 但不保留源 name/order。",
-        "删除 write/editor/assertComposition；文件系统是唯一编辑器。",
-        "运行中 generation 用 mtime+size 检测文件变化并启动下一代，避免旧 generation 继续服务。",
-        "authoring 操作集只含 read/copy/openDocument/remove，均不接受文件系统目标；用完整 Host API 认证。"
+        "浏览器请求不得携带任意 composition 文本或文件系统目标；设置页对每个 preset 只读展示其声明，作者操作不跨越 wire 传输路径/组合文本。",
+        "设置页的“查看配置”以只读 YAML 展示声明的 plugin list（含 `!!js` 条件）；失败的 preset 仍可读，诊断指向该 YAML；页内没有 textbox/编辑器。",
+        "创建入口只启动 Creator-mode 任务：选择 `cordis` preset 给接收的 blank Session，不改变新任务默认或 Coding Tools；没有 workspace/blank Session 时等待绑定，选择应用后消费一次并保持 Creator Session 的 preset。",
+        "文件系统仍是唯一编辑器；本地 CLI/用户可直接编辑文件。运行中 generation 用 mtime+size 检测变化并启动下一代，旧 Session 不被静默改写。",
+        "当前设置页不提供 copy/open-directory/delete 操作；旧 Note 的 `agentPreset.copy { from, agentPreset, name? }`、`openDocument`、`remove` 与 `settings/openAgentPresetDirectory` 属于历史 API 形状，不得写成现状。若目标仍实现 copy-by-id，必须单独提供其权限、元数据与无路径/文本跨 wire 的证据。"
       ],
       "actors": [
         "预设/registry 所有者",
-        "Web/host API 作者",
+        "Web UI/host API 作者",
+        "Creator-mode Agent（在文件系统写 bundle）",
         "安全评审者",
         "用户"
       ],
       "steps": [
-        "把 write 类操作改为 host 侧 copy（id→id），禁止路径/文本入参。",
-        "删除 YAML 编辑器与形状检查；把文件打开/编辑交给用户编辑器。",
-        "实现整目录复制、权限/元数据规则与 mtime+size generation 检测。",
-        "更新 Web UI/远程 API，只暴露 read/copy/openDocument/remove。",
-        "测试无路径/文本跨 wire、权限收紧、编辑后新 generation。"
+        "打开 Settings 的 Agent 预设 roster；每个内置/custom preset 只提供只读“查看配置”，不提供复制、编辑、打开目录或删除。",
+        "创建入口启动 Creator-mode：暂存 `cordis` 给接收的 blank Session，保留未发送草稿，不改变新任务默认/Coding Tools；无绑定则等待。",
+        "Creator Session 由 Agent 在文件系统创建或覆盖 preset bundle；用户自己的编辑器直接改文件，不存在浏览器 YAML 编辑器。",
+        "运行中的 standing mount 用 mtime+size 检测文件变化并启动下一代；旧 Session 保持其 generation。",
+        "若目标要恢复 copy-by-id，先按历史 Note 重新验证 host 解析 id、整目录复制、权限/元数据与无路径/文本跨 wire；不要把旧 API 名直接接回。"
       ],
       "enforcement": {
-        "mode": "host-api-capability-and-fs-test",
-        "implementation": "Host API 类型/认证、预设 registry 测试、文件权限/复制测试、Web e2e。",
-        "trust": "API 类型/测试能证明入参面；不能证明用户编辑器/OS 文件权限的所有边界。",
-        "failure": "浏览器可写任意组合/路径；!!js 代码在下一 mount 执行；编辑被旧 generation 忽略。",
-        "exceptions": "明确的本地 CLI/文件系统作者仍可直接编辑文件；本机制限制的是远程/浏览器能力。"
+        "mode": "Web UI e2e plus host API contract; historical copy API separately unproven",
+        "implementation": "`apps/web/tests/agent-preset-authoring.e2e.ts` asserts the four-preset roster, a read-only composition viewer with no textbox, absence of 复制预设/编辑插件/打开目录/删除 actions, and the Creator entry staging `cordis`. `agentPresets/list` and `agentPresets/read` supply the roster/viewer; default changes use the `agent-preset-registry` settings namespace. The old `agentPreset.copy/openDocument/remove` API is not present in the current settings surface.",
+        "trust": "The e2e proves the current UI's read-only viewer, action absence and Creator staging through a real browser. It does not prove OS file permissions, arbitrary external-editor behavior, or Creator-mode agent writes.",
+        "failure": "A browser can send composition text or a filesystem target; an editor textarea returns; the Creator entry stages a different preset or changes the default; an external edit is served by the old generation.",
+        "exceptions": [
+          "Local CLI/filesystem authors still edit files directly; this mechanism constrains the browser surface.",
+          "If a deployment implements the historical copy/openDocument/remove API, it is a separate implementation requiring its own positive and rejection evidence."
+        ]
       },
       "applicability": "适用于 Web/远程配置编辑。对本地 CLI 文件编辑不适用；对需要结构化表单的场景，应提供受控字段而非任意 YAML。",
       "relationships": [
@@ -2642,40 +2658,48 @@
         "rationale-simplification-1-ui-affordance-honesty"
       ],
       "migration": {
-        "strategy": "copy-by-id-no-text-over-wire",
-        "implementation": "write→copy(id,id)，删除编辑器/assertComposition，host 文件操作+mtime generation。",
-        "requiredSupport": "Host API 认证/类型、权限测试、Web UI 迁移、generation 检测。"
+        "strategy": "remove-browser-editor; read-only-viewer-plus-creator-mode; files remain the editor",
+        "implementation": "Delete the YAML textarea/write path and `assertComposition`; expose `agentPresets/list` plus a read-only `agentPresets/read` view; route creation to a Creator-mode `cordis` task; keep mtime+size generation detection. Do not claim the historical copy/openDocument/remove API unless separately implemented and verified.",
+        "requiredSupport": "Web roster/viewer, Creator-mode task entry, host-authenticated preset operations, and an external-editor workflow; a copy-by-id implementation needs additional permission/metadata/wire tests."
       },
       "reference": "references/rationale-simplification-1.md#rationale-simplification-1-copy-only-preset-authoring",
       "verification": {
         "positive": [
           {
-            "scenario": "copy 只接受 from/agentPreset/name；浏览器不发送路径/组合文本；复制后权限 owner-only。",
+            "scenario": "Settings roster shows the built-in presets; “查看配置” opens the declared plugin list as read-only YAML with `!!js` conditions and zero textboxes; a failed preset remains readable with its diagnostic pointing into that YAML.",
             "evidence": "planned"
           },
           {
-            "scenario": "手工编辑 composition 后，下一 session 使用新 generation；旧 session 不被静默改写。",
+            "scenario": "The Creator entry stages `cordis` for the receiving blank Session and opens a task without changing the new-task default or Coding Tools; a later newly created Session uses the configured default.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "Hand-editing a preset composition externally makes the next Session use the new mtime+size generation; the old Session is not silently rewritten.",
             "evidence": "planned"
           }
         ],
         "rejection": [
           {
-            "scenario": "保留任意 YAML 编辑器并依赖 entryListSchema 形状检查；应拒绝，因为 !!js 仍是代码。",
+            "scenario": "The Settings page exposes 复制预设/编辑插件/打开目录/删除 or a YAML textarea; the browser e2e must fail because it asserts those actions are absent.",
             "evidence": "planned"
           },
           {
-            "scenario": "让浏览器传文件系统路径给 openDocument；应拒绝，路径由 host 解析。",
+            "scenario": "A browser payload carries a filesystem path or arbitrary composition text for authoring, or a schema shape check is treated as a capability boundary; reject because `!!js` remains code.",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "The Creator entry stages a different preset, changes the new-task default, or leaves the staged choice unconsumed; reject.",
             "evidence": "planned"
           }
         ],
         "recovery": [
           {
-            "scenario": "复制失败/权限错误：返回显式错误，不自动放宽权限；用户修正源目录后重试。",
+            "scenario": "When the roster is loading or Creator is unavailable, the entry is disabled with an explanation; without a bound workspace/blank Session the staged `cordis` choice waits for binding. A failed preset remains readable and a host refusal is shown as a Toast rather than silently changing the default.",
             "evidence": "planned"
           }
         ]
       },
-      "limitations": "Note 的具体 `agentPreset.copy/openDocument/remove` API 在固定提交的 preset registry 中未完全找到；应把它当历史实现原则，不要把旧方法名当现状。"
+      "limitations": "The source Note's `agentPreset.copy/openDocument/remove` and `settings/openAgentPresetDirectory` API shapes are not present in the current settings surface; treat them as historical design, not current code. Current fixed-commit behavior is the read-only viewer plus Creator-mode task, supported by `packages/client/ui-agent-preset/README.md` and the real-browser `agent-preset-authoring.e2e.ts`; that e2e proves UI action absence/read-only/Creator staging, not OS permissions, external-editor behavior or Creator-mode agent writes. The old copy-by-id permission/metadata/wire guarantees remain a valid principle but need separate implementation evidence."
     },
     {
       "id": "rationale-simplification-1-measured-micro-optimization",

@@ -191,14 +191,18 @@
 - 任何改变字节但不改变受锁输入的装配/extraction 变更都要求显式格式版本递增。
 - 拒绝重复包前先规范化包名。
 
-**完成信号。** 同一受锁输入的两次构建身份相同；更换归档会改变身份；无关目标不使其失效。
+**完成信号。** 同一受锁输入的两次构建身份相同；更换归档会改变身份；无关目标不使其失效；共享 wheel、发行版本或 pnpm 版本变化会改变身份；Python-only 与含 pnpm 的身份不同。
 
-**失败、例外与证据限制。** 缺少或不匹配身份时重建/重装，而不是静默复用；无摘要的旧 manifest 可读但绝不视为当前匹配。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；平台相关行为需在采纳环境复验。
+**失败、例外与证据限制。** 缺少或不匹配身份时重建/重装，而不是静默复用；无摘要的旧 manifest 可读但绝不视为当前匹配；非 64 位小写 hex 的 `payloadDigest` 在校验时拒绝。**注意**：`format` 是源码中的字面值；装配/extraction 改变但未 bump 时，摘要本身无法发现，必须由变更审查拒绝，不能声称自动检测。证据限制：源 Note 的 Testing/Verification 未由本分区执行；固定提交的实现与测试源码已读，但测试未运行。
 
 **关联机制。** `rationale-feature-3-staged-atomic-publish`、`rationale-feature-3-artifact-reference-store`。
 
 **原文证据（commit `687f282e`）。**
 - `deepseek-harness/.agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md:1-43@687f282e`
+- `deepseek-harness/scripts/primary-runtime/prepare.ts:121-131@687f282e`
+- `deepseek-harness/scripts/primary-runtime/prepare.spec.ts:25-47@687f282e`
+- `deepseek-harness/packages/skill/tool-workspace-dependencies/src/index.ts:85-129@687f282e`
+- `deepseek-harness/packages/skill/tool-workspace-dependencies/README.md:40-47@687f282e`
 
 ---
 
@@ -463,9 +467,9 @@
 - 子级不能自行提升权限；原因沿链保留。
 - 只有下游闸门允许后才询问人类，避免后续拒绝/取消被洗成提示。
 
-**完成信号。** reviewer 拒绝在 approval policy 为 ask 时返回 approval service 的 ask 决定；allowed-once 执行，rejected/cancelled/unavailable 拒绝且 body 不运行；下游拒绝阻止审批提示。
+**完成信号。** reviewer 拒绝在 approval policy 为 ask 时返回 **tools pipeline 的** `ask` 决定（不是 approval service 的结果），随后才交给 approval service；`allowed-once` 执行，`rejected`/`cancelled`/`unavailable` 拒绝且 body 不运行；policy 为 `never` 时 reviewer 拒绝直接终结、不弹审批；下游拒绝阻止审批提示。
 
-**失败、例外与证据限制。** 拒绝绝不自动重试；reviewer 失败以独立的 `Auto review of tool "<name>" failed; its body was not executed: <error>` 消息拒绝，并携带 finish kind、failure code 与 provider message；拒绝对该次尝试为终态。不可用审批者映射为已记录的保守结果，而非允许。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；平台相关行为需在采纳环境复验。
+**失败、例外与证据限制。** 拒绝绝不自动重试；reviewer 失败以独立的 `Auto review of tool "<name>" failed; its body was not executed: <error>` 消息拒绝，并携带 finish kind、failure code 与 provider message；拒绝对该次尝试为终态。不可用审批者映射为已记录的保守结果，而非允许。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；固定提交的 auto-review 与 tools 审批映射源码已读，但测试未运行。
 
 **关联机制。** `rationale-feature-3-denied-body-never-executes`、`rationale-feature-3-model-authority-fixed-policy`。
 
@@ -473,6 +477,8 @@
 - `deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:11-47@687f282e`
 - `deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:11-19@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e`
+- `deepseek-harness/packages/experimental/auto-review/src/index.ts:634-725@687f282e`
+- `deepseek-harness/packages/core/tools/src/index.ts:1725-1775@687f282e`
 
 ---
 
@@ -970,22 +976,22 @@
 
 **执行步骤。**
 1. 判定所有者状态。
-2. 忙碌走注入，空闲走 followup 唤醒。
-3. 取消的轮次不重开。
-4. 可选 cap 按轮次计数，用户消息恢复预算。
+2. 忙碌或取消收敛中的所有者走注入；仅 idle 所有者用 followup 唤醒。
+3. 抑制 awaited、model-kill、teardown 与 unowned settlement。
+4. 可选 cap 按所有者轮次计数，仅认领用户消息恢复预算。
 5. 需要确定性时显式 quiet。
 
 **必须做到。**
 - 完成投递按所有者状态选道：忙碌所有者注入；空闲所有者用 followup 唤醒；不要忙等或睡眠轮询。
 - 已取消的轮次是用户中断；不得代其重新打开。
-- 唤醒默认无上限；可选 cap 按所有者轮次数计，不按时间；认领用户消息恢复预算。
+- 唤醒默认无上限；可选 cap 按所有者轮次数计，不按时间；认领用户-authored 消息恢复预算，插件自己的通知不恢复。
 - quiet 模式可恢复旧的注入车道，用于确定性 transcript；它是显式选择，不是默认。
 - 投递是正确性规则，有一个所有者；完成不是单纯通知。
 - 注册表/ledger 可以迁移，但车道规则不随实现搬家而改变。
 
-**完成信号。** 忙碌所有者收到注入；空闲所有者被唤醒并继续；取消的轮次不被唤醒；cap 耗尽后退化为注入。
+**完成信号。** 忙碌所有者收到注入；空闲所有者被唤醒并继续；取消收敛中的所有者不被唤醒；awaited/model-kill/teardown/unowned 不产生通知；cap 耗尽后退化为注入。
 
-**失败、例外与证据限制。** 唤醒链可能自激，故 cap 可选；quiet 模式牺牲即时性换确定性；后台注册表迁移不改变规则。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；平台相关行为需在采纳环境复验。
+**失败、例外与证据限制。** 唤醒链可能自激，故 cap 可选且不由时间恢复；quiet 模式牺牲即时性换确定性，超过 cap 的通知会静默等待下一轮。归档 Note 的 `reported` bit/`onJobDone` 已随 jobs seam consolidation 离开注册表；固定提交的当前 ledger 在 `tool-jobs`：`event.awaited` + model-kill set + teardown cause，cap 用按 Agent 的 `WeakMap`。不要恢复旧名。证据限制：源 Note 的 Testing/Verification 未由本分区执行；当前实现与 README 已读，但测试未运行。
 
 **关联机制。** `rationale-feature-3-single-owner-contract`、`rationale-feature-3-single-flow-owner`。
 
@@ -993,6 +999,8 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-38@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-21-continuable-background-subagents.md:1-127@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-first-continuable-delegation.md:1-46@687f282e`
+- `deepseek-harness/packages/jobs/tool-jobs/README.md:38-42,92-94@687f282e`
+- `deepseek-harness/packages/jobs/tool-jobs/src/index.ts:194-300@687f282e`
 
 ---
 
@@ -1472,15 +1480,18 @@
 - 一个连接 generation 使用一个 protocol 实例；不跨 transport 复用。
 - 不支持的能力显式报告，不假装。
 
-**完成信号。** `dsh-mcp-client` 使用官方 `@modelcontextprotocol/client` SDK，由 SDK 负责协议协商、发现、列表变更订阅、分页、请求头、取消与输出校验；bridge 使用高层 `listTools`/`callTool`，不添加并行分页实现。
+**完成信号。** `dsh-mcp-client` 依赖官方 `@modelcontextprotocol/client`（固定提交 manifest 为 2.2.0；归档 Note 写 2.0.0，属历史），`new Client(..., { versionNegotiation: { mode: 'auto' } })` 把协商交给 SDK；发现调用高层 `client.listTools(undefined, { cacheMode: 'refresh' })`，每个工具调用委托 `client.callTool(..., { toolDefinition: tool })`；bridge 没有并行分页实现。
 
-**失败、例外与证据限制。** 不支持能力被报告而非模拟；不存在第二份 wire 实现；协商失败报错，重连开新 generation。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；平台相关行为需在采纳环境复验。
+**失败、例外与证据限制。** 不支持能力被报告而非模拟；不存在第二份 wire 实现；协商失败报错，重连开新 generation。资源列表方法只原样传递 SDK cursor，不自行迭代。证据限制：源 Note 的 Testing/Verification 未由本分区执行；固定提交的实现与 manifest 已读，但测试未运行；版本号必须从当前 manifest 重取，不能照抄归档 Note。
 
 **关联机制。** `rationale-feature-3-bounded-remote-recovery`、`rationale-feature-3-first-party-rewrite`。
 
 **原文证据（commit `687f282e`）。**
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-12-mcp-sdk-protocol-negotiation.md:12-24@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md:12-27@687f282e`
+- `deepseek-harness/packages/mcp/mcp-client/package.json:31-52@687f282e`
+- `deepseek-harness/packages/mcp/mcp-client/src/connection.ts:257-275@687f282e`
+- `deepseek-harness/packages/mcp/mcp-client/src/tools.ts:118-143@687f282e`
 
 ---
 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-12-mcp-sdk-protocol-negotiation.md:12-24@687f282e
@@ -1511,12 +1522,15 @@
 
 **完成信号。** Session Inspector 不注册 resource provider、Conversation header slot、composer 或 product navigation API；Session Controller 与 Chat 保留数据所有权；只有选中的 table 订阅；日志读取使用既有 loaded window 与分页。
 
-**失败、例外与证据限制。** 打开/关闭默认 inspector 不改变所有权或运行状态；缺失/部分记录显示不可用，不发生重建写入。**显式例外：** 默认关闭的 `inspector-profile` optional bundle 启用后会启动 NodeJS Inspector，允许本地代码执行并捕获未脱敏的 Host fetch（完整 URL、请求/响应头、body、状态、时序、错误）；关闭调试窗口不停止捕获。脱敏是采纳要求，不是源行为。 证据限制：源 Note 的 Testing/Verification 未由本分区执行；平台相关行为需在采纳环境复验。
+**失败、例外与证据限制。** 打开/关闭默认 inspector 不改变所有权或运行状态；缺失/部分记录显示不可用，不发生重建写入。**独立特权例外（不属于只读契约）：** 默认关闭的 `inspector-profile` optional bundle 的 patch 启用 `experimental-inspector` 并设 `captureFetch: true`；启用后会启动 NodeJS Inspector，允许本地代码执行并捕获未脱敏的 Host fetch（完整 URL、请求/响应头、body、状态、时序、错误、取消）；关闭调试窗口不停止捕获。脱敏是采纳要求，不是源行为。证据限制：源 Note 的 Testing/Verification 未由本分区执行；固定提交的 note、bundle patch、capture 实现与 README 已读，但测试未运行。
 
 **关联机制。** `rationale-feature-3-no-fabricated-coverage`、`rationale-feature-3-committed-state-only`。
 
 **原文证据（commit `687f282e`）。**
-- `deepseek-harness/.agents/notes/implemented/feature/2026-09-24-session-inspector.md:11-30@687f282e`
+- `deepseek-harness/.agents/notes/implemented/feature/2026-09-24-session-inspector.md:11-30,26-28@687f282e`
+- `deepseek-harness/packages/experimental/inspector-profile/cordis.patch.yml:1-5@687f282e`
+- `deepseek-harness/packages/experimental/inspector/src/host/inspection/network.ts:39-160@687f282e`
+- `deepseek-harness/packages/experimental/inspector/README.md:136-137,143-151@687f282e`
 
 ---
 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-24-session-inspector.md:11-30@687f282e

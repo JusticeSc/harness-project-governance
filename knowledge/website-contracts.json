@@ -223,7 +223,7 @@
           }
         ]
       },
-      "limitations": "本域没有找到针对 Vue 插值转义的专用测试；证据仅为实现代码。开发环境不缓存 fence，性能差异未测量。",
+      "limitations": "本域在固定提交的 website/tests、website/.vitepress 与全仓 *.spec.ts 中对 escapeVueInterpolation、Interpolation、code_inline、&#123; 及字面量 {{ 做了有界检索，未发现针对 Vue 插值转义的专用回归测试；该检索不是逐行全审，测试也未运行，不能据此断言仓库任何位置绝不存在相关测试。证据仅为实现代码。开发环境不缓存 fence，性能差异未测量。",
       "origin": "source",
       "sourceBacked": true
     },

@@ -35,6 +35,24 @@
           "start": 1,
           "end": 20,
           "kind": "instruction"
+        },
+        {
+          "path": "scripts/verify-package-readme-model-experience.ts",
+          "start": 32,
+          "end": 40,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-readme-model-experience.ts",
+          "start": 333,
+          "end": 393,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-package-readme-limitations.ts",
+          "start": 19,
+          "end": 86,
+          "kind": "implementation"
         }
       ],
       "problem": "包的采用者只读 README 就要判断它能否直接用、会不会改变模型请求、有哪些硬限制。各包自由发挥时，缺失的模型体验或限制会变成隐藏行为，采用者只能在故障后发现。",
@@ -66,16 +84,16 @@
       ],
       "enforcement": {
         "mode": "README 结构检查脚本 + 允许清单 + 评审",
-        "implementation": "packages/README.md:102-105 明确引用 `scripts/verify-package-readme-model-experience.ts` 与 `scripts/verify-package-readme-limitations.ts`，并说明 omission allowlist。检查脚本本体未读，不能声称其具体判定逻辑。",
-        "trust": "源 README 证明检查入口与 allowlist 存在；不能证明 CI 实际执行，也不能证明每个包都被脚本覆盖。",
-        "failure": "缺节、空泛限制或未登记的豁免会让采用者误判能力边界；评审应拒绝没有具体行为依据的 Known Limitations。",
+        "implementation": "packages/README.md:102-105 明确引用 `scripts/verify-package-readme-model-experience.ts` 与 `scripts/verify-package-readme-limitations.ts`。前者枚举 `packages/*/*/package.json` 的 README，要求 `## Model Experience` 及有序的 `#### What the model sees`/`#### Token effect`/`#### KV Cache effect` 字段或允许的简化句式，`NO_MODEL_EXPERIENCE_SECTION` 与 `SENTENCE_MODEL_EXPERIENCE` 是审计过的豁免表；后者要求唯一的 `## Known Limitations and Deferred Work` 与至少一条顶层 bullet，`NO_LIMITATIONS` 只含 `packages/util/brand`。两者失败都 `process.exit(1)` 并列出文件与行号。",
+        "trust": "两个检查器在运行时可机械拒绝缺节、变体标题、空限制与非法豁免项；本域未运行它们，不能声称当前树通过。它们不检查 purpose/configuration/extension-point 的叙述质量，也不检查限制是否绑定真实行为。",
+        "failure": "缺节、空泛限制或未登记的豁免会让采用者误判能力边界；过期 allowlist 条目会以“包不存在”失败并迫使同变更修复。",
         "exceptions": [
-          "model-agnostic 包经 `verify-package-readme-model-experience.ts` 的 allowlist 免除 Model Experience",
-          "确实没有限制的包经 `verify-package-readme-limitations.ts` 的 allowlist 免除限制节",
-          "非 packages/ 工作区的平台包与 Python 文档可不在该契约的适用范围内"
+          "model-agnostic 包经 `NO_MODEL_EXPERIENCE_SECTION`（7 个审计条目）免除 Model Experience；简化模型体验经 `SENTENCE_MODEL_EXPERIENCE` 允许单句 + KV cache 字段",
+          "确实没有限制的包经 `NO_LIMITATIONS` 免除限制节；当前只有 `packages/util/brand`",
+          "`native/system/packages/linux-x64/README.md` 与 `python/README.md` 不在 `packages/*/*/package.json` 枚举内，属于检查器范围外，不是被 allowlist 豁免"
         ]
       },
-      "applicability": "适用：packages/ 下新增或修改的 npm 包 README；任何面向采用者的包级契约变更。 不适用：仓库级架构文档、子系统参考、纯内部脚本说明；这些不应被硬塞进包 README 的五节结构。 说明：观察到的例外：native/system/packages/linux-x64/README.md 与 python/README.md 没有 Model Experience/Known Limitations 节；来源正文未解释它们由哪个 allowlist 覆盖，因此只能记录为观察事实，不能推断豁免原因。",
+      "applicability": "适用：`packages/*/*/package.json` 对应的包 README，以及任何面向采用者的包级契约变更。 不适用：仓库级架构文档、子系统参考、纯内部脚本说明；这些不应被硬塞进包 README 的五节结构。 说明：`native/system/packages/linux-x64/README.md` 与 `python/README.md` 没有 Model Experience/Known Limitations 节，原因是两个检查器只枚举 `packages/*/*/package.json`，它们不在范围内；这与“被某个 allowlist 豁免”是不同结论，来源没有为它们登记豁免。",
       "relationships": [
         "package-contracts-7.model-experience",
         "package-contracts-7.limitations-disclosure",
@@ -118,8 +136,9 @@
         ]
       },
       "limitations": [
-        "检查脚本只被 README 引用，未读实现；不能证明它检查了内容质量而不仅是节存在。",
-        "native 与 python 的 README 没有这些节，说明契约的适用边界在来源中没有被完整写清。",
+        "检查器已读但未运行；不能证明当前仓库通过，也不能证明 `ci-static` 在远端实际执行。",
+        "两个检查器只验证节/字段结构与允许清单，不验证限制内容质量、purpose/configuration/extension-point 的完整性，也不验证双语语义。",
+        "`native/system/packages/linux-x64/README.md` 与 `python/README.md` 在枚举范围外；这是范围事实，不是已审计的豁免。",
         "中文正文已 1-EOF 全文对照（含 20 个文件、44 行宽 CJK 长行 raw 重读），未发现中文独有的额外义务；翻译措辞未做母语审校。"
       ]
     },
@@ -137,6 +156,12 @@
           "path": "packages/README.md",
           "start": 27,
           "end": 72,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/README.md",
+          "start": 96,
+          "end": 96,
           "kind": "instruction"
         },
         {
@@ -279,6 +304,30 @@
           "start": 30,
           "end": 30,
           "kind": "instruction"
+        },
+        {
+          "path": "scripts/product-package-policy.ts",
+          "start": 1,
+          "end": 50,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/verify-product-use.ts",
+          "start": 234,
+          "end": 270,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 298,
+          "end": 299,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/run-gates.ts",
+          "start": 360,
+          "end": 372,
+          "kind": "implementation"
         }
       ],
       "problem": "实验性、可发布但不默认启用的包很容易被误当成产品默认能力。状态不清会让采用者把未验证能力放进生产 profile，或在升级后发现默认行为变了。",
@@ -288,35 +337,38 @@
         "发布说明与采用者文档"
       ],
       "obligations": [
-        "非实验运行时包必须有产品用途，或在 `scripts/product-package-policy.ts` 中有显式分类；SDK、build、test、declaration 基础设施有单独分类。",
+        "非实验运行时包必须有产品用途，或在 `scripts/product-package-policy.ts` 中显式分类；分类值只有 `optional`、`sdk`、`build`、`test`、`web-distribution`、`declarations`，每项必须写非空 reason。",
         "实验状态独立于是否发布、是否可安装、是否可选交付；不能把“已发布”当成“稳定”。",
         "实验包只有在被显式挂载时才激活；shipped profile 不应默认挂载它。",
         "Plugin Manager 把实验插件放在单独入口，不与内置稳定插件混排。",
-        "包的 README 要写明实验边界与启用方式，而不是只在目录名上暗示。"
+        "包的 README 要写明实验边界与启用方式，而不是只在目录名上暗示。",
+        "`scripts/verify-product-use.ts` 在 `ci-static` 中做静态产品用途检查：非实验包既没有 default/optional 可达性、也不在 policy 中时失败；policy 条目必须指向真实且非 experimental 的包目录、reason 非空、category 与路径相符；非 `web-distribution` 条目不得同时是 default runtime use，`web-distribution` 又必须仍是 default use；未知/过期条目使检查失败。"
       ],
       "actors": [
         "包作者",
         "release owner",
         "profile 维护者",
-        "Plugin Manager 维护者"
+        "Plugin Manager 维护者",
+        "automation: `scripts/verify-product-use.ts`（`pnpm run verify-product-use`，由 `scripts/run-gates.ts` 的 `ci-static` 调用）"
       ],
       "steps": [
-        "阅读 `scripts/product-package-policy.ts` 的分类，确定包属于产品运行时、SDK、build、test 还是 declaration 基础设施。",
+        "阅读 `scripts/product-package-policy.ts` 的六个分类，确定包属于产品运行时、optional 集成、SDK、build、test、web-distribution 还是 declarations 基础设施。",
         "如果是实验包，确认 shipped profile 不挂载，并写出显式启用步骤。",
         "在 README 与 Plugin Manager 元数据中标注 experimental，不依赖目录名传达状态。",
-        "发布前检查默认 profile 的挂载列表，确认没有意外加入实验包。"
+        "发布前检查默认 profile 的挂载列表，确认没有意外加入实验包。",
+        "运行 `pnpm run verify-product-use`（或等价的 `ci-static` 聚合），确认未分类、过期或类别不符的条目失败。"
       ],
       "enforcement": {
-        "mode": "package policy 脚本 + profile 评审 + UI 分组",
-        "implementation": "`packages/README.md:86-89` 规定非实验运行时包必须有产品用途或显式分类，并链接 `scripts/product-package-policy.ts`；实验包 README 各自声明显式挂载；`ui-plugin-manager` 单列 Experimental plugins。",
-        "trust": "分类脚本存在但未读；shipped profile 是否真的不挂载只能从包 README 的声明与配置评审证明。",
-        "failure": "误把实验包放进默认 profile 会扩大未验证能力的暴露面；状态标注缺失会让采用者以为能力已稳定。",
+        "mode": "static product-use verifier + package policy + profile review + UI grouping",
+        "implementation": "`packages/README.md:86-89` 规定非实验运行时包必须有产品用途或显式分类，并链接 `scripts/product-package-policy.ts`；该文件定义六个 category 与逐项 reason，`scripts/verify-product-use.ts` 检查 policy 条目、default/optional 可达性和类别/路径匹配；`scripts/run-gates.ts` 的 `ci-static` 以 `product-use` gate 调用 `verify-product-use`，CI 的静态 job 运行 `pnpm run check:ci:static`；`ui-plugin-manager` 单列 Experimental plugins。",
+        "trust": "分类与产品用途由静态 CI gate 机械检查（未分类、过期、类别不符会退出非零）；本域未执行该 gate，不能声称当前树通过。shipped profile 的实际启动结果仍需运行验证。",
+        "failure": "误把实验包放进默认 profile 会扩大未验证能力的暴露面；状态标注缺失会让采用者以为能力已稳定；过期 policy 条目既可能遮蔽 default use，也可能让已移除的包继续被当作例外。",
         "exceptions": [
-          "显式分类为 SDK/build/test/declaration 基础设施的包不要求产品用途",
-          "实验包可以被发布和安装，只是不默认激活"
+          "`optional` 不得用于 `packages/test-support/`；`test` 只接受 `packages/test-support/`；`sdk` 只接受 `packages/sdk/client`；`build` 只接受 `packages/typert/generator`；`web-distribution` 只接受 `packages/client/web` 或 `packages/client/ui-dockkit`；`declarations` 只接受 `packages/util/package-manifest`",
+          "实验包可以被发布和安装，只是不默认激活；`packages/experimental/` 不进入产品用途检查，也不能作为 policy 条目"
         ]
       },
-      "applicability": "适用：任何新包、状态迁移、默认 profile 变更和发布检查。 不适用：纯文档包或仅用于测试的包，可按其分类免于产品用途要求。 说明：状态至少有三个轴：是否实验、是否发布、是否默认挂载；三者不能互相替代。",
+      "applicability": "适用：任何带 `package.json` 的非实验 `packages/*/*` 包、状态迁移、默认 profile 变更和发布检查。 不适用：`packages/experimental/*`（单独状态轴，不进入产品用途检查）。 说明：不存在 documentation/文档包分类；纯文档目录若没有 `package.json` 就不在检查清单内。仅用于测试的包使用 `test` 分类且路径限于 `packages/test-support/`。状态至少有三个轴：是否实验、是否发布、是否默认挂载；三者不能互相替代。",
       "relationships": [
         "package-contracts-7.group-map",
         "package-contracts-7.composition-wiring",
@@ -359,8 +411,9 @@
         ]
       },
       "limitations": [
-        "未读 `scripts/product-package-policy.ts`，不能声称其判定粒度。",
-        "没有执行 profile 启动，不能证明默认挂载的实际行为。"
+        "本域读取了 policy、`verify-product-use.ts` 与 `run-gates.ts` 的 gate 接线，但未执行 `pnpm run verify-product-use` 或 `pnpm run check:ci:static`，不能证明当前树的检查通过。",
+        "没有执行 profile 启动，不能证明默认挂载的实际行为；静态可达性不执行包代码。",
+        "`ci.yml` 是否在托管 CI 上实际运行属于远端执行事实，本域只读到工作流文件声明。"
       ]
     },
     {
@@ -839,6 +892,7 @@
         "取消要在启动后再次检查，避免提供者在取消后仍启动进程。",
         "输出有字符/字节上限；诊断与截断提示可以超出上限，但必须可解释。",
         "请求体、日志字段和队列有独立上限；超限事件不能被静默丢弃，要阻塞或显式失败。",
+        "buffered 请求体 cap 只约束 buffered 路由；opt-in streaming 路由可绕过聚合 cap，由路由自行负责持久化、取消和存储配额。",
         "队列/预算语义要写清：round cap 不是资源预算，token/时间/配额仍各自独立。"
       ],
       "actors": [

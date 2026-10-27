@@ -95,7 +95,7 @@
         "文档维护者：检查格式、链接、翻译配对与当前权威落点"
       ],
       "steps": [
-        "确认变更非平凡，并读当前规则与同主题活 Note。",
+        "确认变更承载持久决策理据，并读当前规则与同主题活 Note。",
         "写 Problem：具体失败/机会、观察方式、受影响 actor。",
         "写 Decision：选择、边界、所有权、负向保证；使用现在时。",
         "写 Alternatives：逐条列真实备选和否决理由。",
@@ -111,7 +111,7 @@
         "failure": "缺段/状态错误/配对缺失/死链会红；语义空洞不会红，必须由评审拦下。",
         "exceptions": "纯机械/纯格式变更可不写 Note；proposed Note 可保留未决问题和计划；事故使用 postmortem 而非普通 Note。"
       },
-      "applicability": "所有非平凡变更；尤其适用于持久化、协议、所有权、默认值、删除与跨包依赖。小型变更可以只写一段，但不能省略 Problem/Decision/Consequences 的实质。",
+      "applicability": "所有承载持久决策理据的变更；尤其适用于持久化、协议、所有权、默认值、删除与跨包依赖。小型变更可以只写一段，但不能省略 Problem/Decision/Consequences 的实质。",
       "relationships": [
         "rationale.alternatives-and-rejected-knowledge",
         "rationale.non-trivial-note-policy",
@@ -286,7 +286,7 @@
     },
     {
       "id": "rationale.non-trivial-note-policy",
-      "title": "非平凡变更的判定与记录理由",
+      "title": "持久决策理据的判定与记录（非平凡判定表的现行边界）",
       "sources": [
         {
           "path": ".agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md",
@@ -319,18 +319,20 @@
           "kind": "instruction"
         }
       ],
-      "problem": "变更范围是语义判断；用行数/文件数/目录或 CI 分类器决定是否写 Note 会漏掉小而重要的契约变化，也会为机械改动制造噪音。",
+      "problem": "变更范围是语义判断；用行数/文件数/目录或 CI 分类器决定是否写 Note 会漏掉小而重要的契约变化，也会为机械改动制造噪音。当前活权威已把触发收窄为 lasting decision rationale；归档的 every-non-trivial-change 规则只是历史信号。",
       "triggers": [
-        "任何代码/配置/文档/测试/依赖/运维改动",
-        "作者或评审者不确定是否非平凡"
+        "改动做出或修订代码、测试和现有文档无法解释的持久决策",
+        "作者或评审者不确定改动是否承载持久决策理据"
       ],
       "obligations": [
-        "非平凡定义：新增/修改事件、上下文、hook、流、状态存储、用户可见行为、公开 API、默认值、CLI、扩展点、跨包依赖或移除能力。",
+        "现行规则：只有 lasting decision rationale 才要求在同一变更中新增或更新 Agent Note；不是每个非平凡改动都强制写 Note。",
+        "归档的 2026-07-19 Note 曾要求 every non-trivial change；该触发已被当前 .agents/notes/README.md、AGENTS.md:155 与 docs/AGENTS.md:40-41 取代，只作为历史与判定信号，不得据此扩大现行义务。",
+        "非平凡判定表仍可用于判断改动是否承载持久决策：新增/修改事件、上下文、hook、流、状态存储、用户可见行为、公开 API、默认值、CLI、扩展点、跨包依赖或移除能力。",
         "平凡示例：typo、格式、注释编辑、纯机械 fixture 更新；但小 UI 调整不自动平凡，测试/fixture 若定义新契约也不平凡。",
         "不要用行数、文件数、目录名或“是否 architecture”作为判定。",
         "不要引入自动 trivial/non-trivial 分类器；评审负责语义边界。",
-        "判为平凡时在 PR 中给出可复核理由（纯格式/纯机械/无行为变化），不要只写 trivial。",
-        "判为非平凡时，Note 与代码同一变更；删除时保留原动机、失效理由、能力损失、重新引入条件和缺席验证。",
+        "判为无需 Note 时在 PR 中给出可复核理由（纯格式/纯机械/无行为变化），不要只写 trivial。",
+        "判为需要 Note 时，Note 与代码同一变更；删除时保留原动机、失效理由、能力损失、重新引入条件和缺席验证。",
         "Note 是决策记录，不是规格书/计划；实现步骤留在 PR/issue。"
       ],
       "actors": [
@@ -339,47 +341,58 @@
         "没有机器兜底"
       ],
       "steps": [
-        "用判定表逐项问：事件/状态/契约/用户行为/API/依赖/所有权是否变化。",
-        "不确定时按非平凡处理。",
+        "用判定表逐项问：事件/状态/契约/用户行为/API/依赖/所有权是否变化，以及该变化是否需要持久理据。",
+        "不确定时按需要 Note 处理。",
         "在 PR 描述中写实际改了什么、没改什么、测试范围。",
-        "若判平凡，给出纯机械/无行为变化的证据。",
+        "若无需 Note，给出纯机械/无行为变化的证据。",
         "评审者质疑时补 Note 或补理由。"
       ],
       "enforcement": {
         "mode": "review-only",
-        "implementation": "没有自动分类器；当前规则只要求评审与作者判断。",
+        "implementation": "没有自动分类器；当前规则只要求评审与作者判断改动是否承载持久决策理据，不要求每个非平凡改动写 Note。",
         "trust": "只能依赖人对语义的理解；行数/覆盖率不能替代。",
-        "failure": "漏写 Note 会丢失理由；过度要求会制造噪音。",
-        "exceptions": "紧急回滚可先落地后补 Note；纯机械修改可豁免。"
+        "failure": "漏写持久理据会丢失理由；把每个非平凡改动都升级为强制 Note 会制造噪音。",
+        "exceptions": "紧急回滚可先落地后补 Note；纯机械或局部编辑（含本地 UI 展示/交互）可豁免。"
       },
-      "applicability": "所有仓库改动；对持久化、安全、所有权、默认值、跨包依赖尤其严格。",
+      "applicability": "所有可能承载持久决策理据的改动；对持久化、安全、所有权、默认值、跨包依赖尤其严格。",
       "relationships": [
         "rationale.decision-record-content",
         "rationale.archive-retention-and-freeze",
+        "rationale-process-1-agent-note-lifecycle",
         "collaboration:pr-scope"
       ],
       "migration": {
-        "strategy": "提供判定表 + PR scope 声明；不实现自动分类器。",
-        "implementation": "在 CONTRIBUTING/PR 模板中放判定表和“实际改了什么”字段；评审清单加一项“边界是否被正确分类”。",
+        "strategy": "提供持久理据判定表 + PR scope 声明；不实现自动分类器，也不把每个非平凡改动强制成 Note。",
+        "implementation": "在 CONTRIBUTING/PR 模板中放“是否承载持久决策理据”的判定表和“实际改了什么”字段；评审清单加一项“边界是否被正确分类”。",
         "requiredSupport": "评审者培训、可搜索的 Note 模板；无需新 CI。"
       },
       "reference": "references/rationale.md#3",
       "verification": {
         "positive": [
-          "作者能引用判定表解释为什么非平凡/平凡；Note 与代码同一变更。"
+          {
+            "scenario": "改动包含持久决策（如默认值/所有权/公开契约变化），作者更新已有 owning Note 或新建，并与代码同一变更。",
+            "evidence": "planned"
+          }
         ],
         "rejection": [
-          "把持久化默认值/安全边界/用户行为变化称为 trivial，应被评审拒绝。"
+          {
+            "scenario": "改动引入持久决策却只在 PR/commit body 解释，或以“非平凡”为由要求纯机械改动补 Note；两者都应被评审纠正。",
+            "evidence": "planned"
+          }
         ],
         "recovery": [
-          "漏写时补 Note；误判平凡时在 PR 中修正范围声明。"
+          {
+            "scenario": "漏写持久理据时补 Note；误把机械改动判为需要 Note 时在 PR 中修正范围声明。",
+            "evidence": "planned"
+          }
         ],
         "evidence": {
           "status": "planned",
-          "note": "未在安装后项目执行判定表/评审演练。"
+          "note": "未在安装后项目执行判定表/评审演练；归档 every-change 规则未被当作现行验收标准。"
         }
       },
       "limitations": [
+        "现行触发是 lasting decision rationale，不是归档 2026-07-19 的 every-non-trivial-change；非平凡判定表只是信号，不是自动门。",
         "语义判断无自动证明；评审者可能低估小改动的契约影响。",
         "过度应用会让 Note 目录膨胀；需要归档/删除边界配合。"
       ]

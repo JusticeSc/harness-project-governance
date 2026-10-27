@@ -20,6 +20,7 @@
     "verify": "node bin/governance.mjs verify",
     "demo": "node scripts/demo.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "test-adoption": "npm --prefix research/fixtures/adoption-cli test",
     "install-doc-gates": "npm install --prefix tools/doc-gates --ignore-scripts",
     "verify-upgrade-guides": "node tools/doc-gates/verify-upgrade-guides.mjs",
     "verify-translation-pairing": "node tools/doc-gates/verify-translation-pairing.mjs",

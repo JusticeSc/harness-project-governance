@@ -341,7 +341,7 @@
 
 ### 合并前进检查点
 
-**何时用**：选择 merge-forward 且合并期间 base 前进时。**做法**：完成、验证并提交当前合并；获授权则推送；把更新后的 base 作为独立提交再合并；绝不丢弃或重写检查点；只有明确选择 rebase 时才用 lease 保护；合并树变化后重跑相关检查。**完成信号**：历史中保留两个检查点，第二次合并后检查通过。**失败/例外**：丢失/重写检查点被拒；rebase 需 lease 且另有决策所有。**证据限制**：增加提交噪音；依赖远端权限。
+**何时用**：选择 merge-forward 且合并期间 base 前进时。**做法**：完成、验证并提交当前合并；获授权则推送；把更新后的 base 作为独立提交再合并；绝不丢弃或重写检查点；只有明确选择 rebase 时才用 lease 保护；合并树变化后重跑相关检查。**完成信号**：历史中保留两个检查点，第二次合并后检查通过。**失败/例外**：丢失/重写检查点被拒；rebase 需 lease 且由 `rationale-process-1-pull-request-stack-and-review` 拥有。**证据限制**：增加提交噪音；依赖远端权限。
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-incremental-pr-base-retargeting.md:1-28@687f282e
 
@@ -670,7 +670,7 @@
 
 ### 历史预编译资产要求与独立引擎归属
 
-**状态与作用**：早期Note要求独立版本、asset-only export、无install编译、显式dispatch/版本tag/受保护环境发布，以及receipt、源码pin/patch/full diff、许可证与notices验证。其链接的 `native/libreoffice-wasm/package.json`、release工作流和包装测试在固定提交不存在，不能当成现有可执行门禁。后续独立LibreOffice kit由外部仓库拥有API/Worker/引擎资格与发布；Harness精确消费npm版本和锁文件，不编译或发布kit。**迁移要求**：保留发布侧编译、来源核验与真实引擎/安装/offline资格，不把移除的产品构建复制为假门禁；缺少实际发布者/合格产物时记为实现阻塞。首次发布未完成是历史限制，不是允许未资格产物上线的例外；源文也未证明receipt是加密签名。目标产品验证仍planned。
+**状态与作用**：历史/条件性模式，固定提交下没有 active automatic gate。早期Note要求独立版本、asset-only export、无install编译、显式dispatch/版本tag/受保护环境发布，以及receipt、源码pin/patch/full diff、许可证与notices验证。其链接的 `native/libreoffice-wasm/package.json`、release工作流和包装测试在固定提交不存在，不能当成现有可执行门禁。后续独立LibreOffice kit由外部仓库拥有API/Worker/引擎资格与发布；Harness精确消费npm版本和锁文件，不编译或发布kit。**迁移要求**：保留发布侧编译、来源核验与真实引擎/安装/offline资格，不把移除的产品构建复制为假门禁；缺少实际发布者/合格产物时记为实现阻塞。首次发布未完成是历史限制，不是允许未资格产物上线的例外；源文也未证明receipt是加密签名。目标产品验证仍planned。
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-11-independent-libreoffice-package.md:1-32@687f282e
 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md:11-31@687f282e
@@ -695,7 +695,7 @@
 
 ### 长期可用的仓库引用形式
 
-**何时用**：长期正文引用与原生包发布元数据。**做法**：历史正文用release tag/PR/run/job ID，当前文件用相对链接；扫描tracked及未忽略新文件，在本地Git对象库拒绝明确commit，保留blob/schema/branch等其他hex，不联网（包括partial-clone懒取）。原生源manifest保留public source home；workflow打包只在可丢弃输入中投影真实workflow仓库身份，交付并发布经核验的原tarball，不改源manifest。无workflow的本地打包仍保留public元数据。**验证**：引用门禁、源文件未改、workflow/local身份差异及核验后tarball不变分别举证；不宣称远端tag不可变或本地对象完整。
+**何时用**：长期正文引用。原生包发布元数据的 pack-time 身份投影属于 release-artifact/payload owner，不是本引用扫描器的职责。**做法**：历史正文用release tag/PR/run/job ID，当前文件用相对链接；扫描tracked及未忽略新文件，在本地Git对象库拒绝明确commit，保留blob/schema/branch等其他hex，不联网（包括partial-clone懒取）。原生源manifest保留public source home；workflow打包必须不改tracked源manifest，可丢弃输入中的真实workflow仓库身份投影与tarball不变性由release owner验证。无workflow的本地打包仍保留public元数据。**验证**：引用门禁与tracked源manifest未被改写分别举证；pack-time身份投影及核验后tarball不变性由release owner举证；不宣称远端tag不可变或本地对象完整。
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-maintained-repository-references.md:1-32@687f282e
 
@@ -918,7 +918,7 @@
 
 ### 可导入包源码禁止顶层 await
 
-**何时用**：包源码可被其他模块导入，或入口需要异步启动时。**做法**：入口使用显式 `async function main()`；定义失败行为（退出码、stderr、就绪信号、清理）；用 AST 规则覆盖模块作用域的 `await`、`for await`、`await using`，包括顶层 if/块/try/循环/switch/条件/export 初始化/计算成员名；只排除 bin（`#!` 或 manifest bin 指向），并钉住排除清单；为空语料/缺 `.tsx`/缺 `src/` 增加 corpus guard；在共享 hygiene 注册。**完成信号**：所有可导入源码同步求值，入口自行处理失败。**失败/例外**：bin 与已记录范围例外；第三方/apps 不在范围。**证据限制**：banner 注入/生成代码可能逃过；不覆盖应用层。
+**何时用**：包源码可被其他模块导入，或入口需要异步启动时。**做法**：入口使用显式 `async function main()`；定义失败行为（退出码、stderr、就绪信号、清理）；用 AST 规则覆盖模块作用域的 `await`、`for await`、`await using`，包括顶层 if/块/try/循环/switch/条件/export 初始化/计算成员名；只排除 bin（`#!` 或 manifest bin 指向），并钉住排除清单；为空语料/缺 `.tsx`/缺 `src/` 增加 corpus guard；在共享 hygiene 注册。**完成信号**：所有可导入源码同步求值，入口自行处理失败。**失败/例外**：bin 与已记录范围例外；第三方/apps 不在范围。**验证（计划，未执行）**：正例为 main()、方法、构造器、accessor、参数默认值或 class static block 内的 `await` 通过，声明为 bin 的文件保留顶层 await；反例为非 bin 的模块作用域 `await`/`for await`/`await using`，包括顶层 if/块/try/循环/switch/条件/export 初始化/计算成员名。**证据限制**：banner 注入/生成代码可能逃过；不覆盖应用层。
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-no-top-level-await-in-packages.md:1-45@687f282e
 

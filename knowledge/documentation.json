@@ -231,6 +231,12 @@
         },
         {
           "path": "scripts/doc-standard.spec.ts",
+          "start": 142,
+          "end": 152,
+          "kind": "test"
+        },
+        {
+          "path": "scripts/doc-standard.spec.ts",
           "start": 154,
           "end": 160,
           "kind": "instruction"
@@ -255,11 +261,11 @@
         "把维护者说明写进正文"
       ],
       "obligations": [
-        "一个一级标题；YAML title/description；语言切换行；## Summary；## Table of Contents；正文 H2；## Dev Note 最后。",
+        "格式所有者允许时，人工页按YAML元数据、一个一级标题、双语切换行、Summary、Table of Contents、正文和最终Dev Note排列；包README元数据测试要求kind/description，不统一要求title字段。",
         "包 README 的自动骨架检查只覆盖路径深度恰为 packages/<group>/<pkg>/README.md 的英文与中文页：英文必须有 ## Summary、## Table of Contents、## Dev Note（H2 或 H3）；中文必须有 ## 概述、## 目录、## 开发备注（H2 或 H3）。",
-        "Summary 写读者能做什么、何时选、主要代价、最重要边界，一到五句。",
+        "Summary用三至五个解释性句子说明读者能做什么、为何关心、主要运行模型与重要边界；英文包README的100词上限是另一个有范围的门禁。",
         "目录锚点匹配 H2；新页按模板顺序，重排需结构理由。",
-        "Dev Note 可写 None.，只放维护者需要但正文不宜展开的工程事实。",
+        "Dev Note是显式非权威的活动工作上下文，可记录假设、粗略备选、进度指针与未决问题；稳定行为、限制与已接受理由回到普通所有者，关闭后提升持久结论或删除已解决讨论；空白写None.。",
         "标题用具体名词短语，不用口号/问句。"
       ],
       "actors": [
@@ -269,7 +275,7 @@
         "automation: doc-standard.spec 检查包 README 的 frontmatter、路径深度恰为 4 的英文/中文骨架标题，以及 session-persistence-jsonl 参考配对的物理行数与 sidecar 形态；其他页面靠评审。"
       ],
       "steps": [
-        "选模板并写 YAML。",
+        "按格式所有者选模板与元数据；包README使用kind/description，不强加全页统一title字段。",
         "写语言切换行。",
         "写 Summary（最后写，确保具体）。",
         "列 H2 目录。",
@@ -281,7 +287,7 @@
         "implementation": "structure-hierarchy.md 的顺序与模板；style.md 的标题/摘要规则；doc-standard.spec 读取每个匹配包 README 的 YAML frontmatter（110-118），对路径深度恰为 4 的 README.md/README.zh.md 断言 Summary/概述、Table of Contents/目录、Dev Note/开发备注（154-160, 401-406），并对参考 README 配对断言物理行数相等与 sidecar 形态（443-456）。这些测试由 run-gates.ts:859-862 在 doc-quick/test:docs 中运行。",
         "trust": "模板和评审覆盖大多数页面；自动检查只覆盖包 README 骨架与参考 README 配对，不覆盖任意页面的标题、摘要质量或目录锚点可达性。",
         "failure": "包 README 缺 Summary/概述、Table of Contents/目录或 Dev Note/开发备注时 vitest 失败；参考配对行数或 sidecar 形态不符也失败。缺 YAML frontmatter 同样使包 README 元数据测试失败。其他页面缺摘要/目录通常只由评审拒绝。",
-        "exceptions": "生成页由生成器决定骨架；归档页保留封印时格式；很短的索引页可省略目录但仍需摘要；组/根 README 不进入路径深度 4 的骨架断言。"
+        "exceptions": "生成片段、微小机器文件、Agent Note、事故复盘和解析器定义格式遵循具名所有者；包README的最后两个H2为Model Experience和Known Limitations and Deferred Work，最终Dev Note用限制节内H3；组/根README不进入路径深度4的骨架断言。"
       },
       "applicability": [
         "when: 新增人类文档页或大改页面结构。",
@@ -1328,8 +1334,8 @@
         "翻译后段落边界变化"
       ],
       "obligations": [
-        "散文段落在源文件中占一个物理行。",
-        "标题、列表项、引用不得硬折行。",
+        "散文段落在源文件中占一个物理行；普通、列表与引用中的 paragraph 节点由 verify-md-wrap 自动检查。",
+        "标题保持单行、列表项与引用不硬折行是写作/评审义务；其中形成 paragraph 的列表/引用正文仍由自动门禁检查，heading 节点不在自动检查范围。",
         "代码块、表格、HTML 块、注释、多行 JSX 保持原格式。",
         "段落之间用空行，不用行内换行制造段落。",
         "代码注释遵守 linter 列宽，不受本规则约束。"
@@ -1342,7 +1348,7 @@
       ],
       "steps": [
         "把段落合并为一行（编辑器软换行）。",
-        "保留列表项/标题的一行形态。",
+        "保留列表项段落的一行形态；标题单行由评审确认。",
         "检查围栏/表格/HTML 不被误合并。",
         "运行 verify-md-wrap。",
         "翻译时只改段落内部，不引入物理换行。"
@@ -1381,9 +1387,9 @@
             "observedScope": "默认隐藏Skill位置的实际离线消费者检查了声明fixture语料；LF frontmatter/容器和多行表格/围栏不误报，单行段落通过，不声称覆盖真实采用项目全仓。"
           },
           {
-            "obligation": "标题/列表项未被硬折行。",
+            "obligation": "列表/引用中的 paragraph 未被硬折行（自动）；标题保持单行（评审）。",
             "evidence": "planned",
-            "boundary": "标题仍需写作评审；实际多行Setext heading通过该程序，不能把它标为标题自动验证。"
+            "boundary": "标题仍需写作评审；实际多行Setext heading通过该程序，不能把它标为标题自动验证。列表/引用内 paragraph 的拒绝已由 p1-installed-markdown-wrap.json 观察，但标题部分未由该程序验证。"
           }
         ],
         "rejection": [
@@ -1402,7 +1408,7 @@
       },
       "limitations": [
         "检查器依赖 Markdown AST，复杂 HTML/JSX 可能误判。",
-        "既有提取的“自动检查标题/任意结构行”和“全部生成区域不适用”表述强于固定源实现，已按 scripts/verify-md-wrap.ts51-74 更正；原写作义务保留，待独立来源复核。",
+        "既有提取的“自动检查标题/任意结构行”和“全部生成区域不适用”表述强于固定源实现，已按 scripts/verify-md-wrap.ts51-74 更正；原写作义务保留为评审，只有 paragraph 节点自动检查，待独立来源复核。",
         "长行在编辑器里需要软换行，否则阅读体验差。"
       ]
     },
@@ -1533,7 +1539,7 @@
     },
     {
       "id": "documentation-markdown-links",
-      "title": "Markdown 相对链接、锚点与网站路由禁用",
+      "title": "Markdown 相对链接与锚点（网站根绝对路由禁令由评审承担）",
       "sources": [
         {
           "path": "scripts/verify-md-links.ts",
@@ -1543,14 +1549,14 @@
         },
         {
           "path": "docs/AGENTS.md",
-          "start": 73,
-          "end": 75,
+          "start": 75,
+          "end": 77,
           "kind": "instruction"
         },
         {
           "path": ".agents/skills/dsh-doc/references/metadata-links-i18n.md",
-          "start": 31,
-          "end": 50,
+          "start": 60,
+          "end": 64,
           "kind": "instruction"
         },
         {
@@ -1585,7 +1591,7 @@
         "外部 URL、协议相对 //host、根绝对 /path 被跳过；纯页内 #frag 对源文件本身检查。",
         "片段只对 .md 目标检查；file.ts#L10 等非 Markdown 片段交给渲染器，不判。",
         "锚点按 GitHub slug（小写、保留字母数字下划线空格连字符、空格转连字符）或显式 <a id> 校验；fenced/inline code 与 HTML 注释中的 id 不算。重复标题按占用集加 -1/-2，匹配大小写敏感。",
-        "Markdown 中不写 /docs/... 站内绝对路由；网站投影负责转换。",
+        "Markdown 中不写 /docs/... 站内绝对路由；这是源写作/评审规则，网站投影负责转换，verify-md-links 会跳过根绝对路径而不会自动拒绝。",
         "标题改名时同改入站引用；没有自动别名放行表。",
         "链接门禁测试覆盖源发现：`packages/README.md` 与 `README.zh.md` 两个顶层索引都受检；`packages/AGENTS.md`、`packages/core/README.md`、`packages/core/probe/README.md` 受检；`.agents/notes/archived/` 冻结 Note 不作为源。",
         "锚点测试覆盖：rendered heading text 的 GitHub slug、下划线保留、heading 内 link 按 rendered text slug、重复标题按 occupied-set 递增后缀、fenced/inline code 与 HTML 注释中的 `<a id>` 无效。",
@@ -1602,7 +1608,7 @@
         "用相对路径写链接。",
         "剥离 query/fragment 确认目标存在。",
         "改标题后搜索入站锚点。",
-        "源文档中不用网站路由。",
+        "源文档中不用网站路由（评审检查；门禁跳过根绝对路径）。",
         "跑 verify-md-links，按 target/anchor 原因修目标或锚点。"
       ],
       "enforcement": {
@@ -1611,7 +1617,7 @@
           "verify-md-links 解析 Markdown AST 的 link/image/definition；isExternal 排除 scheme、//、/；existsSync 探测目标；documentAnchors 用 githubSlug+显式 <a id> 建集合，重复标题加后缀。",
           "verify-md-links.spec.ts 用临时 fixture 树验证 source discovery、documentAnchors 与 findViolations；verify-md-links.ts 的 CLI tail 做成功计数/失败逐条 stderr 与退出码。"
         ],
-        "trust": "只证明本地目标存在与 Markdown 锚点存在；不检查远端 URL、目录是否含 README、非 Markdown 片段、网站部署。",
+        "trust": "只证明本地目标存在与 Markdown 锚点存在；不检查远端 URL、目录是否含 README、非 Markdown 片段、网站部署，也不自动拒绝根绝对站内路由（该禁令靠评审）。",
         "failure": "target 或 anchor 不存在时退出 1；没有自动别名建议。",
         "exceptions": "外部/协议相对/根绝对目标跳过；归档笔记不从源扫描；非 Markdown 目标片段不判；生成区域由生成器负责。"
       },
@@ -1805,7 +1811,7 @@
       ],
       "enforcement": {
         "mode": "automatic-policy-gates",
-        "implementation": "verify-repository-references 用 git cat-file 解析十六进制前缀并拒绝真实提交；verify-public-repository-links 解码后匹配禁用组织；verify-concrete-terms 匹配禁用词并排除历史/发布/归档。",
+        "implementation": "verify-repository-references对组织URL先用canonicalReferenceText标准化，再在原始行上匹配commitCandidate并对照本地真实提交对象；verify-public-repository-links另按其解码规则拒绝旧仓库；verify-concrete-terms匹配禁用词并排除历史/发布/归档。",
         "trust": "已存在 Git 对象的提交号自动检测；浅克隆缺失对象可能漏报；远端 URL 存活不检查。",
         "failure": "发现提交号/禁用 URL/禁用词时退出 1 并指出文件行。",
         "exceptions": "verify-repository-references 只排除 vendor/ 与归档，并允许一个精确的 kit 仓库 URL；verify-public-repository-links 只排除归档来源，禁止旧仓库 deepseek-ai/deepseek-harness-sdk；verify-concrete-terms 排除 vendor/、归档、发布快照与历史格式 schema/i18n 及其生成区域。"
@@ -1860,7 +1866,7 @@
         "不检查远端链接是否 404。",
         "Git发现、精确历史正则及requiredAreas守卫已实现，目标范围仍须审核声明。28项回归与10条当前安装座npm命令分别见 verification/evidence/raw/repository-references-required-areas-exact-regressions.json、repository-references-required-areas-installed-current.json；前版27项/8命令与测试夹具错误仍保留为历史，不冒充当前字节。精确文件/目录替代的真实错误接受已修，保存failing-before；本批守卫待独立复核，之前74探针结论不覆盖新字节。省略gitDiscovery保留显式递归语料及URL默认跳NUL，不等于源三个脚本共同边界。",
         "目标支持显式关闭 commitIdentifiers 或用空数组关闭 URL/词项规则；这不是对应保证已成立。--list 退出0仅为诊断，CI必须运行普通检查。",
-        "初始显式语料版本独立correct结论保留；范围扩展原incorrect与修复复核correct分别为 _working/audit/repository-references-scope-runtime-independent.json、_working/audit/repository-references-scope-repaired-independent.json（80独立探针含8安装座npm调用）。本批Git发现/逐URL NUL/精确历史配置的独立复核为correct：_working/audit/reference-discovery-runtime-independent.json，74条真实安装座npm探针全部符合预期且无偏差（refusal/recovery/noUnintendedPass均真），17个冻结文件前后hash一致；并据此在参考补充策略文件自身须排除的指引。证据：verification/evidence/raw/repository-references-git-discovery-regressions.json（25项回归）、repository-references-git-discovery-installed.json（18条，绑定逐URL豁免改动前字节）、repository-references-url-specific-installed.json（2条当前字节）。完整采用、远端强制与C1–C6未闭合。"
+        "初始显式语料版本独立correct结论保留；范围扩展原incorrect与修复复核correct分别为 _working/audit/repository-references-scope-runtime-independent.json、_working/audit/repository-references-scope-repaired-independent.json（80独立探针含8安装座npm调用）。本批Git发现/逐URL NUL/精确历史配置的独立复核为correct：_working/audit/reference-discovery-runtime-independent.json，74条真实安装座npm探针全部符合预期且无偏差（refusal/recovery/noUnintendedPass均真），17个冻结文件前后hash一致；并据此在参考补充策略文件自身须排除的指引。证据：verification/evidence/raw/repository-references-git-discovery-regressions.json（25项回归）、repository-references-git-discovery-installed.json（18条，绑定逐URL豁免改动前字节）、repository-references-url-specific-installed.json（2条当前字节）。这些历史观察不证明当前目标项目完整采用或远端强制。"
       ]
     },
     {
@@ -2494,6 +2500,12 @@
           "start": 1,
           "end": 306,
           "kind": "test"
+        },
+        {
+          "path": "packages/core/tools/tests/gen-tool-catalog.spec.ts",
+          "start": 1,
+          "end": 158,
+          "kind": "test"
         }
       ],
       "problem": "配置、工具、模块图、Cordis API 等事实手写必漂移。源仓库用生成器从代码/运行时 schema/清单生成英文参考，中文按配对更新，并用 --check 阻止手改和过期。",
@@ -2512,7 +2524,7 @@
         "CLI 帮助：实际启动每个 --help，独立临时 Harness/agents homes，禁用遥测/颜色并清除 NODE_OPTIONS/FORCE_COLOR；空输出、stderr 诊断、超时/非零退出失败。按 Commands: 遍历嵌套与 alias，同文帮助去重并列出全部 invocation；启动器、plugin、每个 profile 的短名与 --profile 形式都覆盖；--check 同时检查英文/中文/sidecar。",
         "Session 格式目录：从 SESSION_FORMAT_VERSION 读当前版本；0 到 current 每个版本恰一条相邻迁移，from/to 为非负安全整数且 to=from+1，包名/目录匹配、metadata 无未知字段；source codec 延续前驱 target 且依赖前驱包，catalog 以 peer+dev 依赖 Session；生成目录用直接 import，独立于已挂载插件；--check 检查 stale。",
         "Persistence 目录：SessionEventMap 顶层接口必须只在本包导出且唯一；成员必须是显式 payload 的 string-literal property，禁止 plugin: 命名空间、继承和重复；envelope 类型必须单家、导出、有文档、无 @mode；SurfaceEventType 必须恰有一个字面量联合，成员不得指向未声明事件，且不能与 messageProjection 同时声明。另生成 current-source 插件记录、运行时 known-types 与 schema JSON；--check 对缺失/不可读/内容不同都按 stale 失败。专用测试 packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306 覆盖所有权/成员/envelope/SurfaceEventType/render 边界；测试未执行。",
-        "生成器的空扫描/未知输入失败不是统一的：配置/CLI/Session/Persistence 有专用 spec；doc-graphs spec 覆盖收集器；tool 的专用 spec 尚未在本轮确认，不能声称所有生成器都有空扫描失败。",
+        "生成器的空扫描/未知输入失败不是统一的：配置/CLI/Session/Persistence 有专用 spec；doc-graphs spec 覆盖收集器；tool 的专用 spec `packages/core/tools/tests/gen-tool-catalog.spec.ts:1-158` 覆盖真实树收集、空清单漏包、启动零工具、PATH 独立与 render，但没有覆盖空磁盘扫描或其他未知输入。不能声称所有生成器都有统一的空扫描失败。",
         "per-platform 原生包跳过和 Client 事件豁免是精确例外；未知类型路径和只影响存在性检查的不可解析情况记为 unknown，不能改写成失败或反之。",
         "SessionEventMap 的 owning 顶层接口必须位于 `@deepseek-ai/dsh-session` 包且导出唯一；同时收集 `declare module '@deepseek-ai/dsh-session/types'` 内的合并声明，两者成员按同一 catalog 规则处理。",
         "同名顶层接口出现在非 owning 包时是另一个类型，必须改名或改用 module merge；包名从 `packages/<group>/<pkg>/package.json` 读取，manifest 缺失或不可解析时所有权不可验证，调用方必须报告而不能静默收录。",
@@ -2596,12 +2608,12 @@
         ],
         "evidence": [
           "gen-config-catalog.ts:1-1074；gen-tool-catalog.ts:1-898；gen-doc-graphs.ts:1-1861；gen-cli-help.ts:1-298；gen-session-format-catalog.ts:1-261；gen-persistence-catalog.ts:1-267；persistence-catalog-source.ts:134-310 已行读。",
-          "gen-config-catalog.spec.ts、gen-cli-help.spec.ts、gen-session-format-catalog.spec.ts、gen-doc-graphs.spec.ts 已读；[2026-10-24 补读] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读，persistence 有专用 spec；tool 的专用 spec 未在本轮确认。",
+          "gen-config-catalog.spec.ts、gen-cli-help.spec.ts、gen-session-format-catalog.spec.ts、gen-doc-graphs.spec.ts 已读；[2026-10-24 补读] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读，persistence 有专用 spec；[2026-10-27 补读] packages/core/tools/tests/gen-tool-catalog.spec.ts 全文 1-158 已读，tool 也有专用 spec，但它只覆盖真实树收集、空清单漏包、启动零工具、PATH 独立和 render，未见空磁盘扫描测试。",
           "未执行生成器或 --check。"
         ]
       },
-      "limitations": "catalog 文本经过单行化与去缩进，不保证与源文件字节格式一致；manifest 缺失时无法证明 owner；未执行生成器。",
-      "notes": "六个生成器均已全文行读（含 collector 主体、render/check 与例外分支）。配置/工具/文档图/CLI/Session/Persistence 的准入面并不相同：配置对确定缺失失败但未知类型路径为 unknown；工具需 boot 且每个工具 source mapping；文档图依赖 Host 聚合程序并豁免 Client 声明；CLI 启动真实 launcher；Session 生成运行时 catalog；Persistence 同时写文档、运行时 known-types 与 schema。没有执行任何生成器或 --check。[2026-10-24 复核] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读；obligations[7]/[8] 的旧“无专用测试”说法已从 active obligations 移除并保留在 _working/audit/readme-gates-full-source-repair.json 的 correctionHistory。tool 的专用 spec 仍未在本轮确认。"
+      "limitations": "catalog 文本经过单行化与去缩进，不保证与源文件字节格式一致；manifest 缺失时无法证明 owner；未执行生成器。tool 的专用 spec 覆盖其清单/启动/渲染守卫，但不覆盖空磁盘扫描，不能据此声称全部生成器对扫描为空统一失败。",
+      "notes": "六个生成器均已全文行读（含 collector 主体、render/check 与例外分支）。配置/工具/文档图/CLI/Session/Persistence 的准入面并不相同：配置对确定缺失失败但未知类型路径为 unknown；工具需 boot 且每个工具 source mapping；文档图依赖 Host 聚合程序并豁免 Client 声明；CLI 启动真实 launcher；Session 生成运行时 catalog；Persistence 同时写文档、运行时 known-types 与 schema。没有执行任何生成器或 --check。[2026-10-24 复核] packages/core/session/tests/gen-persistence-catalog.spec.ts 全文 1-306 已读；obligations[7]/[8] 的旧“无专用测试”说法已从 active obligations 移除并保留在 _working/audit/readme-gates-full-source-repair.json 的 correctionHistory。[2026-10-27 复核] packages/core/tools/tests/gen-tool-catalog.spec.ts 全文 1-158 已读，tool 的专用 spec 存在；其守卫覆盖空 manifest 漏包与零工具启动，但没有空磁盘扫描用例。测试未执行。"
     },
     {
       "id": "documentation-generated-region-grammar",
@@ -3175,6 +3187,12 @@
       "title": "配对门禁的模式、发现、签名比较与 --write",
       "sources": [
         {
+          "path": "scripts/translation-pairing.ts",
+          "start": 252,
+          "end": 280,
+          "kind": "implementation"
+        },
+        {
           "path": "scripts/verify-translation-pairing.ts",
           "start": 1,
           "end": 368,
@@ -3199,7 +3217,7 @@
         "检查三件套完整、切换行、结构签名、记录、生成区域同源。",
         "结构比较按标题/列表/表格/代码块/链接语义，不比较行数。",
         "--write 只能重录记录，不修内容/结构。",
-        "缓存/全量模式不能缩小实际检查范围。"
+        "命名pair与--cached有意只检查指定配对；无pair参数的普通只读检查覆盖语料。--all仅与--write同用，重录未审内容会把未确认内容记为已确认，不能代替语义评审。"
       ],
       "actors": [
         "owner: 文档维护者",
@@ -3212,7 +3230,7 @@
         "跑校验模式看失败对。",
         "修结构/补另一侧/重录。",
         "再跑校验。",
-        "CI 用全量/缓存模式覆盖改动。"
+        "需要全语料证据时运行不带pair参数的只读检查；暂存检查用--cached加明确pair路径，不能把该结果称作全仓通过。"
       ],
       "enforcement": {
         "mode": "automatic-cli-gate",
@@ -3233,7 +3251,7 @@
       ],
       "migration": {
         "strategy": "一个门禁统一发现和比较；--write 只写记录，不代替内容修改。",
-        "implementation": "CI 跑全量或受信缓存；本地用发现/校验；排除项显式配置。",
+        "implementation": "区分工作树全语料只读、命名配对和--cached暂存配对三个范围；--all仅用于显式--write全语料重录。先完成双语内容/结构评审，再重录已确认pair；排除项显式配置。",
         "requiredSupport": [
           "CLI",
           "结构签名",
@@ -4410,6 +4428,24 @@
       "title": "网站发布清单、DocsPage 字段与原子发布",
       "sources": [
         {
+          "path": "scripts/project-doc-site.ts",
+          "start": 30,
+          "end": 38,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/docs-pages.yml",
+          "start": 23,
+          "end": 31,
+          "kind": "config"
+        },
+        {
+          "path": "website/docs.ts",
+          "start": 403,
+          "end": 428,
+          "kind": "config"
+        },
+        {
           "path": "website/AGENTS.md",
           "start": 1,
           "end": 23,
@@ -4425,7 +4461,7 @@
           "path": "scripts/project-doc-site.ts",
           "start": 1,
           "end": 263,
-          "kind": "instruction"
+          "kind": "implementation"
         }
       ],
       "problem": "文档站的发布面若从文件系统自动推断，草稿/归档/内部页会泄露，路由和翻译对侧会失控。源仓库用显式清单声明每个发布页及关系。",
@@ -4437,7 +4473,7 @@
       "obligations": [
         "发布由显式清单控制，不从文件系统 glob 推断。",
         "每个 DocsPage 声明源、路由、语言、对侧、镜像、图片、别名等字段。",
-        "docsPages 只列人工源；生成页由生成器登记，不手加。",
+        "docsPages显式选择人工页和部分生成参考页；生成器拥有生成内容，发布清单拥有发布选择，两种所有权不能互相替代。",
         "移动/改路由同改清单，保持原子性。",
         "路由树/locale 映射/源别名必须一致。",
         "不得在生成站手改来补缺失页。"
@@ -4458,8 +4494,8 @@
         "mode": "manifest-plus-projection-tests",
         "implementation": "website/docs.ts 的 DocsPage 清单/字段；project-doc-site 解析/校验路由树、源别名、对侧；构建生成。",
         "trust": "清单结构/路由/对侧自动；是否应发布、内容质量靠评审。",
-        "failure": "缺字段、路由冲突、源别名错、对侧不一致、清单外链接时测试/构建失败。",
-        "exceptions": "内部页可不发布，但不能被发布页链接；生成页由生成器登记。"
+        "failure": "无效清单、冲突路由或无法解析的相对目标按投影/测试诊断失败；目标未列为站点页本身不构成失败，可回退到配置的公开仓库ref，默认master。",
+        "exceptions": "内部页可不发布，存在的未发布目标可投影为配置ref的GitHub源链接；实际发布故意使用可前移的master而非可能被移除的tag，不保证旧部署与源链接不可变绑定。生成参考是否发布仍由显式清单选择。"
       },
       "applicability": [
         "when: 新增/移动/删除发布页，或改路由/语言。",
@@ -4516,9 +4552,27 @@
       "sources": [
         {
           "path": "scripts/project-doc-site.ts",
+          "start": 30,
+          "end": 38,
+          "kind": "implementation"
+        },
+        {
+          "path": ".github/workflows/docs-pages.yml",
+          "start": 23,
+          "end": 31,
+          "kind": "config"
+        },
+        {
+          "path": "scripts/project-doc-site.ts",
+          "start": 134,
+          "end": 190,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/project-doc-site.ts",
           "start": 263,
           "end": 577,
-          "kind": "instruction"
+          "kind": "implementation"
         },
         {
           "path": "scripts/verify-doc-site-fragments.ts",
@@ -4549,7 +4603,7 @@
       ],
       "steps": [
         "在源文件写相对链接。",
-        "确保目标在清单中。",
+        "确认仓库相对目标存在：已发布目标映射站点路由，未发布目标回退配置的公开GitHub ref（默认master）；若额外要求不可变引用，需显式选择可用的公开不可变ref并另行证明，不能把默认分支投影当版本锁定。图片可由资源放置回调处理。",
         "标题/锚点变化时同改引用。",
         "跑 docs:check/构建。",
         "按失败修源/清单。"
@@ -4558,8 +4612,8 @@
         "mode": "automatic-projection-and-fragment-gate",
         "implementation": "project-doc-site 解析源链接并按类型重写；verify-doc-site-fragments 检查目标片段；测试覆盖投影规则。",
         "trust": "链接/片段转换自动；语义目标是否正确靠评审。",
-        "failure": "缺目标、片段不存在、图片路径错、源写网站路由时失败。",
-        "exceptions": "外部链接不改写；未发布内部页不可被发布页链接；生成区域锚点由生成器保证。"
+        "failure": "无法解析的仓库相对目标会失败，站点片段另由片段门禁检查；投影函数跳过外部/绝对URL，不能声称它自动拒绝所有绝对网站路由。",
+        "exceptions": "外部或绝对URL不由rewriteMarkdown重写；存在但未发布的目标可回退GitHub源；页内空路径保留；生成区域锚点另由生成器及片段检查负责。"
       },
       "applicability": [
         "when: 发布页的链接/标题/图片变化，或改路由。",
@@ -4666,7 +4720,7 @@
         "implementation": "website/docs.ts 的 rawDocsPages/路由；build.ts 预构建；project-doc-site 的 raw 路由/别名/生成；测试覆盖。",
         "trust": "raw/llms 生成与路由自动；内容正确性来自源文档。",
         "failure": "缺 raw、llms 不含页、预构建覆盖手写页、片段无效时构建/测试失败。",
-        "exceptions": "非白名单页不生成 raw；私有/草稿不发布；生成页由生成器登记。"
+        "exceptions": "非白名单页不生成raw；私有/草稿不自动发布；生成器拥有内容，但生成参考的站点发布选择仍由docsPages显式声明。"
       },
       "applicability": [
         "when: 发布页新增/修改，或改 raw/llms 行为。",

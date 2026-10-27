@@ -404,6 +404,17 @@
 - session-query 是独立派生库，带应用 id/模式版本，可删除重建。
 - agent-loop 在下一步前追加已接受事实。
 
+**派生读模型边界（session-query 子契约）**
+
+源 README 拥有搜索/游标的完整行为：literal phrase、filter、ranking、snippet 预算、`openAt` 生命周期、`SESSION_QUERY_STALE_CURSOR`/`SESSION_QUERY_INVALID_CURSOR` 与 generation-bound opaque cursor。日志权威侧只保留以下边界，不在这里复制搜索 API：
+
+- live overlay 是连接内 TEMP 状态，重开即消失；persisted read 只观察、不得修改 store；同一 id 的 live owner 优先。
+- live owner attach/replace、persistence binding 变化或 snapshot population 移动时，最多重试一次（`STABLE_OBSERVATION_ATTEMPTS = 2`，含首次）；仍不稳定报 `SESSION_QUERY_PERSISTENCE_FAILED`。
+- 未变化的 generation 不重读；删除的 id 消失；重开的派生索引在底层 store 不同时，即使 opaque revision 相同也要重载。
+- 模型面工具不得暴露 provider cursor、offset、page size 或 model-controlled limit（由 `package-contracts-6.model-facing-tool-result-contract` 拥有）。
+
+证据：`deepseek-harness/packages/session-query/session-query-sqlite/README.md:57-71@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/README.md:102-108@687f282e`；`deepseek-harness/packages/session-query/session-query-sqlite/src/index.ts:85-86@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/index.ts:275-292@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/index.ts:303-322@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/index.ts:495-561@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/index.ts:975-1015@687f282e`；测试 `deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:991-1009@687f282e`（opaque revision 冲突仍重载）与 `deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1830-1879@687f282e`（重开索引：不变 revision 跳过读取，另一 store 重载）。
+
 **迁移设计**
 
 1. 定义事件类型与载荷，确认只追加。

@@ -225,7 +225,7 @@
           }
         ]
       },
-      "limitations": "源仓库没有根文件完整性的机械检查；只有预算和链接。docs/AGENTS.md:59 的写作目标与 manifest 的硬上限是不同概念：architecture 2400/2410、testing 1300/1350 的差异本身不证明漂移；examples/AGENTS.md 的310词目标由评审而非预算脚本治理，不应静默升级为自动上限。`files.ts:393-395` 仍留有 TODO(total-instruction-read-bound)：没有跨整批基线的聚合源预算，只有单文件 cap；渲染预算在全部文件读取后才应用，因此多个大文件可以先被完整读取。去重只按 trim 后内容，不规范化换行或 Unicode。\n本读取只证明 preset 配置值；loader 在超限时的截断或报错行为未由该范围证明，65536 也不是所有部署的通用常量。",
+      "limitations": "源仓库没有根文件完整性的机械检查；只有预算和链接。docs/AGENTS.md:59 的写作目标与 manifest 的硬上限是不同概念：architecture 2400/2410、testing 1300/1350 的差异本身不证明漂移；examples/AGENTS.md 的310词目标由评审而非预算脚本治理，不应静默升级为自动上限。`files.ts:393-395` 仍留有 TODO(total-instruction-read-bound)：没有跨整批基线的聚合源预算，只有单文件 cap；渲染预算在全部文件读取后才应用，因此多个大文件可以先被完整读取。去重只按 trim 后内容，不规范化换行或 Unicode。\n超限边界由 `files.ts:387-408` 证明：单文件元数据或流式累计超过 maxSourceBytes 时返回 undefined 并静默跳过该候选，不是截断，也不中断其他候选；65536 是源 preset 配置值，不是所有部署的通用常量。",
       "origin": "source",
       "sourceBacked": true,
       "exceptions": [
@@ -1039,7 +1039,7 @@
           }
         ]
       },
-      "limitations": "源仓库没有技能内容正确性检查；doc-standard.spec.ts 只覆盖有限属性（kind 映射、无原型期语言）。provider 会 warn 后跳过非法/缺失 frontmatter 的条目，模型目录没有逐技能诊断；agent-experience 在 Windows core.symlinks=false 物化后会被跳过。技能总数为 19，支撑文件 20 个加 2 个脚本；Windows 上可发现数可能少 1。；watcher 是尽力而为：startup/运行期失败只产生 incomplete/warn 并排程重试，没有持久健康状态；无递归发现、无逐技能诊断（仅日志）；非原生特殊文件被跳过；BUNDLED_SKILL_RANK 的数值来自 @deepseek-ai/dsh-skill 常量而非本文件；本次未执行任何测试，watcher 时序与平台差异仍是已知缺口。",
+      "limitations": "源仓库没有技能内容正确性检查；doc-standard.spec.ts 只覆盖有限属性（kind 映射、无原型期语言）。provider 会 warn 后跳过非法/缺失 frontmatter 的条目，模型目录没有逐技能诊断；agent-experience 在 Windows core.symlinks=false 物化后会被跳过。技能总数为 19，支撑文件 20 个（其中 2 个是 record-browser-gif 的脚本），合计 39 个技能内容文件；目录级 .gitignore 另计，不在该计数内；Windows 上可发现数可能少 1；watcher 是尽力而为：startup/运行期失败只产生 incomplete/warn 并排程重试，没有持久健康状态；无递归发现、无逐技能诊断（仅日志）；非原生特殊文件被跳过；BUNDLED_SKILL_RANK 的数值来自 @deepseek-ai/dsh-skill 常量而非本文件；本次未执行任何测试，watcher 时序与平台差异仍是已知缺口。",
       "entryPaths": [
         ".agents/skills/agent-experience",
         ".agents/skills/cordis-styling-nitpicking",
@@ -2486,11 +2486,13 @@
           "kind": "instruction"
         }
       ],
-      "problem": "用户要求“刷新会话后继续”时，源仓库没有通用协议；只有 Agent Notes、Dev Note、scratch 与 git 历史。直接把聊天摘要当状态会遗漏分支、命令与阻塞。",
+      "problem": "用户要求“刷新会话后继续”时，源仓库没有通用协议；只有 Agent Notes、Dev Note、scratch 与 git 历史。直接把聊天摘要当状态会遗漏分支、命令与阻塞；反过来，把每个多步改动都变成状态文件也会制造可腐化的第二账本。",
       "triggers": [
         "用户显式要求跨会话继续",
         "任务被暂停/交接到新会话",
-        "上下文压缩前需要保存进度"
+        "上下文压缩前需要保存进度",
+        "同一目标确需多个会话或另一位执行者接续",
+        "用户要求初始化治理元数据"
       ],
       "obligations": [
         "明确标注这是迁移设计，不是源仓库已验证的机制",
@@ -2504,10 +2506,11 @@
         "接续代理"
       ],
       "steps": [
-        "创建受版本控制的状态文件",
-        "写字段并链接证据",
+        "确认存在跨上下文边界或用户要求初始化，而不是仅因改动多步",
+        "复用目标已有唯一状态 owner；没有且确需启用时才创建受版本控制的状态文件",
+        "写字段并链接证据，记录仍有效的工作与已撤销动作",
         "交接时更新",
-        "新会话读取并核对 git/文件状态",
+        "新会话读取并核对 git/文件与当前请求",
         "关闭时归档或删除"
       ],
       "enforcement": {
@@ -2520,7 +2523,7 @@
           "纯调查任务可用只读摘要"
         ]
       },
-      "applicability": "仅当用户明确要求连续会话或交接时启用。不得声称源仓库已提供该能力。",
+      "applicability": "在用户明确要求连续会话、暂停、交接或压缩前保存，或同一目标确需跨会话/另一位执行者接续时启用；用户要求初始化治理元数据时例外。单会话内多步改动本身不启用。不得声称源仓库已提供该能力。",
       "relationships": [
         "agent-workflows-handoff",
         "agent-workflows-agent-note-lifecycle"
@@ -2541,11 +2544,21 @@
             "check": "新会话按状态文件的下一命令可独立执行并复现当前状态",
             "evidence": "planned",
             "note": ""
+          },
+          {
+            "check": "单会话内多步改动不因验收条件多而新建 .governance；需要跨会话时复用既有唯一 owner",
+            "evidence": "planned",
+            "note": ""
           }
         ],
         "rejection": [
           {
             "check": "状态与 git/文件不一致时仍继续，应判定为失败",
+            "evidence": "planned",
+            "note": ""
+          },
+          {
+            "check": "记录中的动作已被当前请求撤销却仍执行，应判定为失败",
             "evidence": "planned",
             "note": ""
           }
@@ -2558,7 +2571,7 @@
           }
         ]
       },
-      "limitations": "完全是迁移设计；无源证据，不得标为已验证。",
+      "limitations": "完全是迁移设计；无源证据，不得标为已验证。触发、现有 owner 复用或撤销动作核对错误时，状态文件会误导接续并制造第二权威。",
       "origin": "user-required migration extension",
       "sourceBacked": false
     },
@@ -2685,7 +2698,7 @@
     },
     {
       "id": "agent-workflows-artwork",
-      "title": "官方插件图标与特性预览美术工作流",
+      "title": "官方插件图标/预览美术与官方 bundle catalog 准入",
       "sources": [
         {
           "path": ".agents/skills/dsh-official-plugin-artwork/SKILL.md",
@@ -2718,12 +2731,13 @@
           "kind": "implementation"
         }
       ],
-      "problem": "插件图标若各自发明风格、错误透明、把页面 tile 烤进 SVG、或用字体渲染字标，会与现有官方图标不一致，且在实际尺寸/主题下不可读。",
+      "problem": "插件图标若各自发明风格、错误透明、把页面 tile 烤进 SVG、或用字体渲染字标，会与现有官方图标不一致，且在实际尺寸/主题下不可读。官方 on-demand bundle catalog 的准入与新鲜度由同一生成器/门禁体系承担，是独立的打包子程序，不是视觉美术规则；两者必须分别验收。",
       "triggers": [
         "新增官方/官方 experimental 插件图标",
         "新增可选特性预览",
         "评审 PluginArtwork 变更",
-        "修改 package icon 元数据"
+        "修改 package icon 元数据",
+        "官方 on-demand bundle catalog 名单、成员、元数据或生成文件变化（条件性打包子程序）"
       ],
       "obligations": [
         "先检查真实特性、输出、owning manifest；复用设计者资源；不改品牌/产品名/无关图标",
@@ -2734,12 +2748,12 @@
         "包图片经 <img>：自包含 SVG，局部唯一 ID，无 script/外链/字体/foreignObject",
         "新字形落地前取得设计者批准",
         "预览遵循 adding-a-plugin-preview 的可选性/尺寸/语言/资源上限",
-        "官方 on-demand catalog 名单必须非空且无重复，默认取安装侧的 ON_DEMAND_BUNDLES。生成器扫描 `packages/*/*/package.json`、`apps/*/package.json`、`vendor/*/package.json`；重名 workspace 包直接失败。",
-        "每个 catalog 成员必须是 `packages/` 下、以 `@deepseek-ai/dsh-` 命名、非 private 且声明 `dsh.bundle.patch` 的公开 bundle 包；并且不得是 DSH 安装依赖闭包的一部分（从 `@deepseek-ai/dsh` 递归 dependencies/optionalDependencies/peerDependencies，命中即失败）。",
-        "元数据只从包资源读取，不 import 或激活 provider：`locale/{en,zh}.json` 的 meta.title/description 必须非空；插件 meta 必须有 icon，且 title/description 的 en/zh 文本都非空；meta.error 直接失败。",
-        "生成文件 `packages/boot/app-boot/src/official-bundles.generated.ts` 是确定性的 source-plane 产物：header 写明生成命令与 do not edit；localized 对象按语言键排序，字符串经 TypeScript printer 单引号转义。",
-        "同步逻辑只容忍 ENOENT，其他读取错误抛出；内容相同不写；`--check` 发现 stale 时抛错并提示 `pnpm gen-official-bundle-catalog`，否则写文件。",
-        "该门禁只证明 catalog 元数据与结构，不证明视觉美术、provider 运行行为或真实安装；美术评审与真实页面验证仍必须执行。"
+        "【catalog 准入子程序，非视觉规则】官方 on-demand catalog 名单必须非空且无重复，默认取安装侧的 ON_DEMAND_BUNDLES。生成器扫描 `packages/*/*/package.json`、`apps/*/package.json`、`vendor/*/package.json`；重名 workspace 包直接失败。",
+        "【catalog 准入子程序，非视觉规则】每个 catalog 成员必须是 `packages/` 下、以 `@deepseek-ai/dsh-` 命名、非 private 且声明 `dsh.bundle.patch` 的公开 bundle 包；并且不得是 DSH 安装依赖闭包的一部分（从 `@deepseek-ai/dsh` 递归 dependencies/optionalDependencies/peerDependencies，命中即失败）。",
+        "【catalog 准入子程序，非视觉规则】元数据只从包资源读取，不 import 或激活 provider：`locale/{en,zh}.json` 的 meta.title/description 必须非空；插件 meta 必须有 icon，且 title/description 的 en/zh 文本都非空；meta.error 直接失败。",
+        "【catalog 准入子程序，非视觉规则】生成文件 `packages/boot/app-boot/src/official-bundles.generated.ts` 是确定性的 source-plane 产物：header 写明生成命令与 do not edit；localized 对象按语言键排序，字符串经 TypeScript printer 单引号转义。",
+        "【catalog 准入子程序，非视觉规则】同步逻辑只容忍 ENOENT，其他读取错误抛出；内容相同不写；`--check` 发现 stale 时抛错并提示 `pnpm gen-official-bundle-catalog`，否则写文件。",
+        "【catalog 准入子程序，非视觉规则】该门禁只证明 catalog 元数据与结构，不证明视觉美术、provider 运行行为或真实安装；美术评审与真实页面验证仍必须执行。"
       ],
       "actors": [
         "美术实现者",
@@ -2751,7 +2765,7 @@
         "检查特性与参考",
         "绘制/细化",
         "导出到 manifest icon 路径",
-        "跑 verify-package-meta / constraints / verify-official-bundle-catalog",
+        "跑 verify-package-meta / constraints；维护 catalog 时再跑 verify-official-bundle-catalog（--check）",
         "真实页面明暗主题验证",
         "设计批准",
         "GUI PR 录 GIF"
@@ -2762,7 +2776,7 @@
           "verify-package-meta（含 SVG 检查）、constraints、verify-official-bundle-catalog、gen-official-bundle-catalog；设计批准",
           "generateOfficialBundleCatalog 做名单、DSH 安装闭包、包形态与 en/zh 元数据/icon 校验；renderOfficialBundleCatalog 生成确定性 TS；syncOfficialBundleCatalog 提供 --check freshness 和 ENOENT-only 容错。"
         ],
-        "trust": "元数据/结构可机械检查；视觉质量与品牌一致性靠设计与真实页面",
+        "trust": "元数据/结构可机械检查；视觉质量与品牌一致性靠设计与真实页面。catalog 准入通过只说明名单、成员、元数据与生成文件结构正确，不替代美术评审；美术批准也不替代 catalog 门禁。",
         "failure": [
           "SVG 含脚本/外链会被 <img> 拒绝；目录陈旧被门禁拒绝；未批准字形不应落地",
           "空/重复名单、依赖闭包命中、非 public/非 bundle/非 packages 成员、缺 icon 或 en/zh 标题/描述、meta.error、stale 生成文件都会失败。"
@@ -2773,7 +2787,7 @@
           "ENOENT（尚未生成）被视为可写状态；其他读取错误不吞掉。"
         ]
       },
-      "applicability": "有官方插件图标/预览的仓库。尺寸、目录、门禁命令需按目标产品替换。",
+      "applicability": "有官方插件图标/预览的仓库。官方 bundle catalog 准入子程序只在目标仓库配置该 on-demand catalog 生成器/门禁时适用。尺寸、目录、门禁命令需按目标产品替换。",
       "relationships": [
         "agent-workflows-ui-review",
         "agent-workflows-browser-evidence"
@@ -2784,6 +2798,7 @@
         "requiredSupport": [
           "SVG 校验",
           "包元数据门禁",
+          "官方 bundle catalog 目录与非空/成员/元数据校验（仅条件适用）",
           "真实页面预览",
           "设计批准角色"
         ]
@@ -2795,6 +2810,11 @@
             "check": "三个门禁通过；实际尺寸与两主题可读；透明正确；设计批准存在",
             "evidence": "planned",
             "note": ""
+          },
+          {
+            "scenario": "维护 catalog 时，名单非空且无重复、每个成员通过 packages/公开 DSH bundle/非安装闭包校验，locale 与 plugin meta 的双语 title/description/icon 非空；生成文件与当前包资源一致，verify-official-bundle-catalog 退出 0。",
+            "evidence": "planned",
+            "note": "条件性打包子程序；未运行生成器或 --check。"
           }
         ],
         "rejection": [
@@ -2802,6 +2822,11 @@
             "check": "白/深色圆盘伪造透明、把 tile 烤进 SVG、或未批准新字形时应被拒绝",
             "evidence": "planned",
             "note": ""
+          },
+          {
+            "scenario": "空/重复名单、成员在 DSH 安装闭包、非 public/非 bundle/非 packages 成员、缺 icon 或 en/zh 文本、meta.error、手改生成文件导致 stale，任一都必须失败。",
+            "evidence": "planned",
+            "note": "条件来自生成器源码；未在目标仓库执行。"
           }
         ],
         "recovery": [
@@ -2809,10 +2834,15 @@
             "check": "改 mask/cutout；重画几何；取得批准后重跑",
             "evidence": "planned",
             "note": ""
+          },
+          {
+            "scenario": "撤销手改并运行 gen-official-bundle-catalog；若元数据本身缺失，先修包资源再生成，最后运行 verify-official-bundle-catalog --check。",
+            "evidence": "planned",
+            "note": ""
           }
         ]
       },
-      "limitations": "结构检查不替代视觉评审；设计批准无法自动化。；合法结构不等于图标视觉合格；locale 字典与插件 meta 两处都校验文本，但语义质量靠评审。；不 import provider，因此不证明运行时可用或安装成功；未执行生成器或 --check。",
+      "limitations": "结构检查不替代视觉评审；设计批准无法自动化。；合法结构不等于图标视觉合格；locale 字典与插件 meta 两处都校验文本，但语义质量靠评审。；不 import provider，因此不证明运行时可用或安装成功；未执行生成器或 --check。catalog 准入是条件性打包子程序，只在存在官方 on-demand catalog 时运行，不能当作每个图标变更的视觉验收。",
       "origin": "source",
       "sourceBacked": true
     },

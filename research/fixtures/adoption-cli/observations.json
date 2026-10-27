@@ -1,0 +1,104 @@
+{
+  "schema": "governance-adoption-evidence/v1",
+  "scope": "Coordinator-seeded persistent test consumer; independent implementation and contract-only acceptance; not external production adoption",
+  "historicalPathScope": "setup.stateOwner and ci describe the original standalone consumer, not files copied into this public snapshot; no historical owner or workflow is required for reproduction",
+  "consumer": "research/fixtures/adoption-cli",
+  "environment": {
+    "os": "Windows",
+    "node": "v24.19.0"
+  },
+  "setup": {
+    "installedFiles": 166,
+    "stateOwner": "PROJECT.md",
+    "testEntry": "npm test",
+    "seededByCoordinator": [
+      "requirements",
+      "state owner",
+      "package scripts",
+      "CI workflow",
+      "Skill installation"
+    ],
+    "skillIntegrityObserved": {
+      "domains": 55,
+      "mechanisms": 1196
+    },
+    "installedSkillSha256": "43423c780480afc48324124041c7f448d02e75e80cd3550a0abb536e39121ae5",
+    "installedGovernanceCliSha256": "2275390a0e45fcfe00652fd47f7062c52aeab5a30e9d8521f42c49443f87953e"
+  },
+  "initialAcceptance": {
+    "authorship": "Stateless independent model received public contract only, no implementation context; first tool-using oracle worker produced no file and was not counted as success",
+    "command": "npm test",
+    "tests": 95,
+    "passed": 93,
+    "failed": 2,
+    "exitCode": 1,
+    "failures": [
+      "ID exhaustion wrote an unsafe id instead of refusing without data loss",
+      "Duplicate list --all flags were accepted instead of rejected as extra arity"
+    ],
+    "output": "evidence/initial-acceptance.txt"
+  },
+  "initialRecovery": {
+    "command": "npm test",
+    "tests": 95,
+    "passed": 95,
+    "failed": 0,
+    "skipped": 0,
+    "initialAssertionsChanged": false,
+    "output": "evidence/recovered-acceptance.txt"
+  },
+  "continuation": {
+    "feature": "reopen <id>",
+    "implementationSession": "New independent agent read project and installed Skill; transport failed after edits were written, no final report was assumed successful",
+    "oracle": "Separate independent agent authored six reopen cases without implementation access",
+    "command": "npm test",
+    "tests": 101,
+    "passed": 101,
+    "failed": 0,
+    "skipped": 0,
+    "output": "evidence/continuation-acceptance.txt",
+    "liveCliObservation": "evidence/live-continuation.txt",
+    "liveRejectionExitCode": 2,
+    "liveRejectionPreservedBytes": true,
+    "liveRecoveryMatchedOriginalBytes": true,
+    "withdrawnActionProbePositiveControl": "Coordinator observed marker creation and cleared it before the new session",
+    "withdrawnActionMarkerAbsentAfterSession": true,
+    "oldNextActionCorrected": true,
+    "temporaryProbeRemovedAfterVerification": true,
+    "newGovernanceStateDirectoryCreated": false,
+    "unchangedSampleSha256": "2b13858bb06ea18cfffc260d8feb1acf918f4c9e61fd935927467db3b4b9f027",
+    "unchangedInitialSuiteSha256": "fe79d1a696562300fdd17b10ae86f447329cf40e8def2f8440720c70debef4da"
+  },
+  "finalFilesSha256": {
+    "bin/tasks.mjs": "0349081be0cc44c037dd5489c7dd8cef861f5ca3d9b36a6f37b7d23ae09fd652",
+    "test/cli.test.mjs": "fe79d1a696562300fdd17b10ae86f447329cf40e8def2f8440720c70debef4da",
+    "test/reopen.test.mjs": "44b53c754a3b875c6fa221dea392c8e24043119edd8fde61a8a8877e6cc83944",
+    "package.json": "c730318678d9cd01a2a8e05a38022e4c12995133b101678101c118f85afe670a"
+  },
+  "ci": {
+    "scope": "Original standalone consumer before publication; current repository CI results are separate observations",
+    "workflow": ".github/workflows/check.yml",
+    "entry": "npm test",
+    "declaredRunner": "ubuntu-latest / Node 22.19.0",
+    "sameEntryExercisedLocally": true,
+    "hostedRunObserved": false,
+    "requiredCheckObserved": false
+  },
+  "limits": [
+    "No causal comparison against an agent without the Skill",
+    "Seeded test consumer, not autonomous discovery or external production adoption",
+    "Initial executor read Skill and examples but did not expand routed references; later continuation did read routed references",
+    "At the original consumer-experiment stage: no hosted CI, remote protection, commit, push or publication",
+    "No full source-semantic completeness certification"
+  ],
+  "publication": {
+    "scope": "Standalone reproducible application snapshot plus retained historical observations; no installed Skill or local repository copied",
+    "redactions": [
+      "Absolute local consumer paths replaced with <consumer> in retained logs",
+      "Host-internal artifact links removed"
+    ],
+    "reproduction": "npm --prefix research/fixtures/adoption-cli test",
+    "canonicalPublicSource": "research/fixtures/adoption-cli",
+    "runtimeClaim": "Retained observations bind the recorded source hashes; fresh checkout/CI results must be observed separately"
+  }
+}

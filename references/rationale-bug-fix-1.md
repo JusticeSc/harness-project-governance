@@ -234,7 +234,7 @@
 
 **迁移步骤。** 记录 durable inbox receipt；收集 root-session turn/end 直到 whole-agent idle；选择最后一个并提取 kind；保留 events 中的完整 reason，不映射到 prompt。
 
-**证据与限制。** Note 是 archived（Status implemented），本分区未核对当前 Python SDK；`None`/malformed reason 必须由协议测试固定。
+**证据与限制。** Note 是 archived（Status implemented），本分区未核对当前 Python SDK；`None`/malformed reason 必须由协议测试固定。源 Verification 只报告「最后一个 turn ending、无 turn ending、malformed reason」三类测试；transport loss/timeout/protocol failure 抛错且不产生 finish reason 是 Decision 规定，必须作为额外 rejection 场景执行，当前仍为 planned，不能声称已覆盖。
 
 **来源。**
 
@@ -534,15 +534,15 @@
 3. 包内转发 import 由 `WorkspaceAnalyzer.targetForReference` 沿 package-local forwarding modules 解析：相对 specifier 经共享 compiler host/解析缓存解析，只在仍位于引用包内时前进；收集携带请求名的 named re-export、`export { local }` + 该模块 import、以及导出同名 symbol 的 star re-export；explicit 先于 star，每个 module/name 对只进入一次（循环 star 终止），首个 package specifier 处停止并交给 `packageExportName`；仍要求 public package import，不得把相对跨包路径、namespace-only route 当 public。这不是 package.json exports/tsconfig 映射改动。
 4. 仅为需要稳定相对位置的提示 section 分配 distinct `order`，其他 equal-order 仍按 activation order；不新增 registry 名称 tie-breaker，也不只在 snapshot harness 归一化来掩盖运行时顺序。
 5. 面向模型的 residency 词汇稳定为 `running | idle | ready`；`ready` 只表示 durable conversation 仍可 `send_message`，不是 terminal/complete；service layer 可保留 `running | inactive`，但必须显式映射。不得把历史 job 说成运行中。
-6. 运行时上下文由应用显式组合并可 opt-out，记录最终提示；受控 prompt 只属于 host 组合，持久 shell prompt 不得被别名/rc 覆盖。
+6. 运行时上下文由应用显式组合并可 opt-out，记录最终提示；受控 prompt 只属于 host 组合。持久 pwsh 的 `prompt` 函数由 `dsh-terminal-bash` 在 `spawn` 时单一所有者安装并等待 `stdin_read` readiness；持久 pwsh 工具不得安装/覆写 prompt、不得持有私有常量或匹配 backend 的 `dsh> ` 文本；无 end marker 的 `stdin_read` 只按 seam 信号返回 captured partial output，partial output 可保留 backend prompt 文本。
 
-**完成信号。** 升级字段无遗漏；catalog 可从磁盘恢复；包内 forwarding 链经 analyzer 解析到 original declaration 且 public subpath 校验仍生效（不是 exports-map 改动）；section 顺序稳定且不静默重排；residency 词表与真实能力一致。
+**完成信号。** 升级字段无遗漏；catalog 可从磁盘恢复；包内 forwarding 链经 analyzer 解析到 original declaration 且 public subpath 校验仍生效（不是 exports-map 改动）；section 顺序稳定且不静默重排；residency 词表与真实能力一致；真实 Loader composition 中持久 pwsh 的每个 send 记录 `stdin_read`（至少六次）且无 `inferred_idle`，重新引入工具 prompt 覆写会失败。
 
-**失败/例外。** 某些 SDK 字段没有替代；必须显式 `unsupported`，不能静默丢弃。设置损坏时保留旧值并提供修复入口。
+**失败/例外。** 某些 SDK 字段没有替代；必须显式 `unsupported`，不能静默丢弃。设置损坏时保留旧值并提供修复入口。持久 pwsh 的 backend prompt 只在 `spawn` 安装一次；模型命令重定义 `prompt` 后无法按 prompt 重断言，后续 send 仍降级到 silence tier，这是文档化残留，不是自动修复。
 
-**迁移步骤。** 先建立字段/顺序/转发的显式映射：转发由 analyzer 沿 package-local forwarding modules 解析，走 face 的共享 compiler host/resolution cache，不要改成 exports-map 映射或依赖 hoisting；再用编译期检查和恢复测试锁住。
+**迁移步骤。** 先建立字段/顺序/转发的显式映射：转发由 analyzer 沿 package-local forwarding modules 解析，走 face 的共享 compiler host/resolution cache，不要改成 exports-map 映射或依赖 hoisting；再用编译期检查和恢复测试锁住。持久 pwsh 删除初始化 send、`PWSH_PROMPT_SETUP`、私有 prompt 常量与匹配/剥离逻辑，由 `dsh-terminal-bash` 在 `spawn` 安装并等待 `stdin_read`；用 loader-composition suite 的 `waitReason` 固定。
 
-**证据与限制。** 升级映射是版本特定的；catalog 损坏恢复依赖存储格式。Typert 的修复在 analyzer 的 `targetForReference`（不是 exports-map/tsconfig 映射）：每个 cross-package relative reference 经 face 的共享解析缓存逐 hop 付一次 module resolution，`reachableFiles` 也走同一缓存；relative 跨包路径、namespace-only 与全部回环仍失败。
+**证据与限制。** 升级映射是版本特定的；catalog 损坏恢复依赖存储格式。Typert 的修复在 analyzer 的 `targetForReference`（不是 exports-map/tsconfig 映射）：每个 cross-package relative reference 经 face 的共享解析缓存逐 hop 付一次 module resolution，`reachableFiles` 也走同一缓存；relative 跨包路径、namespace-only 与全部回环仍失败。pwsh 的 8493/3722/3832/3759 ms → 1340/255/251/241 ms 是源 Note 的 Windows 实测；本分区未重跑，且 `stdin_read` 早返回会保留会话，仍在读 stdin 的子进程可消费下一次命令直到 `timeoutMs`。
 
 **来源。**
 

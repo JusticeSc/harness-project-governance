@@ -72,7 +72,7 @@
 4. 只在生产环境缓存围栏输出，键包含内容、info、markup 与 attrs。
 5. 用含字面量 `{{ }}` 的正文、行内代码、普通围栏和 Mermaid 页面做渲染验证。
 
-**失败与例外。** 未转义时正文出现空白或表达式被执行；误转义围栏会破坏代码示例；缺原生规则时静默跳过会让转义整体失效。作者写在原始 HTML 块里的内容不经过这两条规则，需自行保证安全。本域未发现专门回归测试，证据仅为实现代码。
+**失败与例外。** 未转义时正文出现空白或表达式被执行；误转义围栏会破坏代码示例；缺原生规则时静默跳过会让转义整体失效。作者写在原始 HTML 块里的内容不经过这两条规则，需自行保证安全。本域在固定提交的 `website/tests`、`website/.vitepress` 与全仓 `*.spec.ts` 中对 `escapeVueInterpolation`、`Interpolation`、`code_inline`、`&#123;` 及字面量 `{{` 做了有界检索，未发现专门回归测试；这是有界检索，不是逐行全审或“绝无测试”的证明，且测试未运行。
 
 <a id="m-website-contracts-code-group-isolation"></a>
 ### website-contracts-code-group-isolation — 代码组分组的表单隔离、MPA 全量可见与搜索摘要可见性 {#website-contracts-code-group-isolation}

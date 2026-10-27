@@ -453,7 +453,7 @@
 
 **例外**：实验包标 pre-stable 但仍进列表。
 
-**证据限制**：未运行生成器/`--check`；`collectConfigCatalog` 未读；doc-sync 实际范围未知；packages.md 只机读结构（514 行、50 分组、259 行包条目），未逐行 prose 阅读。
+**证据限制**：未运行生成器/`--check`；`collectConfigCatalog` 未读；doc-sync 实际范围未知；packages.md 的 514 行、50 分组、259 行包条目来自机读结构计数（可由生成器重算），未逐行语义阅读，计数随生成变化而不是稳定契约。
 
 ---
 

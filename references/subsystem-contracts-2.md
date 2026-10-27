@@ -97,7 +97,7 @@
 
 **规则（义务）**
 
-1. 每个子系统有一个 `docs/subsystems/<name>.md` 页面，并在 `docs/subsystems/README.md` 的 Page/Owns 表中有一行，Owards 只写该页真正拥有的内容。
+1. 每个子系统有一个 `docs/subsystems/<name>.md` 页面，并在 `docs/subsystems/README.md` 的 Page/Owns 表中有一行，Owns 只写该页真正拥有的内容。
 2. 页面拥有该子系统的**类型定义、语义、wiring** 和生成的 **Cordis API**；跨子系统的**行为叙事**归 `docs/architecture.md`。
 3. 包级实现细节归 `packages/<group>/README.md`；设计理据归 Agent Notes。页面只保留当前契约并链接理据，不复制历史。
 4. 事件声明若由生成的 persistence catalog 拥有，页面只链接该 catalog，不手写第二份事件表。
@@ -105,7 +105,7 @@
 
 **操作**
 
-1. 先确认包组和它在 README 表中的现有行；没有行就补行，Owards 用一句话写“该页拥有什么”，不要写“相关文档”。
+1. 先确认包组和它在 README 表中的现有行；没有行就补行，Owns 用一句话写“该页拥有什么”，不要写“相关文档”。
 2. 写页首：标题、`English | 中文` 切换、当前契约概述。
 3. 类型/语义/wiring 留在本页；把生命周期叙事移到 `architecture.md`，把包内实现细节移到包 README，把“为什么这样设计”移到 Agent Note，并各留一行链接。
 4. 若事件由 `docs/persistence-catalog.md` 拥有，写“generated persistence catalog owns the declaration”，只链接，不复制事件表。
@@ -113,7 +113,7 @@
 
 **失败与恢复**
 
-- 页面缺 README 索引行、Owards 写错、把行为叙事塞进页面：**现有门不会失败**。恢复方式是把内容移回正确层级，补索引行，并在评审中确认。
+- 页面缺 README 索引行、Owns 写错、把行为叙事塞进页面：**现有门不会失败**。恢复方式是把内容移回正确层级，补索引行，并在评审中确认。
 - 包组 README 没链接页面：由 §2.2 的链接门失败，按该节恢复。
 
 **例外与评审**

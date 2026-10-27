@@ -1616,15 +1616,12 @@
       "obligations": [
         "列表只读存储 header 与 projection cache 行，不得为每 Session 做 stat 或打开冷 body；缓存身份只能提供显示提示，不能作为权威 fold seed。",
         "搜索、附件、历史页、日志跟随、skill 发现与 workspace-path 打开可以检查持久化而不激活 Agent；需要 live state 的操作（如取消）才要求活跃。",
-        "resume 遇到既有写句柄返回 session/writer-held；named Session 只在空白、同目录、未归档、无其他写者时复用，否则新建且不改原 Session。",
-        "Session 的有效目录由 projection 暴露，冷读者无需激活 Agent；目录变更按 Session 串行、经 fs provider 校验、提交事件并排队 user-context notice。",
-        "archived Session 的 pre-step 必须被 gate 拒绝，包括其子代理后代；unarchive 解除整条 lineage。",
-        "工作流/翻译等缓存读取不得打开写句柄或激活 Session；cache miss 只能通过活跃 Session 的既有 writer 追加。",
-        "UI retain 保留本地 Session 数据/流，不代表保留 Host Agent；final release 先撤回代际再 teardown。",
-        "create 只在命名 Session 仍空白、属于请求目录、是请求 Workspace 的未归档成员且无其他写者时复用；live 就地复用，persisted resume 保留写者锁；已开始、目录/Workspace 不符或被他写者持有则不改原 Session 而新建。",
+        "create/resume 的写者所有权唯一：resume 遇到既有写句柄返回 session/writer-held；命名 Session 只在空白（未开始 turn）、属于请求目录、是请求 Workspace 的未归档成员且无其他写者时复用；live 就地复用，persisted resume 保留写者锁；已开始、目录/Workspace 不符或被他写者持有则不改原 Session 而新建。",
         "命名 Session 在其他目录返回 session/conflict，被子代理路由占用返回 session/agent-busy；同一 identity 的创建按到达顺序执行，包括 preset 解析。",
-        "Client retain 保留本地 Session 数据、scoped Context 与历史流，不保留 Host Agent；普通 Session retain 不增加 catalog 行；final release 先撤回 generation 再 teardown。",
+        "Session 的有效目录由 projection 暴露，冷读者无需激活 Agent；目录变更按 Session 串行、经 fs provider 校验、提交事件并排队 user-context notice。",
         "ArchivedSessionGate 在 agent/pre-step 拒绝 archived Session 及其子代理后代的步进，使其以 blocked 结束且不发模型请求；unarchive 解除整条 lineage。",
+        "工作流/翻译等缓存读取不得打开写句柄或激活 Session；cache miss 只能通过活跃 Session 的既有 writer 追加。",
+        "Client retain 保留本地 Session 数据、scoped Context 与历史流，不代表保留 Host Agent；普通 Session retain 不增加 catalog 行；final release 先撤回 generation 再 teardown。",
         "A derived query over stored Sessions may inspect persisted logs without activating a live owner, but must prefer a live owner that attaches during observation and must never write a cold read; an immutable header conflict between live and persisted sources is fatal.",
         "Live-owner attachment or replacement during a persisted read triggers a retry; connection-local overlays disappear on reopen; an external writer replacement refreshes by revision without mutating the stored log."
       ],
@@ -1654,7 +1651,9 @@
         "采用方若无 Agent 激活概念，仍可保留“只读路径不产生副作用/单写者”。"
       ],
       "relationships": [
-        "与 package-contracts-4.trusted-seam-authorization-delegation、package-contracts-4.session-activation-and-write-ownership、package-contracts-4.durable-value-canonicalization 相关。"
+        "与 package-contracts-4.trusted-seam-authorization-delegation 的 Remote 授权与 owner fence 相关。",
+        "与 package-contracts-4.durable-value-canonicalization 的持久值快照/克隆边界相关。",
+        "related: package-contracts-8.owner-fencing（按 owner 会话围栏 job/terminal 等资源）。"
       ],
       "migration": {
         "strategy": "把读路径按副作用分级，并把写者所有权做成显式锁。",
@@ -1799,7 +1798,8 @@
       ],
       "relationships": [
         "与 package-contracts-4.session-activation-and-write-ownership 的 writer 所有权相关。",
-        "与 package-contracts-4.trusted-seam-authorization-delegation 相关。"
+        "与 package-contracts-8.owner-fencing 的 owner fence 与 job/terminal 授权相关。",
+        "crossDomain: rationale-architecture-1.security-boundary（统一认证、principal/peer 分层与单一策略判定点）。"
       ],
       "migration": {
         "strategy": "先标注每个端点的授权模型（逐资源策略 / owner fence / trusted caller），再为每类资源建立显式 fence 与负向测试。",
@@ -2109,6 +2109,12 @@
           "start": 50,
           "end": 63,
           "kind": "instruction"
+        },
+        {
+          "path": "packages/core/agent-default-model/src/index.ts",
+          "start": 75,
+          "end": 94,
+          "kind": "implementation"
         }
       ],
       "verification": {
@@ -2118,7 +2124,7 @@
             "evidence": "planned"
           },
           {
-            "scenario": "两个并发 saveSelection 按提交顺序落盘，后者获胜且前者失败可见。",
+            "scenario": "两个并发 saveSelection 按提交顺序串行落盘；两次调用各自看到自己的写入结果（后提交者的值生效，先提交者不因后一次写入而失败），一次被拒绝的写入也不阻止后续保存。",
             "evidence": "planned"
           }
         ],

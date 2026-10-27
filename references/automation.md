@@ -450,6 +450,7 @@ ci-master 另有 master-only `serial-windows` standby：`runs-on [self-hosted, d
 - 隔离：自托管上设 `NODE_COMPILE_CACHE`、`npm_config_devdir`、`PNPM_CONFIG_STORE_DIR` 到 runner temp/home；`setup-node` 的 `NODE_OPTIONS=--import=./scripts/ci-compatible-toolcache.mjs` 在 setup-node **进程内**改写 `RUNNER_TOOL_CACHE`（`deepseek-harness/scripts/ci-compatible-toolcache.mjs:1-8@687f282e`）；随后显式验证 `process.execPath` 位于 `$RUNNER_TEMP/node-compat-toolcache/`，否则 `::error::` 退出。
 - 聚合：`nodeCompatGates` 在 Node 22 上额外 `build:artifacts` 并启用 CLI smoke；`DSH_NODE_COMPAT_SKIP_TYPECHECK=1` 可去掉 typecheck；source smokes 以 `--no-file-parallelism --maxWorkers=1` + `VITEST_MAX_WORKERS=1` 串行。
 - loader shape 检测**不在聚合内**：它只随 Node 版本变化，放在矩阵 job 的独立步骤（`deepseek-harness/.github/workflows/ci.yml:480-484@687f282e`）。
+- 这些 runner 分支由 §6.2 的 `DSH_CI_FAILOVER_LINUX` / `DSH_CI_FAILOVER_WINDOWS` 选择器控制；本矩阵机制依赖 `automation-ci-runner-failover`，不自行定义开关值或远端变量状态。
 
 **迁移设计**：兼容矩阵的“版本轴”与“平台轴”分开；不要把所有版本塞进一个 job 的串行命令，否则一个版本卡住会拖死全部。
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Governance runtime shipped with this Skill. Node-only, no dependencies.
-// Commands: verify, list, cite, init, status.
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+// Commands: verify, list, cite, init, status, check.
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -181,22 +182,24 @@ function init() {
   writeOnce(join(governance, 'README.md'), [
     '# Project governance state',
     '',
-    'This directory is written by the harness-project-governance Skill and read at the start of every task.',
+    'This directory is written by the harness-project-governance Skill for change tasks that need acceptance tracking or cross-session continuation. It is migration design, not a source-repository guarantee: read it when such a task starts here, not for every question.',
     '',
     '- `requirements.md`: goal, acceptance, non-goals and evidence plan. Acceptance items are the completion test.',
     '- `policy.json`: project facts (name, toolchains, owners, checks, activation). Empty fields mean "not established yet", not "not applicable".',
     '- `state.json`: current phase, active requirement, next action. Update it when the task changes, not when it ends.',
     '- `decisions/`: one decision record per irreversible or cross-cutting choice.',
     '',
-    'Run `node <skill>/bin/governance.mjs status <repo>` to see what is still missing.',
+    'Filled metadata is not permission to act: `status` never runs `policy.checks`, and it cannot tell whether a next action was withdrawn or whether an archived record is still current. `check` runs exactly the commands in `policy.checks`; it does not infer checks, prove semantic completeness or show platform enforcement. Verify authority, ownership and completion separately.',
+    '',
+    'Run `node <skill>/bin/governance.mjs status <repo>` to see what is still missing, then `node <skill>/bin/governance.mjs check <repo>` to execute the configured checks.',
   ].join('\n') + '\n')
   for (const path of writes) console.log(`created ${path.slice(root.length + 1)}`)
   for (const path of skip) console.log(`kept    ${path.slice(root.length + 1)} (existing files are never overwritten)`)
   status(root)
 }
 
-function status() {
-  const { root, governance, policyPath, statePath, requirementsPath } = readTarget(args[1] ?? '.')
+function status(dir = args[1] ?? '.') {
+  const { root, governance, policyPath, statePath, requirementsPath } = readTarget(dir)
   if (!existsSync(governance)) fail(`${root} has no ${GOVERNANCE_DIR}/; run: governance init ${root}`)
   const problems = []
   let policy = null
@@ -223,11 +226,82 @@ function status() {
   console.log(`  requirement: ${state?.requirement ?? '(none)'}`)
   console.log(`  next action: ${state?.nextAction ?? '(none)'}`)
   if (problems.length === 0) {
-    console.log('  status: complete enough to work; re-check after every change')
+    console.log('  status: metadata fields are filled; this does not execute project checks or prove the task complete')
     return
   }
   for (const problem of problems) console.log(`  missing: ${problem}`)
   process.exitCode = 2
+}
+
+function check() {
+  let dir = null
+  let policyArg = null
+  for (let index = 1; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--policy') {
+      policyArg = args[++index]
+      if (!policyArg) {
+        console.error('governance: --policy requires a repository-relative path')
+        process.exit(2)
+      }
+    } else if (arg.startsWith('-')) {
+      console.error(`governance: unknown check option: ${arg}`)
+      process.exit(2)
+    } else if (dir !== null) {
+      console.error(`governance: unexpected check argument: ${arg}`)
+      process.exit(2)
+    } else dir = arg
+  }
+  const { root, governance, policyPath: defaultPolicyPath } = readTarget(dir ?? '.')
+  const policyPath = policyArg ? resolve(root, policyArg) : defaultPolicyPath
+  if (!policyArg && !existsSync(governance)) {
+    console.error(`governance: ${root} has no ${GOVERNANCE_DIR}/; run: governance init ${root}`)
+    process.exit(2)
+  }
+  let policy
+  try {
+    const canonicalRoot = realpathSync(root)
+    const canonicalPolicyPath = realpathSync(policyPath)
+    const relativePath = relative(canonicalRoot, canonicalPolicyPath)
+    if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
+      console.error('governance: policy must resolve inside the target repository')
+      process.exit(2)
+    }
+    policy = readJson(canonicalPolicyPath)
+  } catch (error) {
+    console.error(`governance: cannot read ${policyArg ?? '.governance/policy.json'}: ${error.message}`)
+    process.exit(2)
+  }
+  const entries = policy?.checks
+  if (!entries || typeof entries !== 'object' || Array.isArray(entries) || Object.keys(entries).length === 0) {
+    console.error('governance: policy.checks is empty; configure real project commands before running check')
+    process.exit(2)
+  }
+  const plan = []
+  for (const [name, command] of Object.entries(entries)) {
+    if (typeof command !== 'string' || command.trim().length === 0) {
+      console.error(`governance: policy.checks.${name} must be a non-empty command string`)
+      process.exit(2)
+    }
+    plan.push({ name, command })
+  }
+  console.log(`governance: ${root}`)
+  const failures = []
+  for (const { name, command } of plan) {
+    console.log(`\n--- check ${name}: ${command} ---`)
+    const result = spawnSync(command, { cwd: root, shell: true, stdio: 'inherit', env: process.env })
+    const status = result.error ? null : result.status
+    if (result.error) console.error(`governance: ${name} failed to start: ${result.error.message}`)
+    else if (result.signal) console.error(`governance: ${name} was terminated by ${result.signal}`)
+    console.log(`[observed exit ${status ?? 'none'}${result.signal ? `, signal ${result.signal}` : ''}]`)
+    if (status !== 0) failures.push(name)
+  }
+  console.log(`\ngovernance: ${plan.length - failures.length}/${plan.length} configured checks passed`)
+  if (failures.length > 0) {
+    console.error(`governance: failed checks: ${failures.join(', ')}`)
+    process.exit(1)
+  }
+  console.log('governance: configured checks passed; this does not prove semantic completeness, adoption or platform enforcement')
 }
 
 switch (command) {
@@ -236,7 +310,8 @@ switch (command) {
   case 'cite': cite(); break
   case 'init': init(); break
   case 'status': status(); break
+  case 'check': check(); break
   default:
-    console.error('usage: governance <verify|list|cite|init|status> [argument]')
+    console.error('usage: governance <verify|list|cite|init|status|check> [argument] [--policy path]')
     process.exit(1)
 }

@@ -1038,6 +1038,18 @@
           "kind": "instruction"
         },
         {
+          "path": "packages/session-query/session-query-sqlite/README.md",
+          "start": 57,
+          "end": 71,
+          "kind": "instruction"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/README.md",
+          "start": 102,
+          "end": 108,
+          "kind": "instruction"
+        },
+        {
           "path": "packages/core/agent-loop/README.md",
           "start": 75,
           "end": 75,
@@ -1047,6 +1059,36 @@
           "path": "packages/session-query/session-query-sqlite/src/schema.ts",
           "start": 1,
           "end": 37,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/index.ts",
+          "start": 85,
+          "end": 86,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/index.ts",
+          "start": 275,
+          "end": 292,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/index.ts",
+          "start": 303,
+          "end": 322,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/index.ts",
+          "start": 495,
+          "end": 561,
+          "kind": "implementation"
+        },
+        {
+          "path": "packages/session-query/session-query-sqlite/src/index.ts",
+          "start": 975,
+          "end": 1015,
           "kind": "implementation"
         },
         {
@@ -1075,10 +1117,10 @@
         "改变表层历史的操作必须在日志中留下可检测的括号/标记；崩溃留下未配对标记而不是伪装成功。",
         "日志只追加；修改通过替换事件表达；影子事件保留以便确定性重放。",
         "接受的事实先写入日志，再让下一步从日志派生。",
-        "A derived read model over the append-only log must define effective-source reconciliation: live overlays are connection-local TEMP state dropped on reopen; a persisted read is observation-only and must not mutate the store; a live owner wins over persisted content for the same id.",
-        "Reconciliation must retry a bounded number of passes when live owners attach/replace, the persistence binding changes, or the snapshot population moves; unchanged generations are not re-read, deleted ids disappear, and a reopened index reloads when the underlying store differs even if opaque revisions collide.",
-        "A search cursor is bound to the request (scope, query, filters, limit and effective source generation); within-scope pages remain valid across unrelated changes, while a target or topology change invalidates with a typed stale/invalid cursor error. Cursors are opaque and out-of-range offsets are rejected. These are library/service continuations: the model-facing search/tool contract still exposes no hidden provider cursor, offset, page size or model-controlled limit; do not leak this cursor into a tool result.",
-        "A failed reconciliation must produce a typed failure rather than partial results; a source or SQLite transaction failure must not poison the next search."
+        "派生读模型的 effective-source 对账：live overlay 是连接内 TEMP 状态，重开即消失；persisted read 只观察、不得修改 store；同一 id 的 live owner 优先于 persisted 内容。",
+        "当 live owner attach/replace、persistence binding 变化或 snapshot population 移动时，reconciliation 最多重试一次（`STABLE_OBSERVATION_ATTEMPTS=2`，含首次尝试）；未变化的 generation 不重读，删除的 id 消失，重开的 index 在底层 store 不同时即使 opaque revision 相同也要重载；仍不稳定则报 `SESSION_QUERY_PERSISTENCE_FAILED`。",
+        "搜索游标是库/服务级 continuation：绑定规范化请求（scope、query、filters、limit）与 effective source generation；同 scope 内跨无关变更仍有效，target/topology 变化以 `SESSION_QUERY_STALE_CURSOR` 失效，不属于该请求的游标以 `SESSION_QUERY_INVALID_CURSOR` 拒绝，越界 offset 拒绝。该搜索/游标契约由 `session-query-sqlite` README 与源码拥有，本记录只保留日志权威侧的只读/重建边界；模型面工具仍不得暴露 provider cursor、offset、page size 或 model-controlled limit（见 package-contracts-6.model-facing-tool-result-contract）。",
+        "reconciliation 失败必须产生 typed failure 而不是部分结果；source 或 SQLite transaction 失败不得污染下一次搜索。"
       ],
       "actors": [
         "owner: 持久化/会话域所有者",
@@ -1108,6 +1150,8 @@
       "relationships": [
         "dependsOn: package-contracts-8.seam-split-single-provider",
         "related: package-contracts-8.failure-taxonomy; package-contracts-8.minimal-surface",
+        "related: package-contracts-4.session-activation-and-write-ownership（cold read / live-preferred observation）",
+        "related: package-contracts-6.model-facing-tool-result-contract（模型面不暴露隐藏 cursor/offset）",
         "crossDomain: rationale-architecture-2; testing"
       ],
       "migration": {
@@ -1150,7 +1194,9 @@
       },
       "limitations": [
         "日志只追加会放大存储与扫描成本，需要单独保留策略。",
-        "删除当前反馈不等于删除历史；隐私擦除需要另外机制。"
+        "删除当前反馈不等于删除历史；隐私擦除需要另外机制。",
+        "搜索/游标的完整行为（literal phrase、ranking、snippet、filter/limit 预算、openAt 生命周期）由 `packages/session-query/session-query-sqlite/README.md` 拥有；本记录只保留派生读模型对日志权威的只读/可重建边界，不复制该包完整 API 契约。",
+        "本域未执行 session-query 的 schema/index 代码或测试；上述语义来自 README、源码与测试断言的实际读取，不是运行通过证明。"
       ]
     },
     {

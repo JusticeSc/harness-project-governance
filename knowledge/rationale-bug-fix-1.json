@@ -1399,7 +1399,7 @@
       "limitations": [
         "Note 中的身份字段是 source 实现细节；迁移项目需要定义自己的最小身份元组。",
         "历史记录迁移的兼容策略在 Notes 中只覆盖了部分场景，未形成通用迁移器。",
-        "`ready` 的标题写 \"initial open to succeed\"，但正文明确 settle 不等于 success；采用时以 `openState === \"open\"` 为准",
+        "source Note 2026-09-20 的小节标题写 \"initial open to succeed\"，但正文明确 settle 不等于 success；本 RB03 标题只讲持久身份，不传播该成功声明。采用时以 `openState === \"open\"` 为准",
         "session-open 的 header 根 catalog/menu 加载提示仍是 known gap；stale tests 是 gap，不是通过证据",
         "session-open 的 reconnect/exceptional retry 仍需单独验证；本决策只覆盖当前 generation 初次打开",
         "source decision 是决策层权威；当前代码 enforcement 未做全量复核（仅 session-open 调用点/标签做过定点核对）"
@@ -3208,7 +3208,8 @@
         "设置 catalog 从持久化 source 重建，损坏项可见；不依赖内存缓存",
         "Typert 必须沿 package-local relative forwarding modules（named、import-then-export、star；explicit 先于 star；cycle-safe）找到 original declaration；仍要求 public package import，不得把相对跨包路径当 public",
         "需要稳定相对顺序的 prompt sections 使用互不相同的 `order`；其他 equal-order 仍按 activation order，不能声称全局稳定；运行时上下文由应用显式组合并可 opt-out",
-        "面向模型的 residency 词汇使用 `running | idle | ready`；service layer 可保留 `running | inactive`，但必须显式映射，不能把 `ready` 说成 terminal/complete"
+        "面向模型的 residency 词汇使用 `running | idle | ready`；service layer 可保留 `running | inactive`，但必须显式映射，不能把 `ready` 说成 terminal/complete",
+        "持久 pwsh 的 `prompt` 函数由 `dsh-terminal-bash` 在 `spawn` 时单一所有者安装，并等到 `stdin_read` readiness；持久 pwsh 工具不得安装/覆写 prompt、不得持有私有 prompt 常量，也不得匹配 backend 的 `dsh> ` 协议文本。无 end marker 的 `stdin_read` settlement 只按 seam 自身信号返回 captured partial output；partial output 可以保留 backend prompt 文本，工具不得剥离或假装知道它。"
       ],
       "actors": [
         "adapter owner",
@@ -3221,7 +3222,8 @@
         "从持久化源重建 catalog，标记损坏项",
         "在 Typert 中解析 package-local forwarding edges，显式/star 排序并防环",
         "为需要稳定顺序的 sections 分配 distinct order；记录最终提示",
-        "在 model-facing adapter 映射 residency，并让 service layer 保留自己的词汇"
+        "在 model-facing adapter 映射 residency，并让 service layer 保留自己的词汇",
+        "持久 pwsh 初始化不安装 prompt：由 `dsh-terminal-bash` 在 `spawn` 安装并等待 `stdin_read`；删除 `PWSH_PROMPT_SETUP`、私有 prompt 常量与 `stripPrompt`，把 fallback 改为 seam 的 `stdin_read` 信号；loader-composition suite 记录每个 send 的 `waitReason`，要求至少六次 `stdin_read` 且无 `inferred_idle`。"
       ],
       "enforcement": {
         "mode": "compile-time checks + recovery/package/prompt tests + review",
@@ -3230,6 +3232,7 @@
           "设置恢复测试覆盖损坏/旧版本 catalog",
           "打包测试覆盖 forwarding chain、explicit/star、cycle、namespace-only failure",
           "提示组合测试断言目标 sections 顺序稳定；equal-order 不被冒充为稳定",
+          "loader-composition suite 记录每个持久 pwsh send 的 `waitReason`：要求至少六次 `stdin_read` settlement 且无 `inferred_idle`；重新引入工具自有 prompt 覆写会在 30s 后失败",
           "list_agents 测试断言 running/idle/ready 映射与描述"
         ],
         "trust": "Reviewer trusts exhaustive mapping and package-layout tests; SDK/package layouts vary.",
@@ -3253,7 +3256,8 @@
           "为升级建立字段映射表与类型检查",
           "从持久化源重建 catalog，标记损坏项",
           "在 `WorkspaceAnalyzer.targetForReference` 中通过共享 compiler host 解析相对 specifier，只在仍位于引用包内时沿 package-local forwarding modules 前进：收集携带请求名的 named re-export、`export { local }` + 该模块 import、以及导出同名 symbol 的 star re-export；explicit 先于 star，每个 module/name 对只进入一次，首个 package specifier 处停止并交给 `packageExportName` 检查；相对跨包路径、namespace-only 与全部回环的路径仍失败",
-          "仅为需要稳定相对顺序的 sections 分配 distinct order；其他 ties 保留 activation order，不添加 registry 名称 tie-breaker；记录最终提示"
+          "仅为需要稳定相对顺序的 sections 分配 distinct order；其他 ties 保留 activation order，不添加 registry 名称 tie-breaker；记录最终提示",
+          "持久 pwsh 不安装 prompt：`dsh-terminal-bash` 在 `spawn` 安装并等待 `stdin_read`；工具删除初始化 send、`PWSH_PROMPT_SETUP`、私有常量与匹配/剥离逻辑，partial output 可保留 backend prompt 文本。模型命令重定义 `prompt` 仍会移除 readiness marker 并降级到 silence tier，这是不可自动修复的文档化残留。"
         ],
         "requiredSupport": [
           "adapter owner",
@@ -3273,6 +3277,10 @@
           {
             "scenario": "设置 catalog 从持久化源恢复，损坏项在 UI 可见",
             "evidence": "planned"
+          },
+          {
+            "scenario": "真实 Loader composition 启动持久 pwsh：初始化不安装第二个 prompt，后续每个 send 记录 `stdin_read`（至少六次）且无 `inferred_idle`；partial output 可保留 backend 的受控 prompt 文本。",
+            "evidence": "planned"
           }
         ],
         "rejection": [
@@ -3283,11 +3291,19 @@
           {
             "scenario": "打乱 plugin activation order 后断言 distinct-order 的目标序列不变；另设非目标 equal-order 对照仍随 activation order，若 registry 按名称全局重排则该对照失败",
             "evidence": "planned"
+          },
+          {
+            "scenario": "重新引入持久 pwsh 工具自己的 prompt 覆写：loader-composition suite 在 30s 后失败（至少六次 `stdin_read` 的断言），即使 output 断言仍通过；工具匹配/剥离 backend prompt 文本同样应被拒绝。",
+            "evidence": "planned"
           }
         ],
         "recovery": [
           {
             "scenario": "字段/设置无法映射时返回 typed unsupported，并保留旧值",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "移除工具 prompt 覆写并恢复 backend-owned prompt 后重跑同一 loader-composition suite，`waitReason` 与 output 断言恢复；若模型命令自身重定义 `prompt`，后续 send 仍降级到 silence tier，不能声称已自动修复。",
             "evidence": "planned"
           }
         ],
@@ -3296,7 +3312,8 @@
       "limitations": [
         "升级映射是版本特定的；每次升级都需要重新审查。",
         "设置 catalog 的损坏恢复策略依赖具体存储格式。",
-        "转发解析修复在 analyzer 的 `targetForReference`，不是 exports-map/tsconfig 改动：每次 cross-package relative reference 经共享解析缓存逐 hop 付一次 module resolution，`reachableFiles` 也走同一缓存；relative 跨包路径、namespace-only 与全部回环仍失败。"
+        "转发解析修复在 analyzer 的 `targetForReference`，不是 exports-map/tsconfig 改动：每次 cross-package relative reference 经共享解析缓存逐 hop 付一次 module resolution，`reachableFiles` 也走同一缓存；relative 跨包路径、namespace-only 与全部回环仍失败。",
+        "持久 pwsh 的 prompt 只在 `spawn` 时由 backend 安装一次；模型命令重定义 `prompt` 后无法按 prompt 重断言，后续 send 仍降级到 silence tier。`stdin_read` 早返回会保留会话，仍在读 stdin 的子进程可消费下一次命令直到 `timeoutMs`，与持久 bash 相同；`dsh-terminal-bash` 的行为与 Windows 实测是本记录的运行前提。"
       ],
       "sources": [
         {
@@ -4336,7 +4353,7 @@
           "测试选择最后一个 turn ending",
           "测试无 turn ending 返回 None",
           "测试 malformed reason 抛 SdkProtocolError",
-          "测试 transport/timeout/protocol failure 抛错而不产生 finish reason"
+          "测试 transport/timeout/protocol failure 抛错而不产生 finish reason（源 Decision 规定该行为，但源 Verification 只列出前三类测试；该场景保持 planned，不声称已运行）"
         ],
         "trust": "Reviewer trusts SDK protocol tests; interval attribution can still contain steering/injected/queued work.",
         "failure": "Prompt-level attribution, swallowing a malformed reason, or returning a finish reason for transport failure blocks the change.",
@@ -4403,6 +4420,10 @@
           },
           {
             "scenario": "turn/end 存在但 reason.kind 非 string 时抛 SdkProtocolError",
+            "evidence": "planned"
+          },
+          {
+            "scenario": "注入 transport loss、timeout 或 protocol failure 时调用仍抛错，且 `RunResult.finish_reason` 不产生（不得把失败包装成 None 或某个 reason）",
             "evidence": "planned"
           }
         ],

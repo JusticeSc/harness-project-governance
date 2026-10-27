@@ -25,7 +25,7 @@ function json(name, value) { writeFileSync(join(target, '.governance', name), JS
 try {
   console.log('Harness Project Governance — executable local demo')
   console.log('Scenario: a task-board feature, its acceptance check, rejection and fresh-process handoff.')
-  console.log('This script performs the steps explicitly. It is not an autonomous Agent adoption or a C1–C6 certification.')
+  console.log('This script performs the steps explicitly. It does not demonstrate autonomous Agent adoption or remote enforcement.')
   run('1. Check the installed knowledge/reference integrity', [cli, 'verify'])
   run('2. Initialize a new project (exit 2 means required facts are still empty)', [cli, 'init', target], 2)
   const policy = JSON.parse(readFileSync(join(target, '.governance/policy.json'), 'utf8'))
@@ -49,20 +49,20 @@ try {
   const example = join(skill, 'examples/task-board')
   const working = readFileSync(join(example, 'board.mjs'), 'utf8')
   for (const file of ['board.mjs', 'board.test.mjs']) copyFileSync(join(example, file), join(target, file))
-  run('4. Execute the real acceptance command', ['--test', 'board.test.mjs'])
+  run('4. Execute the configured acceptance check through the governance CLI', [cli, 'check', target])
   writeFileSync(join(target, 'board.mjs'), 'export function pendingTitles(tasks) { return tasks.map(task => task.title) }\n')
-  run('5. Deliberately break the feature: the acceptance command must reject it', ['--test', 'board.test.mjs'], 1)
+  run('5. Deliberately break the feature: the configured check must reject it', [cli, 'check', target], 1)
   writeFileSync(join(target, 'board.mjs'), working)
-  run('6. Restore the feature and observe recovery', ['--test', 'board.test.mjs'])
+  run('6. Restore the feature and observe recovery through the same check command', [cli, 'check', target])
   Object.assign(state, {
-    phase: 'handoff', nextAction: 'A fresh Agent reads requirements.md and state.json, then reruns node --test board.test.mjs before making changes.',
-    evidence: { command: 'node --test board.test.mjs', positiveExit: 0, rejectedMutationExit: 1, recoveryExit: 0 },
+    phase: 'handoff', nextAction: 'A fresh Agent reads requirements.md and state.json, then runs governance check . before making changes.',
+    evidence: { command: 'governance check .', positiveExit: 0, rejectedMutationExit: 1, recoveryExit: 0 },
     updatedAt: new Date().toISOString(),
   })
   json('state.json', state)
   run('7. Read persistent handoff from a fresh CLI process', [cli, 'status', target])
-  console.log('\nDEMO PASSED: initialization → project facts → real acceptance → rejection → recovery → persisted handoff.')
-  console.log('status checks metadata only; the separately executed test command proved the demonstrated feature behavior.')
+  console.log('\nDEMO PASSED: initialization → project facts → configured check → rejection → recovery → persisted handoff.')
+  console.log('status checks metadata only; `check` executed the configured acceptance command and its observed exit codes.')
 } finally {
   rmSync(workspace, { recursive: true, force: true })
 }

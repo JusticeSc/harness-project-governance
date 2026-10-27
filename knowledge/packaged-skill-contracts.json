@@ -1546,7 +1546,7 @@
           {
             "evidence": "planned",
             "note": "",
-            "scenario": "对象在 -AllowRoot 外或 allowRoot 不满足约束时必须拒绝且不改 ACL；本次补读范围内未重复验证该既有用例，只确认新用例未削弱它。"
+            "scenario": "对象在 -AllowRoot 外或 allowRoot 不满足约束时必须拒绝且不改 ACL；该边界由 `diagnose-script.spec.ts` 既有越界用例覆盖，本记录未在 Windows+pwsh 重跑。"
           }
         ],
         "recovery": [
@@ -1562,7 +1562,7 @@
           }
         ]
       },
-      "limitations": "本次补读只到 420 行，恢复/拒绝主流程仍由既有 421-848 用例覆盖；所有结论是测试源码证据，未在 Windows+pwsh 执行。",
+      "limitations": "恢复/拒绝主流程由 `diagnose-script.spec.ts:421-848` 覆盖，记录布局与配对事实由 `:126-420` 覆盖；两边都是测试源码证据，本记录未在 Windows+pwsh 执行。",
       "origin": "source",
       "sourceBacked": true,
       "exceptions": [
@@ -2343,7 +2343,7 @@
       "limitations": [
         "未运行生成器或 `--check`；未阅读 `collectConfigCatalog` 实现。",
         "doc-sync 的实际执行范围与远程 CI 状态未知。",
-        "只机读 packages.md 的结构（514 行、50 个分组、259 行包条目），未逐行 prose 阅读。"
+        "packages.md 的 514 行、50 个分组、259 个包条目来自机读结构计数（可由生成器重算），未逐行语义阅读；计数随生成变化，不是稳定契约。"
       ],
       "origin": "source",
       "sourceBacked": true

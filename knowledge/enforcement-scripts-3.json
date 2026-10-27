@@ -13,6 +13,12 @@
       "title": "Replay spill locators are stable logical names scoped to one saved run",
       "sources": [
         {
+          "path": "scripts/snapshot-spill-locators.ts",
+          "start": 1,
+          "end": 66,
+          "kind": "implementation"
+        },
+        {
           "path": "scripts/snapshot-spill-locators.spec.ts",
           "start": 1,
           "end": 72,
@@ -28,8 +34,9 @@
       ],
       "obligations": [
         "Concurrent replays with identical owner, source, suggested name and content must produce equal-length logical locators, but distinct physical files inside each run's own root. Allocation completion order must not matter.",
-        "The logical locator must retain the recorded prefix and the UTF-8 byte count; reading through fs.resolve must return exactly the saved content.",
-        "Only locators saved by the current run may resolve or map to a host path. An unknown locator under the locator root must fail with 'not saved by this run' from both resolve and processPathFromHostPath; ordinary paths must pass through unchanged.",
+        "The logical locator must start with the recorded locatorRoot. The spec asserts ref.bytes equals the saved content's UTF-8 byte length and that concurrent locators have equal string length; it does not assert that locator text length equals the recorded byte count. Reading through fs.resolve must return exactly the saved content.",
+        "Only locators saved by the current run may resolve or map to a host path. A descendant of locatorRoot (locatorRoot + separator) that is not mapped throws 'not saved by this run' from both resolve and processPathFromHostPath; the bare locatorRoot without a trailing separator passes through as an ordinary path. Ordinary paths outside the root pass through unchanged.",
+        "The implementation rejects a spill backend locator outside the run's live root before mapping it; this guarantee is not in the spec's direct assertions.",
         "Disposing the locator plugin must remove the mapping. After disposal, resolving the old locator must not stat the old physical file and processPathFromHostPath must treat the locator as an ordinary passthrough value, so stale locators cannot read a previous run's data.",
         "The test must cover both allocation orders because Promise.all preserves input order, not completion order, and concurrent creation is the failure mode."
       ],
@@ -48,8 +55,8 @@
       ],
       "enforcement": {
         "mode": "test",
-        "implementation": "scripts/snapshot-spill-locators.spec.ts with the LocalSpillStore, LocalFileSystem and the replay locator plugin",
-        "trust": "Locator length/bytes, physical privacy, saved-run resolution, passthrough and post-dispose behavior are asserted against real temp roots; cross-process collision is not exercised",
+        "implementation": "scripts/snapshot-spill-locators.ts implements the run-private mapping and backend-locator containment; scripts/snapshot-spill-locators.spec.ts drives it with LocalSpillStore, LocalFileSystem and the replay locator plugin",
+        "trust": "Locator prefix, content byte count (ref.bytes), equal-length concurrent locators, physical privacy, saved-run resolution, passthrough and post-dispose behavior are asserted against real temp roots; backend containment and bare-root passthrough are implementation-reading guarantees. Cross-process collision is not exercised",
         "failure": "A shared physical path silently returns another run's bytes; an unsaved locator maps to an arbitrary file; disposal leaves a stale mapping that reads deleted or unrelated data",
         "exceptions": [
           "ordinary absolute paths are intentionally pass-through",
@@ -98,7 +105,7 @@
           }
         ]
       },
-      "limitations": "The spec covers one in-process spill store and filesystem adapter. It does not prove cross-process collision behavior, crash recovery, or that every locator-independent code path uses the mapping. The synthetic locatorRoot may not reproduce every Windows path-shape edge.",
+      "limitations": "The spec covers one in-process spill store and filesystem adapter. The locator text length is only compared between concurrent runs; it is not asserted to equal the content byte count. The bare locatorRoot passes through, and backend containment is implementation-only. It does not prove cross-process collision behavior, crash recovery, or that every locator-independent code path uses the mapping. The synthetic locatorRoot may not reproduce every Windows path-shape edge.",
       "origin": "source",
       "sourceBacked": true
     },
@@ -106,6 +113,18 @@
       "id": "enforcement-scripts-3-python-wheel-test-pruning",
       "title": "Python runtime wheels: remove only distribution test trees and rewrite RECORD safely",
       "sources": [
+        {
+          "path": "scripts/primary-runtime/prune-python-tests.ts",
+          "start": 1,
+          "end": 42,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/primary-runtime/prepare.ts",
+          "start": 130,
+          "end": 153,
+          "kind": "implementation"
+        },
         {
           "path": "scripts/primary-runtime/prune-python-tests.spec.ts",
           "start": 1,
@@ -121,11 +140,11 @@
         "RECORD parsing or CSV handling changes"
       ],
       "obligations": [
-        "Remove only the numpy/tests and pandas/tests directory trees, including nested and empty tests directories. Do not remove similarly named tests under another distribution (other/tests, numpy_extra/tests), nor numpy/testing, pandas/testing, pandas/_testing, compiled *_multiarray_tests or _libs/testing binaries, data files, or dist-info licenses.",
-        "RECORD is CSV with a sha256 digest and size per row. Rewrite it with the original hashes and sizes, preserve quoted paths containing commas, keep the self-row, and keep exactly the retained rows.",
+        "Remove every directory named tests anywhere under the numpy and pandas distribution trees, including nested and empty ones. Keep testing helper modules and files such as numpy/testing/__init__.py, pandas/testing.py, pandas/_testing, compiled *_multiarray_tests binaries, data files and dist-info licenses; do not remove similarly named tests under other distributions (other/tests, numpy_extra/tests).",
+        "RECORD is CSV with a sha256 digest and size per row. Rewrite it with the original hashes and sizes, keep the self-row and exactly the retained rows. The spec's row helper writes every path quoted with a base64url sha256; assertions expect unquoted non-comma paths and quoted comma paths. Embedded-quote, escape and CRLF forms are not exercised.",
         "Validate every RECORD before deleting anything for that distribution. Unterminated quotes, empty rows, missing hash/size rows and empty files must abort with 'invalid wheel RECORD' while test files remain intact.",
         "The second pruning run must be a no-op (byte-identical RECORD), and the source .whl archive must never be modified; pruning is applied to the unpacked site-packages tree only.",
-        "Use the lock-pinned distribution versions in tests; a version mismatch is a test failure rather than a best-effort prune."
+        "Tests read the lock-pinned NumPy/pandas versions; the spec does not execute a version-mismatch negative case, so mismatch behavior is not proven."
       ],
       "actors": [
         "primary-runtime packager",
@@ -142,8 +161,8 @@
       ],
       "enforcement": {
         "mode": "test",
-        "implementation": "scripts/primary-runtime/prune-python-tests.spec.ts with prunePrimaryRuntimePythonTests and unpackPrimaryRuntimeWheel",
-        "trust": "File selection, RECORD round-trip, archive immutability, idempotence and malformed-record refusal are asserted on a real zip built per test",
+        "implementation": "scripts/primary-runtime/prune-python-tests.ts (prunePrimaryRuntimePythonTests, Papa.parse/unparse) and scripts/primary-runtime/prepare.ts (unpackPrimaryRuntimeWheel); scripts/primary-runtime/prune-python-tests.spec.ts drives them on a real zip",
+        "trust": "File selection, RECORD round-trip for the constructed rows, archive immutability, idempotence and malformed-record refusal are asserted on a real zip built per test. Exotic CSV quoting, omitted RECORD rows, and version-mismatch behavior are not executed",
         "failure": "Pruning removes a runtime helper or license, RECORD disagrees with extracted files, a comma path corrupts the CSV, or a malformed record leads to deleting tests without a valid inventory",
         "exceptions": [
           "test directories of distributions other than NumPy/pandas are untouched by design",
@@ -192,7 +211,7 @@
           }
         ]
       },
-      "limitations": "Only NumPy/pandas are covered. The RECORD validator is exercised on synthetic rows; exotic CSV quoting or a wheel whose RECORD omits rows may behave differently. Pruned RECORD intentionally differs from the archive's original RECORD, so archive-level verification must not be used to validate the extracted tree.",
+      "limitations": "Only NumPy/pandas are covered. The RECORD validator is exercised on synthetic rows; the spec's row helper writes every path quoted with a base64url sha256 and the assertions expect unquoted non-comma paths, so embedded-quote/escape/CRLF forms or a wheel whose RECORD omits rows may behave differently. No version-mismatch negative case is executed. Pruned RECORD intentionally differs from the archive's original RECORD, so archive-level verification must not be used to validate the extracted tree.",
       "origin": "source",
       "sourceBacked": true
     },
@@ -228,13 +247,13 @@
         "regenerating or reviewing the model-facing client catalog"
       ],
       "obligations": [
-        "SlotMap merges are the authority. Every catalog key must be declared exactly once across merges; duplicates are a contract violation because the merge is silent. kind must be a literal single/list/keyed/chain and scope a literal root/session/session-maybe.",
+        "SlotMap merges are the authority. Every catalog key must be declared exactly once across merges; duplicates are a contract violation because the merge is silent. kind must be a literal single/list/keyed/chain and scope a literal root/session/session-maybe. Duplicate detection is asserted on synthetic inputs; the real-workspace test asserts entry count/fields, not key uniqueness.",
         "Every slot must carry registrant-side JSDoc prose (what to pass, what the component receives, whom a registration replaces, what absence looks like). An owner prop type must resolve to an exported declaration; otherwise the catalog cannot teach what the component receives.",
         "Every registration must target a declared slot or be a factory; every declared child slot must be typed by some SlotMap merge. A registration into an undeclared slot is dead or the scan has a blind spot.",
-        "Owner props expand only the named owner type plus its top-level composed aliases; field value types stay references so one slot does not expand the Session graph. Declarations longer than 1200 characters are truncated with an explicit marker, never silently cut.",
-        "One slot's expanded report (doc, example, owner props, register-option docs, standard props, owner-prop references, occupants) must stay within 122 lines. Over-budget slots fail the generator; fix by narrowing the owner share or tightening prose, never by raising the budget.",
+        "Owner props expand only the named owner type plus its top-level composed aliases; field value types stay references so one slot does not expand the Session graph. Declarations longer than 1200 characters are truncated with an explicit marker, never silently cut; truncation and ambiguous exported-type dropping are implementation-only, with no direct test.",
+        "One slot's expanded report (doc, example, owner props, register-option docs, standard props, owner-prop references, occupants) must stay within 122 lines. Over-budget slots fail the generator; fix by narrowing the owner share or tightening prose, never by raising the budget. The 122-line and 1200-character numbers are source calibrations.",
         "Register options are curated per cardinality (single none; list id/order/label; keyed key; chain select). Do not teach priority: the browser facade assigns one lower than every shipped entry. Teach inject/remount semantics and the no-import/CSS-theme constraints in the shared notes.",
-        "The generator emits a data module consumed by the host toolset and must not import a client runtime module. Scan all matching .ts/.tsx sources rather than a reachable-export closure; drop ambiguous exported type names; parse .tsx as TSX; restrict registration receivers to slots or *.slots and names to string literals.",
+        "The generator emits a data module consumed by the host toolset and must not import a client runtime module. Scan all matching .ts/.tsx sources rather than a reachable-export closure; drop ambiguous exported type names; parse .tsx as TSX; restrict registration receivers to slots or *.slots and names to string literals. The last three behaviors are implementation-only.",
         "Intentional repetition across seats (register options, framework props) is marked for clone detection with jscpd annotations rather than a config exception. The generated file starts with ignore markers and closes them.",
         "The normal CLI writes the artifact; --check must fail for stale or missing output and must never write. Regeneration is the only remedy."
       ],
@@ -254,8 +273,8 @@
       ],
       "enforcement": {
         "mode": "gate",
-        "implementation": "scripts/gen-client-catalog.ts + scripts/slot-walk.ts; scripts/gen-client-catalog.spec.ts pins validation, truncation, budget and --check behavior",
-        "trust": "Kind/scope liveness, duplicate keys, declaration resolution, budget, truncation and freshness are mechanically checked; whether the prose actually teaches a registrant, and whether the rendered report has the claimed token cost, require review",
+        "implementation": "scripts/gen-client-catalog.ts + scripts/slot-walk.ts; scripts/gen-client-catalog.spec.ts pins contract validation on hand-built inputs, the 122-line budget and the real-workspace entry/field surface. The spec does not execute --check, the 1200-character truncation or ambiguous-type dropping; those remain implementation-only or a separate CLI step",
+        "trust": "Kind/scope liveness, duplicate keys and declaration resolution are mechanically checked on synthetic fixtures; the 122-line budget and the real-workspace >30 entry/field surface are also exercised. --check freshness was not executed in this slice; 1200-character truncation, ambiguous exported-type dropping and real-workspace key uniqueness are implementation-only. Whether the prose actually teaches a registrant, and whether the rendered report has the claimed token cost, require review",
         "failure": "A model receives a catalog entry it cannot register (missing declaration, wrong options, undeclared target), or one slot's answer consumes the context needed to implement it; a stale committed artifact diverges from the source contract",
         "exceptions": [
           "factory-registered slots need no ordinary declaration",
@@ -287,7 +306,7 @@
             "scenario": "a documented literal slot with resolvable owner props and a declared registration",
             "check": "collectSlotEntries returns an entry; generated catalog matches --check",
             "evidence": "planned",
-            "note": "Spec covers judgement and generator freshness."
+            "note": "Spec covers judgement and the 122-line budget; --check freshness is a separate CLI step and was not executed here."
           }
         ],
         "rejection": [
@@ -307,7 +326,7 @@
           }
         ]
       },
-      "limitations": "Report line count is a proxy for rendered context cost, not a measured token count. The scan is lexical and does not resolve conditional/mapped types; one-level owner expansion can still omit a cross-package shape. Specs assert generator judgement, not the host tool's rendered answer.",
+      "limitations": "Report line count is a proxy for rendered context cost, not a measured token count. The scan is lexical and does not resolve conditional/mapped types; one-level owner expansion can still omit a cross-package shape. The real-workspace test asserts >30 entries and fields, not key uniqueness; 1200-character truncation and ambiguous exported-type dropping have no direct test. The 122-line and 1200-character numbers are source calibrations, not portable targets. --check freshness is a separate CLI step and was not executed in this slice. Specs assert generator judgement, not the host tool's rendered answer.",
       "origin": "source",
       "sourceBacked": true
     },
@@ -315,6 +334,18 @@
       "id": "enforcement-scripts-3-windows-safe-script-plumbing",
       "title": "Windows-safe script plumbing: JS entrypoints, tar cwd and junction-first cleanup",
       "sources": [
+        {
+          "path": "scripts/release/process.ts",
+          "start": 85,
+          "end": 129,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/release/tarball.ts",
+          "start": 1,
+          "end": 63,
+          "kind": "implementation"
+        },
         {
           "path": "scripts/release/process.spec.ts",
           "start": 1,
@@ -340,7 +371,8 @@
         "When GNU tar reads an archive, set cwd to the archive's directory and pass its basename. Never pass an absolute Windows path containing a drive colon; tar would treat it as a remote host.",
         "Before recursively deleting a fixture tree, walk it and unlink every junction/symlink. Only then remove the directory. On POSIX the walk is effectively a no-op because unlink/rm do not follow symlinks. Never call rmSync or git worktree remove on a tree that still contains junctions.",
         "Windows removal must be bounded: rmSync with maxRetries 50 and retryDelay 200ms (10-second window) to absorb asynchronous handle release. Do not retry unboundedly; do not swallow non-EPERM errors; a bounded window must not pin afterEach cleanup.",
-        "The process and tarball helpers must be tested with real processes and real archives: list members and read packed identity beside the archive, and assert pnpm reports a version. Mocks alone do not prove Windows launchability."
+        "The process and tarball helpers must be tested with real processes and real archives: list members and read packed identity beside the archive, and assert pnpm reports a version. Mocks alone do not prove Windows launchability.",
+        "The junction-first cleanup helper is implementation-only in this slice: release/process.spec.ts does not call removeFixtureSafely or unlinkFixtureLinks, and no cited test creates a junction and proves deletion order. Callers must use the helper; the helper cannot force that."
       ],
       "actors": [
         "script maintainer",
@@ -409,7 +441,7 @@
           }
         ]
       },
-      "limitations": "The specs prove command shape and real tar/pnpm behavior on the current platform; the destructive junction traversal is not reproduced end to end here. The 50x200ms retry window is tuned to the source repository's runner load and should be re-measured.",
+      "limitations": "The specs prove command shape and real tar/pnpm behavior on the current platform; the destructive junction traversal is not reproduced end to end here, and no cited test creates a junction or asserts the retry window/non-EPERM pass-through. The 50x200ms retry window is tuned to the source repository's runner load and should be re-measured.",
       "origin": "source",
       "sourceBacked": true
     }

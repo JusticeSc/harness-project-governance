@@ -100,6 +100,12 @@
       "title": "生成的 Workflow guest 必须自包含且 --check 不写回",
       "sources": [
         {
+          "path": "scripts/gen-workflow-guest.ts",
+          "start": 1,
+          "end": 72,
+          "kind": "implementation"
+        },
+        {
           "path": "scripts/gen-workflow-guest.spec.ts",
           "start": 1,
           "end": 43,
@@ -118,7 +124,7 @@
         "无法解析的导入必须让生成失败，而不是生成依赖缺失的产物。",
         "--check 只比较已提交产物与当前源，不重写文件；stale 时失败并保留原文件。",
         "生成产物由生成器拥有；手工编辑会在下一次 check 中暴露为 stale。",
-        "正向测试要在删除源文件后动态 import 生成模块，证明自包含而非仅字符串匹配。"
+        "正向测试在删除源文件后以 data URL 导入 bundleWorkflowGuest 返回的字符串，证明的是 bundle 自包含，不是执行已生成的 guest-source.ts 模块。"
       ],
       "actors": [
         "Workflow 运行时所有者",
@@ -134,8 +140,8 @@
       ],
       "enforcement": {
         "mode": "generator + freshness check + negative import test",
-        "implementation": "gen-workflow-guest.ts 的 bundleWorkflowGuest/generateWorkflowGuest；spec 覆盖内联、未解析导入、--check 不写回。",
-        "trust": "自包含与 stale 检测是机械的；生成器是否覆盖全部运行时版本、产物是否语义正确仍靠评审与下游执行。",
+        "implementation": "gen-workflow-guest.ts 的 bundleWorkflowGuest/generateWorkflowGuest；spec 覆盖内联、未解析导入、--check 不写回。自包含用例把 bundleWorkflowGuest 的返回字符串以 data URL 导入，并未加载生成的 guest-source.ts 模块。",
+        "trust": "自包含与 stale 检测是机械的；单 chunk 与非内建 external 的拒绝只有生成器断言，spec 没有构造多 chunk 或非内建 external 负例；生成器是否覆盖全部运行时版本、产物是否语义正确仍靠评审与下游执行。",
         "failure": "未解析导入、输出泄露绝对路径、check 写回或 stale 未失败时 spec 变红。",
         "exceptions": [
           "内置 node: 模块可以保留为外部导入；测试只验证声明范围内的导入图。"
@@ -145,7 +151,8 @@
       "relationships": [
         "rationale-process-2/generated-reference-catalogs",
         "documentation-generated-reference-freshness",
-        "engineering-source-artifact-plane"
+        "engineering-source-artifact-plane",
+        "enforcement-scripts-2.workflow-guest-single-module"
       ],
       "migration": {
         "strategy": "generate-and-verify",
@@ -160,8 +167,8 @@
       "verification": {
         "positive": [
           {
-            "scenario": "生成模块删除源码后仍可加载，且输出不含仓库绝对路径。",
-            "check": "gen-workflow-guest.spec.ts 的自包含用例。",
+            "scenario": "删除源码后以 data URL 导入 bundleWorkflowGuest 的返回字符串仍可求值，且输出不含仓库绝对路径。",
+            "check": "gen-workflow-guest.spec.ts 的自包含用例（导入 bundle 字符串，不是 guest-source.ts）。",
             "evidence": "planned",
             "note": ""
           }
@@ -183,7 +190,7 @@
           }
         ]
       },
-      "limitations": "spec 只覆盖 bundleWorkflowGuest 与 generateWorkflowGuest；未证明所有 workflow 运行时版本、所有 loader 查询或 sourcemap 组合。",
+      "limitations": "spec 只覆盖 bundleWorkflowGuest 与 generateWorkflowGuest；自包含用例导入的是 data URL 中的 bundle 字符串，没有执行生成的 guest-source.ts，也没有证明 PTC 运行时加载。多 chunk 与非内建 external 拒绝未构造负例；所有 workflow 运行时版本、loader 查询与 sourcemap 组合未证明。",
       "origin": "source",
       "sourceBacked": true
     },
@@ -213,7 +220,7 @@
       ],
       "obligations": [
         "引擎选择：installed kit manifest 的 optionalDependencies 声明 @deepseek-ai/libreoffice-kit-<platform>-<arch> 时使用 native，否则使用 wasm；Linux 声明 native target 时无需改变策略。",
-        "从 staging/node_modules/@deepseek-ai/libreoffice-kit 开始，沿 dependencies、optionalDependencies、peerDependencies 递归收集闭包。",
+        "从 staging/node_modules/@deepseek-ai/libreoffice-kit 开始，沿 dependencies、optionalDependencies、peerDependencies 递归收集闭包；遍历时跳过所有 @deepseek-ai/libreoffice-kit-* 边，最后只把选中的 engine 目录加入闭包，其他平台 kit 包不参与遍历。",
         "任何解析结果逃出 staging 立即失败，不能把宿主路径带进发布物。",
         "必需依赖缺失必须失败；optional 依赖只有在目标 os/cpu 受支持时才纳入。",
         "选中的 engine 包必须存在；结果按绝对路径排序，保证输出稳定。",
@@ -233,8 +240,8 @@
       ],
       "enforcement": {
         "mode": "closure walker + platform matrix test",
-        "implementation": "officePackageDirectories/selectOfficeEngine；libreoffice-engine.spec.ts 覆盖 darwin/win32/linux/freebsd 与声明 native 的情形。",
-        "trust": "包闭包、路径边界与引擎选择是机械的；LibreOffice 实际可执行性、字体与渲染结果不由该函数证明。",
+        "implementation": "officePackageDirectories/selectOfficeEngine；libreoffice-engine.spec.ts 只覆盖 selectOfficeEngine 的 darwin/win32/linux/freebsd 与声明 native 的矩阵。officePackageDirectories 的闭包遍历、staging 边界与 optional os/cpu 过滤没有 spec 执行。",
+        "trust": "引擎选择是机械矩阵测试；闭包完整性、路径逃逸拒绝与 optional 过滤来自实现阅读，没有测试证明真实安装布局。LibreOffice 实际可执行性、字体与渲染结果不由该函数证明。",
         "failure": "缺少必需依赖、路径逃出 staging、声明了 native 却缺 engine、未知目标回退错误时抛错或 spec 失败。",
         "exceptions": [
           "未声明的平台回退 wasm；optional peer 仅按 manifest 的 os/cpu 元数据过滤。"
@@ -259,8 +266,8 @@
       "verification": {
         "positive": [
           {
-            "scenario": "darwin-arm64、win32-x64、linux-x64 等目标选出正确 engine 并收集完整闭包。",
-            "check": "selectOfficeEngine 矩阵与 officePackageDirectories 输出。",
+            "scenario": "darwin-arm64、win32-x64、linux-x64 等目标由 selectOfficeEngine 选出正确 engine；声明 Linux native 时选择 linux-x64。",
+            "check": "libreoffice-engine.spec.ts 的 selectOfficeEngine 矩阵；officePackageDirectories 闭包未在此 spec 执行，只作为实现阅读证据。",
             "evidence": "planned",
             "note": ""
           }
@@ -268,9 +275,9 @@
         "rejection": [
           {
             "scenario": "必需依赖缺失、路径逃出 staging、声明 native 但 engine 缺失。",
-            "check": "函数必须抛错而不是返回部分闭包。",
+            "check": "函数必须抛错而不是返回部分闭包；这些分支没有 spec 执行，仅由实现阅读确认。",
             "evidence": "planned",
-            "note": ""
+            "note": "officePackageDirectories 无测试。"
           }
         ],
         "recovery": [
@@ -291,6 +298,12 @@
       "title": "packed-install 验证器独占 npm 缓存写入并清理消费者",
       "sources": [
         {
+          "path": "scripts/release/verify-packed-install.ts",
+          "start": 1,
+          "end": 126,
+          "kind": "implementation"
+        },
+        {
           "path": "scripts/release/verify-packed-install.spec.ts",
           "start": 1,
           "end": 82,
@@ -307,8 +320,9 @@
       "obligations": [
         "验证器必须让 npm 把 tarball 内容写入 consumer-private 的 .npm-cache/_cacache。",
         "继承的 npm_config_cache 与 npmrc 指定的 cache 必须保持不变；两者中的 sentinel 文件在运行后仍存在且内容不变。",
-        "success、install failure、entry failure 三种结果都必须在 finally 删除临时消费者及其私有缓存。",
-        "运行前清除继承的 npm_config_*，显式设置 offline、ignore_scripts=false，并把 TMPDIR/TMP/TEMP 指向私有临时目录。",
+        "success、install failure、entry failure 三种结果都必须在 finally 删除临时消费者；verifier 无条件 rmSync 整个 consumer 树，consumer-private cache 因位于其中一并删除。",
+        "测试 harness 在启动 verifier 前过滤继承的 npm_config_*，显式设置 npm_config_offline=true、npm_config_ignore_scripts=false、npm_config_userconfig 与 TMPDIR/TMP/TEMP；这是测试 setup，不是 verifier 行为。",
+        "verifier 自身只向 npm 传 --cache <consumer>/.npm-cache 与 --omit=optional 等参数，并在 consumerEnvironment 中删除 npm_config_user_agent、NODE_OPTIONS、NODE_PATH，设置 consumer 内的 DSH_HOME/DSH_AGENTS_HOME 与 telemetry off。",
         "成功路径退出 0；install 或 entry 失败路径退出 1，且清理仍然发生。"
       ],
       "actors": [
@@ -325,8 +339,8 @@
       ],
       "enforcement": {
         "mode": "real-entry subprocess test with filesystem oracle",
-        "implementation": "scripts/release/verify-packed-install.spec.ts 通过 spawnSync 调用 scripts/release/verify-packed-install.ts；probe.cjs 在 postinstall 记录 consumer 与 cache 文件。",
-        "trust": "真实调用 verifier 入口并观察文件系统；只覆盖 POSIX 与 tar 可用环境，不证明 registry 行为或 Windows npm shim。",
+        "implementation": "scripts/release/verify-packed-install.ts 创建 mkdtemp consumer、写入私有 package.json、以 --cache <consumer>/.npm-cache 安装并在 finally rmSync consumer；scripts/release/verify-packed-install.spec.ts 用 spawnSync 调用该真实入口，probe.cjs 在 postinstall 记录 consumer 与 cache 文件。",
+        "trust": "真实调用 verifier 入口并观察文件系统；offline 由测试环境注入 npm_config_offline，不是 verifier 或测试独立证明的离线保证。只覆盖 POSIX 与 tar 可用环境，不证明 registry 行为或 Windows npm shim。",
         "failure": "verifier 未隔离 cache、未清理 consumer/cache、或覆盖 ambient/configured cache 时断言失败。",
         "exceptions": [
           "Windows 上跳过，因为 verifier 直接调用 POSIX npm 而非 npm.cmd shim。"
@@ -368,13 +382,13 @@
         "recovery": [
           {
             "scenario": "共享 runner 出现缓存污染。",
-            "check": "检查 verifier 的环境清理与 finally 删除路径，移除继承的 npm_config_* 后重跑。",
+            "check": "检查 verifier 是否只写入 consumer 内 .npm-cache 并在 finally 删除 consumer；测试 harness 的 npm_config_* 清理与 sentinel 断言必须保留。",
             "evidence": "planned",
             "note": ""
           }
         ]
       },
-      "limitations": "spec 在 Windows 跳过；使用 tar 构造输入；未覆盖 registry 网络、pnpm、workspace link 或 npm 版本差异。",
+      "limitations": "spec 在 Windows 跳过；使用 tar 构造输入；offline 仅来自测试 harness 的 npm_config_offline；未覆盖 registry 网络、pnpm、workspace link 或 npm 版本差异。",
       "origin": "source",
       "sourceBacked": true
     },
@@ -382,6 +396,12 @@
       "id": "enforcement-scripts-1-translation-link-locale",
       "title": "译文正文链接的目标语言选择与切换行豁免",
       "sources": [
+        {
+          "path": "scripts/translation-links.ts",
+          "start": 1,
+          "end": 384,
+          "kind": "implementation"
+        },
         {
           "path": "scripts/translation-links.spec.ts",
           "start": 1,
@@ -398,12 +418,12 @@
       ],
       "obligations": [
         "中文源（.zh.md）的文档链接必须指向对应的 .zh.md sibling；英文源必须指向英文 sibling。",
-        "只有语言切换行中的 counterpart 链接豁免；正文里指向 counterpart 的链接仍然违规。",
+        "只有语言切换行中的 counterpart 链接豁免，且豁免形态是精确的：H1 后、下一个 heading 前的首个整段匹配段落、恰好一个链接，文本为 'English | [中文](...)' 或 '[English](...) | 中文'，目标被接受；其他切换器形态不豁免。",
         "只重写链接 destination，保留 query、fragment、title 与 label 的原字节。",
-        "percent-encoded 文件名先解码再精确匹配，重写时只使用 RFC 3986 unreserved 字符重新编码。",
-        "不把目录目标推断为 index 页面；不处理图片 definition、GFM autolink 或代码围栏内的文本。",
+        "percent-encoded 文件名先解码再精确匹配；re-encoding 到 RFC 3986 unreserved 字符发生在 relativeExpectedPath，直接 .md 后缀替换则保留 authored path 字节。",
+        "不把目录目标推断为 index 页面；只访问 mdast 的 link/definition 节点，代码围栏内文本因此不会成为链接（这是解析器行为，不是单独断言）；图片 definition 与 GFM autolink 不处理。",
         "重复 reference definition 只使用第一个。",
-        "目标存在性使用所选 content plane 的查询函数，不从 sibling 是否存在推断检查范围。",
+        "目标存在性使用所选 content plane 的查询函数；pair activity 由 isTranslationPairSource 谓词决定，活动语料中缺 sibling 的目标仍报告违规（期望 sibling），非活动目标保持原样。",
         "normalize 只折叠已配对页面的 locale 路径，保留 query 的原始转义字节。"
       ],
       "actors": [
@@ -421,8 +441,8 @@
       ],
       "enforcement": {
         "mode": "pure validation/rewrite functions exercised by spec",
-        "implementation": "translationLinkLocaleViolations/rewriteTranslationLinkLocales/normalizeTranslationMarkdownLinks；spec 覆盖中英文、编码、definition、图片、autolink、目录与 content plane。",
-        "trust": "locale 选择与字节保留是确定性的；翻译语义与网站最终路由仍需评审/站点测试。",
+        "implementation": "translationLinkLocaleViolations/rewriteTranslationLinkLocales/normalizeTranslationMarkdownLinks；spec 覆盖中英文、编码、definition、图片、autolink、目录与 content plane。切换器识别要求精确文本形态、H1 后且下一个 heading 前的首个整段匹配段落、恰好一个链接和目标可接受。",
+        "trust": "locale 选择与 destination 字节保留是确定性的；re-encoding 仅适用于 relativeExpectedPath，直接后缀替换保留 authored 字节。翻译语义与网站最终路由仍需评审/站点测试；代码围栏排除依赖 mdast 访问，不是单独断言。",
         "failure": "正文链接指向错误 locale、切换行被误报、query/fragment/title 被改写、或目标存在性范围漂移时 spec 失败。",
         "exceptions": [
           "切换行豁免；非文档链接（图片、autolink）不处理；目录目标不改写。"
@@ -432,7 +452,8 @@
       "relationships": [
         "documentation-i18n-pair-contract",
         "documentation-markdown-links",
-        "documentation-i18n-pair-gate"
+        "documentation-i18n-pair-gate",
+        "enforcement-scripts-2.bilingual-link-locale"
       ],
       "migration": {
         "strategy": "locale-aware-link-policy",
@@ -470,7 +491,7 @@
           }
         ]
       },
-      "limitations": "spec 使用临时 fixture，不覆盖网站投影后的最终 URL；percent-encoding 只覆盖列出的 RFC 3986 边界；不判断译文内容是否正确。",
+      "limitations": "spec 使用临时 fixture，不覆盖网站投影后的最终 URL；percent-encoding 只覆盖列出的 RFC 3986 边界；切换器豁免是 source-product 的精确文本形态；代码围栏排除来自 mdast，未单独断言；不判断译文内容是否正确。",
       "origin": "source",
       "sourceBacked": true
     },
@@ -497,7 +518,7 @@
         "当 tmp 就是系统 /tmp、父目录是文件系统根、或父目录落在系统临时目录内时，回退到 home。",
         "父目录不可写（EACCES/EPERM/EROFS）时回退 home；其他 access 错误必须继续抛出。",
         "调用者负责原子分配 workspace 并拥有清理；本函数只选父目录。",
-        "assertWorkspaceOutsideTemp 必须先 canonicalize（解析 symlink），再对 workspace-write 模式的 writableRoots 做包含检查。",
+        "assertWorkspaceOutsideTemp 必须先 canonicalize（解析 symlink），再对 writableRoots({mode:'workspace-write', workspaceRoot:'/tmp'}) 做包含检查；workspaceRoot 是硬编码的合成值，实际覆盖的根来自 writableRoots 固定加入的 /tmp 与 platform tmpdir，不是调用者的项目根。",
         "命中自动临时写授权时抛出明确错误，而不是跳过或改用更宽松的 sandbox 模式。"
       ],
       "actors": [
@@ -514,16 +535,15 @@
       ],
       "enforcement": {
         "mode": "placement helper + fail-closed assertion",
-        "implementation": "outsideTempWorkspaceParent 与 assertWorkspaceOutsideTemp；writableRoots 来自 sandbox 包。",
-        "trust": "对建模的 workspace-write 根是机械的；其他 sandbox 模式、平台策略或未来新增写根不由本函数覆盖。",
+        "implementation": "outsideTempWorkspaceParent 与 assertWorkspaceOutsideTemp；writableRoots 来自 sandbox 包，workspace-write 模式返回 workspaceRoot、/tmp 与 platform tmpdir 的 canonical 并集。",
+        "trust": "对 writableRoots 实际返回的临时根是机械的；workspaceRoot:'/tmp' 是合成的，检查不能证明调用者真实项目根的隔离。没有 cited test 执行这些分支；其他 sandbox 模式、平台策略或未来新增写根不由本函数覆盖。",
         "failure": "workspace 位于自动临时写根内时抛错；不可写父目录静默使用会让分配失败或权限测试失真。",
         "exceptions": [
           "home 回退是允许的，但必须仍通过 assertWorkspaceOutsideTemp。"
         ]
       },
-      "applicability": "任何用临时目录承载 workspace、并要证明 workspace-write 权限边界的测试套件。",
+      "applicability": "任何用临时目录承载 workspace、并要证明 workspace-write 权限边界的测试套件；这是测试资源放置，不是 snapshot replay 机制。",
       "relationships": [
-        "testing-snapshot-workspace-oracle",
         "testing-resource-isolation",
         "testing-global-state-and-platform-semantics"
       ],
@@ -563,19 +583,55 @@
           }
         ]
       },
-      "limitations": "只检查 workspace-write 模式与 /tmp 根；其他 sandbox 模式、容器内路径映射与未来新增写根未覆盖。",
+      "limitations": "只检查 workspace-write 模式与 writableRoots 返回的 /tmp、platform tmpdir；workspaceRoot 传的是合成 '/tmp'，不是调用者真实项目根。其他 sandbox 模式、容器内路径映射与未来新增写根未覆盖；无测试执行。",
       "origin": "source",
       "sourceBacked": true
     },
     {
       "id": "enforcement-scripts-1-local-bundle-registry",
-      "title": "本地 bundle registry：仅目录根可安装、当前构建、不可变运行目录与完成标记",
+      "title": "本地 bundle registry：catalog 根打印、当前构建检查、唯一运行目录与完成标记",
       "sources": [
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 1,
+          "end": 183,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 1,
+          "end": 123,
+          "kind": "test"
+        },
         {
           "path": "scripts/dev-bundle-registry.ts",
           "start": 1,
           "end": 170,
           "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 225,
+          "end": 355,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 400,
+          "end": 500,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.ts",
+          "start": 745,
+          "end": 770,
+          "kind": "implementation"
+        },
+        {
+          "path": "scripts/local-bundle-registry.spec.ts",
+          "start": 300,
+          "end": 559,
+          "kind": "test"
         }
       ],
       "problem": "官方按需 bundle 在发布到 npm 前需要被 packaged test app 安装。如果本地 registry 服务旧构建、任意包或半打包目录，测试会验证错误字节；如果运行目录可被后续运行覆盖，失败现场也无法复现。",
@@ -586,12 +642,12 @@
         "审查 prepare 阶段的信号与清理行为"
       ],
       "obligations": [
-        "bundle catalog 是唯一可安装 root 列表；workspace inventory 只用于区分本地包与外部依赖。",
-        "服务前必须运行 build:official 并 verifyBuiltBundles；不得复用更早的构建产物。",
-        "pack 到 run-owned 的不可变目录 <REGISTRY_OUTPUT_ROOT>/<timestamp>-<uuid>；后续运行不得覆盖已有字节。",
-        "manifest 是完成标记：只有全部成员都成功 pack 的运行才写 manifest。",
+        "bundle catalog 是唯一打印为可安装 spec 的 root 列表；registry 实际服务本次选择闭包的全部 archive，workspace inventory 只用于区分本地包与外部依赖。",
+        "服务前必须运行 build:official；verifyBuiltBundles 只检查 catalog root 的 main 与 bundle patch 文件存在，不能证明这些字节来自本次构建或未被更早产物替代。",
+        "pack 到 run-owned 的唯一目录 <REGISTRY_OUTPUT_ROOT>/<timestamp>-<uuid>；目录名不重用，但代码没有独占创建、只读权限或不可变文件系统保证。",
+        "manifest 是完成标记：只有全部成员都成功 pack 的运行才写 manifest；registry 与 spec 都不读取或校验 manifest 来证明完成。",
         "只有 catalog roots 作为可安装 spec 打印；闭包其余包由 installer 解析并留在 run manifest。",
-        "registry 成功监听后才打印 summary；SIGINT/SIGTERM 取消子进程并关闭 registry，第二次信号强制退出 130。",
+        "registry成功监听后才打印summary。准备阶段被信号取消会结束子进程并以130返回；服务已启动后的首个信号触发正常停止、关闭registry并自然返回，不主动设置非零状态；第二次信号直接强制process.exit(130)，不保证完整清理。",
         "该工具不启动 agent、不需要凭据；packing/manifest/validation 仍由既有 release owner 负责。"
       ],
       "actors": [
@@ -609,9 +665,9 @@
       ],
       "enforcement": {
         "mode": "build/test utility CLI with completion markers",
-        "implementation": "dev-bundle-registry.ts 组合 generateOfficialBundleCatalog、verifyBuiltBundles、packBundleArtifacts、writeRegistryManifest、startBundleRegistry。",
-        "trust": "当前构建、目录唯一性与 manifest 结构可自动保证；真实安装/运行由 packaged test app 证明，registry 本身不验证产品行为。",
-        "failure": "构建失败、bundle 产物缺失、pack 失败、信号中断都会使命令非零退出；未写 manifest 的运行不是完整运行。",
+        "implementation": "dev-bundle-registry.ts 组合 generateOfficialBundleCatalog、verifyBuiltBundles、packBundleArtifacts、writeRegistryManifest、startBundleRegistry；local-bundle-registry.ts 实现闭包选择、archive 读取/校验、HTTP 服务与 manifest 写入，local-bundle-registry.spec.ts 覆盖这些 helper。",
+        "trust": "闭包选择、必需/可选边、foreign-target 拒绝、archive 内容校验、manifest 结构与 HTTP 响应由 spec 机械验证；CLI 编排（build 顺序、信号清理、摘要打印）、端口冲突与并发运行没有 spec。verifyBuiltBundles 只查文件存在，不查构建新鲜度。",
+        "failure": "catalog 为空/重复、必需依赖缺失、foreign-target 成员、archive 缺 main/patch 或版本不匹配时 helper 抛错；build:official 失败、pack 失败或信号中断都会使 CLI 非零退出；未写 manifest 的运行不是完整运行。",
         "exceptions": [
           "工具只服务本地 loopback，不替代 npm registry 或发布验证；summary 中的 roots 不是完整依赖闭包。"
         ]
@@ -635,7 +691,7 @@
       "verification": {
         "positive": [
           {
-            "scenario": "完整运行生成 manifest，registry 服务 catalog roots，packaged app 可安装。",
+            "scenario": "完整运行生成 manifest，registry 服务闭包 archive，summary 打印 catalog roots，packaged app 可安装。",
             "check": "目录含 manifest 与全部 archive；summary 打印 source commit 与 roots。",
             "evidence": "planned",
             "note": ""
@@ -643,22 +699,34 @@
         ],
         "rejection": [
           {
-            "scenario": "使用旧构建、失败 pack 或非 catalog 包作为 root。",
-            "check": "verifyBuiltBundles/pack 阶段失败，或安装 spec 不在 summary 中。",
+            "scenario": "catalog 为空/重复、必需依赖指向 foreign target、archive 缺 main/patch 或版本不匹配，或非 catalog 包被当作 root 打印。",
+            "check": "helper 抛错，或安装 spec 不在 summary 中；verifyBuiltBundles 只拒绝缺失 main/patch，不检测旧构建字节。",
             "evidence": "planned",
             "note": ""
           }
         ],
         "recovery": [
           {
-            "scenario": "运行被 Ctrl+C 中断。",
-            "check": "关闭 registry 与子进程，退出 130；不写 manifest 的运行不得被当作成功。",
+            "scenario": "服务已启动并已有manifest时发送首个SIGINT/SIGTERM。",
+            "check": "registry.close后打印正常stopped消息并自然返回；不得硬要求130。磁盘产物与已写manifest保留。",
             "evidence": "planned",
-            "note": ""
+            "note": "静态来源dev-bundle-registry.ts:140-153；本轮未运行信号场景。"
+          },
+          {
+            "scenario": "构建或packing准备阶段被信号取消。",
+            "check": "捕获Interrupted或abort后输出阶段诊断，process.exitCode=130；未完成准备不得冒充已成功服务。",
+            "evidence": "planned",
+            "note": "静态来源:154-161；不能推广为服务阶段首信号的退出码。"
+          },
+          {
+            "scenario": "停止过程中收到第二次信号。",
+            "check": "直接强制退出130；不把强退视为已等待registry或子进程完全清理。",
+            "evidence": "planned",
+            "note": "静态来源:100-110；强退不是正常完成保证。"
           }
         ]
       },
-      "limitations": "本分区没有该工具的 spec；构建/安装成功依赖外部 pnpm 与 packaged app。未证明端口冲突、并发运行或 Windows 信号语义。",
+      "limitations": "local-bundle-registry.spec.ts 覆盖闭包选择、archive 校验、HTTP 服务、manifest 与同版本缓存失效；dev-bundle-registry.ts 的 CLI 编排、信号处理、端口冲突与并发运行没有专用 spec。构建/安装成功仍依赖外部 pnpm 与 packaged app。真实安装/运行由 packaged test app 证明，registry 本身不验证产品行为。这是 known-source-limitation，不作为已执行的自动保证。",
       "origin": "source",
       "sourceBacked": true
     }

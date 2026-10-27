@@ -341,13 +341,14 @@
 
 ### 能力 seam 的三角色划分：Service Definition、Provider 与 Consumer {#package-contracts-2.capability-seam-roles}
 
-来源：`deepseek-harness/packages/llm/llm/README.md:1-197@687f282e`、`deepseek-harness/packages/web/README.md:1-55@687f282e`、`deepseek-harness/packages/subprocess/README.md:1-51@687f282e`、`deepseek-harness/packages/sandbox/sandbox/README.md:1-184@687f282e`、`deepseek-harness/packages/ptc-runtime/ptc-runtime/README.md:1-150@687f282e`、`deepseek-harness/packages/storage/README.md:1-51@687f282e`。
+来源：`deepseek-harness/packages/llm/llm/README.md:1-197@687f282e`、`deepseek-harness/packages/web/README.md:1-55@687f282e`、`deepseek-harness/docs/subsystems/web.md:121-162@687f282e`、`deepseek-harness/packages/subprocess/README.md:1-51@687f282e`、`deepseek-harness/packages/sandbox/sandbox/README.md:1-184@687f282e`、`deepseek-harness/packages/ptc-runtime/ptc-runtime/README.md:1-150@687f282e`、`deepseek-harness/packages/storage/README.md:1-51@687f282e`。
 
 触发：新增一个可替换能力（LLM、Web、子进程、沙箱、PTC、存储等）。
 
 必须：
 - Service Definition 定义提供方中立的词汇、生命周期与失败分类；Provider 实现平台/供应商细节；Consumer 只依赖 Definition。
-- 能力集合由组合显式挂载，不做运行期服务发现；单例能力（如 Web）只有一个活动 provider。
+- 能力集合由组合显式挂载，不做运行期服务发现；一个能力可以有多个 provider，但同一 provider id/路由重复注册必须失败（LLM：`DUPLICATE_ADAPTER`；Web：`WEB_DUPLICATE_PROVIDER`），不能静默覆盖。
+- 调用时按显式配置的 provider id/路由选择；未配置时只有恰好一个可用 provider 才自动选择，多个可用 provider 且无配置是歧义错误（Web：`WEB_PROVIDER_AMBIGUOUS`），不是 first-wins。未选中的 provider 仍注册，但不得静默接管。
 - Provider 负责平台限制与 fallback 的如实披露；Consumer 不感知后端差异。
 - 卸载/重载时 provider 的贡献随 effect 撤回；服务跨消费者重载保留必要生命周期。
 - 失败分类稳定（不可用、拒绝、超时、取消），不让后端错误文本泄漏到模型。

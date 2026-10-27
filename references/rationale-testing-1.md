@@ -118,9 +118,9 @@
 1. 在请求组装时从 `agent.session.id` 写入 `GenerateOptions.sessionId`；adapter 忽略它，`llm/stream` 监听器用它路由。
 2. fixture 命名：父 `session[.vN].jsonl`，子 `session.<ordinal>[.vN].jsonl`；每个角色选数值最高的 generation。
 3. 子 fixture 按 header `createdAt` 排序，时间相同用 recorded id 决胜。
-4. 活跃会话按首次调用顺序绑定：第一个发起模型调用的会话认领第一份脚本（父会话最早 `createdAt`，且必然先运行一轮才能委派），后续新会话依次认领；每个会话独立推进游标。
+4. 活跃会话按首次调用顺序绑定：第一个发起模型调用的会话认领第一份脚本（父会话最早 `createdAt`，且必然先运行一轮才能委派），后续新会话依次认领；每个会话独立推进游标。`{{session:N}}` token 只对已绑定的 live id 解析，未绑定即报错；后台子会话 id 可从稳定的 `started subagent <id>` tool-result 文本学习。
 5. 无 `sessionId` 的调用视为一个匿名会话绑定主脚本，保持单会话路径字节不变。
-6. fork 子会话从 `inheritedEventCount` 及之后的事件派生；边界由生产者在 `session/end-seed { inherited: true }` 中标记，解码取最后一个 marker；v0 的 `seedLength` 由 codec 翻译为同一逻辑对。
+6. fork 子会话从持久 fixture 的 `inheritedEventCount` 及之后的事件派生；边界由生产者在 `session/end-seed { inherited: true }` 中标记，解码取最后一个 marker；v0 的 `seedLength` 由 codec 翻译为同一逻辑对；resume/load 不得用当前 `seed.length` 重新推断边界。
 7. 活跃会话数多于录制脚本数时明确报错，绝不静默错路由。
 
 **责任者**：replay adapter 所有者实现键控与 fail-loud；Session/fork 后端所有者发出边界；场景作者录制父与每个子日志。
@@ -788,9 +788,9 @@
 
 **例外**：外部服务故障可在明确策略下重试，不能作为通用测试修复；proposed 治理机制在实现前仍是 proposal。
 
-**证据边界**：指南不是自动检查器；有些失败取决于测试无法控制的 host 容量；lint/通用 fixture/nightly stress 未实现，不能声称。
+**证据边界**：指南是 advisory 指令，`dsh-pre-push-checks` 条件咨询、`dsh-code-review` 在风险测试上应用；它不是自动检查器。有些失败取决于测试无法控制的 host 容量；lint/通用 fixture/nightly stress 未实现，不能声称。
 
-来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md:1-44@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md:1-29@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md:1-28@687f282e`。
+来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md:1-44@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e`、`deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:30-32@687f282e`、`deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:22-23@687f282e`、`:52-53@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md:1-29@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md:1-28@687f282e`。
 
 ### 2.26 性能预算门禁 {#proc-perf}
 
