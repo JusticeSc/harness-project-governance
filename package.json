@@ -33,7 +33,8 @@
     "verify-package-readme-summaries": "node tools/doc-gates/verify-package-readme-summaries.mjs",
     "verify-package-readme-limitations": "node tools/doc-gates/verify-package-readme-limitations.mjs",
     "verify-repository-references": "node tools/doc-gates/verify-repository-references.mjs",
-    "test-doc-gates": "node --test research/doc-gates.test.mjs research/doc-typecheck.test.mjs research/type-equiv.test.mjs research/subsystem-pages.test.mjs research/package-readme-summaries.test.mjs research/package-readme-limitations.test.mjs research/repository-references.test.mjs"
+    "test-doc-gates": "node --test research/doc-gates.test.mjs research/doc-typecheck.test.mjs research/type-equiv.test.mjs research/subsystem-pages.test.mjs research/package-readme-summaries.test.mjs research/package-readme-limitations.test.mjs research/repository-references.test.mjs",
+    "test-omp-preflight": "node --test research/omp-preflight.test.mjs"
   },
   "files": [
     "SKILL.md",
@@ -55,6 +56,7 @@
     "tools/github-approval/runtime/*.txt",
     "tools/github-approval/workflows/*.yml",
     "tools/agent-notes/*.mjs",
+    "tools/omp-preflight/*.mjs",
     "tools/doc-gates/*.mjs",
     "tools/doc-gates/package.json",
     "tools/doc-gates/package-lock.json",

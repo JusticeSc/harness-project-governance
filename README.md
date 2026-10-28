@@ -136,6 +136,31 @@ The budget command also needs `.doc-gates/doc-budgets.json`, for example `{"READ
 - `tools/agent-notes/` provides Agent Note format, classification, tree, and archive verifiers. See [references/agent-notes.md](references/agent-notes.md).
 - `tools/doc-gates/` provides Markdown link, wrapping, translation-pairing, budget, and package-README gates with their own pinned parser dependencies. Install them with `npm run install-doc-gates`, then configure only the gates your repository needs; do not copy this repository's thresholds wholesale.
 
+### Optional OMP preflight adapter
+
+`tools/omp-preflight/simplification.mjs` is a target-added OMP 18.13.1 adapter, not recovered upstream behavior and not part of the zero-dependency `bin/governance.mjs` CLI. It uses Node built-ins only. Its supported and probed scope is OMP 18.13.1 on Windows with `--mode rpc`; scripted local-provider probes cover host mechanics, not semantic acceptance of the source workflow or general adoption. Interactive TUI, other modes, hosts, and versions are unverified. Real-model candidate failures and any later bounded results are recorded in [METHODS](METHODS.zh.md).
+
+Start it per session from the consumer repository root (or pass `--cwd`), with the installed module on OMP's exact allowlist and an existing Markdown state owner:
+
+```powershell
+$module = (Resolve-Path '.agents/skills/harness-project-governance/tools/omp-preflight/simplification.mjs').Path
+omp --mode rpc --trusted-extension $module --governance-owner PROJECT.md
+```
+
+```bash
+omp --mode rpc --trusted-extension "$PWD/.agents/skills/harness-project-governance/tools/omp-preflight/simplification.mjs" --governance-owner PROJECT.md
+```
+
+An RPC client must drive prompts over stdio; `--mode rpc` alone starts no conversation. `--trusted-extension` requires an absolute existing file, bypasses ambient extension discovery, and cannot be combined with `-e`/`--extension` or `--hook`. Ordinary `-e`/`--hook` loading and non-strict extension error handling can fail open, so they are not equivalent launch forms. The adapter changes no settings, profile, or installed files, and needs no global setup. It is an in-process module, not a sandbox; other capabilities or middleware can still alter tool input and results, so do not combine it with extensions that rewrite reads or tool calls.
+
+`--governance-owner` must name an existing Markdown file inside the session cwd root after resolving real paths; a repository-relative or absolute spelling is accepted only if its canonical path stays inside that root. The adapter never creates an owner and refuses missing, outside, or junction-escaped paths; no `.governance/` initialization or second owner is needed. Before a checkpoint, the root session may only use native `read`, `grep`, and `glob`; `write`, `edit`, `bash`, `eval`, `task`, and unknown tools are blocked, so delegation and executable work cannot start first.
+
+The checkpoint tool `governance_preflight` is exposed directly as an essential tool, without an extra `--tools` override, and takes nonblank `constraints` and `acceptance` strings. It succeeds only after a native `read` of the installed `references/agent-workflows.md` §18 (`aw-18` through before `aw-19`) whose returned text contains every nonblank line of that section; the path must match the canonical reference, which is checked for changes again when recording the checkpoint. OMP can report a truncation flag because lines after the section remain unread even when the whole section was returned; that flag alone does not reject the read. A read that omits or head-truncates required section lines does not qualify. The tool then appends the mapping and normal/rejection criteria to the owner and allows root-session tool calls to proceed. New user input, activation of queued user work, session switch, branch, or tree navigation resets the checkpoint. Recording proves reading order and presence, not semantic correctness; it does not continuously revalidate the reference after success.
+
+Where its handler is bound, the adapter refuses non-root mutation, but OMP child, revived, and advisor sessions are not universally guaranteed: source reading shows child factory errors can be swallowed, child extension tools are excluded, and child CLI flags are dropped. Successful ordinary child binding is not a child-failure fail-close guarantee. Only the root-session checkpoint is promised. Once an allowed executable call starts, its internals are not gated.
+
+From a development checkout, set `OMP_BIN` to an installed OMP 18.13.1 executable and run `npm run test-omp-preflight`. The six integration cases use a localhost scripted provider, not paid model calls or model credentials; they explicitly skip when that host prerequisite is unavailable. They verify mechanics, not semantic adoption.
+
 The optional references explain the source mechanisms and migration boundaries. Reuse their requirements, not their full configuration.
 
 ## Repository layout
@@ -145,7 +170,7 @@ SKILL.md                 Agent-facing procedure, hard rules, and task routing
 bin/governance.mjs       verify / list / cite / init / status / check; zero dependencies
 knowledge/*.json         Machine-readable mechanism ledgers (55 domains)
 references/*.md          Domain explanations, source ranges, and migration notes
-tools/                   Optional GitHub approval, Agent Note, and documentation modules
+tools/                   Optional GitHub approval, Agent Note, OMP preflight, and documentation modules
 scripts/                 install-skill and repository demo/smoke helpers
 research/fixtures/       Repository-only reproducible adoption snapshot and evidence
 package.json             Node >= 22.19.0; MIT; private package
