@@ -1,6 +1,6 @@
 ---
 name: harness-project-governance
-description: 把 DeepSeek Harness 式项目治理落到任意代码库：识别项目与工具链、建立需求/验收与工作状态、按任务路由到已提取的治理参考、执行变更与独立评审、以真实命令输出完成验证和交接。用于初始化治理、接续任务、日常变更、缺陷修复、设计/文档/发布评审、强制体系核查。
+description: 把 DeepSeek Harness 式项目治理落到任意代码库：识别项目与工具链、建立需求/验收与工作状态、按任务路由到已提取的治理参考、执行变更与独立评审、以真实命令输出完成验证和交接。用于初始化治理、接续任务、日常变更、缺陷修复、代码简化与删减评估、设计/文档/发布评审、强制体系核查。
 ---
 
 # Harness 项目治理
@@ -83,6 +83,7 @@ node .agents/skills/harness-project-governance/bin/governance.mjs verify
 | UI、前端契约、无障碍与响应式 | `ui-surface-contracts`、`subsystem-contracts-2` |
 | 用户文档、公开站点、第三方可见面 | `user-and-publication-contracts`、`website-contracts` |
 | 基准、快照语料、性能预算 | `benchmark-contracts`、`snapshot-corpus-inventory`、`rationale-testing-1` |
+| 代码简化、删除能力或移除校验的评估 | [`agent-workflows` §18](references/agent-workflows.md#aw-18)；先核实消费者、信任边界和保留义务 |
 | 原生启动器、Python SDK、Desktop 打包 | `runtime-residual-authority`、`release` |
 | 采用风险、安全声明、品牌与生态身份 | `adoption-policy` |
 | 无法归类的源码文件该不该算治理 | `policy-source-residual`（判别附录） |

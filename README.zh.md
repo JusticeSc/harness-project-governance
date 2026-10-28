@@ -138,6 +138,31 @@ node .agents/skills/harness-project-governance/bin/governance.mjs cite decisions
 - `tools/agent-notes/`：Agent Note 的格式、分类、生命周期树与归档校验器；见 [references/agent-notes.md](references/agent-notes.md)。
 - `tools/doc-gates/`：Markdown 链接、换行、翻译配对、预算与包 README 门禁，依赖另行固定的解析器。先运行 `npm run install-doc-gates`，再只配置仓库真正需要的门禁；不要照搬本仓库的全部阈值。
 
+### 可选的 OMP 前置检查适配器
+
+`tools/omp-preflight/simplification.mjs` 是目标新增的 OMP 18.13.1 适配器，不是恢复出的上游行为，也不属于零依赖的 `bin/governance.mjs` CLI。它只使用 Node 内置模块。支持且已探测的范围是 Windows 上的 OMP 18.13.1 加 `--mode rpc`；脚本化本地 provider 探测只覆盖宿主机制，不是来源工作流的语义验收或普遍采用声明。交互 TUI、其他模式、宿主与版本均未验证。真实模型候选的失败及后续有界结果另记于 [METHODS](METHODS.zh.md)。
+
+在消费仓库根目录（或传入 `--cwd`）按会话启动：模块须在 OMP 的精确允许列表中，并指定仓库内已有 Markdown 状态 owner：
+
+```powershell
+$module = (Resolve-Path '.agents/skills/harness-project-governance/tools/omp-preflight/simplification.mjs').Path
+omp --mode rpc --trusted-extension $module --governance-owner PROJECT.md
+```
+
+```bash
+omp --mode rpc --trusted-extension "$PWD/.agents/skills/harness-project-governance/tools/omp-preflight/simplification.mjs" --governance-owner PROJECT.md
+```
+
+需要 RPC 客户端通过 stdio 驱动提示；仅加 `--mode rpc` 不会自行开始对话。`--trusted-extension` 只接受存在的绝对文件，绕过环境扩展发现，且不能与 `-e`/`--extension`、`--hook` 同时使用。普通 `-e`/`--hook` 加载与非严格扩展错误处理可能 fail-open，不是等价启动方式。适配器不修改设置、profile 或已安装文件，不需要全局配置。它是同进程模块，不是沙箱；其他能力或中间件仍可改写工具输入与结果，不要与改写 read 或工具调用的扩展同时使用。
+
+`--governance-owner` 必须在解析真实路径后指向当前会话 cwd 根内已有 Markdown 文件；仓库相对或绝对拼写只有在规范结果仍位于该根内时才被接受。适配器不会创建 owner，缺失、越界或经 junction 逃逸的路径都会被拒绝。不需要初始化 `.governance/`，也不需要第二个 owner。检查点建立前，根会话只能使用原生 `read`、`grep`、`glob`；`write`、`edit`、`bash`、`eval`、`task` 与未知工具都被阻止，因此委派与可执行工作不能先行。
+
+检查点工具 `governance_preflight` 作为 essential 工具直接暴露，不需要额外的 `--tools` 覆盖；它接收非空的 `constraints` 与 `acceptance` 字符串。只有对已安装 `references/agent-workflows.md` §18（`aw-18` 起、`aw-19` 前）的原生 `read` 返回该节全部非空行、且路径与规范参考一致时才会成功；记录检查点时会再次核对该参考是否变化。即使整节已返回，只要文件后面还有未读内容，OMP 也可能标记 truncation；该标志本身不构成拒绝。缺少或头部截断所需行的读取仍不合格。成功后将映射及正常/拒绝条件追加到 owner，并允许根会话继续调用工具。新的用户输入、排队用户任务实际激活、会话切换、分支或树导航会重置检查点。记录只能证明阅读顺序与内容存在，不证明语义正确；成功后不持续重验参考。
+
+在其处理器已绑定的范围内，适配器拒绝非根会话变更；但 OMP 子会话、恢复会话与 advisor 会话不获普遍保证：源码核对显示子扩展工厂错误可能被吞掉、子扩展工具被排除、子 CLI 标志会丢失。普通子会话绑定成功不等于子失败时 fail-closed。只承诺根会话检查点。允许的可执行调用一旦开始，其内部不再受门控。
+
+在开发 checkout 中，将 `OMP_BIN` 设为已安装的 OMP 18.13.1 可执行文件，再运行 `npm run test-omp-preflight`。六项集成使用 localhost 脚本化 provider，不调用付费模型或使用模型凭据；缺少该宿主前提时会明确跳过。它们验证机械机制，不验证语义采用。
+
 可选参考解释来源机制与迁移边界。复用的是要求，不是整套配置。
 
 ## 仓库结构
@@ -147,7 +172,7 @@ SKILL.md                 Agent 操作程序、硬规则与任务路由
 bin/governance.mjs       verify / list / cite / init / status / check；零依赖
 knowledge/*.json         机器可读机制账（55 个域）
 references/*.md          分域解释、来源区间与迁移说明
-tools/                   可选的 GitHub 审批、Agent Note 与文档门禁模块
+tools/                   可选的 GitHub 审批、Agent Note、OMP 前置检查与文档门禁模块
 scripts/                 install-skill 与仓库 demo/smoke 辅助脚本
 research/fixtures/       仅供仓库使用的可复现采用快照与验收证据
 package.json             Node >= 22.19.0；MIT；private 包

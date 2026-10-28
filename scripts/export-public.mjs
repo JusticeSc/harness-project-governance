@@ -13,6 +13,7 @@ const extras = [
   'research/type-equiv.test.mjs', 'research/subsystem-pages.test.mjs',
   'research/package-readme-summaries.test.mjs', 'research/package-readme-limitations.test.mjs',
   'research/repository-references.test.mjs',
+  'research/omp-preflight.test.mjs',
   'AGENTS.md', 'METHODS.zh.md',
   'research/fixtures/adoption-cli/.gitignore',
   'research/fixtures/adoption-cli/README.md',
