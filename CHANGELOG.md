@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Present the Skill and bilingual README as project-governance usage instructions; keep source attribution and historical verification in their dedicated records. Runtime behavior and governance acceptance requirements are unchanged.
+- Narrow Skill discovery to governance tasks and already-adopted projects; separate task modes, add checkable completion criteria, and replace bare domain names with conditional reference links. Move first/gradual adoption and CLI lookup/pagination details into focused shipped references without changing runtime contracts or accepting prior failed adoption results.
+- Replace copied operating instructions in the bilingual README prompts with a concrete task and permission boundary; link the maintained adoption and paging procedures instead of repeating them.
+- Correct reference discovery by searching task concepts and triggers across numbered shards instead of assigning topics to shard numbers; read only relevant sections and dependencies. Apply the procedure to package contracts, enforcement scripts, test policies and rationale families, and connect the Skill entry to it.
+
 ## 1.1.0-rc.1 — Prerelease candidate (GitHub distribution)
 
 Prerelease for GitHub tarball/release distribution. The package remains `private: true`; nothing is published to the npm registry. Version-specific checks are recorded in [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md); the matching Actions run and GitHub Release identify remote results and published assets, without certifying autonomous adoption.

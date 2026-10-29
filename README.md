@@ -6,7 +6,7 @@
 
 ## Summary
 
-A portable Agent Skill for engineering governance in real repositories. The project aims to turn DeepSeek Harness's transferable governance methods into a self-bootstrapping development package, with executable checks and CI where mechanical enforcement is appropriate. The current package provides source-linked procedures, optional enforcement tools, and a zero-dependency CLI for knowledge integrity and project metadata. Target-project selection, configuration and CI integration still require explicit adaptation; installation alone does not establish governance. Start with `npm run verify`, then `npm run demo`.
+A project-governance Skill for coding agents. It helps agents identify project facts and toolchains, clarify requirements and acceptance conditions, select relevant rules, and verify changes through real project commands and reviews. The package includes operational references, a zero-dependency CLI, and optional enforcement tools. Start with `npm run verify`, then `npm run demo`; project checks and CI still need explicit configuration.
 
 ## What you get
 
@@ -20,11 +20,11 @@ It is not a hosted governance service, a security audit, or a substitute for you
 
 ## Development status
 
-`1.1.0-rc.1` is a prerelease candidate of this package, not a stable release and not an npm-registry publication. It contains the zero-dependency core CLI (`verify`, `list`, `cite`, `show`, `init`, `status`, `check`), the independent installer, the assisted adoption procedure, the whole-corpus Markdown baseline, and one Agent Note diagnostic correction. Optional approval, Agent Note, documentation-gate and OMP preflight modules work only within their own dependencies, configuration and permissions. Candidate distribution is the repository's GitHub release/tarball path; `package.json` remains `private: true`. A release entry or a CI pass is not asserted here until the corresponding GitHub release and Actions run exist.
+The current release is [`1.1.0-rc.1`](https://github.com/JusticeSc/harness-project-governance/releases/tag/v1.1.0-rc.1), distributed through GitHub rather than the npm registry. It provides the core CLI, Skill installer and optional approval, Agent Note, documentation and OMP tools. Each optional module requires its own dependencies, configuration and permissions.
 
-Adoption is assisted and owner-reviewed: record the target facts and every obligation the change actually triggers, adapt the package's published migration decisions ([SKILL §3.2a](SKILL.md) and per-domain migration sections such as [documentation migration](references/documentation.md#migration)) to the target's owner, commands, corpora, dependencies and permissions, then have the project owner or an independent reviewer accept the decision before implementation. The withdrawn per-semantic-unit fresh-context adoption program is not the default. Earlier candidates—the cold-session PowerShell and Node exercises, reviewed-decision, citation-backed, split-context and source-bound attempts—did not satisfy their required conditions, and those failures remain failed; [METHODS §14](METHODS.zh.md#a07-adoption-candidate) preserves that history rather than this quickstart. This candidate has no complete independent adoption result, no autonomous-Agent adoption, no cross-project or cross-language certification, and no complete-source certification.
+Use the [adoption workflow](references/adoption.md#adoption) to adapt the relevant rules to the project's existing owners, checks and permissions, with project-owner or independent-reviewer acceptance before implementation. Installation alone does not establish governance, and this prerelease does not guarantee autonomous adoption.
 
-Maintainer session progress, next actions and local investigation records belong in a separate development workspace outside the product checkout. A fresh clone requires no private records or parent-directory layout; follow `AGENTS.md`, the current request and repository facts. `AGENTS.md` is not installed into consumer projects. [Public verification](PUBLIC-VERIFICATION.md) separates version-specific release checks from historical observations; neither certifies complete adoption.
+[Public verification](PUBLIC-VERIFICATION.md) records version-specific commands, results and limits. Contributors follow [AGENTS.md](AGENTS.md); it is not installed into consumer projects, and using the Skill requires no maintainer session records.
 
 ## Quickstart (no `npm install`)
 
@@ -40,9 +40,7 @@ npm run demo
 
 The same commands work in Windows PowerShell. `npm run demo` creates a throwaway sample project in a temporary directory, initializes governance, fills the metadata from that sample, runs a real Node app and its test command, deliberately breaks the feature to observe a rejection, restores it, reports status, and shows a handoff. It is a local, repeatable walkthrough: passing it demonstrates the workflow, not that another repository or an autonomous agent has adopted the Skill.
 
-Inspect the actual [sample application and acceptance checks](examples/task-board/README.md), or read the [historical release observations and limits](PUBLIC-VERIFICATION.md). The temporary demo is removed automatically; it does not modify your projects.
-
-On this development checkout, `verify` reports `governance: 1196 mechanisms in 55 domains; references and anchors verified`. That number describes the extracted ledger; it is not a claim that every upstream source line was reviewed or that no mechanism is missing.
+Inspect the [sample application and acceptance checks](examples/task-board/README.md), or read the [verification commands and limits](PUBLIC-VERIFICATION.md). The temporary demo is removed automatically; it does not modify your projects.
 
 ## Install the Skill into a repository
 
@@ -66,23 +64,15 @@ node .agents/skills/harness-project-governance/bin/governance.mjs status .
 
 ## Use it from an agent
 
-After installing, give the agent a prompt such as:
+Name the installed Skill, the actual task and the permitted effects. For example:
 
 ```text
 Follow .agents/skills/harness-project-governance/SKILL.md.
-First find the project's single existing state owner (for example PROJECT.md, a task board, or a handoff file) and read it; do not create a second authority.
-When the user asks to initialize governance, or work must continue across sessions, be handed off, or be saved before compaction: use the existing state owner if there is one; otherwise read or create .governance/requirements.md and state.json. A multi-step change confined to one session does not justify a new state file.
-Before editing, put observable acceptance conditions in the current state owner or the current delivery, and route the task to the relevant references.
-For first/gradual adoption, follow SKILL §3.2a: establish the target facts and every obligation the change actually triggers, then adapt the package's published migration decisions (for example [documentation migration](references/documentation.md#migration)) to the target's parameters, existing owner, commands, corpora, dependencies and permissions. The maintainer owns source-to-obligation verification, exceptions, classification and tool guarantees; you own project facts, configuration, execution and accurate reporting. Return a concrete source doubt to the maintainer instead of asserting equivalence or dropping an obligation. The project owner or an independent reviewer accepts the adoption decision before implementation; then implement, verify at the same local/CI entry with normal, rejection and recovery evidence, continue across sessions from the same owner, and report each real command's exit code.
-List anything you did not run as unverified; do not call the work complete from metadata alone, and do not execute an action the current request has withdrawn.
+Review whether this repository's local checks and CI cover its existing acceptance conditions.
+Report findings and evidence only; do not edit files or remote settings.
 ```
 
-For a review or a risky change:
-
-```text
-Use harness-project-governance to review this change.
-Cite the mechanisms and references you rely on, run the configured checks, and separate observed results from unverified claims.
-```
+For implementation or adoption, replace the review request with your actual deliverable and authorized scope. The Skill owns the workflow; the prompt does not need to repeat it.
 
 ## Command surface
 
@@ -102,7 +92,7 @@ Example against an installed Skill:
 node .agents/skills/harness-project-governance/bin/governance.mjs cite decisions-durable-rule-admission
 ```
 
-Use `show documentation-prose-budgets` to read the complete record, including `migration` and any additional fields; use `--part reference` for its reference file. Follow each `next` token with the same ID/part and `--cursor`; join `chunks` and check continuous byte ranges, identity/hash and the explicit final page. Each page is at most 4096 UTF-8 bytes and each line at most 512 bytes. Missing, repeated, reordered or tool-truncated pages do not establish complete reading. Invalid/stale cursors and unreadable references exit 1 without a success page. See [SKILL §5](SKILL.md) for the full paging contract; complete transport is not semantic acceptance.
+Use `show documentation-prose-budgets` for the complete mechanism or add `--part reference` for its reference file. Follow the [CLI paging protocol](references/cli.md#paging) to read all pages and verify continuity and the full-content hash; `cite` or a partial page is not the complete record. Complete transport does not prove semantic acceptance.
 
 ## What `verify` actually proves
 
@@ -112,11 +102,7 @@ It does not read the pinned upstream repository, revalidate quoted source lines,
 
 ## Minimal adoption walkthrough
 
-Adoption starts from the target, not from re-reading upstream source per obligation. Record the target facts and the obligations the change actually triggers, then adapt the package's published migration decisions—[SKILL §3.2a](SKILL.md), per-domain migration sections such as [documentation migration](references/documentation.md#migration), and each mechanism's `migration` field—keeping every mechanism and its effect while replacing only parameters such as paths, thresholds, gate names, language pairs and tool implementations. The documentation migration section is one entry, not a closed checklist; follow whichever branches the target facts actually trigger. The maintainer is responsible for verifying that a published decision covers the source obligation, including its exceptions, classification, parameterization and tool guarantees; the consumer is responsible for real project facts, the existing owner, commands, corpora, dependencies and permissions, plus execution and reporting. A gap or conflict in the published material goes back to the maintainer with the specific impact; do not assume equivalence, invent upstream support, or silently cancel an obligation.
-
-Record the adoption decision in the existing owner together with the exact commands and observed exits. The project owner or an independent reviewer checks the decision against target facts and every triggered obligation, including blocked and inapplicable items, before implementation; metadata, citations and a green mechanical check do not authorize implementation. Missing dependencies or permissions are blocked prerequisites, not inapplicability, and scratch, cache and test-internal installation effects must match the recorded permissions. Only after acceptance is recorded is the change implemented and verified at the same local/CI entry; decision completion is not completed adoption, and metadata-only initialization does not require this adoption workflow.
-
-Reference locations identify this package's explanation, not upstream source. Label a migration design as such, and record a parameter substitution instead of presenting a source threshold as a target parameter.
+The examples below configure execution **after** the project owner or an independent reviewer accepts the adoption decision. Follow the [adoption workflow](references/adoption.md#adoption) to identify every triggered requirement, adapt target parameters and permissions, and resolve conflicts or blocked prerequisites. For documentation, start with the [project-adaptation sections](references/documentation.md#migration); they are not an exhaustive rule list. These commands are examples, not default project policy or proof of completed adoption.
 
 - **An existing state owner** (a task board, issue/PR ledger, handoff file, or `PROJECT.md`): keep the decision, requirements, acceptance and next action there. Do not run `init` and do not create `.governance/`. After decision acceptance, keep only execution configuration in a repository-relative manifest, for example `governance-checks.json`:
 
@@ -153,11 +139,9 @@ Both paths should use one top-level entry. Add **the same locally verified comma
 
 Retain `--policy` for an existing owner and use the default policy after `init`. The CI step must inherit the non-zero exit; `continue-on-error: true` or a fallback that always succeeds defeats the check. A manifest entry that calls `governance check` again on the same policy recurses, so register the project's own commands. If the repository already has a top-level script that runs these checks, call that script from both the local command and the CI step, and keep the script out of its own manifest. A workflow file does not prove a remote required check is active.
 
-After the accepted decision is implemented, retain consumer-visible normal and invalid-input assertions in the shared entrypoint, not only disposable probes. If adoption must continue across sessions, leave the unique owner with the accepted decision, checked and unchecked commands, original evidence locations and one executable next action. A fresh session must continue a real change from the Skill, repository and current request, reevaluating triggered obligations without this conversation.
+Verify either route with normal execution, a real violation rejected by the same entrypoint, and byte-exact recovery. Retain consumer-visible normal and invalid-input assertions in the shared entrypoint. The [receipt procedure](references/adoption.md#adoption-receipts) specifies raw evidence and execution layers; the [handoff and completion criteria](references/adoption.md#adoption-continuation) cover cross-session work and the remaining acceptance conditions. A passing `check` only proves that its registered commands passed, not semantic completeness or platform enforcement.
 
-**Evidence and layers.** For either path, run the normal command and observe a pass; inject a real violation into a recoverable copy or an authorized file; confirm the same top-level entry exits non-zero; restore exact bytes and observe recovery. Retain the original stdout/stderr and command/exit receipts in the owner's evidence location; quote diagnostics from those logs rather than reconstructing numbers from memory. Report actual installation and scratch effects and distinguish local execution, workflow wiring, remote CI and server-side merge blocking. Adoption acceptance requires every applicable obligation, behavior, original-report and authority condition; corrections do not retroactively pass failed originals. `check` executes registered commands; it does not choose rules, prove semantic completeness, or establish platform enforcement. Policy commands run with local privileges and require the same trust as project scripts.
-
-Node.js is the CLI host, not evidence that every target language is supported or validated. Registered commands may call the repository's own toolchains, but this package's checks and installation observations are Node-hosted; other languages and platforms remain unverified unless the project tests them. In adoption reports, separate observed commands and exit codes, source-based inference, and unverified items. One bounded delivery exercise separated these categories when explicitly asked; as a single intervention without a control, it is not causal proof or general certification.
+Node.js hosts the CLI; registered commands may invoke the target's own toolchains. Other languages and platforms remain unverified unless exercised. Report observed commands and exit codes separately from source-based inference and unverified items.
 
 ## Optional modules
 
@@ -167,7 +151,7 @@ Node.js is the CLI host, not evidence that every target language is supported or
 
 ### Optional OMP preflight adapter
 
-`tools/omp-preflight/simplification.mjs` is a target-added OMP adapter, not recovered upstream behavior and not part of the zero-dependency `bin/governance.mjs` CLI. It uses Node built-ins only. Historical probes ran on OMP 18.13.1 on Windows with `--mode rpc`; that version-specific evidence covers host mechanics, not semantic acceptance of the source workflow or general adoption. Interactive TUI and unlisted host/mode/version combinations are not certified. A separately installed OMP can be exercised from a development checkout with the repository's localhost fixture; the exact installed version, command and result belong in the version-scoped [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md), and one version's result is not generalized to another. Real-model candidate failures and any later bounded results are recorded in [METHODS](METHODS.zh.md).
+`tools/omp-preflight/simplification.mjs` is an optional OMP adapter, separate from the core CLI and using Node built-ins only. It requires a separately installed OMP host. Windows RPC checks, the exact exercised versions and their limits are recorded in [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md); they do not certify interactive TUI, other host/mode/version combinations or semantic correctness of an agent's decisions.
 
 Start it per session from the consumer repository root (or pass `--cwd`), with the installed module on OMP's exact allowlist and an existing Markdown state owner:
 
@@ -190,7 +174,7 @@ Where its handler is bound, the adapter refuses non-root mutation, but OMP child
 
 From a development checkout, set `OMP_BIN` to the separately installed OMP executable and run `npm run test-omp-preflight`. The six integration cases use a localhost scripted provider, not paid model calls or model credentials; they explicitly skip when that host prerequisite is unavailable. They verify mechanics, not semantic adoption, and the exact version exercised is part of the version-scoped evidence record rather than a supported-version claim.
 
-The optional references explain the source mechanisms and migration boundaries. Reuse their requirements, not their full configuration.
+The optional references explain each module's prerequisites, configuration and limits. Adapt them to your project rather than copying the full configuration.
 
 ## Repository layout
 
@@ -225,7 +209,7 @@ npm run verify-md-links
 npm run verify-md-wrap
 ```
 
-Report only commands you actually ran and their exit codes. A green local command does not establish this candidate's CI or release status; check the GitHub Actions run and Releases entry for the candidate commit.
+Report only commands you actually ran and their exit codes. Local success does not prove remote CI or publication; check the GitHub Actions run and Releases entry that match the commit you are using.
 
 For the independently authored consumer contract tests and retained first-failure/recovery observations, see [the public adoption fixture](research/fixtures/adoption-cli/README.md). It needs no installed Skill or dependencies. `test-adoption` is a repository-contributor command; research fixtures are not shipped in the npm runtime or Agent seat. Re-running it validates application behavior, not another autonomous Agent session. The [method report](METHODS.zh.md) distinguishes these observations from production adoption and complete source migration.
 
