@@ -34,7 +34,9 @@
 
 ---
 
-## 包 README 即契约 {#package-contracts-3.readme-package-contract}
+<a id="package-contracts-3.readme-package-contract"></a>
+
+## 包 README 即契约
 
 **何时读**：新增包、改动包的公开面、审查一个包是否"说完自己的事"、或需要判断某条限制是承诺还是待办。
 
@@ -75,7 +77,9 @@
 
 ---
 
-## 模型可见面披露 {#package-contracts-3.model-experience-disclosure}
+<a id="package-contracts-3.model-experience-disclosure"></a>
+
+## 模型可见面披露
 
 **何时读**：包会注册工具、添加系统提示段、注入用户消息、改变请求前缀，或声称"不影响模型"。
 
@@ -111,7 +115,9 @@
 
 ---
 
-## 能力 seam 拆分 {#package-contracts-3.capability-seam-split}
+<a id="package-contracts-3.capability-seam-split"></a>
+
+## 能力 seam 拆分
 
 **何时读**：需要一个可替换后端（持久化、凭据、遥测、沙箱、文件系统、子进程、LSP、标题生成），或要把"定义"与"实现"分给不同包。
 
@@ -151,7 +157,9 @@
 
 ---
 
-## 可选能力缺失语义 {#package-contracts-3.optional-capability-availability}
+<a id="package-contracts-3.optional-capability-availability"></a>
+
+## 可选能力缺失语义
 
 **何时读**：某个服务、后端、路由、提供方或平台工具可能没有装配；你需要决定"缺失时做什么"。
 
@@ -188,7 +196,9 @@
 
 ---
 
-## 失败关闭边界 {#package-contracts-3.fail-closed-boundaries}
+<a id="package-contracts-3.fail-closed-boundaries"></a>
+
+## 失败关闭边界
 
 **何时读**：实现签名、TLS、持久化、格式读取、桌面打包或任何"失败后是否还能继续"的判断。
 
@@ -230,7 +240,9 @@
 
 ---
 
-## 格式版本与迁移链 {#package-contracts-3.format-versioning-and-migration}
+<a id="package-contracts-3.format-versioning-and-migration"></a>
+
+## 格式版本与迁移链
 
 **何时读**：任何持久化记录、日志、缓存行、导出格式要改字段或改语义。
 
@@ -270,7 +282,9 @@
 
 ---
 
-## 持久性与崩溃语义 {#package-contracts-3.durability-and-crash-semantics}
+<a id="package-contracts-3.durability-and-crash-semantics"></a>
+
+## 持久性与崩溃语义
 
 **何时读**：设计 append/flush、单写者、崩溃恢复、队列投递或任何"至少一次/恰好一次"声明。
 
@@ -312,7 +326,9 @@
 
 ---
 
-## 不受信任内容边界 {#package-contracts-3.untrusted-content-boundary}
+<a id="package-contracts-3.untrusted-content-boundary"></a>
+
+## 不受信任内容边界
 
 **何时读**：内容来自模型、网页、文件、远程会话、桌面应用或外部 hook；或你要声明"这个宿主是可信的"。
 
@@ -349,7 +365,9 @@
 
 ---
 
-## 凭据保管与脱敏 {#package-contracts-3.credential-custody-and-redaction}
+<a id="package-contracts-3.credential-custody-and-redaction"></a>
+
+## 凭据保管与脱敏
 
 **何时读**：配置里出现密钥、Token、密码、授权 grant，或日志/遥测/子进程环境可能泄露它们。
 
@@ -390,7 +408,9 @@
 
 ---
 
-## 同意与默认关闭 {#package-contracts-3.consent-and-opt-in-defaults}
+<a id="package-contracts-3.consent-and-opt-in-defaults"></a>
+
+## 同意与默认关闭
 
 **何时读**：你要默认开启遥测、上传、自动审查、实验能力、外部登录、桌面控制或任何"用户没要求但会发生"的行为。
 
@@ -431,7 +451,9 @@
 
 ---
 
-## 实验成熟度与晋升 {#package-contracts-3.experimental-maturity-and-promotion}
+<a id="package-contracts-3.experimental-maturity-and-promotion"></a>
+
+## 实验成熟度与晋升
 
 **何时读**：要把包放进 `packages/experimental/`、从实验组移出、或发布一个"预稳定"能力。
 
@@ -472,7 +494,9 @@
 
 ---
 
-## 测试支持层 {#package-contracts-3.test-support-tier}
+<a id="package-contracts-3.test-support-tier"></a>
+
+## 测试支持层
 
 **何时读**：你要写夹具、mock、回放、冒烟或 seam 契约测试；或不确定某个包是否该进产品依赖。
 
@@ -512,7 +536,9 @@
 
 ---
 
-## 构建产物与平台矩阵 {#package-contracts-3.build-artifact-and-platform-support}
+<a id="package-contracts-3.build-artifact-and-platform-support"></a>
+
+## 构建产物与平台矩阵
 
 **何时读**：发布原生二进制、SSH helper、桌面安装包；或声明"消费方安装时不需要编译"。
 
@@ -552,7 +578,9 @@
 
 ---
 
-## 市场索引发布 {#package-contracts-3.market-index-publication}
+<a id="package-contracts-3.market-index-publication"></a>
+
+## 市场索引发布
 
 **何时读**：你要生成或消费插件市场索引，或决定"索引里的声明由谁负责"。
 
@@ -593,7 +621,9 @@
 
 ---
 
-## 组合所有权 {#package-contracts-3.composition-ownership}
+<a id="package-contracts-3.composition-ownership"></a>
+
+## 组合所有权
 
 **何时读**：决定谁拥有启动器参数、进程退出、stdin/stdout、路由、fallback 席位、设置标签页或 profile 组合。
 
@@ -636,7 +666,9 @@
 
 ---
 
-## 共享 UI 原子与预览注册 {#package-contracts-3.shared-ui-atoms-and-renderer-registry}
+<a id="package-contracts-3.shared-ui-atoms-and-renderer-registry"></a>
+
+## 共享 UI 原子与预览注册
 
 **何时读**：两个功能插件都需要同一个控件；要给工具结果新增卡片；要注册新的文件预览器；或要确认不可信 Markdown、终端与网页内容由谁负责清洗。
 
@@ -679,7 +711,9 @@
 
 ---
 
-## 只读投影与快照 {#package-contracts-3.read-only-projection}
+<a id="package-contracts-3.read-only-projection"></a>
+
+## 只读投影与快照
 
 **何时读**：你要给 UI/诊断提供"当前状态"视图，或要给模型提供其他会话/文件的只读内容。
 
@@ -721,7 +755,9 @@
 
 ---
 
-## 有界传输与显式截断 {#package-contracts-3.bounded-transfer-and-truncation}
+<a id="package-contracts-3.bounded-transfer-and-truncation"></a>
+
+## 有界传输与显式截断
 
 **何时读**：读取文件、跨会话引用、LSP 结果、遥测批次、输出收集或任何可能无限增长的返回。
 
@@ -762,7 +798,9 @@
 
 ---
 
-## 配置契约 {#package-contracts-3.configuration-contract}
+<a id="package-contracts-3.configuration-contract"></a>
+
+## 配置契约
 
 **何时读**：新增配置字段、改默认值、决定加载期还是请求期校验、或要保证生成目录与实现一致。
 

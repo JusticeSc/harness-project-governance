@@ -64,9 +64,7 @@
 
 ## 4. 教程、参考与页面骨架
 
-来源：deepseek-harness/docs/AGENTS.md:7-36@687f282e
-来源：deepseek-harness/AGENTS.md:170-178@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:79-125@687f282e
+来源：deepseek-harness/docs/AGENTS.md:7-36@687f282e 来源：deepseek-harness/AGENTS.md:170-178@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:79-125@687f282e
 
 <a id="authoring-quality"></a>
 <!-- mechanism-ids: documentation-tutorial-vs-reference, documentation-page-skeleton -->
@@ -83,19 +81,7 @@
 
 ## 5. 包 README 合同
 
-来源：deepseek-harness/docs/AGENTS.md:15-19@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:4-87@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:5-49@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:18-24@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:40-49@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:57-160@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:339-406@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:443-456@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:1-77@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-model-experience.ts:1-638@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-limitations.ts:1-95@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:805-885@687f282e
-来源：deepseek-harness/package.json:119-120,130,140@687f282e
+来源：deepseek-harness/docs/AGENTS.md:15-19@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:4-87@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:5-49@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:18-24@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:40-49@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:57-160@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:339-406@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:443-456@687f282e 来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:1-77@687f282e 来源：deepseek-harness/scripts/verify-package-readme-model-experience.ts:1-638@687f282e 来源：deepseek-harness/scripts/verify-package-readme-limitations.ts:1-95@687f282e 来源：deepseek-harness/scripts/run-gates.ts:805-885@687f282e 来源：deepseek-harness/package.json:119-120,130,140@687f282e
 
 <a id="package-readme"></a>
 <!-- mechanism-ids: documentation-package-readme-kinds, documentation-package-readme-summary, documentation-package-readme-model-experience, documentation-package-readme-limitations -->
@@ -151,17 +137,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 6. 写作、预算与审查
 
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:18-31@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:59-62@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:3-10@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:50-61@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:18-24,40-49,57-160,339-406@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:8-17@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:44-75@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:19-25@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-model-experience.ts:1-638@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-package.md:1-170@687f282e
-来源：deepseek-harness/scripts/verify-package-readme-limitations.ts:1-95@687f282e
+来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:18-31@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:59-62@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:3-10@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:50-61@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:18-24,40-49,57-160,339-406@687f282e 来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:8-17@687f282e 来源：deepseek-harness/scripts/verify-package-readme-summaries.ts:44-75@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:19-25@687f282e 来源：deepseek-harness/scripts/verify-package-readme-model-experience.ts:1-638@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-package.md:1-170@687f282e 来源：deepseek-harness/scripts/verify-package-readme-limitations.ts:1-95@687f282e
 
 <a id="prose-budgets"></a>
 <!-- mechanism-ids: documentation-prose-budgets, documentation-slop-checklist, documentation-complete-proposition, documentation-current-state, documentation-fact-check-evidence, documentation-one-physical-line -->
@@ -188,20 +164,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 7. 注释与导出 JSDoc
 
-来源：deepseek-harness/docs/AGENTS.md:51-63@687f282e
-来源：deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e
-来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-8@687f282e
-来源：deepseek-harness/docs/AGENTS.md:65-71@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:79-125@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:14-63@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:4-67@687f282e
-来源：deepseek-harness/docs/AGENTS.md:37-39@687f282e
-来源：deepseek-harness/AGENTS.md:173-177@687f282e
-来源：deepseek-harness/docs/AGENTS.md:41-41@687f282e
-来源：deepseek-harness/scripts/verify-md-wrap.ts:1-86@687f282e
-来源：deepseek-harness/docs/i18n/translation-rules.md:25-32@687f282e
-来源：deepseek-harness/scripts/verify-export-jsdoc.ts:1-607@687f282e
-来源：deepseek-harness/packages/core/agent/tests/verify-export-jsdoc.spec.ts:1-561@687f282e
+来源：deepseek-harness/docs/AGENTS.md:51-63@687f282e 来源：deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e 来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-8@687f282e 来源：deepseek-harness/docs/AGENTS.md:65-71@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:79-125@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:14-63@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:4-67@687f282e 来源：deepseek-harness/docs/AGENTS.md:37-39@687f282e 来源：deepseek-harness/AGENTS.md:173-177@687f282e 来源：deepseek-harness/docs/AGENTS.md:41-41@687f282e 来源：deepseek-harness/scripts/verify-md-wrap.ts:1-86@687f282e 来源：deepseek-harness/docs/i18n/translation-rules.md:25-32@687f282e 来源：deepseek-harness/scripts/verify-export-jsdoc.ts:1-607@687f282e 来源：deepseek-harness/packages/core/agent/tests/verify-export-jsdoc.spec.ts:1-561@687f282e
 
 <a id="comments-jsdoc"></a>
 <!-- mechanism-ids: documentation-comments-export-jsdoc -->
@@ -220,8 +183,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 8. 双语配对
 
-来源：deepseek-harness/AGENTS.md:170-178@687f282e
-来源：deepseek-harness/docs/AGENTS.md:43-43@687f282e
+来源：deepseek-harness/AGENTS.md:170-178@687f282e 来源：deepseek-harness/docs/AGENTS.md:43-43@687f282e
 
 <a id="i18n-pairing"></a>
 <!-- mechanism-ids: documentation-i18n-pair-contract, documentation-i18n-consistency-record, documentation-i18n-pair-gate -->
@@ -240,12 +202,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 9. 术语与风格校准
 
-来源：deepseek-harness/docs/i18n/README.md:3-17@687f282e
-来源：deepseek-harness/docs/AGENTS.md:45-45@687f282e
-来源：deepseek-harness/scripts/verify-translation-pairing.ts:99-170@687f282e
-来源：deepseek-harness/scripts/translation-pairing-record.ts:1-299@687f282e
-来源：deepseek-harness/docs/i18n/README.md:21-43@687f282e
-来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-368@687f282e
+来源：deepseek-harness/docs/i18n/README.md:3-17@687f282e 来源：deepseek-harness/docs/AGENTS.md:45-45@687f282e 来源：deepseek-harness/scripts/verify-translation-pairing.ts:99-170@687f282e 来源：deepseek-harness/scripts/translation-pairing-record.ts:1-299@687f282e 来源：deepseek-harness/docs/i18n/README.md:21-43@687f282e 来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-368@687f282e
 
 <a id="terminology"></a>
 <!-- mechanism-ids: documentation-i18n-translation-rules, documentation-i18n-terminology, documentation-i18n-style-samples -->
@@ -262,12 +219,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 10. 翻译工作流与简报
 
-来源：deepseek-harness/docs/i18n/translation-rules.md:1-69@687f282e
-来源：deepseek-harness/docs/i18n/translation-prompt.md:63-127@687f282e
-来源：deepseek-harness/docs/i18n/terminology.md:1-215@687f282e
-来源：deepseek-harness/docs/i18n/translation-rules.md:39-44@687f282e
-来源：deepseek-harness/docs/i18n/style-samples.md:1-87@687f282e
-来源：deepseek-harness/docs/i18n/translation-rules.md:13-19@687f282e
+来源：deepseek-harness/docs/i18n/translation-rules.md:1-69@687f282e 来源：deepseek-harness/docs/i18n/translation-prompt.md:63-127@687f282e 来源：deepseek-harness/docs/i18n/terminology.md:1-215@687f282e 来源：deepseek-harness/docs/i18n/translation-rules.md:39-44@687f282e 来源：deepseek-harness/docs/i18n/style-samples.md:1-87@687f282e 来源：deepseek-harness/docs/i18n/translation-rules.md:13-19@687f282e
 
 <a id="translation-workflow"></a>
 <!-- mechanism-ids: documentation-i18n-routine-extended, documentation-i18n-briefing -->
@@ -282,10 +234,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 11. 翻译提示词流水线
 
-来源：deepseek-harness/docs/i18n/README.md:57-69@687f282e
-来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e
-来源：deepseek-harness/scripts/gen-translation-brief.ts:1-331@687f282e
-来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:26-34@687f282e
+来源：deepseek-harness/docs/i18n/README.md:57-69@687f282e 来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e 来源：deepseek-harness/scripts/gen-translation-brief.ts:1-331@687f282e 来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:26-34@687f282e
 
 <a id="translation-prompt"></a>
 <!-- mechanism-ids: documentation-i18n-prompt-pipeline -->
@@ -300,10 +249,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-package-re
 
 ## 12. 代码等价与可编译示例
 
-来源：deepseek-harness/scripts/translation-prompt.ts:1-259@687f282e
-来源：deepseek-harness/scripts/verify-translation-prompt.ts:1-98@687f282e
-来源：deepseek-harness/scripts/translation-prompt.expected.spec.ts:1-32@687f282e
-来源：deepseek-harness/docs/i18n/translation-prompt.md:1-263@687f282e
+来源：deepseek-harness/scripts/translation-prompt.ts:1-259@687f282e 来源：deepseek-harness/scripts/verify-translation-prompt.ts:1-98@687f282e 来源：deepseek-harness/scripts/translation-prompt.expected.spec.ts:1-32@687f282e 来源：deepseek-harness/docs/i18n/translation-prompt.md:1-263@687f282e
 
 <a id="code-equivalence"></a>
 <!-- mechanism-ids: documentation-doc-typecheck, documentation-type-equiv, documentation-subsystem-page-ownership -->
@@ -397,15 +343,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 ## 13. 生成参考
 
-来源：deepseek-harness/scripts/doc-typecheck.ts:1-252@687f282e
-来源：deepseek-harness/scripts/doc-typecheck-paths.ts:1-24@687f282e
-来源：deepseek-harness/scripts/verify-type-equiv.ts:1-120@687f282e
-来源：deepseek-harness/scripts/verify-type-equiv.ts:214-391@687f282e
-来源：deepseek-harness/scripts/type-equiv.manifest.json:1-3@687f282e
-来源：deepseek-harness/docs/AGENTS.md:43-43@687f282e
-来源：deepseek-harness/docs/subsystems/README.md:74-76@687f282e
-来源：deepseek-harness/scripts/verify-subsystem-pages.ts:1-137@687f282e
-来源：deepseek-harness/docs/subsystems/README.md:1-76@687f282e
+来源：deepseek-harness/scripts/doc-typecheck.ts:1-252@687f282e 来源：deepseek-harness/scripts/doc-typecheck-paths.ts:1-24@687f282e 来源：deepseek-harness/scripts/verify-type-equiv.ts:1-120@687f282e 来源：deepseek-harness/scripts/verify-type-equiv.ts:214-391@687f282e 来源：deepseek-harness/scripts/type-equiv.manifest.json:1-3@687f282e 来源：deepseek-harness/docs/AGENTS.md:43-43@687f282e 来源：deepseek-harness/docs/subsystems/README.md:74-76@687f282e 来源：deepseek-harness/scripts/verify-subsystem-pages.ts:1-137@687f282e 来源：deepseek-harness/docs/subsystems/README.md:1-76@687f282e
 
 <a id="generated-references"></a>
 <!-- mechanism-ids: documentation-generated-reference-freshness -->
@@ -429,37 +367,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 ## 14. 共享生成区域
 
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:1-103@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:104-944@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:981-1504@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:1531-1759@687f282e
-来源：deepseek-harness/scripts/gen-tool-catalog.ts:1-133@687f282e
-来源：deepseek-harness/scripts/gen-tool-catalog.ts:134-699@687f282e
-来源：deepseek-harness/scripts/gen-tool-catalog.ts:700-849@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:1-120@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:121-239@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:240-310@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:311-929@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e
-来源：deepseek-harness/scripts/gen-tool-catalog.ts:111-119@687f282e
-来源：deepseek-harness/scripts/gen-tool-catalog.ts:850-898@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:945-980@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:1505-1530@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.ts:1760-1861@687f282e
-来源：deepseek-harness/scripts/gen-cli-help.ts:1-229@687f282e
-来源：deepseek-harness/scripts/gen-cli-help.ts:230-298@687f282e
-来源：deepseek-harness/scripts/gen-persistence-catalog.ts:1-209@687f282e
-来源：deepseek-harness/scripts/gen-persistence-catalog.ts:210-267@687f282e
-来源：deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e
-来源：deepseek-harness/scripts/persistence-catalog-source.ts:134-310@687f282e
-来源：deepseek-harness/scripts/gen-session-format-catalog.ts:1-199@687f282e
-来源：deepseek-harness/scripts/gen-session-format-catalog.ts:200-261@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e
-来源：deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e
-来源：deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e
-来源：deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e
-来源：deepseek-harness/scripts/persistence-catalog-source.ts:1-133@687f282e
-来源：deepseek-harness/scripts/persistence-catalog-source.ts:311-311@687f282e
+来源：deepseek-harness/scripts/gen-doc-graphs.ts:1-103@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:104-944@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:981-1504@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:1531-1759@687f282e 来源：deepseek-harness/scripts/gen-tool-catalog.ts:1-133@687f282e 来源：deepseek-harness/scripts/gen-tool-catalog.ts:134-699@687f282e 来源：deepseek-harness/scripts/gen-tool-catalog.ts:700-849@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:1-120@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:121-239@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:240-310@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:311-929@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e 来源：deepseek-harness/scripts/gen-tool-catalog.ts:111-119@687f282e 来源：deepseek-harness/scripts/gen-tool-catalog.ts:850-898@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:945-980@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:1505-1530@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.ts:1760-1861@687f282e 来源：deepseek-harness/scripts/gen-cli-help.ts:1-229@687f282e 来源：deepseek-harness/scripts/gen-cli-help.ts:230-298@687f282e 来源：deepseek-harness/scripts/gen-persistence-catalog.ts:1-209@687f282e 来源：deepseek-harness/scripts/gen-persistence-catalog.ts:210-267@687f282e 来源：deepseek-harness/packages/core/session/tests/gen-persistence-catalog.spec.ts:1-306@687f282e 来源：deepseek-harness/scripts/persistence-catalog-source.ts:134-310@687f282e 来源：deepseek-harness/scripts/gen-session-format-catalog.ts:1-199@687f282e 来源：deepseek-harness/scripts/gen-session-format-catalog.ts:200-261@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.spec.ts:1-195@687f282e 来源：deepseek-harness/scripts/gen-cli-help.spec.ts:1-134@687f282e 来源：deepseek-harness/scripts/gen-session-format-catalog.spec.ts:1-167@687f282e 来源：deepseek-harness/scripts/gen-doc-graphs.spec.ts:1-165@687f282e 来源：deepseek-harness/scripts/persistence-catalog-source.ts:1-133@687f282e 来源：deepseek-harness/scripts/persistence-catalog-source.ts:311-311@687f282e
 
 <a id="generated-regions"></a>
 <!-- mechanism-ids: documentation-generated-region-grammar, documentation-generated-source-pairing, documentation-cordis-catalog-partition -->
@@ -477,17 +385,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 ## 15. Markdown 链接、锚点与换行
 
-来源：deepseek-harness/scripts/translation-pairing.ts:18-80@687f282e
-来源：deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e
-来源：deepseek-harness/scripts/verify-translation-pairing.ts:99-140@687f282e
-来源：deepseek-harness/docs/i18n/README.md:49-56@687f282e
-来源：deepseek-harness/scripts/translation-pairing.ts:80-139@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-83@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog-partition.spec.ts:1-211@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:84-1118@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1171-1187@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1260-1279@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1292-1307@687f282e
+来源：deepseek-harness/scripts/translation-pairing.ts:18-80@687f282e 来源：deepseek-harness/scripts/gen-config-catalog.ts:930-1074@687f282e 来源：deepseek-harness/scripts/verify-translation-pairing.ts:99-140@687f282e 来源：deepseek-harness/docs/i18n/README.md:49-56@687f282e 来源：deepseek-harness/scripts/translation-pairing.ts:80-139@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-83@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog-partition.spec.ts:1-211@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:84-1118@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1171-1187@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1260-1279@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1292-1307@687f282e
 
 <a id="markdown-gates"></a>
 <!-- mechanism-ids: documentation-markdown-links, documentation-source-doc-refs, documentation-mermaid-syntax, documentation-markdown-corpus-model -->
@@ -506,7 +404,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-subsystem-
 
 **源义务（Mermaid）。** 每个 Mermaid 围栏都被解析和校验，单图边数上限 64；只验证语法/结构，不渲染。不要在 Mermaid 中依赖未定义节点或超限复杂度。`deepseek-harness/scripts/verify-mermaid.ts:1-106@687f282e`
 
-**迁移设计。** 采用方必须把本地目标、锚点、换行、仓库引用与 Mermaid 语法作为同一链接/文档完整性合同落地；如果站点使用非 GitHub 锚点算法，替换 slug 实现而不是跳过锚点。可以分批修复存量，但门禁覆盖范围和失败条件不得缩小；未接入项记录非激活与重新激活条件。
+**迁移设计。** 采用方必须把本地目标、锚点、换行、仓库引用与 Mermaid 语法作为同一链接/文档完整性合同落地；如果站点使用非 GitHub 锚点算法，替换 slug 实现而不是跳过锚点。可以分批修复存量，但门禁覆盖范围和失败条件不得缩小。解析器/依赖缺失、配置未声明、语料未纳入或 CI 未接入是**阻塞或未落实**，须记录缺什么与解除条件，不能记成“非激活”；只有该事实类别在目标确实不存在（如确无 Markdown 或确无归档树）才记**不适用**与重新激活条件。两类状态与[§23](#migration)的判据一致。
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/scripts/verify-md-links.spec.ts:1-29@687f282e`、`deepseek-harness/scripts/verify-md-links.spec.ts:64-140@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:204-254@687f282e`
 
@@ -546,16 +444,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 16. 仓库引用与网站投影
 
-来源：deepseek-harness/scripts/verify-md-links.ts:1-254@687f282e
-来源：deepseek-harness/docs/AGENTS.md:75-77@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:60-64@687f282e
-来源：deepseek-harness/scripts/verify-md-links.spec.ts:1-29@687f282e
-来源：deepseek-harness/scripts/verify-md-links.spec.ts:64-140@687f282e
-来源：deepseek-harness/scripts/verify-md-links.ts:204-254@687f282e
-来源：deepseek-harness/scripts/verify-doc-refs.ts:1-45@687f282e
-来源：deepseek-harness/scripts/verify-mermaid.ts:1-106@687f282e
-来源：deepseek-harness/scripts/markdown.ts:1-277@687f282e
-来源：deepseek-harness/scripts/repo-files.ts:1-295@687f282e
+来源：deepseek-harness/scripts/verify-md-links.ts:1-254@687f282e 来源：deepseek-harness/docs/AGENTS.md:75-77@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:60-64@687f282e 来源：deepseek-harness/scripts/verify-md-links.spec.ts:1-29@687f282e 来源：deepseek-harness/scripts/verify-md-links.spec.ts:64-140@687f282e 来源：deepseek-harness/scripts/verify-md-links.ts:204-254@687f282e 来源：deepseek-harness/scripts/verify-doc-refs.ts:1-45@687f282e 来源：deepseek-harness/scripts/verify-mermaid.ts:1-106@687f282e 来源：deepseek-harness/scripts/markdown.ts:1-277@687f282e 来源：deepseek-harness/scripts/repo-files.ts:1-295@687f282e
 
 <a id="reference-policy"></a>
 <!-- mechanism-ids: documentation-repository-reference-policy, documentation-website-publication-manifest, documentation-website-link-projection, documentation-website-raw-llms -->
@@ -634,17 +523,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 17. Agent Note 生命周期
 
-来源：deepseek-harness/scripts/verify-repository-references.ts:1-155@687f282e
-来源：deepseek-harness/scripts/verify-public-repository-links.ts:1-99@687f282e
-来源：deepseek-harness/scripts/verify-concrete-terms.ts:1-105@687f282e
-来源：deepseek-harness/website/AGENTS.md:1-23@687f282e
-来源：deepseek-harness/website/docs.ts:1-123@687f282e
-来源：deepseek-harness/scripts/project-doc-site.ts:1-263@687f282e
-来源：deepseek-harness/scripts/project-doc-site.ts:263-577@687f282e
-来源：deepseek-harness/scripts/verify-doc-site-fragments.ts:1-181@687f282e
-来源：deepseek-harness/website/docs.ts:123-591@687f282e
-来源：deepseek-harness/website/build.ts:1-86@687f282e
-来源：deepseek-harness/scripts/project-doc-site.ts:473-577@687f282e
+来源：deepseek-harness/scripts/verify-repository-references.ts:1-155@687f282e 来源：deepseek-harness/scripts/verify-public-repository-links.ts:1-99@687f282e 来源：deepseek-harness/scripts/verify-concrete-terms.ts:1-105@687f282e 来源：deepseek-harness/website/AGENTS.md:1-23@687f282e 来源：deepseek-harness/website/docs.ts:1-123@687f282e 来源：deepseek-harness/scripts/project-doc-site.ts:1-263@687f282e 来源：deepseek-harness/scripts/project-doc-site.ts:263-577@687f282e 来源：deepseek-harness/scripts/verify-doc-site-fragments.ts:1-181@687f282e 来源：deepseek-harness/website/docs.ts:123-591@687f282e 来源：deepseek-harness/website/build.ts:1-86@687f282e 来源：deepseek-harness/scripts/project-doc-site.ts:473-577@687f282e
 
 <a id="agent-notes"></a>
 <!-- mechanism-ids: documentation-agent-note-lifecycle, documentation-agent-note-format-gates -->
@@ -661,11 +540,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 18. 归档与冻结
 
-来源：deepseek-harness/.agents/notes/README.md:5-75@687f282e
-来源：deepseek-harness/scripts/agent-note-tree.ts:1-83@687f282e
-来源：deepseek-harness/.agents/notes/README.md:77-125@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-86@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e
+来源：deepseek-harness/.agents/notes/README.md:5-75@687f282e 来源：deepseek-harness/scripts/agent-note-tree.ts:1-83@687f282e 来源：deepseek-harness/.agents/notes/README.md:77-125@687f282e 来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-86@687f282e 来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e
 
 <a id="archive"></a>
 <!-- mechanism-ids: documentation-agent-note-archive -->
@@ -680,8 +555,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 19. 升级指南
 
-来源：deepseek-harness/scripts/archived-agent-notes.ts:1-204@687f282e
-来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e
+来源：deepseek-harness/scripts/archived-agent-notes.ts:1-204@687f282e 来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e
 
 <a id="upgrade-guide"></a>
 <!-- mechanism-ids: documentation-upgrade-guide -->
@@ -696,9 +570,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 20. Skill 调用元数据
 
-来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e
-来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e
+来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e 来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e
 
 <a id="skills"></a>
 <!-- mechanism-ids: documentation-skill-invocation-metadata -->
@@ -724,8 +596,7 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 22. 门禁组合与执行顺序
 
-来源：deepseek-harness/scripts/doc-standard.spec.ts:162-299@687f282e
-来源：deepseek-harness/docs/session-format-status.md:1-56@687f282e
+来源：deepseek-harness/scripts/doc-standard.spec.ts:162-299@687f282e 来源：deepseek-harness/docs/session-format-status.md:1-56@687f282e
 
 <a id="gate-composition"></a>
 <!-- mechanism-ids: documentation-gate-composition -->
@@ -742,28 +613,91 @@ node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.m
 
 ## 23. 迁移到新项目
 
-来源：deepseek-harness/package.json:104-140@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:805-883@687f282e
+来源：deepseek-harness/package.json:104-140@687f282e 来源：deepseek-harness/scripts/run-gates.ts:805-883@687f282e
 
 <a id="migration"></a>
 
-**第一步：确定真源。** 列出项目的事实类型（公开 API、配置、命令、数据格式、发布状态、架构决策、事故），为每类指定唯一所有者。没有所有者的先建，不要先写文档。
+**本节的地位。** 这里是文档域首组可直接消费的**迁移决定**（迁移设计），不是自动接入器、不是所有项目的封闭义务清单，也不把维护者的来源判断改写成消费者的实施许可。维护者负责源义务→保留项/例外→分类→参数化→机械工具能力的判断；采用方负责目标真实事实、现有 owner/语料/命令/权限、参数值、运行与报告。参数是可配置值，不是可取消的义务；任何一项都不会因为“不在本组”或“目标没有现成工具”而消失。
 
-**第二步：建立完整分层。** 至少区分：根级命令、架构地图、子系统/模块参考、决策记录、操作指南、包/模块合同、生成参考。为每类写“放什么/不放什么”。为全部适用义务建立映射，并为每项选择真实检查或等价 representation；不能只上三项。可以按依赖顺序落地，但在声称迁移完成前，所有适用项必须有检查或明确的非激活理由；缺失工具不是非激活理由。
+**采用流程（普通首次或渐进）。** ①核实目标事实：读目标现有规则、唯一状态 owner、工具链、脚本和 CI，实际运行相关入口；区分已有事实、本次将创建的文件与未知项，事实不是提议。②套用已发布决定：对每个决定填写目标参数与 owner，判断触发是否成立，选用本文已交付的真实入口；本组未列的义务按其章节条件继续核对。消费者不需要为每条来源重做提取，也不需要为每个语义单元新开上下文。③接受：由项目负责人或独立评审按目标事实核对触发、保留义务、参数/owner、入口、权限和拒绝/恢复；接受记录绑定决定、目标事实和评审者。④实施与回归：在目标既有入口落地，保留原有行为和验收；正常、拒绝、恢复在同一入口观察。接受不代表实施完成，元数据齐全也不是许可。
 
-**第三步：建立类型与示例证据。** 必须选一个编译器可执行的代码块投影方案；若目标没有编译设施，记录该机制非激活及重新激活条件，明确标注“未编译示例/未验证”，不要声称可运行，也不能把标注当成编译等价物。对逐字类型粘贴建清单和漂移检查。
+**参数化。** 源仓库的路径、包前缀、预算数字、门禁名、语言对和网站框架都是参数。替换参数或实现必须保留机制效果；例如“每段一行”保留，格式器实现可替换；“生成参考不可手改”保留，生成器实现可替换。
 
-**第四步：建立双语（如需要）。** 先定义完整三文件契约，然后覆盖范围内所有页面；可以分批迁移，但未迁移页必须显式列为单语/未配对。记录必须绑定两侧内容，而不是只存时间戳。不要用“翻译完成”代替结构一致。
+**状态判据（全组共用）。** **已落实**要求触发事实已登记、义务有 owner 和真实入口、入口可运行，且正常/拒绝/恢复证据已记录；入口已接入但验收尚未复验，或触发后入口尚未接入，都是**未落实**（对应 Skill 的“已接入且待复验”“待接入”）；缺依赖、权限、语料或 CI 接入，是**阻塞**（“触发但阻塞”），须写明缺什么与解除条件；只有该事实类别在项目中确实不存在时才记**不适用**，并写重新激活条件。缺工具、缺凭据、未接入 CI、仓库或页面规模小都不是不适用。
 
-**第五步：建立生成参考。** 每个生成器必须有 `--check` 和稳定输出路径；逐族声明未知输入、空扫描与清单变窄时的行为，适用时必须失败，不能把某一族的 guard 推及全部；生成区域用共享常量标记。中文侧只通过生成/配对更新。
+**来源核对边界。** 本组核心义务定向复读了固定提交中的 `deepseek-harness/docs/AGENTS.md:7-59,75-77@687f282e`、`deepseek-harness/AGENTS.md:175@687f282e`、`deepseek-harness/package.json:104-140@687f282e`、`deepseek-harness/scripts/run-gates.ts:805-883@687f282e`、`deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:34-73@687f282e` 与 `deepseek-harness/scripts/verify-md-wrap.ts:40-86@687f282e`；其余决定沿用各小节已登记的坐标，不声称完整源审核。发现来源支持不足、相互冲突或工具行为与描述不符时，带具体坐标交回维护者；影响验收的未决项保持阻塞，不能用改弱义务或断言通过来收场。
 
-**第六步：建立评审与归档。** 决策记录按生命周期分目录；归档用哈希清单只追加；升级指南只在用户需要动作时写。为每个门禁写正例、拒绝例和恢复说明。
+### 23.1 事实归属与文档分层
 
-**第七步：接入 CI 与权限。** 本地脚本可被绕过，只有 CI 必需检查/分支保护才是强制。分别记录“检查器存在”“CI 运行”“合并被阻塞”三种证据，不要混为一谈。
+**触发。** 新增、搬迁、合并或重写人类文档；新增事实类别；发现同一事实存在两处权威叙述。纯代码注释的局部修正不触发分层迁移，但仍受[§7](#comments-jsdoc)约束。
 
-**参数化。** 源仓库的路径、包前缀、预算数字、门禁名、语言对、网站框架都是参数。迁移时保留机制，不改写其效果；例如“每段一行”可保留，但具体列宽/格式器可替换；“生成参考不可手改”可保留，但生成器实现可替换。
+**保留的义务与例外。** 每个事实只有一个家：所有者层级、代码或生成器；别处只链接，不手抄目录、JSDoc、测试/包/状态清单或版本状态。范围内每篇文档归为教程或参考；作用域由主题加树位置固定，只描述自己的主题，直接子主题只写目的、职责和高层行为，更低层细节链接到 owning descendant。每类文档写“这里放什么/不放什么”；历史理由、事故、操作步骤、类型定义、包合同、常驻命令和生成参考各自归层，不能因规模省略类别。生成参考的英文真源与区域不得手改，中文侧按配对/生成更新。`deepseek-harness/docs/AGENTS.md:7-40@687f282e`
 
-**例外与重新激活。** 只有事实类别在目标中不存在时（例如根本没有网站）才能非激活；仓库规模、包数量、页面数量不是省略理由。记录“不适用 + 重新激活条件”，不要删除知识。例如没有网站就不需要发布清单，但一旦发布文档，必须重新引入清单与链接投影。
+**消费者参数与 owner。** 在目标仓库提供“事实→所有者→检查”表，列出目录/模板和每类的唯一 owner（文件、生成器、清单或人审记录）；事实类别按目标实际枚举，不能只抄本组五项。新事实先补 owner，再写文档。
+
+**机械入口与限制。** 没有自动判定“归属正确”的工具；可机械部分只有链接（§23.4）、生成区域标记（[§14](#generated-regions)）等。层级、类别和重复叙述由评审负责。
+
+**语义评审。** 核对每个事实是否只有一处权威、别处是否只有链接；新页能否回答读者触发点、第一段看到什么、下一层去哪。发现两处矛盾叙述时，先判定 owner，删除或降级另一处为链接，再补能拒绝重复的检查（若可机械化）。
+
+**正常、拒绝与恢复。** 完成信号是所有事实类别都有 owner、抽查事实在唯一 owner、重复处已链接。拒绝信号是同一事实两处权威或手抄生成内容；恢复为判定 owner、降级另一处、必要时新增重复叙述检查。只有目标确实没有该事实类别时才记不适用。
+
+### 23.2 条件性状态 owner
+
+**触发与保留义务。** 状态协议属于迁移设计，完整触发条件与唯一owner复用规则由[Skill 3.0–3.1](../SKILL.md#3-改动型任务走同一循环)和[交接的连续会话补充](agent-workflows.md#aw-11)拥有：用户要求初始化、跨会话继续/暂停/交接、压缩前保存，或同一目标确需多个会话/另一位执行者接续。没有这些触发的单会话采用不新建状态文件，初始化也不自动扩展为完整采用。已有状态、nextAction和完成声明须按当前请求与仓库事实复核，不创造执行许可。
+
+**消费者参数与 owner。** 只登记既有 owner 的路径与格式（或明确不启用状态协议）、记录者与复核者；字段、写入/读取时机和完成信号按所链接协议与既有 owner 执行，本节不复述。
+
+**机械入口与限制。** `node .agents/skills/harness-project-governance/bin/governance.mjs status` 只对 `.governance` 布局检查元数据是否齐备，不执行 `policy.checks`，也不判断 `nextAction` 是否已撤销或归档项是否仍现役。元数据齐全不是执行许可，`phase: complete` 不证明交付已完成。
+
+**语义评审。** 核对现有 owner 是否真正权威、状态与仓库事实是否一致、未完成项是否有 owner、下一命令能否被独立执行。
+
+**正常、拒绝与恢复。** 完成信号是唯一 owner 可读、下一命令可执行、当前已撤销动作不在队列。拒绝信号是双状态源、状态与仓库冲突后仍继续，或把 status 绿灯当完成。恢复为以仓库和当前请求修正记录，保留原失败记录，不追认原状态。没有所链接Skill §3.0的任一启用条件时不启用该协议，这不是“治理不适用”。
+
+### 23.3 常驻文档预算
+
+**触发。** 修改预算清单内的常驻文档，或新增必须常驻上下文的规则。未列入预算的层级不触发此计数器，但仍由评审治理，不是自动豁免。
+
+**保留的义务与例外。** 根据文档职责与目标工作上下文确定受预算文件，不照搬源清单或给全部文档套同一阈值；超限按“迁移到其他层→压缩→有理由提高上限”处理。上限是护栏不是缩减目标：在目标或以下时至少保留 5% 余量；高于目标时冻结上限，直到迁移或压缩回到目标以下；只有文档仍有空间时才降低上限。源数值（如 root 2080、architecture 2400、子树 600 等）是源事实，不是所有采用项目的默认阈值。未列入预算的层级记录理由、owner 和重新激活条件。`deepseek-harness/docs/AGENTS.md:51-59@687f282e`、`deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e`
+
+**消费者参数与 owner。** 非空 `.doc-gates/doc-budgets.json`，键为常驻文档的仓库相对路径，值为评审后的正整数上限；同时登记未预算层的 owner/理由。预算 owner 与内容 owner 可以不同，但都要写清。
+
+**机械入口与限制。** 从目标 cwd 执行 `node .agents/skills/harness-project-governance/tools/doc-gates/verify-doc-budgets.mjs`；异地可用 `--root <目标> --config <仓库相对清单>`。普通模式在超限、清单指向的缺失文件或非法上限时退出 1；配置缺失/不可读/非对象/空清单或调用无效退出 2。`--list` 只列用量并退出 0，即使存在 OVER/MISS/BAD，因此不能用于 CI 阻断。它只统计空白分隔词数和清单内文件，不判断内容质量，也不阻止新增未列入清单的膨胀文档。
+
+**语义评审。** 判断文档是否必须常驻、超限内容应迁移到哪一层、提高上限的理由、5% 余量是否保留，以及未预算层的理由与重新激活条件。
+
+**正常、拒绝与恢复。** 完成信号是清单非空且覆盖已决定纳入预算的受约束文档、普通模式在真实语料上退出 0、未预算层有 owner/理由。拒绝与恢复：制造真实超限或缺失条目应退出 1，按迁移/压缩恢复后退出 0；提高上限须有理由，不能靠放宽上限变绿。依赖或配置不可用导致的退出 2 是阻塞，不是通过或不适用。
+
+### 23.4 完整 Markdown 语料：链接、锚点与换行
+
+**触发。** 任何 Markdown 链接、标题或文件移动；受检 Markdown 的散文编辑；归档移动。源码注释中的文档路径、Mermaid 语法和网站投影各由[§16](#reference-policy)等小节拥有，不由此决定替代。
+
+**保留的义务与例外。** 当前文件用相对 Markdown 链接，历史引用用 tag 或 PR 号；不写 `/docs/...` 之类站内绝对路由，该禁令只由写作评审执行。锚点按 GitHub slug 规则匹配，显式 `<a id="...">` 也算目标，标题改名视为接口变更并须同改入站引用。每个散文段落占一个物理行；自动谓词只拒绝 GFM AST 中跨行的 `paragraph`（含列表/引用内段落），标题、围栏、表格、HTML 和代码注释不在该谓词内，标题单行仍是评审义务。冻结归档源不作为扫描语料，但活跃页指向归档的目标/锚点继续验证；生成区域内的 prose 不是一概豁免。链接与换行共享同一组固定版本解析器和语料模型，但发现配置独立。`deepseek-harness/docs/AGENTS.md:42,75-77@687f282e`、`deepseek-harness/scripts/verify-md-links.ts:34-73@687f282e`、`deepseek-harness/scripts/verify-md-wrap.ts:40-86@687f282e`
+
+**消费者参数与 owner。** 分别为 `.doc-gates/markdown-links.json` 与 `.doc-gates/markdown-wrap.json` 声明真实语料：`roots`（递归目录）、`files`（单文件）、`archiveRoots`（只跳过源扫描；缺省为源归档路径，目标更换归档位置时同步）。纳入全部适用文档、包说明、指令、技能文档和 expected Markdown 输出，不以示例路径代替完整语料；归档树不存在时省略相应字段，不伪造目录。
+
+**机械入口与限制。** 先按[§15.1](#markdown-gates)准备固定解析器依赖，再从目标 cwd 执行 `node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-links.mjs` 与 `node .agents/skills/harness-project-governance/tools/doc-gates/verify-md-wrap.mjs`；异地可用 `--root/--config`。成功退出 0，缺目标/`.md` 锚点或跨行段落逐项输出 `file:line` 并退出 1，配置、语料、解析器或调用不可用退出 2；两个程序只检查不重写。链接程序跳过外部 URL、协议相对地址和根绝对路径，因此 `/docs/...` 误用抓不住；非 Markdown 片段交给渲染器，不判锚点。
+
+**语义评审。** 核对语料是否完整、链接文字与目标语义是否相符、标题是否单行、是否依赖站内绝对路由、归档外的出站链接是否仍应维护。
+
+**正常、拒绝与恢复。** 完成信号是两个执行器在声明的完整语料上退出 0，且正常、拒绝、恢复都观察到。拒绝与恢复：制造断链或跨行段落应退出 1 并给出 `file:line`，精确恢复后退出 0。解析器/依赖无法安装或配置不可读导致的退出 2 是阻塞，记录解除条件；不得把缺依赖记成“没有触发面”，也不得用局部语料通过冒充全量。
+
+### 23.5 本地与 CI 同入口
+
+**触发。** 任何文档改动、提交前、CI 或发布前；新增或变更文档检查。纯代码改动仍可能触发 JSDoc、类型等其他域检查。
+
+**保留的义务与例外。** 编辑循环、提交前和 CI 三层可以不同宽度，但规则来源必须相同；quick 是完整集的子集，不能替代完整集；网站专用入口不能替代完整文档组。本地脚本可被绕过，只有 CI 必需检查与分支保护才是强制。分别记录“检查器存在”“CI 运行”“合并被阻塞”三种证据，不能混为一谈。失败先修根因，不通过扩大排除、降低预算或删除测试来变绿；门禁不可用时报告不可用，不用“已人工检查”替代自动保证。`deepseek-harness/package.json:104-140@687f282e`、`deepseek-harness/scripts/run-gates.ts:805-883@687f282e`
+
+**消费者参数与 owner。** 复用目标已有顶层入口（脚本、`verify.ps1`、`npm run check` 等），或使用 `node .agents/skills/harness-project-governance/bin/governance.mjs check <repo> --policy <仓内清单>`；新的初始化才用默认 `.governance/policy.json`。清单只登记命令，不复制需求或进度。另需 CI 工作流、分支保护/required checks 的配置权限与负责人。
+
+**机械入口与限制。** 同一命令应在本地和 CI 调用。`check` 只按清单顺序执行命令并报告退出码：策略缺失/无效/检查为空退出 2，任一命令失败退出 1；它不推导检查、不证明语义完整、不证明平台强制。工作流文件存在不等于远端已配置；没有授权不改生产保护或凭据。
+
+**语义评审。** 核对 quick 子集是否覆盖本组决定、每条触发义务是否有入口、失败诊断是否指向规则 owner、是否有入口被排除后仍宣称完整。
+
+**正常、拒绝与恢复。** 完成信号是同一命令在本地与 CI 覆盖全部已声明检查、正常退出 0，且真实义务破坏在同一入口被拒绝、精确恢复后通过。拒绝信号是靠排除门禁、降低预算或删除断言变绿；恢复为修根因后在原入口复跑。缺远端权限时保留平台层“未验证”的阻塞状态，不把工作流文件当强制。没有 CI 平台时记录本地入口与重新激活条件，不能宣称合并阻断。
+
+**其余按事实触发的条件。** 本组不是封闭清单：文档类型/页面骨架（[§4](#authoring-quality)）、包 README 合同与三类门禁（[§5](#package-readme)、[§6](#prose-budgets)）、注释与导出 JSDoc（[§7](#comments-jsdoc)）、双语三文件与配对/翻译（[§8](#i18n-pairing)至[§11](#translation-prompt)）、类型等价与可编译示例（[§12](#code-equivalence)）、生成参考与共享区域（[§13](#generated-references)、[§14](#generated-regions)）、仓库引用与网站投影（[§16](#reference-policy)）、Agent Note/归档/升级指南（[§17](#agent-notes)至[§19](#upgrade-guide)）、Skill 元数据与 Session 格式状态（[§20](#skills)、[§21](#session-status)），被目标事实触发时按对应小节保留全套条件、例外、参数与评审。没有工具、没有权限或尚未接入 CI 是阻塞，不是没有触发；只有事实类别确实不存在才不适用。
+
+**采用完成。** 每项已触发义务均须有 owner、真实检查或评审入口及所需的正常/拒绝/恢复证据，所有影响当前验收的未落实、阻塞或争议已解决；真正不适用项有事实依据与重新激活条件。最后按[Skill采用验收](../SKILL.md#3-改动型任务走同一循环)核对冷接续、实际接入层级及准确原交接，不能仅因缺口已列理由而报完成。检查器存在、单次绿灯、页面数量或引用计数都不单独证明语义采用。
 
 ## 24. 已知限制与未决问题
 

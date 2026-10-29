@@ -2530,9 +2530,9 @@
       ],
       "migration": {
         "strategy": "new-capability",
-        "implementation": "新增状态文件模板与读取约定；在文档中标注 Non-source / migration design",
+        "implementation": "先复用目标已有唯一状态 owner；仅在跨会话/交接/压缩或用户要求初始化且没有既有 owner 时建立持久状态文件与读取约定。标注 Non-source / migration design，不为普通单会话采用另建状态账。",
         "requiredSupport": [
-          "受版本控制的 scratch/handoff 目录",
+          "可持久定位的唯一状态 owner；目标已有任务板、Issue 台账或交接文件时复用，不强制另建目录或版本控制副本",
           "git 状态查询",
           "任务关闭时的清理约定"
         ]

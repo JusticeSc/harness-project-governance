@@ -19,7 +19,10 @@
 迁移时必须同时迁移被引用的 owner 域，或显式记录未迁移依赖；本文件不复制它们的完整规则。
 
 <a id="m-enforcement-scripts-1-request-input-durable-boundary"></a>
-### enforcement-scripts-1-request-input-durable-boundary — 请求态输入与持久消息的编译期边界 {#enforcement-scripts-1-request-input-durable-boundary}
+
+<a id="enforcement-scripts-1-request-input-durable-boundary"></a>
+
+### enforcement-scripts-1-request-input-durable-boundary — 请求态输入与持久消息的编译期边界
 
 **问题**：provider 请求可以混合 durable `Message` 与轻量 `RequestUserInput`。如果持久写入、followup/inject、title 事件或投影函数接受后者，历史里就会出现没有 `source`/`id` 的记录，或者投影伪造身份与归属。运行时这种错误通常只是少一个字段，普通断言很难发现。
 
@@ -55,7 +58,10 @@
 **限制**：只覆盖编译期；未证明运行时反序列化、wire 协议与所有投影函数。目标项目若没有 TypeScript，需要用等价的 schema/构造器约束重新落地。
 
 <a id="m-enforcement-scripts-1-generated-workflow-guest"></a>
-### enforcement-scripts-1-generated-workflow-guest — 生成的 Workflow guest 必须自包含且 --check 不写回 {#enforcement-scripts-1-generated-workflow-guest}
+
+<a id="enforcement-scripts-1-generated-workflow-guest"></a>
+
+### enforcement-scripts-1-generated-workflow-guest — 生成的 Workflow guest 必须自包含且 --check 不写回
 
 **问题**：PTC workflow guest 在受限运行时加载，不能依赖生成时存在的源文件或外部依赖。若生成器允许未解析导入，产物在运行期才失败；若 `--check` 会写回，陈旧产物被静默修复，评审看不到真实 diff。
 
@@ -86,14 +92,16 @@
 **证据**：
 
 <a id="m-enforcement-scripts-1-generated-guest-1"></a>
-- `deepseek-harness/scripts/gen-workflow-guest.ts:1-72@687f282e`：生成器实现，覆盖固定入口、只外置 Node 内建、拒绝未解析导入、单 chunk 断言、sourceURL、横幅与 `--check` 精确比较。
-<a id="m-enforcement-scripts-1-generated-guest-2"></a>
+- `deepseek-harness/scripts/gen-workflow-guest.ts:1-72@687f282e`：生成器实现，覆盖固定入口、只外置 Node 内建、拒绝未解析导入、单 chunk 断言、sourceURL、横幅与 `--check` 精确比较。 <a id="m-enforcement-scripts-1-generated-guest-2"></a>
 - `deepseek-harness/scripts/gen-workflow-guest.spec.ts:1-43@687f282e`：三个测试分别覆盖自包含打包（导入 bundle 字符串的 data URL，不是 guest-source.ts）、未解析导入拒绝、以及 stale check 不重写文件。
 
 **限制**：spec 只覆盖 `bundleWorkflowGuest` 与 `generateWorkflowGuest`；自包含用例导入 data URL 中的 bundle 字符串，没有执行生成的 guest-source.ts，也没有证明 PTC 运行时加载。多 chunk 与非内建 external 拒绝未构造负例；未证明所有 workflow 运行时版本、loader 查询或 sourcemap 组合。
 
 <a id="m-enforcement-scripts-1-office-runtime-closure"></a>
-### enforcement-scripts-1-office-runtime-closure — 独立 CLI 的 Office 运行时闭包与引擎选择 {#enforcement-scripts-1-office-runtime-closure}
+
+<a id="enforcement-scripts-1-office-runtime-closure"></a>
+
+### enforcement-scripts-1-office-runtime-closure — 独立 CLI 的 Office 运行时闭包与引擎选择
 
 **问题**：独立 CLI 进程不能依赖 workspace 的 `node_modules` 布局。只复制顶层 Office kit 会漏掉传递依赖或平台引擎，问题到用户机器才暴露；可选依赖若不按目标 os/cpu 过滤，会把不兼容的原生包带进发布物。
 
@@ -125,14 +133,16 @@
 **证据**：
 
 <a id="m-enforcement-scripts-1-office-1"></a>
-- `deepseek-harness/scripts/libreoffice-engine.spec.ts:1-24@687f282e`：引擎选择矩阵，覆盖 darwin-arm64、darwin-x64、win32-arm64、win32-x64、Linux 回退与声明 native 的 Linux target。
-<a id="m-enforcement-scripts-1-office-2"></a>
+- `deepseek-harness/scripts/libreoffice-engine.spec.ts:1-24@687f282e`：引擎选择矩阵，覆盖 darwin-arm64、darwin-x64、win32-arm64、win32-x64、Linux 回退与声明 native 的 Linux target。 <a id="m-enforcement-scripts-1-office-2"></a>
 - `deepseek-harness/scripts/libreoffice-packages.mjs:1-80@687f282e`：`selectOfficeEngine` 与 `officePackageDirectories` 的完整实现，包括 staging 边界、必需/可选依赖分类、os/cpu 过滤与 engine 存在性检查。
 
 **限制**：只验证 `selectOfficeEngine` 的引擎选择；`officePackageDirectories` 没有 spec 执行，闭包、路径边界与 optional 过滤只是实现阅读证据。不证明 LibreOffice 在目标机器可启动、渲染正确或 PDF 导出成功。未覆盖所有 npm 安装布局。
 
 <a id="m-enforcement-scripts-1-packed-install-cache-ownership"></a>
-### enforcement-scripts-1-packed-install-cache-ownership — packed-install 验证器独占 npm 缓存写入并清理消费者 {#enforcement-scripts-1-packed-install-cache-ownership}
+
+<a id="enforcement-scripts-1-packed-install-cache-ownership"></a>
+
+### enforcement-scripts-1-packed-install-cache-ownership — packed-install 验证器独占 npm 缓存写入并清理消费者
 
 **问题**：packed-install 验证器会在仓库外创建临时消费者并运行 `npm install` 与 lifecycle。若它继承 ambient 或 npmrc 配置的 cache，会污染宿主缓存、把外部状态带进验证结果；失败路径还可能留下消费者目录与私有缓存。
 
@@ -164,14 +174,16 @@
 **证据**：
 
 <a id="m-enforcement-scripts-1-cache-1"></a>
-- `deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e`：验证器实现，使用 `mkdtemp` consumer、`--cache <consumer>/.npm-cache`、`--omit=optional`、consumer 环境清理与 finally `rmSync`。
-<a id="m-enforcement-scripts-1-cache-2"></a>
+- `deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e`：验证器实现，使用 `mkdtemp` consumer、`--cache <consumer>/.npm-cache`、`--omit=optional`、consumer 环境清理与 finally `rmSync`。 <a id="m-enforcement-scripts-1-cache-2"></a>
 - `deepseek-harness/scripts/release/verify-packed-install.spec.ts:1-82@687f282e`：真实 verifier 入口、三种结果、cache 观测 probe、ambient/configured sentinel 与 consumer 清理断言；测试 harness 另行提供 offline/ignore-scripts/TMPDIR 等环境。
 
 **限制**：spec 在 Windows 跳过；使用 `tar` 构造输入；offline 仅来自测试 harness 的 `npm_config_offline`；未覆盖 registry 网络、pnpm、workspace link 或 npm 版本差异。
 
 <a id="m-enforcement-scripts-1-translation-link-locale"></a>
-### enforcement-scripts-1-translation-link-locale — 译文正文链接的目标语言选择与切换行豁免 {#enforcement-scripts-1-translation-link-locale}
+
+<a id="enforcement-scripts-1-translation-link-locale"></a>
+
+### enforcement-scripts-1-translation-link-locale — 译文正文链接的目标语言选择与切换行豁免
 
 **问题**：中文页面若把正文链接指向英文 sibling，读者会在无提示的情况下离开目标语言；普通 Markdown 链接检查只验证目标存在，不验证 locale。语言切换行本身必须指向另一语言，因此需要精确豁免，否则要么误报切换行，要么放过正文中的错误链接。
 
@@ -206,14 +218,16 @@
 **证据**：
 
 <a id="m-enforcement-scripts-1-translation-1"></a>
-- `deepseek-harness/scripts/translation-links.ts:1-384@687f282e`：真实链接解析、同语言期望路径、RFC 3986 重编码、字节级 destination 替换与 merge token 归一化实现。
-<a id="m-enforcement-scripts-1-translation-2"></a>
+- `deepseek-harness/scripts/translation-links.ts:1-384@687f282e`：真实链接解析、同语言期望路径、RFC 3986 重编码、字节级 destination 替换与 merge token 归一化实现。 <a id="m-enforcement-scripts-1-translation-2"></a>
 - `deepseek-harness/scripts/translation-links.spec.ts:1-281@687f282e`：完整 spec，覆盖错误 locale、编码文件名、query/fragment/title 保留、definition、图片、autolink、目录、切换行精确豁免、活动语料缺 sibling 仍报违规与 content plane。
 
 **限制**：spec 使用临时 fixture，不覆盖网站投影后的最终 URL；percent-encoding 只覆盖列出的 RFC 3986 边界；切换器豁免是 source-product 的精确文本形态；代码围栏排除来自 mdast，未单独断言；不判断译文内容是否正确。
 
 <a id="m-enforcement-scripts-1-snapshot-workspace-placement"></a>
-### enforcement-scripts-1-snapshot-workspace-placement — 快照工作区必须位于自动临时写授权之外 {#enforcement-scripts-1-snapshot-workspace-placement}
+
+<a id="enforcement-scripts-1-snapshot-workspace-placement"></a>
+
+### enforcement-scripts-1-snapshot-workspace-placement — 快照工作区必须位于自动临时写授权之外
 
 **问题**：如果快照 workspace 落在 `/tmp` 等自动临时写授权内，workspace-write 沙箱测试会在没有真实 workspace grant 的情况下通过，产生假绿；平台 tmp 还可能是 symlink、系统目录或不可写父目录。
 
@@ -250,7 +264,10 @@
 **限制**：这是测试资源放置，不证明 snapshot replay 语义。只检查 workspace-write 模式与 `writableRoots` 返回的 `/tmp`、platform tmpdir；`workspaceRoot` 传的是合成 `/tmp`，不是调用者真实项目根。其他 sandbox 模式、容器内路径映射与未来新增写根未覆盖；无测试执行。
 
 <a id="m-enforcement-scripts-1-local-bundle-registry"></a>
-### enforcement-scripts-1-local-bundle-registry — 本地 bundle registry：catalog 根打印、当前构建检查、唯一运行目录与完成标记 {#enforcement-scripts-1-local-bundle-registry}
+
+<a id="enforcement-scripts-1-local-bundle-registry"></a>
+
+### enforcement-scripts-1-local-bundle-registry — 本地 bundle registry：catalog 根打印、当前构建检查、唯一运行目录与完成标记
 
 **问题**：官方按需 bundle 在发布到 npm 前需要被 packaged test app 安装。如果本地 registry 服务旧构建、任意包或半打包目录，测试会验证错误字节；如果运行目录可被后续运行覆盖，失败现场也无法复现。
 
@@ -284,10 +301,8 @@
 **证据**：
 
 <a id="m-enforcement-scripts-1-registry-1"></a>
-- `deepseek-harness/scripts/local-bundle-registry.ts:1-183,225-355,400-500,745-770@687f282e`：闭包选择、archive 校验、manifest 写入与 HTTP 服务实现；目录只是唯一命名，不是独占创建。
-<a id="m-enforcement-scripts-1-registry-2"></a>
-- `deepseek-harness/scripts/local-bundle-registry.spec.ts:1-123,300-559@687f282e`：覆盖真实 catalog 闭包、必需/可选/peer 边、foreign-target、archive main/patch、manifest 结构、HTTP 响应、同版本重建与缓存失效需要清理 stale resolution。
-<a id="m-enforcement-scripts-1-registry-3"></a>
+- `deepseek-harness/scripts/local-bundle-registry.ts:1-183,225-355,400-500,745-770@687f282e`：闭包选择、archive 校验、manifest 写入与 HTTP 服务实现；目录只是唯一命名，不是独占创建。 <a id="m-enforcement-scripts-1-registry-2"></a>
+- `deepseek-harness/scripts/local-bundle-registry.spec.ts:1-123,300-559@687f282e`：覆盖真实 catalog 闭包、必需/可选/peer 边、foreign-target、archive main/patch、manifest 结构、HTTP 响应、同版本重建与缓存失效需要清理 stale resolution。 <a id="m-enforcement-scripts-1-registry-3"></a>
 - `deepseek-harness/scripts/dev-bundle-registry.ts:1-170@687f282e`：CLI 编排，包括 catalog-only printed roots、`build:official`/`verifyBuiltBundles`、唯一运行目录、manifest 完成标记、summary 与信号清理；其自身没有专用 spec。
 
 **限制**：`local-bundle-registry.spec.ts` 覆盖 helper，`dev-bundle-registry.ts` 的 CLI 编排、信号处理、端口冲突与并发运行没有专用 spec。构建/安装成功仍依赖外部 pnpm 与 packaged app；registry 本身不验证产品行为。这是 known-source-limitation，不作为已执行的自动保证。

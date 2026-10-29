@@ -1332,11 +1332,11 @@
         "显式验证盲区：空树通过、删除某必需指南仍通过、只放 guide.md 的 item 仍通过、旧版本目录可改、i18n.yaml 内容不解析",
         "把链接与配对交给独立门禁：verify-md-links、verify-translation-pairing；不要在升级门里重复实现",
         "在评审模板中补上脚本无法判断的检查项",
-        "不要把本包 CI 的 documentation-tools job（只运行 test-doc-gates 回归）当成目标语料已被门禁；真实消费者 CI 尚未激活这些命令"
+        "不要把本包 CI 的 documentation-tools job 当成消费者语料已被门禁：该 job 登记了工具回归、本产品链接/换行和公开导出检查，没有替消费者激活升级形态门或配对门"
       ],
       "enforcement": {
         "mode": "automatic-shape-gate-with-documented-blind-spots（源 CI）+ 本包可执行同语义门（目标激活）",
-        "implementation": "verify-upgrade-guides.ts 是纯函数 collectUpgradeGuideViolations + CLI；run-gates 把 upgrade-guides 注册为 quick 门，出现在 docSyncLeafGates 与 docQuickLeafGates 中；package.json 暴露 verify-upgrade-guides、test:docs、doc-sync；SKILL.md:48-54 是源项目的三条验证命令。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，包含同一 collect 语义（递归枚举、路径正则、frontmatter/YAML、depth<=2 outline 形状、whitespace 词数、空树通过、i18n 不解析、H3+ 忽略、中文不计数、只检查已存在文件）；CLI 在空树时打印 “is absent; nothing to check” 而不是静默通过。源 CLI 只显式使用 0/1；移植版另加 2（参数、缺根、依赖不可用），不要反推源也有 2。该命令不会自动出现在目标 CI：本包 CI 的 documentation-tools job 只运行 test-doc-gates，没有对真实消费者语料运行形态门。",
+        "implementation": "verify-upgrade-guides.ts 是纯函数 collectUpgradeGuideViolations + CLI；run-gates 把 upgrade-guides 注册为 quick 门，出现在 docSyncLeafGates 与 docQuickLeafGates 中；package.json 暴露 verify-upgrade-guides、test:docs、doc-sync；SKILL.md:48-54 是源项目的三条验证命令。本包已交付 tools/doc-gates/verify-upgrade-guides.mjs，包含同一 collect 语义（递归枚举、路径正则、frontmatter/YAML、depth<=2 outline 形状、whitespace 词数、空树通过、i18n 不解析、H3+ 忽略、中文不计数、只检查已存在文件）；CLI 在空树时打印 “is absent; nothing to check” 而不是静默通过。源 CLI 只显式使用 0/1；移植版另加 2（参数、缺根、依赖不可用），不要反推源也有 2。该命令不会自动出现在目标 CI：本包 documentation-tools job 登记了工具回归、本产品链接/换行和公开导出检查，没有对真实消费者语料运行升级形态门。",
         "trust": "形态可机械证明；门禁接线可核对；完整性/准确性不可由该门证明。",
         "failure": "形态违规以 1 退出；语义/覆盖缺失不会失败；YAML 语法错误会以未捕获异常终止而不是进入违规列表；参数错误或解析依赖缺失在移植版以 2 退出（不当作通过）。",
         "exceptions": [

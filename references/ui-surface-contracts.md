@@ -42,7 +42,9 @@
 - `deepseek-harness/docs/ui-radius.md:19-21,52-56,70-75,110-117@687f282e`：范围与局部调整权威、`corner-shape: superellipse(1.5)`、全圆/胶囊配对、嵌套几何、应用与验证。
 - 本域只引用与 Note 机制直接相关的段落（复用控件、焦点/reduced-motion、降级臂几何、全圆退出）；其余圆角/token 细节以这两份文档为准。
 
-## 1. 唯一渲染派生：同一 wire 契约只允许一个 model {#ui-surface-contracts-single-render-derivation}
+<a id="ui-surface-contracts-single-render-derivation"></a>
+
+## 1. 唯一渲染派生：同一 wire 契约只允许一个 model
 
 ### 触发条件
 
@@ -100,7 +102,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-24-new-session-clears-to-empty-state.zh.md:12-18@687f282e`
 - `deepseek-harness/docs/web-styling.md:14-16@687f282e`（先复用控件；ui-primitives 目录是唯一跨包通道）
 
-## 2. 渐进增强的降级臂必须保持几何与内容等价 {#ui-surface-contracts-progressive-fallback-parity}
+<a id="ui-surface-contracts-progressive-fallback-parity"></a>
+
+## 2. 渐进增强的降级臂必须保持几何与内容等价
 
 ### 触发条件
 
@@ -161,7 +165,9 @@
 - `deepseek-harness/docs/web-styling.md:23-24@687f282e`
 - `deepseek-harness/docs/ui-radius.md:52-56@687f282e`
 
-## 3. 阅读模式与派生展示状态从日志/快照重算，不写回持久层 {#ui-surface-contracts-derived-view-state}
+<a id="ui-surface-contracts-derived-view-state"></a>
+
+## 3. 阅读模式与派生展示状态从日志/快照重算，不写回持久层
 
 ### 触发条件
 
@@ -214,7 +220,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.md:16-20,34@687f282e`（`StatsLine` 从快照客户端派生；不新增事件/投影）
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-composer-stats-and-input-polish.zh.md:16-20@687f282e`
 
-## 4. 时间、耗时与窗口计数必须说明测量范围 {#ui-surface-contracts-temporal-truthfulness}
+<a id="ui-surface-contracts-temporal-truthfulness"></a>
+
+## 4. 时间、耗时与窗口计数必须说明测量范围
 
 ### 触发条件
 
@@ -272,7 +280,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md:14-26,44@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md:14-26@687f282e`
 
-## 5. 指针与键盘共享唯一高亮，动作 chrome 不得只靠 hover 发现 {#ui-surface-contracts-single-focus-ownership}
+<a id="ui-surface-contracts-single-focus-ownership"></a>
+
+## 5. 指针与键盘共享唯一高亮，动作 chrome 不得只靠 hover 发现
 
 ### 触发条件
 
@@ -330,7 +340,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md:14-26,44@687f282e`（`aria-expanded` 切换）
 - `deepseek-harness/docs/web-styling.md:23@687f282e`
 
-## 6. 宽高受限的交互面板必须让决策内容、校验与控件保持可达 {#ui-surface-contracts-bounded-panel-reachability}
+<a id="ui-surface-contracts-bounded-panel-reachability"></a>
+
+## 6. 宽高受限的交互面板必须让决策内容、校验与控件保持可达
 
 ### 触发条件
 
@@ -385,7 +397,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-read-card-frontend.md:14-26,44@687f282e`（高度上限、`aria-expanded`、窗口计数、空窗口隐藏 copy）
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-read-card-frontend.zh.md:14-26@687f282e`
 
-## 7. 反馈分类由单一所有者定义、写入校验，客户端重述必须编译期完备 {#ui-surface-contracts-feedback-taxonomy}
+<a id="ui-surface-contracts-feedback-taxonomy"></a>
+
+## 7. 反馈分类由单一所有者定义、写入校验，客户端重述必须编译期完备
 
 ### 触发条件
 
@@ -441,7 +455,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md:46-54@687f282e`（反馈对模型不可见；不进入 Session log/模型上下文/telemetry）
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md:46-54@687f282e`
 
-## 8. 反馈目标身份可选且不可伪造，逐条版本冲突从回复收敛 {#ui-surface-contracts-feedback-target-cas}
+<a id="ui-surface-contracts-feedback-target-cas"></a>
+
+## 8. 反馈目标身份可选且不可伪造，逐条版本冲突从回复收敛
 
 ### 触发条件
 
@@ -494,7 +510,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.md:14-34,46-54,58@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-message-feedback-web-surface.zh.md:14-34,46-54@687f282e`
 
-## 9. 可互换 shell 工具必须共享解析并呈现为同一种卡片 {#ui-surface-contracts-shell-presentation-parity}
+<a id="ui-surface-contracts-shell-presentation-parity"></a>
+
+## 9. 可互换 shell 工具必须共享解析并呈现为同一种卡片
 
 ### 触发条件
 
@@ -545,7 +563,9 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.md:10-18,30-32@687f282e`
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-05-pwsh-ui-bash-parity.zh.md:10-18,30-32@687f282e`
 
-## 10. 插件提示符值用存储字符串 + 合并通知，并明确 ANSI 信任边界 {#ui-surface-contracts-prompt-registry-trust}
+<a id="ui-surface-contracts-prompt-registry-trust"></a>
+
+## 10. 插件提示符值用存储字符串 + 合并通知，并明确 ANSI 信任边界
 
 ### 触发条件
 

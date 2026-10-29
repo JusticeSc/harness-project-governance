@@ -13,7 +13,10 @@
 ## Mechanisms
 
 <a id="m-website-contracts-config-single-source"></a>
-### website-contracts-config-single-source — 站点配置的单一来源：清单派生导航、editSource 失败关闭与可处置输出目录 {#website-contracts-config-single-source}
+
+<a id="website-contracts-config-single-source"></a>
+
+### website-contracts-config-single-source — 站点配置的单一来源：清单派生导航、editSource 失败关闭与可处置输出目录
 
 **问题。** 站点导航、侧栏、模块标签与编辑链接若在配置里各写一份，发布清单新增/移动页面后就会缺页或指向旧路由。输出目录、缓存与公开资源若混放，生成物会被跟踪或因清理而丢失。
 
@@ -49,7 +52,10 @@
 **失败与例外。** 缺 `editSource` 时渲染/构建抛错；清单与 locale 集合不一致时导航缺页或链接 404；把资源放进 `.generated` 会随清理丢失；子路径部署未使用 base 时 favicon 与 raw 链接失效。未发布页面不需要 `editSource`，因为它不进入站点。链接投影算法不在本机制内。
 
 <a id="m-website-contracts-vue-interpolation-safety"></a>
-### website-contracts-vue-interpolation-safety — 正文与行内代码的 Vue 插值转义，以及围栏渲染的失败关闭与构建期缓存 {#website-contracts-vue-interpolation-safety}
+
+<a id="website-contracts-vue-interpolation-safety"></a>
+
+### website-contracts-vue-interpolation-safety — 正文与行内代码的 Vue 插值转义，以及围栏渲染的失败关闭与构建期缓存
 
 **问题。** VitePress 的 Markdown 输出会进入 Vue 编译；正文或行内代码中的字面量 `{{ }}` 会被当作模板表达式。全局替换 HTML 又会破坏代码围栏与 Mermaid。
 
@@ -75,7 +81,10 @@
 **失败与例外。** 未转义时正文出现空白或表达式被执行；误转义围栏会破坏代码示例；缺原生规则时静默跳过会让转义整体失效。作者写在原始 HTML 块里的内容不经过这两条规则，需自行保证安全。本域在固定提交的 `website/tests`、`website/.vitepress` 与全仓 `*.spec.ts` 中对 `escapeVueInterpolation`、`Interpolation`、`code_inline`、`&#123;` 及字面量 `{{` 做了有界检索，未发现专门回归测试；这是有界检索，不是逐行全审或“绝无测试”的证明，且测试未运行。
 
 <a id="m-website-contracts-code-group-isolation"></a>
-### website-contracts-code-group-isolation — 代码组分组的表单隔离、MPA 全量可见与搜索摘要可见性 {#website-contracts-code-group-isolation}
+
+<a id="website-contracts-code-group-isolation"></a>
+
+### website-contracts-code-group-isolation — 代码组分组的表单隔离、MPA 全量可见与搜索摘要可见性
 
 **问题。** VitePress 本地搜索会把编译后的代码组 HTML 重新挂载到摘要；原生 radio 复用相同 `name`，摘要中点选平台会清掉正文的选择。MPA 构建没有客户端 tab 处理器，非活动块会永久隐藏。
 
@@ -107,7 +116,10 @@
 **失败与例外。** 摘要选择清空正文选择；MPA 只显示第一个命令；VitePress 标记变化时未抛错会静默失去隔离。普通代码围栏不属于代码组，不应用本机制；非 MPA 构建不得注入 fallback。
 
 <a id="m-website-contracts-raw-dev-serving"></a>
-### website-contracts-raw-dev-serving — 开发服务器 raw Markdown 请求路由：显式 404、Vite 模块直通与 HEAD 语义 {#website-contracts-raw-dev-serving}
+
+<a id="website-contracts-raw-dev-serving"></a>
+
+### website-contracts-raw-dev-serving — 开发服务器 raw Markdown 请求路由：显式 404、Vite 模块直通与 HEAD 语义
 
 **问题。** 开发服务器若把所有 `.md` 请求都当 raw 文档，会劫持 Vite 的页面模块导入；反过来，对未发布页面返回 200 会泄露草稿。
 
@@ -139,7 +151,10 @@
 **失败与例外。** 脚本导入被 raw 响应劫持会使页面白屏；未发布 raw 泄露；投影异常被吞掉会返回 200 空内容；错误 content-type 会让复制动作拒绝内容。该中间件只服务开发服务器；生产 raw 孪生由 `buildEnd` 生成。
 
 <a id="m-website-contracts-page-markdown-actions"></a>
-### website-contracts-page-markdown-actions — 页面 Markdown 操作：rawMarkdownPath 门槛、水合前直链、复制请求与页面级取消 {#website-contracts-page-markdown-actions}
+
+<a id="website-contracts-page-markdown-actions"></a>
+
+### website-contracts-page-markdown-actions — 页面 Markdown 操作：rawMarkdownPath 门槛、水合前直链、复制请求与页面级取消
 
 **问题。** 复制原始 Markdown 是异步浏览器权限操作；若在 `await` 之后才写剪贴板、或在路由切换后继续更新旧页状态，会出现权限失败、串页或错误内容。
 
@@ -177,7 +192,10 @@
 **失败与例外。** `await` 后再写剪贴板会丢用户手势；旧请求完成会污染新页面状态；缺 `rawMarkdownPath` 仍渲染会导致 404 直链；不校验 content-type 会把 HTML 错误页复制成 Markdown。没有 `rawMarkdownPath` 的页面是正常无操作页，不是错误；静态宿主把 `.md` 作为 `text/plain` 返回是允许的。
 
 <a id="m-website-contracts-media-viewer"></a>
-### website-contracts-media-viewer — 共享图片/图表查看器：增强资格、单一模态、焦点与资源生命周期 {#website-contracts-media-viewer}
+
+<a id="website-contracts-media-viewer"></a>
+
+### website-contracts-media-viewer — 共享图片/图表查看器：增强资格、单一模态、焦点与资源生命周期
 
 **问题。** 图片与 Mermaid 图需要全屏查看，但增强逻辑若移动源元素会破坏 Markdown 投影；若每个图各自创建模态，会出现多个 dialog、滚动锁泄漏、焦点丢失与旧内容残留。
 
@@ -221,7 +239,10 @@
 **失败与例外。** 移动源图片会破坏投影；多个模态会泄漏滚动锁；`srcset` 变化未关闭会显示旧图；dispose 不彻底会留下监听器或孤儿按钮。链接图片、行内图片、装饰图片、`data-no-zoom` 容器内图片与失败图片保持原交互；Mermaid 尺寸不可用时不加按钮。
 
 <a id="m-website-contracts-theme-test-evidence"></a>
-### website-contracts-theme-test-evidence — 主题契约测试：JSDOM 行为断言、按 locale 的 expected 快照与真实浏览器边界 {#website-contracts-theme-test-evidence}
+
+<a id="website-contracts-theme-test-evidence"></a>
+
+### website-contracts-theme-test-evidence — 主题契约测试：JSDOM 行为断言、按 locale 的 expected 快照与真实浏览器边界
 
 **问题。** 主题行为、可访问名称与本地化标记容易在重构中退化；人工点页面无法稳定回归，而把 JSDOM 结果当真实浏览器证明又会漏掉原生模态、布局与剪贴板差异。
 

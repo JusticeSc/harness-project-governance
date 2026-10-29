@@ -117,14 +117,7 @@
 
 **证据限制。** 本机制未执行门禁；`verify-subsystem-pages` 只检查英文组 README 的直接链接，不检查索引表与页首描述是否同义。本域只覆盖 33 页；索引页列出的其余页面不在本域证据范围。
 
-来源：deepseek-harness/docs/subsystems/README.md:1-76@687f282e
-来源：deepseek-harness/docs/AGENTS.md:17-33@687f282e
-来源：deepseek-harness/scripts/verify-subsystem-pages.ts:1-30@687f282e
-来源：deepseek-harness/scripts/verify-subsystem-pages.ts:34-61@687f282e
-来源：deepseek-harness/scripts/verify-subsystem-pages.ts:62-137@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:40-52@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1131-1190@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:846-846@687f282e
+来源：deepseek-harness/docs/subsystems/README.md:1-76@687f282e 来源：deepseek-harness/docs/AGENTS.md:17-33@687f282e 来源：deepseek-harness/scripts/verify-subsystem-pages.ts:1-30@687f282e 来源：deepseek-harness/scripts/verify-subsystem-pages.ts:34-61@687f282e 来源：deepseek-harness/scripts/verify-subsystem-pages.ts:62-137@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:40-52@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1131-1190@687f282e 来源：deepseek-harness/scripts/run-gates.ts:846-846@687f282e
 
 <a id="subsystem-contracts-1-tier-home-and-page-scope"></a>
 ## subsystem-contracts-1-tier-home-and-page-scope — 事实单一归属：参考层级与页作用域
@@ -161,14 +154,7 @@
 
 **证据限制。** 分层表是散文规则，无机械校验；本机制为评审强制。“哪些页真正做到了单一归属”需要评审判断；本域已逐页阅读 33 个英文页与 33 个中文页的作者区，但阅读本身不能证明全库无重复。
 
-来源：deepseek-harness/docs/AGENTS.md:17-33@687f282e
-来源：deepseek-harness/docs/AGENTS.md:41-42@687f282e
-来源：deepseek-harness/docs/AGENTS.md:67-70@687f282e
-来源：deepseek-harness/docs/subsystems/README.md:5-5@687f282e
-来源：deepseek-harness/docs/subsystems/compaction.md:1-5@687f282e
-来源：deepseek-harness/docs/subsystems/storage.md:1-7@687f282e
-来源：deepseek-harness/docs/subsystems/web.md:1-7@687f282e
-来源：deepseek-harness/docs/subsystems/skills.md:1-6@687f282e
+来源：deepseek-harness/docs/AGENTS.md:17-33@687f282e 来源：deepseek-harness/docs/AGENTS.md:41-42@687f282e 来源：deepseek-harness/docs/AGENTS.md:67-70@687f282e 来源：deepseek-harness/docs/subsystems/README.md:5-5@687f282e 来源：deepseek-harness/docs/subsystems/compaction.md:1-5@687f282e 来源：deepseek-harness/docs/subsystems/storage.md:1-7@687f282e 来源：deepseek-harness/docs/subsystems/web.md:1-7@687f282e 来源：deepseek-harness/docs/subsystems/skills.md:1-6@687f282e
 
 <a id="subsystem-contracts-1-same-change-type-authority"></a>
 ## subsystem-contracts-1-same-change-type-authority — 类型权威与同变更更新义务
@@ -208,14 +194,7 @@
 
 **证据限制。** 未运行验证器；未逐条核对 493 条清单条目；本域 33 页中只有 27 页含 `type-equiv` 块。`public-api` 仅 `session` 页出现 1 次。
 
-来源：deepseek-harness/docs/AGENTS.md:43-44@687f282e
-来源：deepseek-harness/docs/subsystems/README.md:76-76@687f282e
-来源：deepseek-harness/docs/subsystems/compaction.md:23-23@687f282e
-来源：deepseek-harness/docs/subsystems/session.md:250-523@687f282e
-来源：deepseek-harness/scripts/verify-type-equiv.ts:280-391@687f282e
-来源：deepseek-harness/scripts/type-equiv.manifest.json:1-3@687f282e
-来源：deepseek-harness/scripts/type-equiv.manifest.json:588-614@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:824-824@687f282e
+来源：deepseek-harness/docs/AGENTS.md:43-44@687f282e 来源：deepseek-harness/docs/subsystems/README.md:76-76@687f282e 来源：deepseek-harness/docs/subsystems/compaction.md:23-23@687f282e 来源：deepseek-harness/docs/subsystems/session.md:250-523@687f282e 来源：deepseek-harness/scripts/verify-type-equiv.ts:280-391@687f282e 来源：deepseek-harness/scripts/type-equiv.manifest.json:1-3@687f282e 来源：deepseek-harness/scripts/type-equiv.manifest.json:588-614@687f282e 来源：deepseek-harness/scripts/run-gates.ts:824-824@687f282e
 
 <a id="subsystem-contracts-1-generated-cordis-region"></a>
 ## subsystem-contracts-1-generated-cordis-region — 生成区边界与 Cordis API 新鲜度
@@ -256,22 +235,7 @@
 
 **部分本地化对照的独立追查修复。** 主26对严格比较有效，但旧364项对照中的18项误把非首个URL换成内部规范化值。新 `verification/evidence/raw/p1-partial-localization-after.json` 保留其余原始英文目标：18项均确认原始目标保留、内部规范化URL数为0，且仅由独立locale检查拒绝；8个单目标区域明确不适用。总数与主比较结论不变，旧raw、不利复核及before保留；相同绿色计数不能代替核实变异输入。
 
-来源：deepseek-harness/docs/subsystems/README.md:5-5@687f282e
-来源：deepseek-harness/docs/AGENTS.md:33-33@687f282e
-来源：deepseek-harness/docs/subsystems/session.md:812-820@687f282e
-来源：deepseek-harness/docs/subsystems/credentials.md:65-68@687f282e
-来源：deepseek-harness/docs/subsystems/credentials.md:490-493@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-32@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1189-1200@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1262-1307@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1198-1260@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1227-1257@687f282e
-来源：deepseek-harness/packages/typert/generator/src/cordis-catalog.ts:958-962@687f282e
-来源：deepseek-harness/packages/typert/generator/src/cordis-catalog.ts:1056-1067@687f282e
-来源：deepseek-harness/packages/typert/generator/tests/cordis-catalog.spec.ts:41-64@687f282e
-来源：deepseek-harness/scripts/translation-pairing-record.ts:152-163@687f282e
-来源：deepseek-harness/docs/i18n/README.md:50-54@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:825-825@687f282e
+来源：deepseek-harness/docs/subsystems/README.md:5-5@687f282e 来源：deepseek-harness/docs/AGENTS.md:33-33@687f282e 来源：deepseek-harness/docs/subsystems/session.md:812-820@687f282e 来源：deepseek-harness/docs/subsystems/credentials.md:65-68@687f282e 来源：deepseek-harness/docs/subsystems/credentials.md:490-493@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-32@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1189-1200@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1262-1307@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1198-1260@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1227-1257@687f282e 来源：deepseek-harness/packages/typert/generator/src/cordis-catalog.ts:958-962@687f282e 来源：deepseek-harness/packages/typert/generator/src/cordis-catalog.ts:1056-1067@687f282e 来源：deepseek-harness/packages/typert/generator/tests/cordis-catalog.spec.ts:41-64@687f282e 来源：deepseek-harness/scripts/translation-pairing-record.ts:152-163@687f282e 来源：deepseek-harness/docs/i18n/README.md:50-54@687f282e 来源：deepseek-harness/scripts/run-gates.ts:825-825@687f282e
 
 <a id="subsystem-contracts-1-bilingual-triplet"></a>
 ## subsystem-contracts-1-bilingual-triplet — 双语三件套与外区哈希配对
@@ -313,15 +277,7 @@
 
 **证据限制。** 未运行配对门禁。33 个中文页的作者区已逐页读取；中文生成区只读抽样与边界；侧车逐文件全文读取但只作为哈希/结构证据，不当作译文质量证据。33 页的配对节计数由行数机械推算。超过显示宽度上限的行（英文含 `docs/i18n/README.md:22`、`:69`；中文候选行见 coverage）已用 `:raw` 重读。
 
-来源：deepseek-harness/docs/i18n/README.md:8-44@687f282e
-来源：deepseek-harness/docs/i18n/README.md:50-50@687f282e
-来源：deepseek-harness/docs/i18n/README.md:69-69@687f282e
-来源：deepseek-harness/docs/AGENTS.md:45-45@687f282e
-来源：deepseek-harness/docs/subsystems/session.md:1-3@687f282e
-来源：deepseek-harness/docs/subsystems/session.zh.md:1-3@687f282e
-来源：deepseek-harness/docs/subsystems/filesystem.i18n.yaml:1-12@687f282e
-来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-80@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:5-8@687f282e
+来源：deepseek-harness/docs/i18n/README.md:8-44@687f282e 来源：deepseek-harness/docs/i18n/README.md:50-50@687f282e 来源：deepseek-harness/docs/i18n/README.md:69-69@687f282e 来源：deepseek-harness/docs/AGENTS.md:45-45@687f282e 来源：deepseek-harness/docs/subsystems/session.md:1-3@687f282e 来源：deepseek-harness/docs/subsystems/session.zh.md:1-3@687f282e 来源：deepseek-harness/docs/subsystems/filesystem.i18n.yaml:1-12@687f282e 来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-80@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:5-8@687f282e
 
 <a id="subsystem-contracts-1-doc-sync-gates"></a>
 ## subsystem-contracts-1-doc-sync-gates — doc-sync 门禁组合与按触发执行
@@ -359,13 +315,7 @@
 
 **证据限制。** 未运行任何门禁；未验证 CI 配置或分支保护。门禁清单是固定提交的事实，目标项目会演化，迁移时应以目标 `package.json`/runner 为准。
 
-来源：deepseek-harness/docs/i18n/README.md:30-40@687f282e
-来源：deepseek-harness/docs/AGENTS.md:42-48@687f282e
-来源：deepseek-harness/docs/AGENTS.md:61-61@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:122-134@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:805-874@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:881-883@687f282e
-来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e
+来源：deepseek-harness/docs/i18n/README.md:30-40@687f282e 来源：deepseek-harness/docs/AGENTS.md:42-48@687f282e 来源：deepseek-harness/docs/AGENTS.md:61-61@687f282e 来源：deepseek-harness/scripts/run-gates.ts:122-134@687f282e 来源：deepseek-harness/scripts/run-gates.ts:805-874@687f282e 来源：deepseek-harness/scripts/run-gates.ts:881-883@687f282e 来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e
 
 <a id="subsystem-contracts-1-capability-seam-ownership"></a>
 ## subsystem-contracts-1-capability-seam-ownership — 可选能力 seam 的 Definition/Provider/Consumer 归属
@@ -404,16 +354,7 @@
 
 **证据限制。** 三角色完整性没有机械校验；33 个英文页与 33 个中文页的作者区已逐页阅读，但“页首三角色是否同等完整”仍由评审判断。Provider 实现是否真的解耦，本域未读实现代码。
 
-来源：deepseek-harness/docs/subsystems/filesystem.md:1-7@687f282e
-来源：deepseek-harness/docs/subsystems/web.md:1-7@687f282e
-来源：deepseek-harness/docs/subsystems/compaction.md:1-5@687f282e
-来源：deepseek-harness/docs/subsystems/storage.md:1-7@687f282e
-来源：deepseek-harness/docs/subsystems/skills.md:1-6@687f282e
-来源：deepseek-harness/docs/subsystems/shell.md:1-4@687f282e
-来源：deepseek-harness/docs/subsystems/spill.md:1-5@687f282e
-来源：deepseek-harness/docs/subsystems/client-modules.md:1-4@687f282e
-来源：deepseek-harness/docs/subsystems/credentials.md:1-5@687f282e
-来源：deepseek-harness/docs/subsystems/office-to-pdf.md:1-8@687f282e
+来源：deepseek-harness/docs/subsystems/filesystem.md:1-7@687f282e 来源：deepseek-harness/docs/subsystems/web.md:1-7@687f282e 来源：deepseek-harness/docs/subsystems/compaction.md:1-5@687f282e 来源：deepseek-harness/docs/subsystems/storage.md:1-7@687f282e 来源：deepseek-harness/docs/subsystems/skills.md:1-6@687f282e 来源：deepseek-harness/docs/subsystems/shell.md:1-4@687f282e 来源：deepseek-harness/docs/subsystems/spill.md:1-5@687f282e 来源：deepseek-harness/docs/subsystems/client-modules.md:1-4@687f282e 来源：deepseek-harness/docs/subsystems/credentials.md:1-5@687f282e 来源：deepseek-harness/docs/subsystems/office-to-pdf.md:1-8@687f282e
 
 <a id="subsystem-contracts-1-exclusive-provider-registration"></a>
 ## subsystem-contracts-1-exclusive-provider-registration — 唯一提供方槽与会话资源所有权
@@ -494,8 +435,4 @@
 - `subsystem-contracts-1-bilingual-triplet`：`deepseek-harness/docs/subsystems/session.md:1-3@687f282e`、`deepseek-harness/docs/subsystems/session.zh.md:1-3@687f282e`
 - `subsystem-contracts-1-exclusive-provider-registration`：`deepseek-harness/docs/subsystems/browser-use.md:1-40@687f282e`
 
-来源：deepseek-harness/docs/subsystems/browser-use.md:1-40@687f282e
-来源：deepseek-harness/docs/subsystems/browser-use.md:41-67@687f282e
-来源：deepseek-harness/docs/subsystems/computer-use.md:1-32@687f282e
-来源：deepseek-harness/docs/subsystems/computer-use.md:33-59@687f282e
-来源：deepseek-harness/docs/subsystems/README.md:43-44@687f282e
+来源：deepseek-harness/docs/subsystems/browser-use.md:1-40@687f282e 来源：deepseek-harness/docs/subsystems/browser-use.md:41-67@687f282e 来源：deepseek-harness/docs/subsystems/computer-use.md:1-32@687f282e 来源：deepseek-harness/docs/subsystems/computer-use.md:33-59@687f282e 来源：deepseek-harness/docs/subsystems/README.md:43-44@687f282e

@@ -1,8 +1,6 @@
 # 包契约域治理迁移参考（package-contracts-7）
 
-> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。
-> 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。只引用实际读过的范围；未读的脚本与实现源码列入证据限制。53 个中文正文已 1-EOF 全文阅读；20 个中文文件的 44 行 display width >700（其中 35 行 >768）与 27 个英文文件的 95 行 >768 字符长行已用 `:raw` 重读。
-> 标记约定：**[源规则]** 表示源仓有明确文字、配置或脚本引用；**[源事实]** 表示从源 README 观察到的实现行为；**[迁移设计]** 表示为了让这些要求在采用项目可执行而设计的落地方式；**[建议]** 表示源仓未强制、但采用时可降低风险的附加做法。迁移设计不冒充源规则。
+> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。只引用实际读过的范围；未读的脚本与实现源码列入证据限制。53 个中文正文已 1-EOF 全文阅读；20 个中文文件的 44 行 display width >700（其中 35 行 >768）与 27 个英文文件的 95 行 >768 字符长行已用 `:raw` 重读。 标记约定：**[源规则]** 表示源仓有明确文字、配置或脚本引用；**[源事实]** 表示从源 README 观察到的实现行为；**[迁移设计]** 表示为了让这些要求在采用项目可执行而设计的落地方式；**[建议]** 表示源仓未强制、但采用时可降低风险的附加做法。迁移设计不冒充源规则。
 
 ## 0. 使用契约与读者入口
 
@@ -34,7 +32,9 @@
 
 ---
 
-## 1. 包 README 契约：采用者先看什么 {#package-contracts-7.readme-contract}
+<a id="package-contracts-7.readme-contract"></a>
+
+## 1. 包 README 契约：采用者先看什么
 
 **什么时候读.** 新建包、改包能力、改配置面、发布前审阅，或者采用者问“这个包能不能直接用”。
 
@@ -78,7 +78,9 @@
 
 ---
 
-## 2. 包分组与依赖方向：每个包恰好一个组 {#package-contracts-7.group-map}
+<a id="package-contracts-7.group-map"></a>
+
+## 2. 包分组与依赖方向：每个包恰好一个组
 
 **什么时候读.** 新包选目录、包职责变化、跨组依赖、读者找不到包。
 
@@ -117,7 +119,9 @@
 
 ---
 
-## 3. 包状态与默认交付：实验 ≠ 已发布 ≠ 默认挂载 {#package-contracts-7.status-classification}
+<a id="package-contracts-7.status-classification"></a>
+
+## 3. 包状态与默认交付：实验 ≠ 已发布 ≠ 默认挂载
 
 **什么时候读.** 新增包、把包移入/移出 `experimental/`、修改 shipped profile、发布说明。
 
@@ -158,7 +162,9 @@
 
 ---
 
-## 4. 能力缝：扩展依赖 Service Definition，模型面只有一个 owner {#package-contracts-7.capability-seam}
+<a id="package-contracts-7.capability-seam"></a>
+
+## 4. 能力缝：扩展依赖 Service Definition，模型面只有一个 owner
 
 **什么时候读.** 同一能力有多个实现（LSP provider、skill provider、shell executor、sandbox policy），或消费者开始直接 import 具体 provider。
 
@@ -200,7 +206,9 @@
 
 ---
 
-## 5. 组合装配：能在加载期失败，就不要拖到运行期 {#package-contracts-7.composition-wiring}
+<a id="package-contracts-7.composition-wiring"></a>
+
+## 5. 组合装配：能在加载期失败，就不要拖到运行期
 
 **什么时候读.** 插件“装了没效果”、宿主/客户端只挂一半、profile/preset 组合、诊断缺服务。
 
@@ -241,7 +249,9 @@
 
 ---
 
-## 6. 配置面：可枚举、可校验、可解释优先级 {#package-contracts-7.configuration-surface}
+<a id="package-contracts-7.configuration-surface"></a>
+
+## 6. 配置面：可枚举、可校验、可解释优先级
 
 **什么时候读.** 新增/删除配置字段、修改默认值、profile/patch/CLI/表单优先级、诊断“设了没生效”。
 
@@ -329,7 +339,9 @@
 
 ---
 
-## 8. 失败关闭：安全边界不能回退到更宽权限 {#package-contracts-7.fail-closed-security}
+<a id="package-contracts-7.fail-closed-security"></a>
+
+## 8. 失败关闭：安全边界不能回退到更宽权限
 
 **什么时候读.** 权限、沙箱、审批、hook、动态代码、浏览器控制或任何“失败后是否继续”的分支。
 
@@ -373,7 +385,9 @@
 
 ---
 
-## 9. 凭据通道：配置只存名称，值走服务/环境 {#package-contracts-7.credentials-channel}
+<a id="package-contracts-7.credentials-channel"></a>
+
+## 9. 凭据通道：配置只存名称，值走服务/环境
 
 **什么时候读.** 新增 provider、登录流、外部服务、代理或测试替身。
 
@@ -416,7 +430,9 @@
 
 ---
 
-## 10. 所有权与生命周期：注册返回 disposer，关闭要等静止 {#package-contracts-7.ownership-lifecycle}
+<a id="package-contracts-7.ownership-lifecycle"></a>
+
+## 10. 所有权与生命周期：注册返回 disposer，关闭要等静止
 
 **什么时候读.** 插件卸载/热重载、注册服务/槽位/provider/监听、关闭客户端/Session/后台任务、诊断重复注册或泄漏。
 
@@ -461,7 +477,9 @@
 
 ---
 
-## 11. 扩展点：声明式槽位、优先级与整项替换 {#package-contracts-7.extension-points}
+<a id="package-contracts-7.extension-points"></a>
+
+## 11. 扩展点：声明式槽位、优先级与整项替换
 
 **什么时候读.** 新增 UI 面板、按钮、设置项、详情区，或第三方包需要贡献到宿主页面。
 
@@ -505,7 +523,9 @@
 
 ---
 
-## 12. 模型体验：可见字节、注入位置与缓存影响 {#package-contracts-7.model-experience}
+<a id="package-contracts-7.model-experience"></a>
+
+## 12. 模型体验：可见字节、注入位置与缓存影响
 
 **什么时候读.** 新增/修改模型可见文本、工具 schema、system prompt、runtime context 或工具结果。
 
@@ -548,7 +568,9 @@
 
 ---
 
-## 13. 生成物与发布面：从源生成、freshness 门禁、`files` 齐全 {#package-contracts-7.generated-artifacts}
+<a id="package-contracts-7.generated-artifacts"></a>
+
+## 13. 生成物与发布面：从源生成、freshness 门禁、`files` 齐全
 
 **什么时候读.** 新增生成器/模板/协议、修改导出映射或 npm `files`、升级 Typert/双语 sidecar/预览图。
 
@@ -594,7 +616,9 @@
 
 ---
 
-## 14. 限制披露：写当前约束，不写路线图 {#package-contracts-7.limitations-disclosure}
+<a id="package-contracts-7.limitations-disclosure"></a>
+
+## 14. 限制披露：写当前约束，不写路线图
 
 **什么时候读.** 新增包/能力、平台/权限/性能边界变化、发布前审阅。
 
@@ -635,7 +659,9 @@
 
 ---
 
-## 15. 测试支撑边界：假凭据、确定性回放、失败大声 {#package-contracts-7.test-support-boundary}
+<a id="package-contracts-7.test-support-boundary"></a>
+
+## 15. 测试支撑边界：假凭据、确定性回放、失败大声
 
 **什么时候读.** 新增测试替身、回放场景、mock provider，或诊断“本地过、真实调用失败”。
 
@@ -676,7 +702,9 @@
 
 ---
 
-## 16. 平台后端：拆开实现，声明矩阵，不静默 fallback {#package-contracts-7.platform-backends}
+<a id="package-contracts-7.platform-backends"></a>
+
+## 16. 平台后端：拆开实现，声明矩阵，不静默 fallback
 
 **什么时候读.** 新增平台/架构支持、原生依赖、目录选择器、shell 执行器或二进制包。
 
@@ -719,7 +747,9 @@
 
 ---
 
-## 17. 会话格式兼容：相邻版本的纯升级，历史字节不改写 {#package-contracts-7.session-format-compat}
+<a id="package-contracts-7.session-format-compat"></a>
+
+## 17. 会话格式兼容：相邻版本的纯升级，历史字节不改写
 
 **什么时候读.** 新增 Session 事件字段/版本、迁移历史记录、诊断旧会话无法读取或字段丢失。
 
@@ -759,7 +789,9 @@
 
 ---
 
-## 18. vendor 账本：上游清单、修改记录、可重放同步 {#package-contracts-7.vendor-ledger}
+<a id="package-contracts-7.vendor-ledger"></a>
+
+## 18. vendor 账本：上游清单、修改记录、可重放同步
 
 **什么时候读.** 新增/升级 vendored 包、修改 vendored 源码、发布前审计许可证与版本、上游同步。
 
@@ -801,7 +833,9 @@
 
 ---
 
-## 19. 持久水位：先写意图，完成写水位，崩溃后按水位恢复 {#package-contracts-7.durable-watermarks}
+<a id="package-contracts-7.durable-watermarks"></a>
+
+## 19. 持久水位：先写意图，完成写水位，崩溃后按水位恢复
 
 **什么时候读.** 长事务、后台任务、压缩、上传、轮次驱动、崩溃恢复与重放。
 

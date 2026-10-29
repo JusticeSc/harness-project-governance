@@ -57,8 +57,7 @@
 
 ---
 
-<a id="aw-01"></a>
-**机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/packages/AGENTS.md:1-29@687f282e`、`deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e`、`deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/session.v2.jsonl:8-8@687f282e`
+<a id="aw-01"></a> **机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/packages/AGENTS.md:1-29@687f282e`、`deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e`、`deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/session.v2.jsonl:8-8@687f282e`
 
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/context/agent-instructions/src/digest.ts:1-17@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:1-149@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:181-419@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:420-430@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:431-602@687f282e`
@@ -77,21 +76,7 @@
 | `docs/` | 当前状态说明、教程、参考、cookbook | 决策理据（去 Agent Notes） |
 | `.agents/notes/` | 决策记录：为什么、放弃了什么、如何验证 | 迁移计划、验收清单、fixture 走查 |
 
-来源：`deepseek-harness/docs/AGENTS.md:15-37@687f282e`，`deepseek-harness/AGENTS.md:1-185@687f282e`。
-来源：deepseek-harness/AGENTS.md:1-185@687f282e
-来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e
-来源：deepseek-harness/packages/AGENTS.md:1-29@687f282e
-来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
-来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e
-来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/README.md:34-40@687f282e
-来源：deepseek-harness/snapshots/session/agent-instructions/session.v2.jsonl:8-8@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/digest.ts:1-17@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:1-149@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:181-419@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:420-430@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:431-602@687f282e
-来源：deepseek-harness/packages/bundle/web-app/presets/standard.patch.yml:15-18@687f282e
+来源：`deepseek-harness/docs/AGENTS.md:15-37@687f282e`，`deepseek-harness/AGENTS.md:1-185@687f282e`。 来源：deepseek-harness/AGENTS.md:1-185@687f282e 来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e 来源：deepseek-harness/packages/AGENTS.md:1-29@687f282e 来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e 来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e 来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e 来源：deepseek-harness/packages/context/agent-instructions/README.md:34-40@687f282e 来源：deepseek-harness/snapshots/session/agent-instructions/session.v2.jsonl:8-8@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/digest.ts:1-17@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:1-149@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:181-419@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:420-430@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:431-602@687f282e 来源：deepseek-harness/packages/bundle/web-app/presets/standard.patch.yml:15-18@687f282e
 
 ### 1.2 优先级与加载语义
 
@@ -146,8 +131,7 @@
 
 ---
 
-<a id="aw-02"></a>
-**机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/CLAUDE.md:1-1@687f282e`、`deepseek-harness/packages/CLAUDE.md:1-1@687f282e`、`deepseek-harness/vendor/CLAUDE.md:1-1@687f282e`、`deepseek-harness/.agents/notes/implemented/CLAUDE.md:1-1@687f282e`、`deepseek-harness/.claude/skills:1-1@687f282e`、`deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1-1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/nested/AGENTS.md:1-1@687f282e`、`deepseek-harness/snapshots/AGENTS.md:9-17@687f282e`、`deepseek-harness/docs/i18n/README.md:46-66@687f282e`、`deepseek-harness/packages/preset/agent-preset/skills/agent-experience/SKILL.md:1-19@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:156-158@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:173-178@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/digest.ts:20-24@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:422-459@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:819-835@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:129-165@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:214-236@687f282e`、`deepseek-harness/docs/config-catalog.md:3110-3114@687f282e`
+<a id="aw-02"></a> **机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/CLAUDE.md:1-1@687f282e`、`deepseek-harness/packages/CLAUDE.md:1-1@687f282e`、`deepseek-harness/vendor/CLAUDE.md:1-1@687f282e`、`deepseek-harness/.agents/notes/implemented/CLAUDE.md:1-1@687f282e`、`deepseek-harness/.claude/skills:1-1@687f282e`、`deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1-1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/nested/AGENTS.md:1-1@687f282e`、`deepseek-harness/snapshots/AGENTS.md:9-17@687f282e`、`deepseek-harness/docs/i18n/README.md:46-66@687f282e`、`deepseek-harness/packages/preset/agent-preset/skills/agent-experience/SKILL.md:1-19@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:156-158@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/files.ts:173-178@687f282e`、`deepseek-harness/packages/context/agent-instructions/src/digest.ts:20-24@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:422-459@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:819-835@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:129-165@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:214-236@687f282e`、`deepseek-harness/docs/config-catalog.md:3110-3114@687f282e`
 
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/context/agent-instructions/src/files.ts:550-586@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:619-634@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:636-662@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:853-868@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-922@687f282e`
@@ -169,37 +153,7 @@
 | `snapshots/session/agent-instructions/workspace/AGENTS.md` | `AGENTS.canonical.md` | snapshot fixture 的指令别名 |
 | `snapshots/session/agent-instructions/workspace/nested/AGENTS.md` | `AGENTS.canonical.md` | 嵌套 fixture 别名 |
 
-来源：`deepseek-harness/CLAUDE.md:1@687f282e`、`deepseek-harness/packages/CLAUDE.md:1@687f282e`、`deepseek-harness/vendor/CLAUDE.md:1@687f282e`、`deepseek-harness/.agents/notes/implemented/CLAUDE.md:1@687f282e`、`deepseek-harness/.claude/skills:1@687f282e`、`deepseek-harness/.agents/skills/agent-experience/SKILL.md:1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1@687f282e`。
-来源：deepseek-harness/CLAUDE.md:1-1@687f282e
-来源：deepseek-harness/packages/CLAUDE.md:1-1@687f282e
-来源：deepseek-harness/vendor/CLAUDE.md:1-1@687f282e
-来源：deepseek-harness/.agents/notes/implemented/CLAUDE.md:1-1@687f282e
-来源：deepseek-harness/.claude/skills:1-1@687f282e
-来源：deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e
-来源：deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1-1@687f282e
-来源：deepseek-harness/snapshots/session/agent-instructions/workspace/nested/AGENTS.md:1-1@687f282e
-来源：deepseek-harness/AGENTS.md:179-182@687f282e
-来源：deepseek-harness/snapshots/AGENTS.md:9-17@687f282e
-来源：deepseek-harness/docs/i18n/README.md:46-66@687f282e
-来源：deepseek-harness/packages/preset/agent-preset/skills/agent-experience/SKILL.md:1-19@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:156-158@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:173-178@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/digest.ts:20-24@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/README.md:1-236@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-819@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:859-861@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-919@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:422-459@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:819-835@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:129-165@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:214-236@687f282e
-来源：deepseek-harness/docs/config-catalog.md:3110-3114@687f282e
-来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:550-586@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:619-634@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:636-662@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:853-868@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-922@687f282e
+来源：`deepseek-harness/CLAUDE.md:1@687f282e`、`deepseek-harness/packages/CLAUDE.md:1@687f282e`、`deepseek-harness/vendor/CLAUDE.md:1@687f282e`、`deepseek-harness/.agents/notes/implemented/CLAUDE.md:1@687f282e`、`deepseek-harness/.claude/skills:1@687f282e`、`deepseek-harness/.agents/skills/agent-experience/SKILL.md:1@687f282e`、`deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1@687f282e`。 来源：deepseek-harness/CLAUDE.md:1-1@687f282e 来源：deepseek-harness/packages/CLAUDE.md:1-1@687f282e 来源：deepseek-harness/vendor/CLAUDE.md:1-1@687f282e 来源：deepseek-harness/.agents/notes/implemented/CLAUDE.md:1-1@687f282e 来源：deepseek-harness/.claude/skills:1-1@687f282e 来源：deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e 来源：deepseek-harness/snapshots/session/agent-instructions/workspace/AGENTS.md:1-1@687f282e 来源：deepseek-harness/snapshots/session/agent-instructions/workspace/nested/AGENTS.md:1-1@687f282e 来源：deepseek-harness/AGENTS.md:179-182@687f282e 来源：deepseek-harness/snapshots/AGENTS.md:9-17@687f282e 来源：deepseek-harness/docs/i18n/README.md:46-66@687f282e 来源：deepseek-harness/packages/preset/agent-preset/skills/agent-experience/SKILL.md:1-19@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:156-158@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:173-178@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/digest.ts:20-24@687f282e 来源：deepseek-harness/packages/context/agent-instructions/README.md:1-236@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-819@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:859-861@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-919@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:422-459@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:819-835@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:129-165@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:214-236@687f282e 来源：deepseek-harness/docs/config-catalog.md:3110-3114@687f282e 来源：deepseek-harness/packages/context/agent-instructions/src/files.ts:550-586@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:619-634@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:636-662@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:853-868@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-922@687f282e
 
 ### 2.2 操作规则
 
@@ -239,8 +193,7 @@
 
 ---
 
-<a id="aw-03"></a>
-**机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/.agents/skills/.gitignore:1-1@687f282e`、`deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e`、`deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e`、`deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e`、`deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e`、`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-bundle.md:1-103@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-group.md:1-59@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-library.md:1-96@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:1-103@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-change.md:1-73@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-format.md:1-25@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-release.md:1-30@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e`、`deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e`、`deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e`、`deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e`、`deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e`、`deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e`、`deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e`、`deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e`、`deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e`、`deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e`、`deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e`
+<a id="aw-03"></a> **机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/.agents/skills/.gitignore:1-1@687f282e`、`deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e`、`deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e`、`deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e`、`deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e`、`deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-bundle.md:1-103@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-group.md:1-59@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-library.md:1-96@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:1-103@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-change.md:1-73@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-format.md:1-25@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/persistence-release.md:1-30@687f282e`、`deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e`、`deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e`、`deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e`、`deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e`、`deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e`、`deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e`、`deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e`、`deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e`、`deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e`、`deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e`、`deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e`、`deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e`、`deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e`
 
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:34-68@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:87-286@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:287-630@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:646-803@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:820-848@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:862-905@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:920-1006@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:184-421@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:465-818@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:849-922@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:1-124@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:166-213@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:237-489@687f282e`
@@ -300,64 +253,7 @@ disable-model-invocation: true
 user-invocable: true
 ```
 
-来源：`deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-8@687f282e`。
-来源：deepseek-harness/.agents/skills/.gitignore:1-1@687f282e
-来源：deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e
-来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e
-来源：deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e
-来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e
-来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-bundle.md:1-103@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-group.md:1-59@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-library.md:1-96@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:1-103@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-change.md:1-73@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-format.md:1-25@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-release.md:1-30@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e
-来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e
-来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e
-来源：deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e
-来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e
-来源：deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e
-来源：deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e
-来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e
-来源：deepseek-harness/docs/subsystems/skills.md:64-150@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-819@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-919@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:34-68@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:87-286@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:287-630@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:646-803@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:820-848@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:862-905@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:920-1006@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:184-421@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:465-818@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:849-922@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:1-124@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:166-213@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:237-489@687f282e
+来源：`deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-8@687f282e`。 来源：deepseek-harness/.agents/skills/.gitignore:1-1@687f282e 来源：deepseek-harness/.agents/skills/agent-experience/SKILL.md:1-1@687f282e 来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e 来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e 来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e 来源：deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e 来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e 来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-bundle.md:1-103@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-group.md:1-59@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-library.md:1-96@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/package-reference.md:1-103@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-change.md:1-73@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-format.md:1-25@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/persistence-release.md:1-30@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e 来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e 来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e 来源：deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e 来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e 来源：deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e 来源：deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e 来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e 来源：deepseek-harness/docs/subsystems/skills.md:64-150@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/README.md:1-115@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-819@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:906-919@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:34-68@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:87-286@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:287-630@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:646-803@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:820-848@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:862-905@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:920-1006@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:184-421@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:465-818@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:849-922@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:1-124@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:166-213@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem-watcher.spec.ts:237-489@687f282e
 
 `【源义务】` 调用策略必须区分**原始 frontmatter 键**与**归一化字段**，两者不是同一组布尔：
 
@@ -420,8 +316,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 ---
 
-<a id="aw-04"></a>
-**机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/docs/subsystems/skills.md:119-129@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1007-1016@687f282e`、`deepseek-harness/scripts/verify-skill-invocation-metadata.spec.ts:1-53@687f282e`、`deepseek-harness/scripts/run-gates.ts:851-858@687f282e`
+<a id="aw-04"></a> **机制声明的其余来源**（知识账登记、由本域作者在上述机制中核对，本节复核时未逐行重读）：`deepseek-harness/docs/subsystems/skills.md:119-129@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1007-1016@687f282e`、`deepseek-harness/scripts/verify-skill-invocation-metadata.spec.ts:1-53@687f282e`、`deepseek-harness/scripts/run-gates.ts:851-858@687f282e`
 
 
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-848@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1019-1044@687f282e`、`deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:314-378@687f282e`
@@ -437,18 +332,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 - Claude Code 的 manual-only（`disable-model-invocation === true`）必须与 Codex 的 manual-only（`allow_implicit_invocation === false`）**双向一致**；
 - manual-only 技能必须仍 `user-invocable`（不能把两个入口都关死）。
 
-来源：`deepseek-harness/scripts/verify-skill-invocation-metadata.ts:44-105@687f282e`。
-来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-8@687f282e
-来源：deepseek-harness/docs/subsystems/skills.md:119-129@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1007-1016@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1025-1026@687f282e
-来源：deepseek-harness/scripts/verify-skill-invocation-metadata.ts:1-122@687f282e
-来源：deepseek-harness/scripts/verify-skill-invocation-metadata.spec.ts:1-53@687f282e
-来源：deepseek-harness/.agents/skills/.gitignore:1-1@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:851-858@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-848@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1019-1044@687f282e
-来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:314-378@687f282e
+来源：`deepseek-harness/scripts/verify-skill-invocation-metadata.ts:44-105@687f282e`。 来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-8@687f282e 来源：deepseek-harness/docs/subsystems/skills.md:119-129@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1007-1016@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1025-1026@687f282e 来源：deepseek-harness/scripts/verify-skill-invocation-metadata.ts:1-122@687f282e 来源：deepseek-harness/scripts/verify-skill-invocation-metadata.spec.ts:1-53@687f282e 来源：deepseek-harness/.agents/skills/.gitignore:1-1@687f282e 来源：deepseek-harness/scripts/run-gates.ts:851-858@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:804-848@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/src/index.ts:1019-1044@687f282e 来源：deepseek-harness/packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:314-378@687f282e
 
 `【源义务，范围限定】` 上述 manual-only 检查只遍历**存在 `agents/openai.yaml` 的技能目录**（`skillDirectories` 过滤），而该文件被 `.gitignore` 忽略；检查用原始键 `disableModelInvocation === true` 判定 Claude manual-only，并在同一原始键 `userInvocable === false` 时报 `a manual-only skill must remain user-invocable`（`scripts/verify-skill-invocation-metadata.ts:95-103@687f282e`）。因此：
 
@@ -504,13 +388,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 ---
 
-来源：deepseek-harness/CONTRIBUTING.md:1-23@687f282e
-来源：deepseek-harness/docs/development.md:9-53@687f282e
-来源：deepseek-harness/docs/development.md:133-162@687f282e
-来源：deepseek-harness/docs/development.md:196-205@687f282e
-来源：deepseek-harness/README.md:11-15@687f282e
-来源：deepseek-harness/README.md:17-42@687f282e
-来源：deepseek-harness/README.md:49-56@687f282e
+来源：deepseek-harness/CONTRIBUTING.md:1-23@687f282e 来源：deepseek-harness/docs/development.md:9-53@687f282e 来源：deepseek-harness/docs/development.md:133-162@687f282e 来源：deepseek-harness/docs/development.md:196-205@687f282e 来源：deepseek-harness/README.md:11-15@687f282e 来源：deepseek-harness/README.md:17-42@687f282e 来源：deepseek-harness/README.md:49-56@687f282e
 
 <a id="aw-06"></a>
 ## 6. 任务开工：范围、证据与权限
@@ -525,14 +403,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 `【源义务】` 评审和推送前使用 `pnpm --silent run change-scope --base <verified-base-ref> [--head <ref>]`。它**从不猜测或抓取 base**；调用者必须提供从当前远端或栈状态验证过的 ref。报告是带版本号的 JSON，包含 `repositoryRoot`、`input`、`resolved`（base/head/merge-base SHA）以及 `committed`/`staged`/`unstaged`/`untracked` 路径。合并 base 变化后要重跑并重新评估受影响行为。
 
-来源：`dsh-pre-push-checks/SKILL.md:10-26`、`dsh-code-review/SKILL.md:8`、`scripts/change-scope.ts:1-40@687f282e`。
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:14-27@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:8-16@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:18-24@687f282e
-来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:10-26@687f282e
-来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:8-10@687f282e
-来源：deepseek-harness/scripts/change-scope.ts:1-50@687f282e
-来源：deepseek-harness/AGENTS.md:109-112@687f282e
+来源：`dsh-pre-push-checks/SKILL.md:10-26`、`dsh-code-review/SKILL.md:8`、`scripts/change-scope.ts:1-40@687f282e`。 来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:14-27@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:8-16@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:18-24@687f282e 来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:10-26@687f282e 来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:8-10@687f282e 来源：deepseek-harness/scripts/change-scope.ts:1-50@687f282e 来源：deepseek-harness/AGENTS.md:109-112@687f282e
 
 ### 6.3 主机沙箱失败
 
@@ -618,11 +489,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e
-来源：deepseek-harness/docs/defensive-patterns/README.md:1-25@687f282e
-来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e
-来源：deepseek-harness/docs/testing.md:7-55@687f282e
-来源：deepseek-harness/.github/pull_request_template.md:1-21@687f282e
+来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e 来源：deepseek-harness/docs/defensive-patterns/README.md:1-25@687f282e 来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e 来源：deepseek-harness/docs/testing.md:7-55@687f282e 来源：deepseek-harness/.github/pull_request_template.md:1-21@687f282e
 
 <a id="aw-08"></a>
 ## 8. 推送前证据选择（`dsh-pre-push-checks`）
@@ -681,11 +548,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e
-来源：deepseek-harness/AGENTS.md:113-122@687f282e
-来源：deepseek-harness/docs/development.md:133-162@687f282e
-来源：deepseek-harness/docs/testing.md:7-25@687f282e
-来源：deepseek-harness/scripts/change-scope.ts:1-50@687f282e
+来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:1-137@687f282e 来源：deepseek-harness/AGENTS.md:113-122@687f282e 来源：deepseek-harness/docs/development.md:133-162@687f282e 来源：deepseek-harness/docs/testing.md:7-25@687f282e 来源：deepseek-harness/scripts/change-scope.ts:1-50@687f282e
 
 <a id="aw-09"></a>
 ## 9. 历史改写保护与 `gh stack sync` 后验证
@@ -715,9 +578,7 @@ dsh-archive-agent-notes    -> dsh-pre-push-checks
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:80-96@687f282e
-来源：deepseek-harness/AGENTS.md:161-162@687f282e
-来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:7-26@687f282e
+来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:80-96@687f282e 来源：deepseek-harness/AGENTS.md:161-162@687f282e 来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:7-26@687f282e
 
 <a id="aw-10"></a>
 ## 10. PR 栈：评审修复传播与落地
@@ -794,11 +655,7 @@ gh stack merge <boundary-pr> --yes --merge
 
 ---
 
-来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:1-32@687f282e
-来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:6-8@687f282e
-来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e
-来源：deepseek-harness/AGENTS.md:161-162@687f282e
-来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:27-32@687f282e
+来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:1-32@687f282e 来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:6-8@687f282e 来源：deepseek-harness/.agents/skills/dsh-merging-stacked-prs/SKILL.md:1-127@687f282e 来源：deepseek-harness/AGENTS.md:161-162@687f282e 来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:27-32@687f282e
 
 <a id="aw-11"></a>
 ## 11. 交接：Agent Notes、归档、维护者与委派
@@ -868,7 +725,7 @@ gh stack merge <boundary-pr> --yes --merge
 
 `【迁移设计，非源义务】` 源仓库没有“新会话继续未完成任务”的通用协议；它依赖 Agent Notes、Dev Note、scratch 和 git 历史。若目标用户要求“刷新会话后继续”，必须作为**新增能力**明确标注，不得冒充源机制。最低可用设计：
 
-1. 一个受版本控制的任务状态文件（例如 `docs/scratch/<topic>.md`、`.agents/handoff/<task>.md` 或项目已有状态 owner），字段：owner、目标、当前分支/commit、已完成、未完成、阻塞、下一命令、证据路径、过期/复核日期。
+1. 先复用项目已有唯一状态owner（任务板、Issue台账、交接文件等），不为本协议复制一份同权威记录；没有既有owner且按[Skill状态触发](../SKILL.md#3-改动型任务走同一循环)确需启用时，才建立可持久定位的任务状态文件。字段：owner、目标、当前分支/commit、已完成、未完成、阻塞、下一命令、证据路径、过期/复核日期；存储位置沿用项目权限与交接方式，不强制给既有owner另建版本控制副本。
 2. 启用信号是跨上下文边界：用户要求继续/暂停/交接，压缩前保存，或同一目标确需多个会话或另一位执行者。单会话内的小改动，即使有多步验收，也不仅为“以后可能有用”而新建状态文件；用户明确要求初始化治理元数据时，初始化本身是任务。
 3. 写入时机：任务暂停、交接、上下文压缩前；不是每步都写。
 4. 读取时机：新会话开始时先读状态文件与 owning Agent Note，再读代码；不要只读聊天摘要。
@@ -888,24 +745,7 @@ gh stack merge <boundary-pr> --yes --merge
 
 ---
 
-来源：deepseek-harness/.agents/notes/README.md:7-125@687f282e
-来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
-来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e
-来源：deepseek-harness/scripts/agent-note-tree.ts:1-40@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-40@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e
-来源：deepseek-harness/.agents/notes/README.md:36-43@687f282e
-来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e
-来源：deepseek-harness/scripts/archived-agent-notes.ts:1-60@687f282e
-来源：deepseek-harness/scripts/archived-agent-notes.spec.ts:1-60@687f282e
-来源：deepseek-harness/docs/cookbook/maintaining-dsh-code-review.md:54-64@687f282e
-来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:15-26@687f282e
-来源：deepseek-harness/docs/testing.md:33-35@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:55-60@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:75-87@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:44-62@687f282e
+来源：deepseek-harness/.agents/notes/README.md:7-125@687f282e 来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e 来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e 来源：deepseek-harness/scripts/agent-note-tree.ts:1-40@687f282e 来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-40@687f282e 来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e 来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:1-68@687f282e 来源：deepseek-harness/.agents/notes/README.md:36-43@687f282e 来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e 来源：deepseek-harness/scripts/archived-agent-notes.ts:1-60@687f282e 来源：deepseek-harness/scripts/archived-agent-notes.spec.ts:1-60@687f282e 来源：deepseek-harness/docs/cookbook/maintaining-dsh-code-review.md:54-64@687f282e 来源：deepseek-harness/docs/cookbook/responding-to-pr-review-on-a-stack.md:15-26@687f282e 来源：deepseek-harness/docs/testing.md:33-35@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:55-60@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:75-87@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:44-62@687f282e
 
 <a id="aw-12"></a>
 ## 12. UI/UX 与响应式工作流
@@ -951,10 +791,7 @@ gh stack merge <boundary-pr> --yes --merge
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e
-来源：deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:1-40@687f282e
-来源：deepseek-harness/docs/defensive-patterns/README.md:1-25@687f282e
+来源：deepseek-harness/.agents/skills/dsh-client-ui-ux/SKILL.md:1-73@687f282e 来源：deepseek-harness/.agents/skills/dsh-responsive-ui/SKILL.md:1-54@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:1-40@687f282e 来源：deepseek-harness/docs/defensive-patterns/README.md:1-25@687f282e
 
 <a id="aw-13"></a>
 
@@ -1008,11 +845,7 @@ gh stack merge <boundary-pr> --yes --merge
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-plugin-preview.md:1-52@687f282e
-来源：deepseek-harness/scripts/verify-package-meta.ts:1-40@687f282e
-来源：deepseek-harness/scripts/gen-official-bundle-catalog.ts:1-40@687f282e
-来源：deepseek-harness/scripts/gen-official-bundle-catalog.ts:41-127@687f282e
+来源：deepseek-harness/.agents/skills/dsh-official-plugin-artwork/SKILL.md:1-41@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-plugin-preview.md:1-52@687f282e 来源：deepseek-harness/scripts/verify-package-meta.ts:1-40@687f282e 来源：deepseek-harness/scripts/gen-official-bundle-catalog.ts:1-40@687f282e 来源：deepseek-harness/scripts/gen-official-bundle-catalog.ts:41-127@687f282e
 
 <a id="aw-14"></a>
 ## 14. 浏览器证据与 GIF 工作流
@@ -1089,12 +922,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e
-来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e
-来源：deepseek-harness/AGENTS.md:121-121@687f282e
-来源：deepseek-harness/apps/web/tests/pin-browse-picker.overlay.yml:1-13@687f282e
-来源：deepseek-harness/apps/web/tests/README.md:1-39@687f282e
+来源：deepseek-harness/.agents/skills/record-browser-gif/SKILL.md:1-172@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/encode_gif.py:1-337@687f282e 来源：deepseek-harness/.agents/skills/record-browser-gif/scripts/test_encode_gif.py:1-103@687f282e 来源：deepseek-harness/AGENTS.md:121-121@687f282e 来源：deepseek-harness/apps/web/tests/pin-browse-picker.overlay.yml:1-13@687f282e 来源：deepseek-harness/apps/web/tests/README.md:1-39@687f282e
 
 <a id="aw-15"></a>
 ## 15. 翻译工作流：常规单遍与扩展用户调用
@@ -1165,12 +993,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e
-来源：deepseek-harness/docs/i18n/README.md:7-69@687f282e
-来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e
-来源：deepseek-harness/scripts/translation-pairing.manifest.json:1-13@687f282e
-来源：deepseek-harness/scripts/gen-translation-brief.ts:1-40@687f282e
-来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-40@687f282e
+来源：deepseek-harness/.agents/skills/dsh-translate-docs/SKILL.md:1-74@687f282e 来源：deepseek-harness/docs/i18n/README.md:7-69@687f282e 来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e 来源：deepseek-harness/scripts/translation-pairing.manifest.json:1-13@687f282e 来源：deepseek-harness/scripts/gen-translation-brief.ts:1-40@687f282e 来源：deepseek-harness/scripts/verify-translation-pairing.ts:1-40@687f282e
 
 <a id="aw-16"></a>
 ## 16. Provider 面向的真实 API 证据
@@ -1212,12 +1035,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/docs/testing.md:7-25@687f282e
-来源：deepseek-harness/docs/cookbook/adding-an-llm-adapter.md:1-43@687f282e
-来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:27-52@687f282e
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:102-117@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:10-16@687f282e
-来源：deepseek-harness/docs/development.md:145-149@687f282e
+来源：deepseek-harness/docs/testing.md:7-25@687f282e 来源：deepseek-harness/docs/cookbook/adding-an-llm-adapter.md:1-43@687f282e 来源：deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:27-52@687f282e 来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:102-117@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:10-16@687f282e 来源：deepseek-harness/docs/development.md:145-149@687f282e
 
 <a id="aw-17"></a>
 ## 17. 性能工作流
@@ -1251,10 +1069,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e
-来源：deepseek-harness/benchmarks/AGENTS.md:1-18@687f282e
-来源：deepseek-harness/docs/testing.md:7-17@687f282e
-来源：deepseek-harness/docs/defensive-patterns/README.md:7-25@687f282e
+来源：deepseek-harness/.agents/skills/dsh-speed-up-perf/SKILL.md:1-92@687f282e 来源：deepseek-harness/benchmarks/AGENTS.md:1-18@687f282e 来源：deepseek-harness/docs/testing.md:7-17@687f282e 来源：deepseek-harness/docs/defensive-patterns/README.md:7-25@687f282e
 
 <a id="aw-18"></a>
 ## 18. 简化工作流
@@ -1308,10 +1123,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e
-来源：deepseek-harness/docs/development.md:196-205@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:1-36@687f282e
+来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:1-65@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e 来源：deepseek-harness/docs/development.md:196-205@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:1-36@687f282e
 
 <a id="aw-19"></a>
 ## 19. 文档、散文与推理轨迹工作流（跨域入口）
@@ -1390,18 +1202,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e
-来源：deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e
-来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e
-来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e
+来源：deepseek-harness/.agents/skills/dsh-doc/SKILL.md:1-132@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/metadata-links-i18n.md:1-78@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/review.md:1-67@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/structure-hierarchy.md:1-87@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/style.md:1-49@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/references/website-sync.md:1-95@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/SKILL.md:1-81@687f282e 来源：deepseek-harness/.agents/skills/dsh-prose-standard/references/examples.md:1-169@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/SKILL.md:1-45@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/examples.md:1-275@687f282e 来源：deepseek-harness/.agents/skills/dsh-trim-cot-leakage/references/recall-batteries.md:1-52@687f282e 来源：deepseek-harness/docs/AGENTS.md:1-77@687f282e
 
 <a id="aw-20"></a>
 ## 20. 测试可靠性、错误处理与 Cordis 生命周期（跨域入口）
@@ -1441,12 +1242,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e
-来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e
-来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e
-来源：deepseek-harness/docs/testing.md:7-55@687f282e
-来源：deepseek-harness/packages/AGENTS.md:1-29@687f282e
+来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e 来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e 来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:1-30@687f282e 来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:1-65@687f282e 来源：deepseek-harness/docs/testing.md:7-55@687f282e 来源：deepseek-harness/packages/AGENTS.md:1-29@687f282e
 
 <a id="aw-21"></a>
 ## 21. 升级指南工作流
@@ -1465,11 +1261,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e
-来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e
-来源：deepseek-harness/AGENTS.md:5-13@687f282e
-来源：deepseek-harness/docs/AGENTS.md:15-37@687f282e
+来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e 来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e 来源：deepseek-harness/AGENTS.md:5-13@687f282e 来源：deepseek-harness/docs/AGENTS.md:15-37@687f282e
 
 <a id="aw-22"></a>
 ## 22. 技能维护与人类评审
@@ -1484,9 +1276,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/docs/cookbook/maintaining-dsh-code-review.md:1-64@687f282e
-来源：deepseek-harness/.agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md:1-85@687f282e
-来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e
+来源：deepseek-harness/docs/cookbook/maintaining-dsh-code-review.md:1-64@687f282e 来源：deepseek-harness/.agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md:1-85@687f282e 来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-61@687f282e
 
 <a id="aw-23"></a>
 ## 23. 评审批准门（跨域）
@@ -1503,10 +1293,7 @@ python3 "$GIF_SKILL_DIR/scripts/encode_gif.py" \
 
 ---
 
-来源：deepseek-harness/.github/review-ownership/README.md:1-63@687f282e
-来源：deepseek-harness/.github/review-ownership/approval-policy.json:1-12@687f282e
-来源：deepseek-harness/.github/review-ownership/check-approval.mjs:1-60@687f282e
-来源：deepseek-harness/.github/workflows/weighted-approval.yml:1-66@687f282e
+来源：deepseek-harness/.github/review-ownership/README.md:1-63@687f282e 来源：deepseek-harness/.github/review-ownership/approval-policy.json:1-12@687f282e 来源：deepseek-harness/.github/review-ownership/check-approval.mjs:1-60@687f282e 来源：deepseek-harness/.github/workflows/weighted-approval.yml:1-66@687f282e
 
 <a id="aw-24"></a>
 ## 24. 迁移落地清单

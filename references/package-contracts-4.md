@@ -1,8 +1,6 @@
 # Package Contracts 4：包契约、seam 与执行边界参考
 
-> 依据：deepseek-harness 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`。
-> 覆盖：本域分配的 54 个英文 README、53 个中文 counterpart、53 个 `.i18n.yaml` 侧车。
-> 用途：让采用方在没有源仓 checkout 的情况下，仍能按触发场景落实包契约、边界、生命周期与评审义务。
+> 依据：deepseek-harness 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`。 覆盖：本域分配的 54 个英文 README、53 个中文 counterpart、53 个 `.i18n.yaml` 侧车。 用途：让采用方在没有源仓 checkout 的情况下，仍能按触发场景落实包契约、边界、生命周期与评审义务。
 
 ## 0. 先读：证据等级与使用方式
 
@@ -88,7 +86,9 @@
 
 ## 2.A 组合、角色与依赖边界
 
-### M01 Profile bundle 的 patch 分层与组合契约 {#package-contracts-4.profile-bundle-composition}
+<a id="package-contracts-4.profile-bundle-composition"></a>
+
+### M01 Profile bundle 的 patch 分层与组合契约
 
 **问题**：同一份安装要服务 Web、headless、ACP、SDK 等不同表面，若每个表面复制完整插件树或在运行时随意改写配置，组合会漂移、重复挂载或丢失行配置。
 
@@ -150,7 +150,9 @@
 
 ---
 
-### M02 能力 seam 的单一所有者与显式依赖 {#package-contracts-4.service-seam-single-owner}
+<a id="package-contracts-4.service-seam-single-owner"></a>
+
+### M02 能力 seam 的单一所有者与显式依赖
 
 **问题**：多个提供者同时注册同一 ctx 服务会让消费方看到不确定实现；缺少必需服务时若静默降级，会把配置错误推迟到首次请求。
 
@@ -206,7 +208,9 @@
 
 ---
 
-### M03 包角色、library 边界与业务语义归属 {#package-contracts-4.package-role-and-library-boundary}
+<a id="package-contracts-4.package-role-and-library-boundary"></a>
+
+### M03 包角色、library 边界与业务语义归属
 
 **问题**：共享工具若注册服务或持有业务状态，会与能力包争夺所有权；把 library 当插件挂载也会制造隐藏生命周期。
 
@@ -263,7 +267,9 @@
 
 ---
 
-### M04 实验包状态、默认关闭与晋升门槛 {#package-contracts-4.experimental-status-opt-in-and-promotion}
+<a id="package-contracts-4.experimental-status-opt-in-and-promotion"></a>
+
+### M04 实验包状态、默认关闭与晋升门槛
 
 **问题**：实验能力若默认出现在产品中或暗示稳定 API，采用方会把可自由变更的契约当成兼容承诺；晋升若只看“能用”会绕过证据与所有权。
 
@@ -319,7 +325,9 @@
 
 ---
 
-### M05 vendor 与平台包的边界：无构建、随宿主生命周期释放 {#package-contracts-4.vendor-and-platform-package-boundary}
+<a id="package-contracts-4.vendor-and-platform-package-boundary"></a>
+
+### M05 vendor 与平台包的边界：无构建、随宿主生命周期释放
 
 **问题**：把第三方代码当成本仓治理对象，或让平台包带安装脚本或 JS 包装，会让供应链与构建行为脱离审查；计时器或句柄若不属于创建它的 fiber，插件卸载后仍会触发。
 
@@ -371,7 +379,9 @@
 
 ---
 
-### M06 运行时插件身份与包清单的尽力而为边界 {#package-contracts-4.runtime-package-inventory}
+<a id="package-contracts-4.runtime-package-inventory"></a>
+
+### M06 运行时插件身份与包清单的尽力而为边界
 
 **问题**：把程序化 child fiber、内存插件或缺少 manifest 的模块伪造成 npm 包身份，会把诊断数据变成猜测；若清单失败阻塞请求，又会让观测能力反噬主路径。
 
@@ -429,7 +439,9 @@
 
 ## 2.B 工具、执行与文件边界
 
-### M07 工具注册、执行管线与单调策略护栏 {#package-contracts-4.tool-registration-and-policy}
+<a id="package-contracts-4.tool-registration-and-policy"></a>
+
+### M07 工具注册、执行管线与单调策略护栏
 
 **问题**：工具参数、权限决定与结果内容若没有固定顺序，插件可以在拒绝之后重新放行、在日志与执行之间改写参数，或把 canonical value 与模型可见内容混为一谈。
 
@@ -494,7 +506,9 @@
 
 ---
 
-### M08 有界输出与“省略”诚实性 {#package-contracts-4.output-retention-honesty}
+<a id="package-contracts-4.output-retention-honesty"></a>
+
+### M08 有界输出与“省略”诚实性
 
 **问题**：工具为控制上下文而截断结果时，若不精确报告被丢弃的内容，模型会把不完整结果当完整；把权限失败或上游不完整混入截断标记会污染语义。
 
@@ -551,7 +565,9 @@
 
 ---
 
-### M09 MCP 桥接的工具身份、整代同步与重连边界 {#package-contracts-4.mcp-bridge-identity}
+<a id="package-contracts-4.mcp-bridge-identity"></a>
+
+### M09 MCP 桥接的工具身份、整代同步与重连边界
 
 **问题**：外部 MCP 服务器的名称不可信、可重复且会随升级变化；若直接把远端名称当模型可见工具名，历史与权限规则会在重连/升级后失效，部分同步会留下半套工具。
 
@@ -611,7 +627,9 @@
 
 ---
 
-### M10 一次性/持久 shell 与终端后端的执行契约 {#package-contracts-4.shell-execution-contracts}
+<a id="package-contracts-4.shell-execution-contracts"></a>
+
+### M10 一次性/持久 shell 与终端后端的执行契约
 
 **问题**：命令执行若混用 rc 文件、无界输出或不确定的就绪判断，同一命令会因环境与平台不同而产生不同结果；持久 shell 若在不确定状态下继续复用，会污染后续调用。
 
@@ -675,7 +693,9 @@
 
 ---
 
-### M11 沙箱执行器的 fail-closed、拒绝事实与单次提权 {#package-contracts-4.sandbox-fail-closed-and-escalation}
+<a id="package-contracts-4.sandbox-fail-closed-and-escalation"></a>
+
+### M11 沙箱执行器的 fail-closed、拒绝事实与单次提权
 
 **问题**：沙箱不可用时若回退为无约束执行，命令会获得宿主完整权限；把拒绝伪装成成功或让执行器自行协商权限，会让模型与用户都失去真实边界。
 
@@ -735,7 +755,9 @@
 
 ---
 
-### M12 文件变更的读前策略、版本防护与原子发布 {#package-contracts-4.filesystem-mutation-integrity}
+<a id="package-contracts-4.filesystem-mutation-integrity"></a>
+
+### M12 文件变更的读前策略、版本防护与原子发布
 
 **问题**：并发写入、符号链接别名与过期观察会让“编辑”覆盖他人内容；把 cwd 当沙箱或绕过 policy waterfall 会同时破坏完整性与权限边界。
 
@@ -796,7 +818,9 @@
 
 ---
 
-### M13 Worktree 隔离创建、沙箱约束与保留语义 {#package-contracts-4.worktree-isolation-and-retention}
+<a id="package-contracts-4.worktree-isolation-and-retention"></a>
+
+### M13 Worktree 隔离创建、沙箱约束与保留语义
 
 **问题**：在源 checkout 上直接实验会污染工作区；复制未提交文件或执行仓库配置的 clean 与 smudge 过滤器又会在隔离名义下引入未审查代码与隐式网络拉取。
 
@@ -853,7 +877,9 @@
 
 ---
 
-### M14 工作流引擎的 holder-owned run 与沙箱执行边界 {#package-contracts-4.workflow-engine-and-confinement}
+<a id="package-contracts-4.workflow-engine-and-confinement"></a>
+
+### M14 工作流引擎的 holder-owned run 与沙箱执行边界
 
 **问题**：工作流脚本会扇出大量子代理；若 run 由服务而不是调用方持有，引擎卸载或调用方放弃会让子代理泄漏。脚本执行若只靠 VM 或合作式计数，也会被误当成安全边界。
 
@@ -913,7 +939,9 @@
 
 ## 2.C 模型、子代理与值语义
 
-### M15 默认模型只填空、会话选择不回溯 {#package-contracts-4.model-selection-and-session-pin}
+<a id="package-contracts-4.model-selection-and-session-pin"></a>
+
+### M15 默认模型只填空、会话选择不回溯
 
 **问题**：把进程默认模型当成“全局当前模型”会在已有 Session 上静默换模型，改变请求前缀与可比性；反过来，每次请求都重新解析默认值也会让旧 Session 漂移。
 
@@ -974,7 +1002,9 @@
 
 ---
 
-### M16 子代理提供者的能力协商与拒绝而非静默省略 {#package-contracts-4.subagent-capability-negotiation}
+<a id="package-contracts-4.subagent-capability-negotiation"></a>
+
+### M16 子代理提供者的能力协商与拒绝而非静默省略
 
 **问题**：不同子代理后端（进程内、ACP、Claude Code、Harness SDK）支持的能力不同；若父级请求了远端无法执行的 preset、结构化输出或深度上限却被静默忽略，调用方会得到看似成功但语义错误的结果。
 
@@ -1030,7 +1060,9 @@
 
 ---
 
-### M17 外部子代理的隔离与父级结果边界 {#package-contracts-4.subagent-isolation-and-result-boundary}
+<a id="package-contracts-4.subagent-isolation-and-result-boundary"></a>
+
+### M17 外部子代理的隔离与父级结果边界
 
 **问题**：把子进程的推理、工具流量、stderr、usage 或工作区 diff 全部倒进父 Session 会污染上下文并泄露敏感信息；反过来，若失败只给“未知错误”，父级无法安全恢复。
 
@@ -1085,7 +1117,9 @@
 
 ---
 
-### M18 时钟上下文注入：按步、追加、可解释缺失 {#package-contracts-4.time-context-injection}
+<a id="package-contracts-4.time-context-injection"></a>
+
+### M18 时钟上下文注入：按步、追加、可解释缺失
 
 **问题**：模型不知道现在和用户时区时会误读未限定时间；每次请求都注入又会累积历史成本并干扰 KV cache；用进程时区冒充用户时区会把猜测当事实。
 
@@ -1144,7 +1178,9 @@
 
 ---
 
-### M19 持久值的无损 JSON、规范时区与快照/克隆 {#package-contracts-4.durable-value-canonicalization}
+<a id="package-contracts-4.durable-value-canonicalization"></a>
+
+### M19 持久值的无损 JSON、规范时区与快照/克隆
 
 **问题**：别名时区、负零、稀疏数组、类实例或 live 引用一旦进入持久日志，另一进程重新计算时可能比较不等或改变语义；把可变对象发布给消费者则会产生隐蔽共享状态。
 
@@ -1205,7 +1241,9 @@
 
 ## 2.D 会话、信任与客户端投影
 
-### M20 Session 冷读不激活与单写者所有权 {#package-contracts-4.session-activation-and-write-ownership}
+<a id="package-contracts-4.session-activation-and-write-ownership"></a>
+
+### M20 Session 冷读不激活与单写者所有权
 
 **问题**：列表、搜索或 UI 预览若为了显示而激活冷 Session，会消耗资源、触发迁移或与真实 owner 争写；多个写者同时 resume 会让同一 Session 出现分叉。
 
@@ -1268,7 +1306,9 @@
 
 ---
 
-### M21 Remote 访问控制、owner fence 与受信 seam 的授权责任 {#package-contracts-4.trusted-seam-authorization-delegation}
+<a id="package-contracts-4.trusted-seam-authorization-delegation"></a>
+
+### M21 Remote 访问控制、owner fence 与受信 seam 的授权责任
 
 **问题**：不同服务对“已授权”的假设不同：有的按 remote-access 策略逐资源鉴权，有的只做 owner fence 并把 per-session 约束留给调用方；若把后者当前者，任何连接的浏览器或新工具都能越权读取或终止。
 
@@ -1331,7 +1371,9 @@
 
 ---
 
-### M22 凭据来源、写-only 存储与 Origin 绑定 {#package-contracts-4.credential-origin-and-secret-boundary}
+<a id="package-contracts-4.credential-origin-and-secret-boundary"></a>
+
+### M22 凭据来源、写-only 存储与 Origin 绑定
 
 **问题**：把密钥写进 patch、配置文件或日志，或让回调/重定向把凭据送到错误 Origin，都会造成不可撤回的泄露；删除凭据时误删非本页拥有的引用同样会破坏部署。
 
@@ -1394,7 +1436,9 @@
 
 ---
 
-### M23 客户端投影、局部回声与页面级故障边界 {#package-contracts-4.client-projection-and-live-ownership}
+<a id="package-contracts-4.client-projection-and-live-ownership"></a>
+
+### M23 客户端投影、局部回声与页面级故障边界
 
 **问题**：浏览器 UI 若持有 durable 运行状态、在重载后恢复旧 bundle，或把局部 echo 当成权威消息，会在重连、换页或多标签时显示错误状态甚至重复提交。
 
@@ -1474,7 +1518,9 @@
 
 ## 2.E 外部结果与发布
 
-### M24 外部提供者的原生结果、可移植片段与诚实缺失 {#package-contracts-4.external-provider-provenance}
+<a id="package-contracts-4.external-provider-provenance"></a>
+
+### M24 外部提供者的原生结果、可移植片段与诚实缺失
 
 **问题**：把供应商专有字段或生成的答案伪装成统一结果，会制造不可引用的来源；省略无法映射的内容而不标注，会让调用方以为结果完整。
 
@@ -1533,7 +1579,9 @@
 
 ---
 
-### M25 已安装产物发布的分离授权与证据链 {#package-contracts-4.installed-artifact-test-provenance}
+<a id="package-contracts-4.installed-artifact-test-provenance"></a>
+
+### M25 已安装产物发布的分离授权与证据链
 
 **问题**：测试二进制上传若同时发布 feed，或复用未绑定材料的旧 receipt，就会把上传成功误当已发布；并发发布者或崩溃残留锁会造成不可复现的远程状态。
 

@@ -1,8 +1,6 @@
 # snapshot-corpus-inventory
 
-> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。
-> 本文件只覆盖分区内的 **250 份 `snapshot.yml`**（ACP 9、SDK 27、headless/session 150、Web 64）与 **3 个 `.snapshot.ts` 适配器**（ACP/SDK/headless；Web 适配器在 `apps/web/tests/`，不在本分区）。规范义务的 canonical 记录在 `testing` 与 `rationale-testing-1` 域；本域负责说明这 253 份文件如何把“场景清单”变成可执行的语料角色，以及哪些字节只是 fixture。
-> 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。只标注实际读过的行；三个适配器为选读，覆盖范围逐条列在 `research/snapshot-corpus-inventory-coverage.json`。
+> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。 本文件只覆盖分区内的 **250 份 `snapshot.yml`**（ACP 9、SDK 27、headless/session 150、Web 64）与 **3 个 `.snapshot.ts` 适配器**（ACP/SDK/headless；Web 适配器在 `apps/web/tests/`，不在本分区）。规范义务的 canonical 记录在 `testing` 与 `rationale-testing-1` 域；本域负责说明这 253 份文件如何把“场景清单”变成可执行的语料角色，以及哪些字节只是 fixture。 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。只标注实际读过的行；三个适配器为选读，覆盖范围逐条列在 `research/snapshot-corpus-inventory-coverage.json`。
 
 ## Scope
 
@@ -23,7 +21,10 @@
 ## Mechanisms
 
 <a id="m-snapshot-corpus-inventory.manifest-role-taxonomy"></a>
-### snapshot-corpus-inventory.manifest-role-taxonomy — 场景清单是输入、期望与夹具角色的权威声明 {#snapshot-corpus-inventory.manifest-role-taxonomy}
+
+<a id="snapshot-corpus-inventory.manifest-role-taxonomy"></a>
+
+### snapshot-corpus-inventory.manifest-role-taxonomy — 场景清单是输入、期望与夹具角色的权威声明
 
 **问题.** 一个场景目录同时存放 replay 输入、期望持久化输出、header sidecar、workspace 种子、补丁与辅助字节。没有作者声明时，适配器和评审无法区分哪些字节是权威输入、哪些是 oracle、哪些只是惰性 fixture；fixture 里的 `AGENTS.md`、系统提示或 expected 散文还可能被误当成项目指令，record/refresh 也可能覆盖错误产物。
 
@@ -74,31 +75,25 @@
 **验证（计划）.** 逐份解析 250 个 manifest 并注入未知字段；运行 corpus gate 验证 scenario/目录、profile/父目录、composition/recording/header 与 pin 唯一性；删除 `image-compaction` 的附件或把 `session.source` 指向不存在的 owner；恢复后重跑并检查只恢复预期角色。
 
 <a id="m-snapshot-corpus-inventory-roles-10"></a>
-- **证据（parser 闭合 schema）.** `deepseek-harness/packages/test-support/session-snapshot/src/manifest.ts:201-432@687f282e` 使用 `yaml.JSON_SCHEMA`、`exactKeys` 与 `version: 1`；`sessionFormat` 校验非负安全整数 version、非空唯一受支持 coverage，并拒绝与 `session` 并存（`manifest.ts:387-405`）；`scenario`/`composition`/`recording`/`header` 在 parser 中均允许缺省（`manifest.ts:201-249`），因此目录/父 profile/必填关系不能归因于 parser。
-<a id="m-snapshot-corpus-inventory-roles-11"></a>
+- **证据（parser 闭合 schema）.** `deepseek-harness/packages/test-support/session-snapshot/src/manifest.ts:201-432@687f282e` 使用 `yaml.JSON_SCHEMA`、`exactKeys` 与 `version: 1`；`sessionFormat` 校验非负安全整数 version、非空唯一受支持 coverage，并拒绝与 `session` 并存（`manifest.ts:387-405`）；`scenario`/`composition`/`recording`/`header` 在 parser 中均允许缺省（`manifest.ts:201-249`），因此目录/父 profile/必填关系不能归因于 parser。 <a id="m-snapshot-corpus-inventory-roles-11"></a>
 - **证据（corpus gate）.** `deepseek-harness/scripts/session-snapshot-corpus.corpus.ts:41-70@687f282e` 断言每目录存在 `snapshot.yml`、`scenario` 等于目录名、`sdk` profile 属于 `sdk|sdk-minimal`、`session` 必须 `headless`、其余 profile 精确匹配，并要求 `composition`/`recording`/`header`；同文件 `124-216` 继续检查 pin 唯一性、owner/borrower、sidecar 与 fixed point。
 
 <a id="m-snapshot-corpus-inventory-roles"></a>
-- **证据（附件输入）.** `deepseek-harness/snapshots/acp/image-compaction/snapshot.yml:1-16@687f282e` 同时声明 pin 来源与 `input.attachments`（`sha256:` id、`image/png`、base64 data），说明附件是清单声明的输入而不是 session 内容。
-<a id="m-snapshot-corpus-inventory-roles-2"></a>
-- **证据（最小手工场景）.** `deepseek-harness/snapshots/acp/handshake/snapshot.yml:1-7@687f282e` 只有 version/scenario/profile/composition/recording/header，证明 authored 场景可以没有 session、pin、workspace 与 input。
-<a id="m-snapshot-corpus-inventory-roles-3"></a>
-- **证据（跨 profile 借用）.** `deepseek-harness/snapshots/web/bash-abort-row/snapshot.yml:1-9@687f282e` 用 `session.source: ../../acp/cancel-tool-calls/session.v4.jsonl` 声明借用，目录本身不拥有 canonical session。
-<a id="m-snapshot-corpus-inventory-roles-4"></a>
-- **证据（多角色叠加）.** `deepseek-harness/snapshots/session/agent-instructions/snapshot.yml:1-14@687f282e` 同时使用 authored、pin、`replay.override`、`platform: posix` 与 `workspace.setup: delimiter-path`，展示一份清单可以声明多个正交角色。
-<a id="m-snapshot-corpus-inventory-roles-5"></a>
-- **证据（retained 代际）.** `deepseek-harness/snapshots/session/text-turn/snapshot.yml:1-10@687f282e` 用 `sessionFormat: {version: 1, coverage: [adjacent-migration]}` 保留历史代际。
-<a id="m-snapshot-corpus-inventory-roles-9"></a>
-- **证据（V0 覆盖名）.** `deepseek-harness/snapshots/session/subagent-multi/snapshot.yml:1-10@687f282e` 声明 v0 的 `multi-hop`/`shipped-profile`；`deepseek-harness/snapshots/session/packed-chunks/snapshot.yml:1-10@687f282e` 声明 v0 的 `packed-row`。
-<a id="m-snapshot-corpus-inventory-roles-6"></a>
-- **证据（catalog-only pin）.** `deepseek-harness/snapshots/web/schedule-catalog/snapshot.yml:1-10@687f282e` 的注释明确说该 v3 fixture 没有 request/header 或 system/message，但历史 prompt/schema sidecar 仍需 pin；这是“断言对象不是完整 header 序列”的例外。
-<a id="m-snapshot-corpus-inventory-roles-7"></a>
-- **证据（retired-tools 与 setup 叠加）.** `deepseek-harness/snapshots/session/office-render-tools/snapshot.yml:1-12@687f282e` 用 v4 + `retired-tools` 保留已移除工具的录制，同时用 `workspace.setup: office-skills` 生成运行种子。
-<a id="m-snapshot-corpus-inventory-roles-8"></a>
+- **证据（附件输入）.** `deepseek-harness/snapshots/acp/image-compaction/snapshot.yml:1-16@687f282e` 同时声明 pin 来源与 `input.attachments`（`sha256:` id、`image/png`、base64 data），说明附件是清单声明的输入而不是 session 内容。 <a id="m-snapshot-corpus-inventory-roles-2"></a>
+- **证据（最小手工场景）.** `deepseek-harness/snapshots/acp/handshake/snapshot.yml:1-7@687f282e` 只有 version/scenario/profile/composition/recording/header，证明 authored 场景可以没有 session、pin、workspace 与 input。 <a id="m-snapshot-corpus-inventory-roles-3"></a>
+- **证据（跨 profile 借用）.** `deepseek-harness/snapshots/web/bash-abort-row/snapshot.yml:1-9@687f282e` 用 `session.source: ../../acp/cancel-tool-calls/session.v4.jsonl` 声明借用，目录本身不拥有 canonical session。 <a id="m-snapshot-corpus-inventory-roles-4"></a>
+- **证据（多角色叠加）.** `deepseek-harness/snapshots/session/agent-instructions/snapshot.yml:1-14@687f282e` 同时使用 authored、pin、`replay.override`、`platform: posix` 与 `workspace.setup: delimiter-path`，展示一份清单可以声明多个正交角色。 <a id="m-snapshot-corpus-inventory-roles-5"></a>
+- **证据（retained 代际）.** `deepseek-harness/snapshots/session/text-turn/snapshot.yml:1-10@687f282e` 用 `sessionFormat: {version: 1, coverage: [adjacent-migration]}` 保留历史代际。 <a id="m-snapshot-corpus-inventory-roles-9"></a>
+- **证据（V0 覆盖名）.** `deepseek-harness/snapshots/session/subagent-multi/snapshot.yml:1-10@687f282e` 声明 v0 的 `multi-hop`/`shipped-profile`；`deepseek-harness/snapshots/session/packed-chunks/snapshot.yml:1-10@687f282e` 声明 v0 的 `packed-row`。 <a id="m-snapshot-corpus-inventory-roles-6"></a>
+- **证据（catalog-only pin）.** `deepseek-harness/snapshots/web/schedule-catalog/snapshot.yml:1-10@687f282e` 的注释明确说该 v3 fixture 没有 request/header 或 system/message，但历史 prompt/schema sidecar 仍需 pin；这是“断言对象不是完整 header 序列”的例外。 <a id="m-snapshot-corpus-inventory-roles-7"></a>
+- **证据（retired-tools 与 setup 叠加）.** `deepseek-harness/snapshots/session/office-render-tools/snapshot.yml:1-12@687f282e` 用 v4 + `retired-tools` 保留已移除工具的录制，同时用 `workspace.setup: office-skills` 生成运行种子。 <a id="m-snapshot-corpus-inventory-roles-8"></a>
 - **证据（借用 + 最终树）.** `deepseek-harness/snapshots/web/default-workspace/snapshot.yml:1-11@687f282e` 同时声明 `workspace.final: true` 与 `session.source: ../fresh-round-trip/session.v4.jsonl`，说明最终树 oracle 与回放输入是两件事。
 
 <a id="m-snapshot-corpus-inventory.adapter-entry-and-profile-selection"></a>
-### snapshot-corpus-inventory.adapter-entry-and-profile-selection — ACP/SDK/headless 三个适配器是各自 profile 场景的唯一执行入口 {#snapshot-corpus-inventory.adapter-entry-and-profile-selection}
+
+<a id="snapshot-corpus-inventory.adapter-entry-and-profile-selection"></a>
+
+### snapshot-corpus-inventory.adapter-entry-and-profile-selection — ACP/SDK/headless 三个适配器是各自 profile 场景的唯一执行入口
 
 **问题.** 清单只声明意图，只有适配器把声明接进真实进程或浏览器。适配器若静默漏掉一份 manifest，或有人新增隐藏驱动绕过 suite，场景会在账面上存在却从未执行；composition/pin 所有权与 profile 选择也会变得不可判定。
 
@@ -149,32 +144,24 @@
 
 
 <a id="m-snapshot-corpus-inventory-adapters"></a>
-- **证据（ACP 闭合表）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:26-42@687f282e` 列出 9 个 controller case，其中 `handshake` 与 `reject-extra-dirs` 的 `hasModelTurn` 为 false；`image-compaction` 额外指定 `configPath`。
-<a id="m-snapshot-corpus-inventory-adapters-2"></a>
-- **证据（ACP 映射）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:50-76@687f282e` 把 manifest 的 recording/header/pin/changes/sidecar/platform/permission/environment 映射为 suite 选项，并对带斜杠的 pin 来源返回 undefined（本地表只接受裸名）。
-<a id="m-snapshot-corpus-inventory-adapters-3"></a>
-- **证据（SDK 收集）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:204-226@687f282e` 只遍历 `session/` 与 `sdk/`，解析 `snapshot.yml`；`composition`/`recording`/`header` 任一缺失时静默 `continue`，场景会从 suite 消失。这是源负向发现，不是应保留的保证。
-<a id="m-snapshot-corpus-inventory-adapters-4"></a>
-- **证据（SDK 所有权）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:228-264@687f282e` 按 profile 过滤，建立 `compositionOwners` 与 `headerPins`，重复 owner/pin 立即抛错，并对裸名/相对路径 sidecar 来源做二次解析。
-<a id="m-snapshot-corpus-inventory-adapters-5"></a>
-- **证据（SDK 补丁层序与跳过）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:551-565@687f282e` 区分 `sdk-*` composition 与默认 transport-neutral 的补丁层序；`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:925-931@687f282e` 在 record 时跳过 authored 与 retained 场景。
-<a id="m-snapshot-corpus-inventory-adapters-6"></a>
-- **证据（Headless 收集与所有权）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:563-617@687f282e` 只收集 `profile: headless`，缺 recording/header 抛错，并建立 composition owner 与 header pin 的唯一映射；`deepseek-harness/snapshots/session/headless.snapshot.ts:955-960@687f282e` 断言每个 composition/class 恰好一个 current-writer pin。
-<a id="m-snapshot-corpus-inventory-adapters-7"></a>
-- **证据（Headless 跳过条件）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1229-1240@687f282e` 在 posix/win32、缺 pwsh、record+authored、record+sessionFormat 时显式跳过，而不是静默返回。
-<a id="m-snapshot-corpus-inventory-adapters-8"></a>
-- **证据（Headless 补丁层序）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1257-1290@687f282e` 组装 base `cordis.yml` + 模式补丁 + `model.cordis.yml` + 可选 `runtime.cordis.yml`，并按 profile 与 workspace.parent 选择运行参数。
-<a id="m-snapshot-corpus-inventory-adapters-9"></a>
-- **证据（未知模式分叉）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:15-23@687f282e` 与 `deepseek-harness/snapshots/session/headless.snapshot.ts:68-79@687f282e` 对未知 `DSH_SNAPSHOT` 抛错；`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:79-82@687f282e` 仅把 `record`/`refresh` 特判，其余值（含拼写错误）都落入 replay。
-<a id="m-snapshot-corpus-inventory-adapters-10"></a>
-- **证据（断言所有权不同）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:109-192@687f282e` 定义 `SDK_ASSERTIONS`；`deepseek-harness/snapshots/session/headless.snapshot.ts:945-960@687f282e` 用 `verifyHeaders` 与 pin 唯一性断言；`deepseek-harness/snapshots/acp/acp.snapshot.ts:82-92@687f282e` 把场景与期望交给 `defineAcpSnapshotSuite`。三者不是一张同形表。
-<a id="m-snapshot-corpus-inventory-adapters-11"></a>
-- **证据（水合、catalog顺序与最终尾部等待）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:370-383@687f282e`将`{{cwd}}`替换为临时rooted `.replay-fixtures`；`deepseek-harness/snapshots/session/headless.snapshot.ts:205-226@687f282e`优先catalog顺序再以`createdAt`回退，`1109-1135@687f282e`是时间戳回归。`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:491-495@687f282e`从最后一次`turn/end`后取事件类型，`687-766@687f282e`区分逐action结束等待、特定场景等待和全部actions之后的最终尾部等待；不能推成每轮均有同一屏障。执行状态仍为planned。
-<a id="m-snapshot-corpus-inventory-adapters-12"></a>
+- **证据（ACP 闭合表）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:26-42@687f282e` 列出 9 个 controller case，其中 `handshake` 与 `reject-extra-dirs` 的 `hasModelTurn` 为 false；`image-compaction` 额外指定 `configPath`。 <a id="m-snapshot-corpus-inventory-adapters-2"></a>
+- **证据（ACP 映射）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:50-76@687f282e` 把 manifest 的 recording/header/pin/changes/sidecar/platform/permission/environment 映射为 suite 选项，并对带斜杠的 pin 来源返回 undefined（本地表只接受裸名）。 <a id="m-snapshot-corpus-inventory-adapters-3"></a>
+- **证据（SDK 收集）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:204-226@687f282e` 只遍历 `session/` 与 `sdk/`，解析 `snapshot.yml`；`composition`/`recording`/`header` 任一缺失时静默 `continue`，场景会从 suite 消失。这是源负向发现，不是应保留的保证。 <a id="m-snapshot-corpus-inventory-adapters-4"></a>
+- **证据（SDK 所有权）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:228-264@687f282e` 按 profile 过滤，建立 `compositionOwners` 与 `headerPins`，重复 owner/pin 立即抛错，并对裸名/相对路径 sidecar 来源做二次解析。 <a id="m-snapshot-corpus-inventory-adapters-5"></a>
+- **证据（SDK 补丁层序与跳过）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:551-565@687f282e` 区分 `sdk-*` composition 与默认 transport-neutral 的补丁层序；`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:925-931@687f282e` 在 record 时跳过 authored 与 retained 场景。 <a id="m-snapshot-corpus-inventory-adapters-6"></a>
+- **证据（Headless 收集与所有权）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:563-617@687f282e` 只收集 `profile: headless`，缺 recording/header 抛错，并建立 composition owner 与 header pin 的唯一映射；`deepseek-harness/snapshots/session/headless.snapshot.ts:955-960@687f282e` 断言每个 composition/class 恰好一个 current-writer pin。 <a id="m-snapshot-corpus-inventory-adapters-7"></a>
+- **证据（Headless 跳过条件）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1229-1240@687f282e` 在 posix/win32、缺 pwsh、record+authored、record+sessionFormat 时显式跳过，而不是静默返回。 <a id="m-snapshot-corpus-inventory-adapters-8"></a>
+- **证据（Headless 补丁层序）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1257-1290@687f282e` 组装 base `cordis.yml` + 模式补丁 + `model.cordis.yml` + 可选 `runtime.cordis.yml`，并按 profile 与 workspace.parent 选择运行参数。 <a id="m-snapshot-corpus-inventory-adapters-9"></a>
+- **证据（未知模式分叉）.** `deepseek-harness/snapshots/acp/acp.snapshot.ts:15-23@687f282e` 与 `deepseek-harness/snapshots/session/headless.snapshot.ts:68-79@687f282e` 对未知 `DSH_SNAPSHOT` 抛错；`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:79-82@687f282e` 仅把 `record`/`refresh` 特判，其余值（含拼写错误）都落入 replay。 <a id="m-snapshot-corpus-inventory-adapters-10"></a>
+- **证据（断言所有权不同）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:109-192@687f282e` 定义 `SDK_ASSERTIONS`；`deepseek-harness/snapshots/session/headless.snapshot.ts:945-960@687f282e` 用 `verifyHeaders` 与 pin 唯一性断言；`deepseek-harness/snapshots/acp/acp.snapshot.ts:82-92@687f282e` 把场景与期望交给 `defineAcpSnapshotSuite`。三者不是一张同形表。 <a id="m-snapshot-corpus-inventory-adapters-11"></a>
+- **证据（水合、catalog顺序与最终尾部等待）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:370-383@687f282e`将`{{cwd}}`替换为临时rooted `.replay-fixtures`；`deepseek-harness/snapshots/session/headless.snapshot.ts:205-226@687f282e`优先catalog顺序再以`createdAt`回退，`1109-1135@687f282e`是时间戳回归。`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:491-495@687f282e`从最后一次`turn/end`后取事件类型，`687-766@687f282e`区分逐action结束等待、特定场景等待和全部actions之后的最终尾部等待；不能推成每轮均有同一屏障。执行状态仍为planned。 <a id="m-snapshot-corpus-inventory-adapters-12"></a>
 - **证据（retained 输入字节不变）.** `deepseek-harness/snapshots/sdk/sdk.snapshot.ts:1090-1180@687f282e` 与 `deepseek-harness/snapshots/session/headless.snapshot.ts:1377-1396@687f282e` 在 retained 场景比较原始 replay 字节并读取 writer oracle。
 
 <a id="m-snapshot-corpus-inventory.fixture-helper-admission"></a>
-### snapshot-corpus-inventory.fixture-helper-admission — Fixture 辅助文件与 workspace setup 的准入规则 {#snapshot-corpus-inventory.fixture-helper-admission}
+
+<a id="snapshot-corpus-inventory.fixture-helper-admission"></a>
+
+### snapshot-corpus-inventory.fixture-helper-admission — Fixture 辅助文件与 workspace setup 的准入规则
 
 **问题.** 场景内的 `.mjs` HTTP server、生成的 workspace 与命名 setup 常被当作“只是 fixture”随手添加；固定监听端口会让并行 lane 撞端口，非确定的 seed 会让 replay 抖动，未注册的 setup 会在运行期才失败，helper 文本还可能被误当项目指令。
 
@@ -225,24 +212,15 @@
 
 
 <a id="m-snapshot-corpus-inventory-fixtures"></a>
-- **证据（端口扫描实现）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:137-163@687f282e` 用 TypeScript AST 识别 `listen` 调用，接受数值 0、`{ port: 0, ... }` 与 `{ path }`，对固定/动态/混合端口生成带行号的违规。
-<a id="m-snapshot-corpus-inventory-fixtures-2"></a>
-- **证据（setup 闭合映射）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:498-560@687f282e` 定义 `workspaceSetups`，覆盖 Windows ACL、office skills、office-retired-ptc、git-worktree、editing-cordis-skill、delimiter-path 与 fixed-search-mtimes；`seedWorkspace` 对未注册名直接抛错。
-<a id="m-snapshot-corpus-inventory-fixtures-3"></a>
-- **证据（扫描负向测试）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:962-995@687f282e` 先验证接受形态，再对 `listen(43118)`、动态 `port` 与 `path+port` 断言违规，并扫描 `snapshots/**/*.mjs` 全量。
-<a id="m-snapshot-corpus-inventory-fixtures-4"></a>
-- **证据（setup 实例）.** `deepseek-harness/snapshots/session/agent-instructions/snapshot.yml:12-13@687f282e` 声明 `workspace.setup: delimiter-path`；`deepseek-harness/snapshots/session/worktree/snapshot.yml:10-12@687f282e` 声明 `git-worktree` 且 `final: true`；`deepseek-harness/snapshots/session/office-progressive-ptc/snapshot.yml:10-11@687f282e` 声明 `office-retired-ptc`。
-<a id="m-snapshot-corpus-inventory-fixtures-5"></a>
-- **证据（确定性种子）.** `deepseek-harness/snapshots/session/fs-glob-sampling/snapshot.yml:9-11@687f282e` 用 `fixed-search-mtimes` 固定文件时间；`deepseek-harness/snapshots/session/headless.snapshot.ts:541-560@687f282e` 的 `fixed-search-mtimes` 实现用 `utimes` 写入 2000-01-01 的递增秒数，避免 ambient mtime 进入 golden。
-<a id="m-snapshot-corpus-inventory-fixtures-6"></a>
-- **证据（宿主秘密哨兵）.** `deepseek-harness/snapshots/session/ptc-python-read-only/snapshot.yml:10-11@687f282e` 只声明 `DSH_PYTHON_PTC_HOST_SECRET: host-only-sentinel`，证明宿主秘密以场景哨兵而非真实值进入 fixture。
-<a id="m-snapshot-corpus-inventory-fixtures-7"></a>
-- **证据（最终树捕获）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1448-1451@687f282e` 在 `workspace.final: true` 时用 `captureExpectedWorkspaceSnapshot` 比较完整最终树；否则要求最终树等于初始树，从而暴露 helper 遗留的运行期文件。
-<a id="m-snapshot-corpus-inventory-fixtures-8"></a>
-- **证据（Web 专属清单）.** `deepseek-harness/apps/web/tests/scaffold.ts:1728-1788@687f282e` 的 `assertFixtureInventory` 检查 Web 场景文件角色集合、`profile=web`、canonical session owner/borrower，并对每个 JSONL 断言 prompt/schema scrub 与身份 redaction fixed point；该函数不在 headless 路径。
-<a id="m-snapshot-corpus-inventory-fixtures-9"></a>
-- **证据（headless 禁止文件）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:989-1000@687f282e` 断言 session-owned 输入为身份/提示/工具 fixed point，且 `input.json` 与 `stdout.expected.jsonl` 不存在；这不是通用文件清单。
-<a id="m-snapshot-corpus-inventory-fixtures-10"></a>
+- **证据（端口扫描实现）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:137-163@687f282e` 用 TypeScript AST 识别 `listen` 调用，接受数值 0、`{ port: 0, ... }` 与 `{ path }`，对固定/动态/混合端口生成带行号的违规。 <a id="m-snapshot-corpus-inventory-fixtures-2"></a>
+- **证据（setup 闭合映射）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:498-560@687f282e` 定义 `workspaceSetups`，覆盖 Windows ACL、office skills、office-retired-ptc、git-worktree、editing-cordis-skill、delimiter-path 与 fixed-search-mtimes；`seedWorkspace` 对未注册名直接抛错。 <a id="m-snapshot-corpus-inventory-fixtures-3"></a>
+- **证据（扫描负向测试）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:962-995@687f282e` 先验证接受形态，再对 `listen(43118)`、动态 `port` 与 `path+port` 断言违规，并扫描 `snapshots/**/*.mjs` 全量。 <a id="m-snapshot-corpus-inventory-fixtures-4"></a>
+- **证据（setup 实例）.** `deepseek-harness/snapshots/session/agent-instructions/snapshot.yml:12-13@687f282e` 声明 `workspace.setup: delimiter-path`；`deepseek-harness/snapshots/session/worktree/snapshot.yml:10-12@687f282e` 声明 `git-worktree` 且 `final: true`；`deepseek-harness/snapshots/session/office-progressive-ptc/snapshot.yml:10-11@687f282e` 声明 `office-retired-ptc`。 <a id="m-snapshot-corpus-inventory-fixtures-5"></a>
+- **证据（确定性种子）.** `deepseek-harness/snapshots/session/fs-glob-sampling/snapshot.yml:9-11@687f282e` 用 `fixed-search-mtimes` 固定文件时间；`deepseek-harness/snapshots/session/headless.snapshot.ts:541-560@687f282e` 的 `fixed-search-mtimes` 实现用 `utimes` 写入 2000-01-01 的递增秒数，避免 ambient mtime 进入 golden。 <a id="m-snapshot-corpus-inventory-fixtures-6"></a>
+- **证据（宿主秘密哨兵）.** `deepseek-harness/snapshots/session/ptc-python-read-only/snapshot.yml:10-11@687f282e` 只声明 `DSH_PYTHON_PTC_HOST_SECRET: host-only-sentinel`，证明宿主秘密以场景哨兵而非真实值进入 fixture。 <a id="m-snapshot-corpus-inventory-fixtures-7"></a>
+- **证据（最终树捕获）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:1448-1451@687f282e` 在 `workspace.final: true` 时用 `captureExpectedWorkspaceSnapshot` 比较完整最终树；否则要求最终树等于初始树，从而暴露 helper 遗留的运行期文件。 <a id="m-snapshot-corpus-inventory-fixtures-8"></a>
+- **证据（Web 专属清单）.** `deepseek-harness/apps/web/tests/scaffold.ts:1728-1788@687f282e` 的 `assertFixtureInventory` 检查 Web 场景文件角色集合、`profile=web`、canonical session owner/borrower，并对每个 JSONL 断言 prompt/schema scrub 与身份 redaction fixed point；该函数不在 headless 路径。 <a id="m-snapshot-corpus-inventory-fixtures-9"></a>
+- **证据（headless 禁止文件）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:989-1000@687f282e` 断言 session-owned 输入为身份/提示/工具 fixed point，且 `input.json` 与 `stdout.expected.jsonl` 不存在；这不是通用文件清单。 <a id="m-snapshot-corpus-inventory-fixtures-10"></a>
 - **证据（确定性 Git）.** `deepseek-harness/snapshots/session/headless.snapshot.ts:805-835@687f282e` 的 `snapshotGit` 清空 `GIT_*`、设 `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM=/dev/null`、固定 author/committer 与日期；`verifyWorktree` 比较 config、attributes/filter、branch、HEAD、worktree list 与 `check-ignore`。
 
 ## References
@@ -272,9 +250,6 @@
 
 本节按机制列出 `knowledge/` 账中登记的全部来源区间，使用固定提交 `687f282e`。它只补齐可回溯的引用坐标，不新增正文断言；正文解释仍以对应小节为准。
 
-- `snapshot-corpus-inventory.manifest-role-taxonomy`：
-  `snapshots/acp/image-compaction/snapshot.yml:1-16`、`snapshots/acp/handshake/snapshot.yml:1-7`、`snapshots/web/bash-abort-row/snapshot.yml:1-9`、`snapshots/session/agent-instructions/snapshot.yml:1-14`、`snapshots/session/text-turn/snapshot.yml:1-10`、`snapshots/session/subagent-multi/snapshot.yml:1-10`、`snapshots/session/packed-chunks/snapshot.yml:1-10`、`snapshots/web/schedule-catalog/snapshot.yml:1-10`、`snapshots/session/office-render-tools/snapshot.yml:1-12`、`snapshots/web/default-workspace/snapshot.yml:1-11`、`packages/test-support/session-snapshot/src/manifest.ts:150-432`、`scripts/session-snapshot-corpus.corpus.ts:1-216`
-- `snapshot-corpus-inventory.adapter-entry-and-profile-selection`：
-  `snapshots/acp/acp.snapshot.ts:26-42`、`snapshots/acp/acp.snapshot.ts:50-76`、`snapshots/acp/acp.snapshot.ts:82-92`、`snapshots/sdk/sdk.snapshot.ts:204-226`、`snapshots/sdk/sdk.snapshot.ts:228-264`、`snapshots/sdk/sdk.snapshot.ts:551-565`、`snapshots/sdk/sdk.snapshot.ts:925-931`、`snapshots/sdk/sdk.snapshot.ts:109-192`、`snapshots/sdk/sdk.snapshot.ts:274-496`、`snapshots/sdk/sdk.snapshot.ts:664-787`、`snapshots/sdk/sdk.snapshot.ts:954-1179`、`snapshots/session/headless.snapshot.ts:563-617`、`snapshots/session/headless.snapshot.ts:955-960`、`snapshots/session/headless.snapshot.ts:1229-1240`、`snapshots/session/headless.snapshot.ts:1257-1290`、`snapshots/session/headless.snapshot.ts:164-479`、`snapshots/session/headless.snapshot.ts:644-898`、`snapshots/session/headless.snapshot.ts:1014-1199`
-- `snapshot-corpus-inventory.fixture-helper-admission`：
-  `snapshots/session/headless.snapshot.ts:137-163`、`snapshots/session/headless.snapshot.ts:498-560`、`snapshots/session/headless.snapshot.ts:962-995`、`snapshots/session/headless.snapshot.ts:989-1000`、`snapshots/session/headless.snapshot.ts:1448-1451`、`snapshots/session/agent-instructions/snapshot.yml:12-13`、`snapshots/session/worktree/snapshot.yml:10-12`、`snapshots/session/office-progressive-ptc/snapshot.yml:10-11`、`snapshots/session/ptc-python-read-only/snapshot.yml:10-11`、`snapshots/session/fs-glob-sampling/snapshot.yml:9-11`、`snapshots/session/headless.snapshot.ts:817-835`、`apps/web/tests/scaffold.ts:146-158`、`apps/web/tests/scaffold.ts:1728-1788`
+- `snapshot-corpus-inventory.manifest-role-taxonomy`： `snapshots/acp/image-compaction/snapshot.yml:1-16`、`snapshots/acp/handshake/snapshot.yml:1-7`、`snapshots/web/bash-abort-row/snapshot.yml:1-9`、`snapshots/session/agent-instructions/snapshot.yml:1-14`、`snapshots/session/text-turn/snapshot.yml:1-10`、`snapshots/session/subagent-multi/snapshot.yml:1-10`、`snapshots/session/packed-chunks/snapshot.yml:1-10`、`snapshots/web/schedule-catalog/snapshot.yml:1-10`、`snapshots/session/office-render-tools/snapshot.yml:1-12`、`snapshots/web/default-workspace/snapshot.yml:1-11`、`packages/test-support/session-snapshot/src/manifest.ts:150-432`、`scripts/session-snapshot-corpus.corpus.ts:1-216`
+- `snapshot-corpus-inventory.adapter-entry-and-profile-selection`： `snapshots/acp/acp.snapshot.ts:26-42`、`snapshots/acp/acp.snapshot.ts:50-76`、`snapshots/acp/acp.snapshot.ts:82-92`、`snapshots/sdk/sdk.snapshot.ts:204-226`、`snapshots/sdk/sdk.snapshot.ts:228-264`、`snapshots/sdk/sdk.snapshot.ts:551-565`、`snapshots/sdk/sdk.snapshot.ts:925-931`、`snapshots/sdk/sdk.snapshot.ts:109-192`、`snapshots/sdk/sdk.snapshot.ts:274-496`、`snapshots/sdk/sdk.snapshot.ts:664-787`、`snapshots/sdk/sdk.snapshot.ts:954-1179`、`snapshots/session/headless.snapshot.ts:563-617`、`snapshots/session/headless.snapshot.ts:955-960`、`snapshots/session/headless.snapshot.ts:1229-1240`、`snapshots/session/headless.snapshot.ts:1257-1290`、`snapshots/session/headless.snapshot.ts:164-479`、`snapshots/session/headless.snapshot.ts:644-898`、`snapshots/session/headless.snapshot.ts:1014-1199`
+- `snapshot-corpus-inventory.fixture-helper-admission`： `snapshots/session/headless.snapshot.ts:137-163`、`snapshots/session/headless.snapshot.ts:498-560`、`snapshots/session/headless.snapshot.ts:962-995`、`snapshots/session/headless.snapshot.ts:989-1000`、`snapshots/session/headless.snapshot.ts:1448-1451`、`snapshots/session/agent-instructions/snapshot.yml:12-13`、`snapshots/session/worktree/snapshot.yml:10-12`、`snapshots/session/office-progressive-ptc/snapshot.yml:10-11`、`snapshots/session/ptc-python-read-only/snapshot.yml:10-11`、`snapshots/session/fs-glob-sampling/snapshot.yml:9-11`、`snapshots/session/headless.snapshot.ts:817-835`、`apps/web/tests/scaffold.ts:146-158`、`apps/web/tests/scaffold.ts:1728-1788`

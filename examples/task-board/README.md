@@ -2,8 +2,7 @@
 
 [中文](#中文)
 
-This is the actual application used by `npm run demo`, not a fake checker response.
-It returns unfinished task titles in input order. Run its acceptance checks from the repository root:
+This is the actual application used by `npm run demo`, not a fake checker response. It returns unfinished task titles in input order. Run its acceptance checks from the repository root:
 
 ```bash
 node --test examples/task-board/board.test.mjs

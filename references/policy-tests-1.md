@@ -11,7 +11,9 @@
 
 ## 新增机制
 
-## Committed session fixture corpus admission {#policy-tests-1.committed-session-fixture-corpus-admission}
+<a id="policy-tests-1.committed-session-fixture-corpus-admission"></a>
+
+## Committed session fixture corpus admission
 
 **来源。** `deepseek-harness/packages/test-support/llm-replay/tests/session-format-corpus.spec.ts:1-138@687f282e`（测试全文）。该测试是 `packages/test-support/llm-replay` 的 committed-corpus gate，配套 inventory 提供 `expectedUnsupported` 与 `unversionedProtocolFixtures`。
 

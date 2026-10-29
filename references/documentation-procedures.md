@@ -38,7 +38,9 @@
 
 ## 1. 改文档：配对、围栏、生成页与词汇
 
-### 1.1 双语三件套与逐标题 sidecar {#documentation-procedures.translation-pairing-and-sidecar}
+<a id="documentation-procedures.translation-pairing-and-sidecar"></a>
+
+### 1.1 双语三件套与逐标题 sidecar
 
 **适用。** `docs/`、包 README、Agent Note 等被翻译范围覆盖的 Markdown 页。是否在范围由 `scripts/translation-pairing.manifest.json` 的 `excluded` 决定，而不是凭目录猜；该文件只列显式排除项，例如 `.agents/notes/AGENTS.md`、`docs/AGENTS.md`、`docs/i18n/terminology.md`（`deepseek-harness/scripts/translation-pairing.manifest.json:1-13@687f282e`）。
 
@@ -72,7 +74,9 @@
 
 ---
 
-### 1.2 代码围栏与类型逐字校验 {#documentation-procedures.doc-fence-typecheck-and-type-equiv}
+<a id="documentation-procedures.doc-fence-typecheck-and-type-equiv"></a>
+
+### 1.2 代码围栏与类型逐字校验
 
 **适用。** 任何含 TypeScript 围栏、或粘贴源类型定义的 Markdown。
 
@@ -111,7 +115,9 @@
 
 ---
 
-### 1.3 生成参考的唯一真源与新鲜度 {#documentation-procedures.generated-reference-freshness}
+<a id="documentation-procedures.generated-reference-freshness"></a>
+
+### 1.3 生成参考的唯一真源与新鲜度
 
 **适用。** 工具目录（`docs/tool-catalog.md`）、配置目录（`docs/config-catalog.md`）、持久化目录（`docs/persistence-catalog.md`）、模块图（`docs/module-graph.md`）、CLI 帮助（`docs/cli-help.md`）、子系统页中的 `cordis-surface` 生成区域，以及 Session 格式 catalog。
 
@@ -141,7 +147,9 @@
 
 ---
 
-### 1.4 规范术语与职责命名 {#documentation-procedures.naming-and-vocabulary}
+<a id="documentation-procedures.naming-and-vocabulary"></a>
+
+### 1.4 规范术语与职责命名
 
 **适用。** 命名新概念、包、类、`ctx` key，或在文档中发现同义词漂移。
 
@@ -169,7 +177,9 @@
 
 ## 2. 新增能力：cookbook 与文件清单
 
-### 2.1 Cookbook 页的可执行步骤合同 {#documentation-procedures.cookbook-procedure-standard}
+<a id="documentation-procedures.cookbook-procedure-standard"></a>
+
+### 2.1 Cookbook 页的可执行步骤合同
 
 **适用。** 任何 how-to、迁移步骤、评审流程与操作清单。
 
@@ -199,7 +209,9 @@
 
 ---
 
-### 2.2 新增 workspace 包 {#documentation-procedures.package-addition-procedure}
+<a id="documentation-procedures.package-addition-procedure"></a>
+
+### 2.2 新增 workspace 包
 
 **适用。** 创建 `@deepseek-ai/dsh-<name>` 包、拆分或迁移包。
 
@@ -237,7 +249,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.3 面向模型的工具 {#documentation-procedures.tool-authoring-contract}
+<a id="documentation-procedures.tool-authoring-contract"></a>
+
+### 2.3 面向模型的工具
 
 **适用。** 任何注册到 `ctx.tools` 的模型可见能力，包括第一方工具、MCP 工具与动态工具。
 
@@ -268,7 +282,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.4 新增或修改 Remote API {#documentation-procedures.remote-api-addition-procedure}
+<a id="documentation-procedures.remote-api-addition-procedure"></a>
+
+### 2.4 新增或修改 Remote API
 
 **适用。** 任何通过 `ctx.remote` 暴露或消费的端点。会话事件流、分页、增量与 projection 明确不属于 Remote，不得伪装成 Remote 方法（`deepseek-harness/docs/api-gateway.md:162-172@687f282e`）。
 
@@ -292,7 +308,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.5 即时配置表单（设置卡） {#documentation-procedures.settings-card-procedure}
+<a id="documentation-procedures.settings-card-procedure"></a>
+
+### 2.5 即时配置表单（设置卡）
 
 **适用。** 插件需要运行时配置编辑，或需要向插件详情页贡献 UI。
 
@@ -316,7 +334,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.6 内置插件功能配图 {#documentation-procedures.plugin-preview-procedure}
+<a id="documentation-procedures.plugin-preview-procedure"></a>
+
+### 2.6 内置插件功能配图
 
 **适用。** 编辑 Plugin Manager 的 `BUNDLE_PREVIEWS` 或资产。
 
@@ -341,7 +361,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.7 新增 vendored 上游包 {#documentation-procedures.vendored-package-procedure}
+<a id="documentation-procedures.vendored-package-procedure"></a>
+
+### 2.7 新增 vendored 上游包
 
 **适用。** 需要另一个上游 Cordis 包，或更新/修改已 vendored 包。
 
@@ -367,7 +389,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 2.8 新增 LLM 适配器 {#documentation-procedures.llm-adapter-procedure}
+<a id="documentation-procedures.llm-adapter-procedure"></a>
+
+### 2.8 新增 LLM 适配器
 
 **适用。** 接入新模型提供方或修改其流协议翻译。
 
@@ -395,7 +419,9 @@ pnpm run build && pnpm run hygiene
 
 ## 3. Session 格式与持久化
 
-### 3.1 三类格式真源与发布推进 {#documentation-procedures.session-format-authority}
+<a id="documentation-procedures.session-format-authority"></a>
+
+### 3.1 三类格式真源与发布推进
 
 **适用。** 改当前 Session 格式、准备发布、判断页面上的格式数字是否可信。
 
@@ -430,7 +456,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 3.2 持久化类型变更的准入与决策记录 {#documentation-procedures.persistence-type-change-record}
+<a id="documentation-procedures.persistence-type-change-record"></a>
+
+### 3.2 持久化类型变更的准入与决策记录
 
 **适用。** 新增、修改或删除 `packages/core/session/src/types.ts` 中持久化的消息类型、内容块或元数据。
 
@@ -459,7 +487,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 3.3 新增 Session 格式版本（格式链） {#documentation-procedures.session-format-version-procedure}
+<a id="documentation-procedures.session-format-version-procedure"></a>
+
+### 3.3 新增 Session 格式版本（格式链）
 
 **适用。** 需要新增格式整数，或改变格式链/邻接边。
 
@@ -494,7 +524,9 @@ pnpm run build && pnpm run hygiene
 
 ## 4. 事故复盘：准入、结构与防护栏
 
-### 4.1 复盘准入与叙事边界 {#documentation-procedures.postmortem-admission}
+<a id="documentation-procedures.postmortem-admission"></a>
+
+### 4.1 复盘准入与叙事边界
 
 **适用。** 一个 bug 已修复，判断是否写 postmortem，或评审一篇复盘。
 
@@ -527,7 +559,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 4.2 复盘证据与防护栏质量 {#documentation-procedures.postmortem-evidence-and-guardrails}
+<a id="documentation-procedures.postmortem-evidence-and-guardrails"></a>
+
+### 4.2 复盘证据与防护栏质量
 
 **适用。** 写“Root cause / Guardrails”两节，或评审防护栏是否真的能阻止复发。
 
@@ -557,7 +591,9 @@ pnpm run build && pnpm run hygiene
 
 ## 5. 评审协作
 
-### 5.1 堆叠 PR 的评审响应与修复归属 {#documentation-procedures.stacked-pr-review-response}
+<a id="documentation-procedures.stacked-pr-review-response"></a>
+
+### 5.1 堆叠 PR 的评审响应与修复归属
 
 **适用。** 一个 PR 属于 GitHub stack，收到多个线程评审。
 
@@ -584,7 +620,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 5.2 仓库专用评审 skill 的维护流程 {#documentation-procedures.code-review-skill-maintenance}
+<a id="documentation-procedures.code-review-skill-maintenance"></a>
+
+### 5.2 仓库专用评审 skill 的维护流程
 
 **适用。** 运行 `dsh-code-review` 的周期维护、处理候选、失败或陈旧窗口，或交接给新操作者。
 
@@ -625,7 +663,9 @@ pnpm run build && pnpm run hygiene
 
 ## 6. UI 标准
 
-### 6.1 圆角角色与嵌套几何 {#documentation-procedures.ui-corner-radius-standard}
+<a id="documentation-procedures.ui-corner-radius-standard"></a>
+
+### 6.1 圆角角色与嵌套几何
 
 **适用。** 任何 Web/Desktop UI 的边框圆角、胶囊或圆形表面。
 
@@ -698,7 +738,9 @@ pnpm run build && pnpm run hygiene
 
 ---
 
-### 6.2 Web 样式归属与组件边界 {#documentation-procedures.web-styling-ownership}
+<a id="documentation-procedures.web-styling-ownership"></a>
+
+### 6.2 Web 样式归属与组件边界
 
 **适用。** 给 Web 功能写样式、新增 token、评审样式改动。
 
@@ -732,7 +774,9 @@ pnpm run build && pnpm run hygiene
 
 ## 7. 协议、wire 暴露面与扩展点
 
-### 7.1 DeepSeek wire 扩展的暴露面与接收方义务 {#documentation-procedures.wire-extension-exposure-and-receiver}
+<a id="documentation-procedures.wire-extension-exposure-and-receiver"></a>
+
+### 7.1 DeepSeek wire 扩展的暴露面与接收方义务
 
 **适用。** 给 DeepSeek official Messages 请求加 header/JSON 字段，或接收方要理解未知字段。
 
@@ -799,7 +843,9 @@ HTTP 2xx 后，适配器先运行准备好的 `accept()`，再读取 SSE。传�
 
 ---
 
-### 7.2 架构地图与扩展点选择 {#documentation-procedures.extension-point-map}
+<a id="documentation-procedures.extension-point-map"></a>
+
+### 7.2 架构地图与扩展点选择
 
 **适用。** 新增产品行为，先找“应该放哪一层”，而不是先写代码。
 

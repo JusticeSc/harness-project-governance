@@ -1,7 +1,6 @@
 # 决策理由、否决知识与归档理由（rationale）：迁移参考
 
-> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317`（DeepSeek Harness）。
-> 本文只从原始仓库的 Note 正文、postmortem、当前规则/脚本和冻结归档中取证；不读取新根目录之外的既有提取包、Skill、研究或审计产物。所有新文件仅写入 `harness-project-governance/`。
+> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317`（DeepSeek Harness）。 本文只从原始仓库的 Note 正文、postmortem、当前规则/脚本和冻结归档中取证；不读取新根目录之外的既有提取包、Skill、研究或审计产物。所有新文件仅写入 `harness-project-governance/`。
 >
 > **证据标签**：`【源规则】` 是源仓库明文规则或脚本行为；`【源实践】` 是从多个 Note/postmortem 正文归纳出的做法；`【迁移设计】` 是给安装后消费者项目的建议，不是源仓库义务；`【未验证】` 是尚未运行或无法从静态阅读证明的事项。引用格式为 `deepseek-harness/<path>:<start>-<end>@687f282e`。
 
@@ -140,29 +139,12 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e
-来源：deepseek-harness/.agents/notes/README.md:54-125@687f282e
-来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e
-来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e
-来源：deepseek-harness/docs/AGENTS.md:61-73@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-11-event-sourced-sessions.md:5-23@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md:7-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:5-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e
-来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e
+来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e 来源：deepseek-harness/.agents/notes/README.md:54-125@687f282e 来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:1-13@687f282e 来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e 来源：deepseek-harness/docs/AGENTS.md:61-73@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-11-event-sourced-sessions.md:5-23@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-24-single-harness-home-resolver.md:7-24@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:5-30@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e 来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e
 
 <a id="2"></a>
 ## 2. 备选方案与否决知识
 
-来源：deepseek-harness/.agents/notes/README.md:105-121@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md:9-23@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-78@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:1-10@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:25-45@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:31-31@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:25-30@687f282e
+来源：deepseek-harness/.agents/notes/README.md:105-121@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md:9-23@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-78@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:1-10@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:25-45@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:31-31@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:25-30@687f282e
 
 <a id="2-1"></a>
 ### 2.1 为什么备选段是硬要求
@@ -209,11 +191,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:9-34@687f282e
-来源：deepseek-harness/AGENTS.md:140-140@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:3-78@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:1-10@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:45-55@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:9-34@687f282e 来源：deepseek-harness/AGENTS.md:140-140@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:3-78@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:1-10@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:45-55@687f282e
 
 <a id="3"></a>
 ## 3. 持久决策理据的判定：为什么没有自动分类器
@@ -252,11 +230,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:7-40@687f282e
-来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e
-来源：deepseek-harness/AGENTS.md:155-155@687f282e
-来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e
-来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:7-40@687f282e 来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e 来源：deepseek-harness/AGENTS.md:155-155@687f282e 来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e 来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
 
 <a id="4"></a>
 ## 4. 格式、分类与索引：结构服务于发现，不证明内容
@@ -312,7 +286,7 @@
 |---|---|
 | 前置 | 已读当前 `README` 骨架和分类清单 |
 | 步骤 1 | 用 `YYYY-MM-DD-kebab-title.md` 命名；同变更创建 `.zh.md` 对应文件 |
-| 步骤 2 | 填头部 `Status`、`English | [中文](...)`；按状态选骨架 |
+| 步骤 2 | 填头部 `Status`、`English \| [中文](...)`；按状态选骨架 |
 | 步骤 3 | 填 `## Problem`/`Decision`/`Alternatives`/`Consequences`；不要留空段 |
 | 步骤 4 | 运行 `node scripts/agent-note-tree.ts --write` 和格式/分类校验（若项目脚本名不同，使用对应 `scripts/*` 入口） |
 | 责任角色 | 作者填；评审者看语义；CI 跑机械检查 |
@@ -323,17 +297,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md:9-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-agent-note-classification.md:7-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-remove-generated-agent-note-index.md:7-31@687f282e
-来源：deepseek-harness/.agents/notes/README.md:7-34@687f282e
-来源：deepseek-harness/.agents/notes/README.md:54-125@687f282e
-来源：deepseek-harness/scripts/agent-note-tree.ts:1-83@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-94@687f282e
-来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e
-来源：deepseek-harness/scripts/verify-doc-refs.ts:1-45@687f282e
-来源：deepseek-harness/docs/i18n/README.md:9-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-23-section-keyed-translation-pairing-records.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md:9-31@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-agent-note-classification.md:7-40@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-remove-generated-agent-note-index.md:7-31@687f282e 来源：deepseek-harness/.agents/notes/README.md:7-34@687f282e 来源：deepseek-harness/.agents/notes/README.md:54-125@687f282e 来源：deepseek-harness/scripts/agent-note-tree.ts:1-83@687f282e 来源：deepseek-harness/scripts/verify-agent-note-format.ts:1-94@687f282e 来源：deepseek-harness/scripts/verify-agent-note-classification.ts:1-27@687f282e 来源：deepseek-harness/scripts/verify-doc-refs.ts:1-45@687f282e 来源：deepseek-harness/docs/i18n/README.md:9-44@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-23-section-keyed-translation-pairing-records.md:1-29@687f282e
 
 <a id="5"></a>
 ## 5. 冻结归档与当前权威
@@ -373,15 +337,7 @@
 - 归档路径是兼容命名空间；链接可指向它，但读者必须回到当前权威；
 - 唯一允许的写入是归档清单（路径 + `sha256:`），用于证明字节未被改动；清单本身不是内容权威。
 
-来源：`deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e`；`deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e`；`deepseek-harness/.rgignore:1-2@687f282e`。
-来源：deepseek-harness/.agents/notes/README.md:36-42@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:5-45@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:38-52@687f282e
-来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e
-来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e
-来源：deepseek-harness/.rgignore:1-2@687f282e
-来源：deepseek-harness/docs/AGENTS.md:23-29@687f282e
+来源：`deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e`；`deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e`；`deepseek-harness/.rgignore:1-2@687f282e`。 来源：deepseek-harness/.agents/notes/README.md:36-42@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:5-45@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:38-52@687f282e 来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e 来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e 来源：deepseek-harness/.rgignore:1-2@687f282e 来源：deepseek-harness/docs/AGENTS.md:23-29@687f282e
 
 `【源实践】` 冻结的理由不是“历史不可变”的教条，而是**防止历史被悄悄改写为现状**：
 
@@ -438,19 +394,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e
-来源：deepseek-harness/.agents/notes/README.md:7-19@687f282e
-来源：deepseek-harness/.agents/notes/README.md:36-42@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:13-23@687f282e
-来源：deepseek-harness/.rgignore:1-2@687f282e
-来源：deepseek-harness/docs/AGENTS.md:15-36@687f282e
-来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e
-来源：deepseek-harness/docs/AGENTS.md:61-73@687f282e
-来源：deepseek-harness/docs/i18n/README.md:34-48@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-committed-artifact-citations.md:7-33@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-13@687f282e
-来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-30@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:10-10@687f282e
+来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e 来源：deepseek-harness/.agents/notes/README.md:7-19@687f282e 来源：deepseek-harness/.agents/notes/README.md:36-42@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:13-23@687f282e 来源：deepseek-harness/.rgignore:1-2@687f282e 来源：deepseek-harness/docs/AGENTS.md:15-36@687f282e 来源：deepseek-harness/docs/AGENTS.md:40-41@687f282e 来源：deepseek-harness/docs/AGENTS.md:61-73@687f282e 来源：deepseek-harness/docs/i18n/README.md:34-48@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-committed-artifact-citations.md:7-33@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-13@687f282e 来源：deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:1-30@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:10-10@687f282e
 
 <a id="6"></a>
 ## 6. 事故复盘：根因、时间线与安全网
@@ -539,16 +483,7 @@
 
 ---
 
-来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e
-来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:1-113@687f282e
-来源：deepseek-harness/docs/postmortem/0002-js-expression-disabled-filesystem-tools.md:1-47@687f282e
-来源：deepseek-harness/docs/postmortem/0003-web-agent-gui-feedback-loop.md:1-53@687f282e
-来源：deepseek-harness/docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md:1-55@687f282e
-来源：deepseek-harness/docs/AGENTS.md:7-7@687f282e
-来源：deepseek-harness/docs/testing.md:1-55@687f282e
-来源：deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:3-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-completion-observations.md:3-45@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e
+来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e 来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:1-113@687f282e 来源：deepseek-harness/docs/postmortem/0002-js-expression-disabled-filesystem-tools.md:1-47@687f282e 来源：deepseek-harness/docs/postmortem/0003-web-agent-gui-feedback-loop.md:1-53@687f282e 来源：deepseek-harness/docs/postmortem/0004-landlock-partial-notice-misclassified-child-failures.md:1-55@687f282e 来源：deepseek-harness/docs/AGENTS.md:7-7@687f282e 来源：deepseek-harness/docs/testing.md:1-55@687f282e 来源：deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:3-44@687f282e 来源：deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-completion-observations.md:3-45@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e
 
 <a id="7"></a>
 ## 7. 验证证据的层次：不要用一个观察代替另一个
@@ -640,18 +575,7 @@
 
 ---
 
-来源：deepseek-harness/docs/testing.md:1-55@687f282e
-来源：deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:3-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-completion-observations.md:3-45@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e
-来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:7-63@687f282e
-来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:97-125@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-19@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:508-557@687f282e
-来源：deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:787-806@687f282e
-来源：deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1197-1199@687f282e
-来源：deepseek-harness/packages/AGENTS.md:5-9@687f282e
-来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:79-106@687f282e
+来源：deepseek-harness/docs/testing.md:1-55@687f282e 来源：deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:3-44@687f282e 来源：deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-completion-observations.md:3-45@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-22-windows-open-through-shell-resolution.md:5-44@687f282e 来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:7-63@687f282e 来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:97-125@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-19@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:508-557@687f282e 来源：deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:787-806@687f282e 来源：deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1197-1199@687f282e 来源：deepseek-harness/packages/AGENTS.md:5-9@687f282e 来源：deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:79-106@687f282e
 
 <a id="8"></a>
 ## 8. 简化调查：先证明行为，再证明“更少”
@@ -668,13 +592,7 @@
 
 `【源规则】` 2026-09-19 的调查 Note 明确否决了“按 checklist 逐项打勾”“按文件数/行数选目标”“先删再验证”的做法；它要求按领域读、按行为验证、保留未知（`deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:7-45@687f282e`）。
 
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:8-61@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:7-45@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:9-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:7-47@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:11-36@687f282e
+来源：deepseek-harness/.agents/skills/dsh-find-simplifications/SKILL.md:8-61@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:1-45@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:7-45@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:9-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:7-47@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:11-36@687f282e
 
 <a id="8-2"></a>
 ### 8.2 候选的六个问题
@@ -770,11 +688,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:7-63@687f282e
-来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:97-125@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:5-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-11-lossless-build-speedups.md:5-30@687f282e
-来源：deepseek-harness/docs/testing.md:1-55@687f282e
+来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:7-63@687f282e 来源：deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:97-125@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:5-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-11-lossless-build-speedups.md:5-30@687f282e 来源：deepseek-harness/docs/testing.md:1-55@687f282e
 
 <a id="10"></a>
 ## 10. 移除与重新引入
@@ -790,16 +704,7 @@
 - 重新引入的条件；
 - 完整缺席的验证（搜索/测试/构建/文档）。
 
-来源：`deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:15-20@687f282e`；`deepseek-harness/.agents/notes/README.md:44-52@687f282e`。
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:15-22@687f282e
-来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:24-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:7-47@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.md:5-57@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:5-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md:10-19@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e
-来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:31-31@687f282e
+来源：`deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:15-20@687f282e`；`deepseek-harness/.agents/notes/README.md:44-52@687f282e`。 来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:15-22@687f282e 来源：deepseek-harness/.agents/notes/README.md:44-52@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:24-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:7-47@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-23-acp-automation-only-protocol.md:5-57@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:5-30@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md:10-19@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-19-fold-compaction-package-split.md:3-37@687f282e 来源：deepseek-harness/.agents/skills/dsh-find-simplifications/references/historical-patterns.md:31-31@687f282e
 
 `【源规则】` 如果移除只限一个 transport/default/implementation，必须明确范围，不能声称全局缺席；未受影响的部分保留其现有记录。测试如果只是描述被删行为，应删除/改写为“缺席验证”，而不是继续把旧行为当契约（`deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:15-22@687f282e`）。
 
@@ -882,15 +787,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:30-40@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:8-8@687f282e
-来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e
-来源：deepseek-harness/docs/i18n/README.md:44-48@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:15-19@687f282e
-来源：deepseek-harness/.agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md:9-85@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-committed-artifact-citations.md:28-33@687f282e
-来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e
-来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:30-40@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:8-8@687f282e 来源：deepseek-harness/.agents/skills/dsh-archive-agent-notes/SKILL.md:18-38@687f282e 来源：deepseek-harness/docs/i18n/README.md:44-48@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:15-19@687f282e 来源：deepseek-harness/.agents/notes/proposed/process/2026-07-13-human-review-skill-maintenance.md:9-85@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-committed-artifact-citations.md:28-33@687f282e 来源：deepseek-harness/scripts/verify-archived-agent-notes.ts:1-115@687f282e 来源：deepseek-harness/docs/postmortem/README.md:1-18@687f282e
 
 <a id="12"></a>
 ## 12. 迁移操作清单（按场景）

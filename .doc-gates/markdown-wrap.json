@@ -1,0 +1,5 @@
+{
+  "roots": ["references", "examples", "research/fixtures/adoption-cli"],
+  "files": ["AGENTS.md", "CHANGELOG.md", "METHODS.zh.md", "PUBLIC-VERIFICATION.md", "README.md", "README.zh.md", "SKILL.md"],
+  "archiveRoots": []
+}

@@ -36,7 +36,9 @@
 
 ---
 
-## 渲染预算：8192 码点与更紧的家族预算 {#packaged-skill-contracts.render-budget}
+<a id="packaged-skill-contracts.render-budget"></a>
+
+## 渲染预算：8192 码点与更紧的家族预算
 
 **触发**：新增/修改 SKILL.md；新增整文件 references；正文接近阈值；调整标准 preset 的 pruner 配置。
 
@@ -67,7 +69,9 @@
 
 ---
 
-## 引用资源的存在性、可发现性与打包完整性 {#packaged-skill-contracts.referenced-resource-integrity}
+<a id="packaged-skill-contracts.referenced-resource-integrity"></a>
+
+## 引用资源的存在性、可发现性与打包完整性
 
 **触发**：正文新增 `references/...`/`templates/...` 引用；新增模板 manifest、locale、icon、客户端文件；把技能搬到 Desktop/SEA；provider 以目录作为 `resourceBase`。
 
@@ -100,7 +104,9 @@
 
 ---
 
-## 模板可解析、可复制、不得原地执行 {#packaged-skill-contracts.template-parse-and-copy}
+<a id="packaged-skill-contracts.template-parse-and-copy"></a>
+
+## 模板可解析、可复制、不得原地执行
 
 **触发**：新增/修改 `templates/**`；模型按技能复制模板；模板安装或 Loader 激活失败。
 
@@ -129,7 +135,9 @@
 
 ---
 
-## 禁止用 shell 读取技能文件，也禁止封杀源码阅读 {#packaged-skill-contracts.no-shell-file-routing}
+<a id="packaged-skill-contracts.no-shell-file-routing"></a>
+
+## 禁止用 shell 读取技能文件，也禁止封杀源码阅读
 
 **触发**：编写技能正文的文件访问指令；运行环境是 Desktop/打包应用；正文出现“不要读源码”。
 
@@ -153,7 +161,9 @@
 
 ---
 
-## Office 路由技能与渐进加载预算 {#packaged-skill-contracts.office-router-progressive}
+<a id="packaged-skill-contracts.office-router-progressive"></a>
+
+## Office 路由技能与渐进加载预算
 
 **触发**：创建/编辑/检查/转换 Office 文档；需要图片或视觉检查；需要刷新公式或导出 PDF；新增 Office 能力。
 
@@ -180,7 +190,9 @@
 
 ---
 
-## Office 内容创作、校验与交付纪律 {#packaged-skill-contracts.office-authoring-delivery}
+<a id="packaged-skill-contracts.office-authoring-delivery"></a>
+
+## Office 内容创作、校验与交付纪律
 
 **触发**：创建/读取/编辑 docx/xlsx/pptx；需要保留格式、公式、图表或宏；准备交付。
 
@@ -208,7 +220,9 @@
 
 ---
 
-## 视觉升级、空白预览止损与单句状态 {#packaged-skill-contracts.office-render-escalation}
+<a id="packaged-skill-contracts.office-render-escalation"></a>
+
+## 视觉升级、空白预览止损与单句状态
 
 **触发**：用户要求图片/视觉检查；任务主要目标是布局、间距、颜色、对齐、字号；渲染返回空白/透明图；模型不接受图片输入。
 
@@ -235,7 +249,9 @@
 
 ---
 
-## Sidecar 缺失时的用户同意与安装边界 {#packaged-skill-contracts.office-sidecar-consent}
+<a id="packaged-skill-contracts.office-sidecar-consent"></a>
+
+## Sidecar 缺失时的用户同意与安装边界
 
 **触发**：render/recalculate/export-pdf 需要 sidecar 但缺失；`dsoffice` 不在 PATH；安装失败或平台不匹配。
 
@@ -262,7 +278,9 @@
 
 ---
 
-## 无效技能资产在注册前拒绝 {#packaged-skill-contracts.invalid-asset-rejection}
+<a id="packaged-skill-contracts.invalid-asset-rejection"></a>
+
+## 无效技能资产在注册前拒绝
 
 **触发**：新增/移动资产目录；修改 frontmatter；配置 `assetRoot`；卸载/重新加载。
 
@@ -291,7 +309,9 @@
 
 ---
 
-## Windows ACL 诊断：一次运行内诊断、修复、验证与回滚 {#packaged-skill-contracts.windows-acl-one-shot-repair}
+<a id="packaged-skill-contracts.windows-acl-one-shot-repair"></a>
+
+## Windows ACL 诊断：一次运行内诊断、修复、验证与回滚
 
 **触发**：Windows 上 DSH sandbox 出现非预期拒绝（工作区写入/列目录失败，或本应可读的路径读不了）；sandbox 在工作区根报告 provisioning 失败。
 
@@ -337,7 +357,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts:126-175@687f282e`、`deepseek-harness/packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts:176-243@687f282e`、`deepseek-harness/packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts:244-297@687f282e`、`deepseek-harness/packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts:298-376@687f282e`、`deepseek-harness/packages/sandbox/sandbox-windows-acl/tests/diagnose-script.spec.ts:377-420@687f282e`
 
 
-## 模型选择加载与宿主注入的调用策略 {#packaged-skill-contracts.invocation-policy}
+<a id="packaged-skill-contracts.invocation-policy"></a>
+
+## 模型选择加载与宿主注入的调用策略
 
 **触发**：frontmatter 声明 `disable-model-invocation`/`user-invocable`；模型调用 `skill`；用户输入 `/name`；技能目录变化。
 
@@ -370,7 +392,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:353-396@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:397-482@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:483-526@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:527-630@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:631-685@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:686-751@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:752-803@687f282e`、`deepseek-harness/packages/skill/tool-skill/tests/tool-skill.spec.ts:804-904@687f282e`
 
 
-## 单一来源、别名分发与产品/仓库技能边界 {#packaged-skill-contracts.single-source-distribution}
+<a id="packaged-skill-contracts.single-source-distribution"></a>
+
+## 单一来源、别名分发与产品/仓库技能边界
 
 **触发**：同一技能同时出现在 `.agents/skills/` 与包内 skills；修改 agent-experience；为测试创建 SKILL.md 夹具；给仓库技能加 Codex/Claude 元数据。
 
@@ -399,7 +423,9 @@
 
 ---
 
-## 插件/预设创建技能的操作流程与交付标准 {#packaged-skill-contracts.plugin-creator-procedure}
+<a id="packaged-skill-contracts.plugin-creator-procedure"></a>
+
+## 插件/预设创建技能的操作流程与交付标准
 
 **触发**：新增/启用/配置/调试插件、bundle、页面、面板、tool、MCP；创建/修改 agent preset；无其他目的地的视觉对象；设计评审。
 
@@ -432,7 +458,9 @@
 
 ---
 
-## 生成式插件包索引与新鲜度门禁 {#packaged-skill-contracts.generated-package-index}
+<a id="packaged-skill-contracts.generated-package-index"></a>
+
+## 生成式插件包索引与新鲜度门禁
 
 **触发**：包新增/删除/改名/描述变化；config-catalog 分类变化；查找可安装插件；doc-sync 失败。
 
@@ -457,7 +485,9 @@
 
 ---
 
-## 模型可见工具定义与上下文预算卫生 {#packaged-skill-contracts.tool-definition-hygiene}
+<a id="packaged-skill-contracts.tool-definition-hygiene"></a>
+
+## 模型可见工具定义与上下文预算卫生
 
 **触发**：新增/修改模型可见工具名称、描述、参数 schema 或系统提示段；设计技能/上下文加载/多步工作流；发现重复搜索/读取。
 

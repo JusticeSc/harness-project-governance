@@ -2,9 +2,32 @@
 
 ## Scope
 
-This preserves the historical observations reported for the first public demonstration release. It is not a fresh verification report for the recovered development checkout. Counts describe packaged knowledge/reference integrity, not how many automatic guarantees an installed project receives.
+This page separates the 1.1.0-rc.1 release contract from the historical observations for the first public demonstration release. Version-specific local results describe only their stated environment and candidate; the matching commit's Actions results and GitHub Release identify remote outcomes and published assets. Counts describe packaged knowledge/reference integrity, not automatic guarantees received by an installed project.
 
 Some mechanism ledgers and references retain paths to publisher-internal historical evidence (`verification/evidence/`, `_working/` and extraction builders). Those artifacts are not distributed and cannot be treated as independently reproducible proof from this repository. This page records this public release's observed checks; retained source/extraction statements remain bounded by their stated limitations.
+
+## 1.1.0-rc.1 release scope
+
+This prerelease distributes the existing Skill, source-linked knowledge, zero-dependency CLI (including the read-only paginated `show` command), independent installer and optional execution modules for project-owner-reviewed adoption. It does not certify autonomous adoption, complete extraction or stable cross-project reproduction. The current adoption procedure is SKILL §3.2a; superseded F/S/D experiments and failed original reports remain historical evidence in [METHODS.zh.md on GitHub](https://github.com/JusticeSc/harness-project-governance/blob/v1.1.0-rc.1/METHODS.zh.md#a07-adoption-candidate).
+
+Fresh-checkout verification must exercise the repository commands below, offline package/installed-seat behavior, the full authored Markdown corpus, and public export. The existing CI retains Ubuntu/Windows × Node 22.19.0/24 core checks and a Node 24 documentation job. The optional OMP integration requires a separately installed OMP host and uses a scripted localhost provider; tested host versions must be stated, and a missing host is a skip, not compatibility proof. No test run here replaces consumer applicability, semantic review, cold Agent adoption or platform-policy acceptance.
+
+## 1.1.0-rc.1 local observations
+
+The core, package, documentation and export commands below ran from a clean committed clone of candidate `b8b9017165c5cfbe0090c37ee2ed03515267c998` on Windows x64 / Node v24.19.0 / npm 11.17.0. The OMP result ran after the reviewed-trigger and test correction at `b1639b4b906860315fbeb76fa700b5429cad748a`, with the separately installed OMP 18.13.2 and a scripted localhost provider. These are named candidate observations, not claims about any arbitrary later checkout; use the matching commit's Actions and release notes for final remote outcomes.
+
+| Command | Observed result | Evidence boundary |
+|---|---|---|
+| `npm run verify` | Exit 0; 1196 mechanisms / 55 domains | Ledger/reference integrity, not semantic completeness |
+| `npm run demo` | Exit 0; configured check accepted, real application fault refused, then recovered | Scripted workflow, not an autonomous Agent |
+| `npm run smoke` | Exit 0; 117 real command scenarios | Fresh offline tarball, installed CLI/Skill, lossless pagination, containment, preservation and refusal/recovery |
+| `npm run test-adoption` | Exit 0; 101 passed | Existing consumer application contracts, not a new adoption session |
+| `npm ci --prefix tools/doc-gates --ignore-scripts` then `npm run test-doc-gates` | Exit 0; 87 passed | Locked parser prerequisites and optional local tool regressions |
+| `npm run verify-md-links` / `npm run verify-md-wrap` | Both exit 0; 68 authored Markdown files checked by each | Actual product corpus, not translation/semantic certification |
+| Public export, then exported `npm run verify` / `npm run demo` | All exit 0; 195 files exported | Allowlisted source distribution runs without private developer state |
+| `OMP_BIN=<installed executable>` with `npm run test-omp-preflight` | Exit 0; 6 passed, 0 skipped on OMP 18.13.2 | Windows RPC host mechanics and real tool effects with localhost provider only |
+
+The initial OMP run was 5 passed / 1 failed because the test demanded a `shownRange` field absent from this host's native read result. A diagnostic retained canonical source provenance, every required nonblank line and the actual allowed target write; the adapter had not failed to unlock. The obsolete output-shape assertion was deleted, not replaced with another metadata-shape assertion; wrong-source/partial-read refusal, actual writes, queue/reset and owner-containment assertions remain. The original failed run is not rewritten as a pass, and no runtime adapter rule or adoption acceptance criterion was relaxed.
 
 ## Historical local observations
 
@@ -21,12 +44,20 @@ The published workflow runs these core commands from the allowlisted staging tre
 
 ## Reproduce
 
+Run this contributor sequence from a fresh repository checkout or allowlisted public export, not from the smaller npm runtime or installed Agent seat: regression fixtures and corpus configuration are development inputs. The exporter refuses an existing destination; use a new path if `dist/public` already exists.
+
 ```bash
 npm run verify
 npm run demo
+npm run test-adoption
 npm run smoke
 npm ci --prefix tools/doc-gates --ignore-scripts
 npm run test-doc-gates
+npm run verify-md-links
+npm run verify-md-wrap
+node scripts/export-public.mjs
+npm --prefix dist/public run verify
+npm --prefix dist/public run demo
 ```
 
 The core requires no dependency install. `smoke` packs and installs the local tarball in offline mode with a fresh cache, exercises the installed package and Agent-discoverable seat, rejects overwrites and redirected installation parents, preserves target edits, and executes the installed end-to-end demo. All consumer fixtures are temporary.

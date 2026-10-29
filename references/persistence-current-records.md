@@ -42,7 +42,7 @@
 - CI 是否真的挂了这些检查：自动化/发布域；本域只能证明文档声明了这条门禁。
 
 <a id="persistence-current-records.record-quadruple"></a>
-## 1. 记录四件套与所有权 {#persistence-current-records.record-quadruple}
+## 1. 记录四件套与所有权
 
 ### 触发
 新增、修改或删除任何被 Session 持久化的声明类型；补一条历史遗漏；准备把一个格式标记为已接受。
@@ -84,14 +84,10 @@
 - 删除根没有 after schema，只有显式 tombstone。
 - `.i18n.yaml` 与 `.schema.json` 永远由工具生成，人工只改 `.md`/`.zh.md`。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:31-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:31-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:1-52@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.md:1-48@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.i18n.yaml:1-28@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:31-44@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:31-44@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:1-52@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.md:1-48@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.i18n.yaml:1-28@687f282e
 
 <a id="persistence-current-records.machine-declaration"></a>
-## 2. 机器声明 {#persistence-current-records.machine-declaration}
+## 2. 机器声明
 
 ### 触发
 任何记录的新建、修订、复制或评审。
@@ -137,15 +133,10 @@ changes:
 ### 例外
 删除、基线、新根三种形状见上；`version-bump` 记录里也可以出现 `previous: null` 的新根（`event:developer/message` 在 v4 记录中即如此）。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:40-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:40-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:24-37@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.zh.md:1-60@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:40-44@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:40-44@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:24-37@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.zh.md:1-60@687f282e
 
 <a id="persistence-current-records.compatibility-decision"></a>
-## 3. 兼容性决策：同版本 vs 版本提升 {#persistence-current-records.compatibility-decision}
+## 3. 兼容性决策：同版本 vs 版本提升
 
 ### 触发
 检测到任何结构性变化；分类器报告“需要兼容性评审”；准备写 `decision:`；CI 拒绝 `same-version`。
@@ -170,14 +161,7 @@ changes:
 | 可选改必选、加必选属性、改已有类型、删除/重命名属性或事件 | 兼容性评审后 `same-version`，或显式 `version-bump` |
 | 改 Session header 或 event envelope | 兼容性评审后 `same-version`；header 版本变化要求 `version-bump` |
 
-来源：`deepseek-harness/docs/persistence-changes/README.md:51-59@687f282e`。
-来源：deepseek-harness/docs/persistence-changes/README.md:46-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:46-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.md:36-40@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-14-workspace-changes-event.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-30-job-session-lifecycle.md:40-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-106@687f282e
+来源：`deepseek-harness/docs/persistence-changes/README.md:51-59@687f282e`。 来源：deepseek-harness/docs/persistence-changes/README.md:46-63@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:46-63@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.md:36-40@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-14-workspace-changes-event.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-30-job-session-lifecycle.md:40-44@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-106@687f282e
 
 ### 分类器与人的分工
 - 分类器只识别“已确立的同版本情形”和“需要评审的变更”，**不能判定语义安全**（`deepseek-harness/docs/persistence-changes/README.md:61-61@687f282e`）。
@@ -209,7 +193,7 @@ changes:
 - “类型不同”不是自动不安全，也不是自动安全；必须给读取器行为证据。
 
 <a id="persistence-current-records.same-version-evidence"></a>
-## 4. 同版本说明与验证证据 {#persistence-current-records.same-version-evidence}
+## 4. 同版本说明与验证证据
 
 ### 触发
 写 `decision: same-version`；评审一条同版本记录；判断“旧读取器会不会误解”。
@@ -251,17 +235,10 @@ Compatibility 同时覆盖两个方向；Verification 有可复现命令与结�
 ### 例外
 已定稿的历史记录不要求重写说明；新记录必须引用/保留其声明与快照。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:69-69@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:69-69@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:40-49@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-14-image-offload.md:84-93@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.md:48-57@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-05-ptc-operation-metadata.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-13-deepseek-search-thinking.md:36-45@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:69-69@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:69-69@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:40-49@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-14-image-offload.md:84-93@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.md:48-57@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-05-ptc-operation-metadata.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-13-deepseek-search-thinking.md:36-45@687f282e
 
 <a id="persistence-current-records.payload-version-evolution"></a>
-## 5. `data.version` 载荷分支演进 {#persistence-current-records.payload-version-evolution}
+## 5. `data.version` 载荷分支演进
 
 ### 触发
 普通事件要新增一种载荷形状；想给现有事件加字段但不想 bump Session 版本。
@@ -299,15 +276,10 @@ Compatibility 同时覆盖两个方向；Verification 有可复现命令与结�
 ### 例外
 旧读取器拒绝新载荷是预期行为，不是缺陷；但拒绝不得表现为损坏恢复或尾部截断（与 [同版本证据](#persistence-current-records.same-version-evidence) 联用）。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:65-65@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:65-65@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-20-unknown-child-catalog.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-20-unknown-child-catalog.schema.json:1-250@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.schema.json:1-290@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:65-65@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:65-65@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-20-unknown-child-catalog.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-20-unknown-child-catalog.schema.json:1-250@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.schema.json:1-290@687f282e
 
 <a id="persistence-current-records.attribution-policy"></a>
-## 6. 归属来源策略（`@persistenceSource` / `@persistenceAttribution`） {#persistence-current-records.attribution-policy}
+## 6. 归属来源策略（`@persistenceSource` / `@persistenceAttribution`）
 
 ### 触发
 新增消息来源 kind；把生产者私有信息写进用户/开发者消息源；比较两个带策略的 schema 快照。
@@ -346,15 +318,10 @@ Compatibility 同时覆盖两个方向；Verification 有可复现命令与结�
 ### 例外
 System/model/tool source 保持严格语义规则，不能套用归属宽松策略（`deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:100-100@687f282e`）。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:67-67@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:67-67@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-21-user-question-reply.md:48-57@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-05-working-directory-attribution.md:48-52@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.md:48-57@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:98-104@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:67-67@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:67-67@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-21-user-question-reply.md:48-57@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-05-working-directory-attribution.md:48-52@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-13-user-rpc-principal.md:48-57@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:98-104@687f282e
 
 <a id="persistence-current-records.reserved-field"></a>
-## 7. 禁止字段保留（可选 `never` + `@persistenceReserved`） {#persistence-current-records.reserved-field}
+## 7. 禁止字段保留（可选 `never` + `@persistenceReserved`）
 
 ### 触发
 读取器按属性名拒绝某个旧 JSON 字段；想把这个事实固化进 schema；以后可能重新允许该字段。
@@ -387,13 +354,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 未标记 `never`/`undefined` 保持既有省略行为；不要把它们当成禁止字段。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:71-71@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:71-71@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:96-96@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:71-71@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:71-71@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:96-96@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e
 
 <a id="persistence-current-records.history-graph"></a>
-## 8. 前驱链与历史图 {#persistence-current-records.history-graph}
+## 8. 前驱链与历史图
 
 ### 触发
 新增后继；合并两条改同一根的分支；验证器报告缺失前驱/环/重复后继/摘要不匹配。
@@ -428,16 +392,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 已定稿记录不可改；删除根用 `after: null` 保留 tombstone；独立根不需要互相等待。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:76-78@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:76-78@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:24-37@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-14-image-offload.md:24-81@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.md:24-33@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:76-78@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:76-78@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.md:24-37@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-14-image-offload.md:24-81@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-19-external-subagent-catalog.md:24-33@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e
 
 <a id="persistence-current-records.current-root-agreement"></a>
-## 9. 当前根与最新记录一致 {#persistence-current-records.current-root-agreement}
+## 9. 当前根与最新记录一致
 
 ### 触发
 改完类型后本地检查；CI 报“当前根与最新记录不一致”；准备只跑 `--check`。
@@ -464,15 +422,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 生成文本/源码位置变化不影响摘要，重新生成即可；见下一节。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:63-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:76-76@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:63-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:76-76@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-10-05-ptc-operation-metadata.md:36-45@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:107-117@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:63-63@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:76-76@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:63-63@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:76-76@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-10-05-ptc-operation-metadata.md:36-45@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:107-117@687f282e
 
 <a id="persistence-current-records.root-inventory"></a>
-## 10. 根清单与传递类型 {#persistence-current-records.root-inventory}
+## 10. 根清单与传递类型
 
 ### 触发
 决定一个改动影响哪些根；新增事件类型；评审快照根集合。
@@ -520,14 +473,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 `opaque` 类型不暴露内部结构，无法比较隐藏结构；行为变化不在本机制范围。基线快照的根对象省略 `event`/`surface` 字段（较早生成器形态），不要据此回填旧文件；以声明摘要为准（`deepseek-harness/docs/persistence-changes/2026-09-11-initial.schema.json:1-13557@687f282e`，机器解析）。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:29-29@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:29-29@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.schema.json:1-13557@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.schema.json:1-76@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:29-29@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:29-29@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.md:24-265@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.schema.json:1-13557@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-13-working-directory.schema.json:1-76@687f282e
 
 <a id="persistence-current-records.digest-scope"></a>
-## 11. 摘要口径与例外类 {#persistence-current-records.digest-scope}
+## 11. 摘要口径与例外类
 
 ### 触发
 生成物看起来“过期”；重排声明后摘要没变/变了；判断某改动要不要新增确认。
@@ -570,15 +519,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 不透明值、纯行为变化、被别名掩盖的重排；后者的判断依赖提取器的规范化规则，而实现属于发布域。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:80-80@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:80-80@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.schema.json:1-13557@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.schema.json:1-910@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.schema.json:1-302@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:80-80@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:80-80@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.schema.json:1-13557@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-12-auto-review-error-metadata.schema.json:1-910@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-18-schedule-optional-title.schema.json:1-302@687f282e
 
 <a id="persistence-current-records.finalized-checkpoint"></a>
-## 12. 定稿检查点与不可变历史 {#persistence-current-records.finalized-checkpoint}
+## 12. 定稿检查点与不可变历史
 
 ### 触发
 要把一个已同意的格式标记为已接受；写入器要继续演进但需保护已接受声明；有人想改已定稿记录。
@@ -610,14 +554,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外与限制
 检查点只覆盖机器声明与 after schema；散文可改（只要配对哈希同步）。验证器无法证明检查点与权威记录未被联合篡改——这是评审/权限问题，不是自动保证。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:40-42@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:61-61@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:78-78@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:40-42@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:40-42@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:61-61@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:78-78@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:40-42@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-85@687f282e
 
 <a id="persistence-current-records.terminal-refresh"></a>
-## 13. 末端未接受记录刷新 {#persistence-current-records.terminal-refresh}
+## 13. 末端未接受记录刷新
 
 ### 触发
 一条记录还没被接受，但其 after schema/声明需要按最新源码刷新；记录被后续记录依赖；记录已被检查点锁定。
@@ -642,11 +582,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 “未接受”是前提；已接受但未定稿的记录仍按历史处理（保留声明与快照，新增后继）。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:78-78@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:78-78@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:78-78@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:78-78@687f282e
 
 <a id="persistence-current-records.bilingual-pairing"></a>
-## 14. 双语配对与侧车哈希 {#persistence-current-records.bilingual-pairing}
+## 14. 双语配对与侧车哈希
 
 ### 触发
 编辑英文或中文任一侧；`*.i18n.yaml` 缺失/过期；doc-sync 报翻译配对失败。
@@ -680,15 +619,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外与边界
 标题文字可不同（英/中各一套 slug 在侧车中成对）；代码块内容不参与配对哈希。哈希算法细节由文档域实现拥有，本域未复算。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:35-44@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:1-90@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-21-user-question-reply.md:53-57@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.i18n.yaml:1-28@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.i18n.yaml:1-28@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.zh.md:1-120@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:35-44@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:1-90@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-21-user-question-reply.md:53-57@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-11-initial.i18n.yaml:1-28@687f282e 来源：deepseek-harness/docs/persistence-changes/README.i18n.yaml:1-28@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.zh.md:1-120@687f282e
 
 <a id="persistence-current-records.archive-separation"></a>
-## 15. 归档分离与发布比较冻结 {#persistence-current-records.archive-separation}
+## 15. 归档分离与发布比较冻结
 
 ### 触发
 想用旧 tag、alpha/RC 归档或历史格式参考来证明当前兼容性；准备改归档比较。
@@ -715,12 +649,10 @@ System/model/tool source 保持严格语义规则，不能套用归属宽松策�
 ### 例外
 格式参考可以覆盖未打 tag 的中间格式；这仍是历史阅读材料，不是当前确认。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:11-15@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:11-15@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:94-94@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:11-15@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:11-15@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:94-94@687f282e
 
 <a id="persistence-current-records.version-bump-migration"></a>
-## 16. 版本提升与迁移边 {#persistence-current-records.version-bump-migration}
+## 16. 版本提升与迁移边
 
 ### 触发
 分类器/评审决定必须 bump；需要改 `SessionHeader.version`；需要写 V3→V4 这类迁移。
@@ -765,14 +697,10 @@ header 版本递增；所有受影响根在同一 bump 记录中；迁移对缺�
 ### 例外
 没有 shipped profile 发出的记录类型（如 developer 记录）可以只定义持久化形状，provider 序列化/自动发出/UI 支持延后；但读取接纳必须明确。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:51-61@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:51-61@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-106@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:107-117@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:51-61@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:51-61@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:24-106@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:107-117@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.schema.json:1-16212@687f282e
 
 <a id="persistence-current-records.verifier-trust-boundary"></a>
-## 17. 验证器信任边界 {#persistence-current-records.verifier-trust-boundary}
+## 17. 验证器信任边界
 
 ### 触发
 准备说“验证通过所以兼容/安全”；评审 CI 绿灯；设计迁移验收。
@@ -804,12 +732,7 @@ header 版本递增；所有受影响根在同一 bump 记录中；迁移对缺�
 - 检查点哈希通过但怀疑联合篡改：走权限/审计，不是重跑验证器。
 - `--check` 通过但 base/head 有差异：用 `persistence-review` 补看。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:61-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:69-69@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:76-80@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:63-63@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.zh.md:78-78@687f282e
-来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:96-96@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:61-63@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:69-69@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:76-80@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:63-63@687f282e 来源：deepseek-harness/docs/persistence-changes/README.zh.md:78-78@687f282e 来源：deepseek-harness/docs/persistence-changes/2026-09-16-session-format-v4.md:96-96@687f282e
 
 <a id="persistence-current-records.commands"></a>
 ## 18. 命令、字段与文件速查

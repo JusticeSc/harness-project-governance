@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Governance runtime shipped with this Skill. Node-only, no dependencies.
-// Commands: verify, list, cite, init, status, check.
+// Commands: verify, list, cite, show, init, status, check.
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { runShow } from './show.mjs'
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const KNOWLEDGE_DIR = join(SKILL_ROOT, 'knowledge')
@@ -27,15 +28,17 @@ function loadMechanisms() {
   if (!existsSync(KNOWLEDGE_DIR)) fail(`knowledge directory is missing: ${KNOWLEDGE_DIR}`)
   const mechanisms = []
   const domains = new Map()
+  const ledgers = []
   for (const file of readdirSync(KNOWLEDGE_DIR).filter((name) => name.endsWith('.json')).sort()) {
     const value = readJson(join(KNOWLEDGE_DIR, file))
     if (typeof value.domain !== 'string' || value.domain.length === 0) fail(`${file}: domain is missing`)
     if (domains.has(value.domain)) fail(`${file}: duplicate domain ${value.domain}`)
     if (!Array.isArray(value.mechanisms) || value.mechanisms.length === 0) fail(`${file}: mechanisms must be a non-empty array`)
     domains.set(value.domain, value.mechanisms.length)
+    ledgers.push({ file, domain: value.domain, sourceCommit: value.sourceCommit, mechanisms: value.mechanisms })
     for (const mechanism of value.mechanisms) mechanisms.push({ ...mechanism, file })
   }
-  return { mechanisms, domains }
+  return { mechanisms, domains, ledgers }
 }
 
 function anchorPresent(text, fragment) {
@@ -304,14 +307,25 @@ function check() {
   console.log('governance: configured checks passed; this does not prove semantic completeness, adoption or platform enforcement')
 }
 
+function show() {
+  const { ledgers } = loadMechanisms()
+  runShow(args.slice(1), {
+    ledgers,
+    skillRoot: SKILL_ROOT,
+    referencesDir: REFERENCES_DIR,
+    anchorPresent,
+  })
+}
+
 switch (command) {
   case 'verify': verify(); break
   case 'list': list(); break
   case 'cite': cite(); break
+  case 'show': show(); break
   case 'init': init(); break
   case 'status': status(); break
   case 'check': check(); break
   default:
-    console.error('usage: governance <verify|list|cite|init|status|check> [argument] [--policy path]')
+    console.error('usage: governance <verify|list|cite|show|init|status|check> [argument] [--policy path]')
     process.exit(1)
 }

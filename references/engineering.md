@@ -64,23 +64,7 @@
 
 **证据与限制**：层级归属是人工评审保证；预算和归档有自动门禁（若迁移后实现）。仅通过字数检查不证明内容正确。
 
-来源：deepseek-harness/AGENTS.md:179-181@687f282e
-来源：deepseek-harness/AGENTS.md:155-155@687f282e
-来源：deepseek-harness/docs/AGENTS.md:15-36@687f282e
-来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e
-来源：deepseek-harness/docs/AGENTS.md:49-59@687f282e
-来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:5-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e
-来源：deepseek-harness/lefthook.yml:7-11@687f282e
-来源：deepseek-harness/lefthook.yml:13-15@687f282e
-来源：deepseek-harness/lefthook.yml:24-25@687f282e
-来源：deepseek-harness/lefthook.yml:36-40@687f282e
-来源：deepseek-harness/lefthook.yml:42-44@687f282e
-来源：deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e
-来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e
-来源：deepseek-harness/docs/AGENTS.md:75-77@687f282e
-来源：deepseek-harness/AGENTS.md:165-165@687f282e
-来源：deepseek-harness/package.json:132-132@687f282e
+来源：deepseek-harness/AGENTS.md:179-181@687f282e 来源：deepseek-harness/AGENTS.md:155-155@687f282e 来源：deepseek-harness/docs/AGENTS.md:15-36@687f282e 来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e 来源：deepseek-harness/docs/AGENTS.md:49-59@687f282e 来源：deepseek-harness/.agents/notes/implemented/AGENTS.md:5-13@687f282e 来源：deepseek-harness/.agents/notes/archived/AGENTS.md:1-9@687f282e 来源：deepseek-harness/lefthook.yml:7-11@687f282e 来源：deepseek-harness/lefthook.yml:13-15@687f282e 来源：deepseek-harness/lefthook.yml:24-25@687f282e 来源：deepseek-harness/lefthook.yml:36-40@687f282e 来源：deepseek-harness/lefthook.yml:42-44@687f282e 来源：deepseek-harness/scripts/verify-doc-budgets.ts:1-58@687f282e 来源：deepseek-harness/scripts/doc-budgets.manifest.json:1-9@687f282e 来源：deepseek-harness/docs/AGENTS.md:75-77@687f282e 来源：deepseek-harness/AGENTS.md:165-165@687f282e 来源：deepseek-harness/package.json:132-132@687f282e
 
 <a id="engineering-check-selection"></a>
 ## 2. 按改动面选择检查（engineering-check-selection）
@@ -117,16 +101,7 @@
 
 **证据与限制**：检查选择本身是人工判断；自动门禁只证明被运行的检查通过，不证明选择充分。
 
-来源：deepseek-harness/AGENTS.md:113-121@687f282e
-来源：deepseek-harness/AGENTS.md:109-111@687f282e
-来源：deepseek-harness/docs/testing.md:7-12@687f282e
-来源：deepseek-harness/docs/testing.md:43-46@687f282e
-来源：deepseek-harness/docs/development.md:91-103@687f282e
-来源：deepseek-harness/docs/development.md:135-152@687f282e
-来源：deepseek-harness/scripts/AGENTS.md:1-5@687f282e
-来源：deepseek-harness/package.json:7-10@687f282e
-来源：deepseek-harness/package.json:23-23@687f282e
-来源：deepseek-harness/package.json:61-61@687f282e
+来源：deepseek-harness/AGENTS.md:113-121@687f282e 来源：deepseek-harness/AGENTS.md:109-111@687f282e 来源：deepseek-harness/docs/testing.md:7-12@687f282e 来源：deepseek-harness/docs/testing.md:43-46@687f282e 来源：deepseek-harness/docs/development.md:91-103@687f282e 来源：deepseek-harness/docs/development.md:135-152@687f282e 来源：deepseek-harness/scripts/AGENTS.md:1-5@687f282e 来源：deepseek-harness/package.json:7-10@687f282e 来源：deepseek-harness/package.json:23-23@687f282e 来源：deepseek-harness/package.json:61-61@687f282e
 
 <a id="engineering-architecture-extension-map"></a>
 ## 3. 架构地图、扩展点与“插件优先”（engineering-architecture-extension-map）
@@ -159,18 +134,7 @@
 
 **证据与限制**：源仓主要靠评审和架构文档约束；没有自动“业务分支在中心层”检查器。真实组合测试是补充证据（见 Testing 域）。
 
-来源：deepseek-harness/AGENTS.md:3-3@687f282e
-来源：deepseek-harness/AGENTS.md:138-138@687f282e
-来源：deepseek-harness/docs/architecture.md:1-5@687f282e
-来源：deepseek-harness/docs/architecture.md:67-77@687f282e
-来源：deepseek-harness/docs/architecture.md:106-106@687f282e
-来源：deepseek-harness/docs/architecture.md:118-128@687f282e
-来源：deepseek-harness/docs/architecture.md:130-134@687f282e
-来源：deepseek-harness/docs/architecture.md:138-165@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:124-148@687f282e
-来源：deepseek-harness/packages/AGENTS.md:14-14@687f282e
-来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:83-115@687f282e
-来源：deepseek-harness/packages/README.md:94-101@687f282e
+来源：deepseek-harness/AGENTS.md:3-3@687f282e 来源：deepseek-harness/AGENTS.md:138-138@687f282e 来源：deepseek-harness/docs/architecture.md:1-5@687f282e 来源：deepseek-harness/docs/architecture.md:67-77@687f282e 来源：deepseek-harness/docs/architecture.md:106-106@687f282e 来源：deepseek-harness/docs/architecture.md:118-128@687f282e 来源：deepseek-harness/docs/architecture.md:130-134@687f282e 来源：deepseek-harness/docs/architecture.md:138-165@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:124-148@687f282e 来源：deepseek-harness/packages/AGENTS.md:14-14@687f282e 来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:83-115@687f282e 来源：deepseek-harness/packages/README.md:94-101@687f282e
 
 <a id="engineering-capability-seam"></a>
 ## 4. 能力缝三角色（engineering-capability-seam）
@@ -202,11 +166,7 @@
 
 **证据与限制**：架构评审是主要保证；真实组合测试可证明替换路径。仅存在一个 interface 不构成 seam。
 
-来源：deepseek-harness/docs/glossary.md:7-9@687f282e
-来源：deepseek-harness/docs/architecture.md:130-134@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:13-30@687f282e
-来源：deepseek-harness/packages/AGENTS.md:10-10@687f282e
-来源：deepseek-harness/packages/README.md:94-101@687f282e
+来源：deepseek-harness/docs/glossary.md:7-9@687f282e 来源：deepseek-harness/docs/architecture.md:130-134@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:13-30@687f282e 来源：deepseek-harness/packages/AGENTS.md:10-10@687f282e 来源：deepseek-harness/packages/README.md:94-101@687f282e
 
 <a id="engineering-registrations-effects"></a>
 ## 5. 注册即效果与可逆生命周期（engineering-registrations-effects）
@@ -238,16 +198,7 @@
 
 **证据与限制**：HMR 测试是自动证据；没有测试的插件只能算评审保证。dispose 调用次数不等于 quiescence。
 
-来源：deepseek-harness/AGENTS.md:133-133@687f282e
-来源：deepseek-harness/docs/cordis-tutorial/02-lifecycle-and-effects.md:1-40@687f282e
-来源：deepseek-harness/docs/cordis-primer.md:41-45@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:12-27@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:39-49@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:59-83@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:104-123@687f282e
-来源：deepseek-harness/packages/AGENTS.md:19-19@687f282e
-来源：deepseek-harness/docs/testing.md:7-12@687f282e
-来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:31-35@687f282e
+来源：deepseek-harness/AGENTS.md:133-133@687f282e 来源：deepseek-harness/docs/cordis-tutorial/02-lifecycle-and-effects.md:1-40@687f282e 来源：deepseek-harness/docs/cordis-primer.md:41-45@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:12-27@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:39-49@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:59-83@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:104-123@687f282e 来源：deepseek-harness/packages/AGENTS.md:19-19@687f282e 来源：deepseek-harness/docs/testing.md:7-12@687f282e 来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:31-35@687f282e
 
 <a id="engineering-explicit-state-contracts"></a>
 ## 6. 显式状态、正交结果与公共契约（engineering-explicit-state-contracts）
@@ -282,13 +233,7 @@
 
 **证据与限制**：主要是评审保证；可用契约测试补充。公共契约测试通过不证明所有调用者都正确使用。
 
-来源：deepseek-harness/docs/defensive-patterns/general.md:7-12@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:13-18@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:19-24@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:25-47@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:48-70@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:71-86@687f282e
-来源：deepseek-harness/packages/AGENTS.md:17-17@687f282e
+来源：deepseek-harness/docs/defensive-patterns/general.md:7-12@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:13-18@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:19-24@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:25-47@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:48-70@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:71-86@687f282e 来源：deepseek-harness/packages/AGENTS.md:17-17@687f282e
 
 <a id="engineering-ownership-teardown"></a>
 ## 7. 共享状态所有权、单一生命周期控制与静默拆卸（engineering-ownership-teardown）
@@ -327,14 +272,7 @@
 
 **证据与限制**：HMR 测试和受控 promise 回归是证据；静态搜索只能发现候选，不能证明安全。源仓自己也说 Cordis 的 workaround 不是完整 enclosing-owner 修复。
 
-来源：deepseek-harness/docs/defensive-patterns/general.md:87-103@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:104-123@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:192-197@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:198-211@687f282e
-来源：deepseek-harness/packages/AGENTS.md:9-9@687f282e
-来源：deepseek-harness/packages/AGENTS.md:13-13@687f282e
-来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:25-60@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md:1-51@687f282e
+来源：deepseek-harness/docs/defensive-patterns/general.md:87-103@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:104-123@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:192-197@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:198-211@687f282e 来源：deepseek-harness/packages/AGENTS.md:9-9@687f282e 来源：deepseek-harness/packages/AGENTS.md:13-13@687f282e 来源：deepseek-harness/.agents/skills/cordis-styling-nitpicking/SKILL.md:25-60@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md:1-51@687f282e
 
 <a id="engineering-error-handling"></a>
 ## 8. 错误处理：类型化失败、所有权与可见报告（engineering-error-handling）
@@ -368,10 +306,7 @@
 
 **证据与限制**：评审是主要保证；测试可验证状态与报告。仅“有错误类型”不等于处理正确。
 
-来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:10-26@687f282e
-来源：deepseek-harness/AGENTS.md:149-150@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:198-211@687f282e
-来源：deepseek-harness/.oxlintrc.json:220-225@687f282e
+来源：deepseek-harness/.agents/skills/dsh-error-handling/SKILL.md:10-26@687f282e 来源：deepseek-harness/AGENTS.md:149-150@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:198-211@687f282e 来源：deepseek-harness/.oxlintrc.json:220-225@687f282e
 
 <a id="engineering-config-tunables"></a>
 ## 9. 配置化而非硬编码可调项（engineering-config-tunables）
@@ -405,11 +340,7 @@
 
 **证据与限制**：配置目录/评测可自动检查 schema 文档；没有门禁时靠评审。配置字段存在不证明默认值有证据。
 
-来源：deepseek-harness/AGENTS.md:141-143@687f282e
-来源：deepseek-harness/packages/AGENTS.md:12-12@687f282e
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:7-43@687f282e
-来源：deepseek-harness/AGENTS.md:125-130@687f282e
-来源：deepseek-harness/docs/development.md:122-132@687f282e
+来源：deepseek-harness/AGENTS.md:141-143@687f282e 来源：deepseek-harness/packages/AGENTS.md:12-12@687f282e 来源：deepseek-harness/docs/defensive-patterns/package-surface.md:7-43@687f282e 来源：deepseek-harness/AGENTS.md:125-130@687f282e 来源：deepseek-harness/docs/development.md:122-132@687f282e
 
 <a id="engineering-loader-composition-validation"></a>
 ## 10. Loader/组合元数据与预设平面校验（engineering-loader-composition-validation）
@@ -454,21 +385,7 @@
 
 **证据与限制**：`verify-cordis-config` 是自动门禁，覆盖元数据、解析、fixture、源平面、preset 平面、client half；它不执行组合后的运行时行为（由测试/启动 smoke 负责）。HMR 的源码监听、queue、替换失败与兼容性检查依赖 Node loader internals 和测试；README 自述仅 `package.json` 变更不检测、动态 `import()` 的 stale 模块、浏览器 Client graph 独立、packed worker 代码替换需重启等限制；dispose 测试只证明被覆盖的贡献路径。README 还有一处需按阶段解读的张力：实现段说替换失败会移除部分激活并恢复旧模块/插件实现（77），Known Limitations 说 import/start 失败时旧版本不恢复（113）；迁移时不要把“失败自动回滚”当保证，必须用失败替换测试记录旧代码是否仍可运行。`deepseek-harness/packages/boot/hmr/README.md:77@687f282e`、`deepseek-harness/packages/boot/hmr/README.md:113@687f282e`
 
-来源：deepseek-harness/scripts/verify-cordis-config.ts:1-12@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:106-136@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:139-180@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:240-412@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:413-448@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:517-578@687f282e
-来源：deepseek-harness/docs/cordis-primer.md:37-39@687f282e
-来源：deepseek-harness/docs/architecture.md:13-40@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:12-27@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:39-49@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:59-83@687f282e
-来源：deepseek-harness/packages/boot/hmr/README.md:104-123@687f282e
-来源：deepseek-harness/scripts/verify-default-product-isolation.ts:140-220@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.spec.ts:49-155@687f282e
-来源：deepseek-harness/packages/bundle/web-app/presets/standard.patch.yml:21-26@687f282e
+来源：deepseek-harness/scripts/verify-cordis-config.ts:1-12@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:106-136@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:139-180@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:240-412@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:413-448@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:517-578@687f282e 来源：deepseek-harness/docs/cordis-primer.md:37-39@687f282e 来源：deepseek-harness/docs/architecture.md:13-40@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:12-27@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:39-49@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:59-83@687f282e 来源：deepseek-harness/packages/boot/hmr/README.md:104-123@687f282e 来源：deepseek-harness/scripts/verify-default-product-isolation.ts:140-220@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.spec.ts:49-155@687f282e 来源：deepseek-harness/packages/bundle/web-app/presets/standard.patch.yml:21-26@687f282e
 
 <a id="engineering-application-launch"></a>
 ## 11. 唯一应用启动通道（engineering-application-launch）
@@ -499,12 +416,7 @@
 
 **证据与限制**：门禁是自动的，负向测试覆盖新增 bin/shebang/root script。它不证明 profile 内部组合正确（由组合/隔离/测试门禁负责）。
 
-来源：deepseek-harness/AGENTS.md:13-13@687f282e
-来源：deepseek-harness/docs/architecture.md:41-47@687f282e
-来源：deepseek-harness/scripts/verify-application-entrypoints.ts:1-12@687f282e
-来源：deepseek-harness/scripts/verify-application-entrypoints.ts:21-89@687f282e
-来源：deepseek-harness/scripts/verify-application-entrypoints.ts:102-174@687f282e
-来源：deepseek-harness/scripts/verify-application-entrypoints.ts:175-203@687f282e
+来源：deepseek-harness/AGENTS.md:13-13@687f282e 来源：deepseek-harness/docs/architecture.md:41-47@687f282e 来源：deepseek-harness/scripts/verify-application-entrypoints.ts:1-12@687f282e 来源：deepseek-harness/scripts/verify-application-entrypoints.ts:21-89@687f282e 来源：deepseek-harness/scripts/verify-application-entrypoints.ts:102-174@687f282e 来源：deepseek-harness/scripts/verify-application-entrypoints.ts:175-203@687f282e
 
 <a id="engineering-plugin-export-forms"></a>
 ## 12. 插件导出形态：四件套 vs 服务默认导出（engineering-plugin-export-forms）
@@ -538,13 +450,7 @@
 
 **证据与限制**：真实 Loader 测试是必要证据；仅 typecheck/单测不覆盖加载路径。`verify-export-jsdoc` 只覆盖文档，不覆盖形态。
 
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:7-43@687f282e
-来源：deepseek-harness/packages/AGENTS.md:5-5@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:34-40@687f282e
-来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:27-55@687f282e
-来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:89-99@687f282e
-来源：deepseek-harness/scripts/verify-export-jsdoc.ts:16-21@687f282e
-来源：deepseek-harness/scripts/verify-export-jsdoc.ts:278-305@687f282e
+来源：deepseek-harness/docs/defensive-patterns/package-surface.md:7-43@687f282e 来源：deepseek-harness/packages/AGENTS.md:5-5@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:34-40@687f282e 来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:27-55@687f282e 来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:89-99@687f282e 来源：deepseek-harness/scripts/verify-export-jsdoc.ts:16-21@687f282e 来源：deepseek-harness/scripts/verify-export-jsdoc.ts:278-305@687f282e
 
 <a id="engineering-optional-service-access"></a>
 ## 13. 可选服务用 `ctx.get(name)`（engineering-optional-service-access）
@@ -575,10 +481,7 @@
 
 **证据与限制**：事故和教程是强证据；真实 Loader 测试是验证。静态代码搜索无法证明 fiber 拓扑。
 
-来源：deepseek-harness/packages/AGENTS.md:6-6@687f282e
-来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:56-88@687f282e
-来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:89-99@687f282e
-来源：deepseek-harness/docs/cordis-tutorial/03-services.md:56-65@687f282e
+来源：deepseek-harness/packages/AGENTS.md:6-6@687f282e 来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:56-88@687f282e 来源：deepseek-harness/docs/postmortem/0001-acp-default-export-drops-inject.md:89-99@687f282e 来源：deepseek-harness/docs/cordis-tutorial/03-services.md:56-65@687f282e
 
 <a id="engineering-typed-events"></a>
 ## 14. 类型化事件、分派模式与 waterfall 契约（engineering-typed-events）
@@ -611,17 +514,7 @@
 
 **证据与限制**：生成目录门禁可自动核对 event mode、JSDoc 完整性、类型链接、分区覆盖与字节 freshness；它不核对运行时分派点，顺序/短路仍需测试。仅类型/目录正确不证明 waterfall 语义正确。
 
-来源：deepseek-harness/AGENTS.md:134-134@687f282e
-来源：deepseek-harness/docs/cordis-primer.md:12-12@687f282e
-来源：deepseek-harness/docs/cordis-primer.md:15-27@687f282e
-来源：deepseek-harness/docs/cordis-primer.md:29-35@687f282e
-来源：deepseek-harness/docs/architecture.md:106-106@687f282e
-来源：deepseek-harness/docs/architecture.md:67-77@687f282e
-来源：deepseek-harness/package.json:163-163@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-18@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1119-1170@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1188-1259@687f282e
-来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1280-1291@687f282e
+来源：deepseek-harness/AGENTS.md:134-134@687f282e 来源：deepseek-harness/docs/cordis-primer.md:12-12@687f282e 来源：deepseek-harness/docs/cordis-primer.md:15-27@687f282e 来源：deepseek-harness/docs/cordis-primer.md:29-35@687f282e 来源：deepseek-harness/docs/architecture.md:106-106@687f282e 来源：deepseek-harness/docs/architecture.md:67-77@687f282e 来源：deepseek-harness/package.json:163-163@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1-18@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1119-1170@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1188-1259@687f282e 来源：deepseek-harness/scripts/gen-cordis-catalog.ts:1280-1291@687f282e
 
 <a id="engineering-typescript-strictness"></a>
 ## 15. TypeScript 严格编译与类型感知 lint（engineering-typescript-strictness）
@@ -654,13 +547,7 @@
 
 **证据与限制**：tsc/lint 是自动证据；它们不证明运行时行为。`any` 理由只能评审。
 
-来源：deepseek-harness/tsconfig.base.json:5-26@687f282e
-来源：deepseek-harness/.oxlintrc.json:69-146@687f282e
-来源：deepseek-harness/.oxlintrc.json:160-182@687f282e
-来源：deepseek-harness/.oxlintrc.json:200-229@687f282e
-来源：deepseek-harness/AGENTS.md:173-173@687f282e
-来源：deepseek-harness/packages/AGENTS.md:24-25@687f282e
-来源：deepseek-harness/.oxlintrc.json:253-358@687f282e
+来源：deepseek-harness/tsconfig.base.json:5-26@687f282e 来源：deepseek-harness/.oxlintrc.json:69-146@687f282e 来源：deepseek-harness/.oxlintrc.json:160-182@687f282e 来源：deepseek-harness/.oxlintrc.json:200-229@687f282e 来源：deepseek-harness/AGENTS.md:173-173@687f282e 来源：deepseek-harness/packages/AGENTS.md:24-25@687f282e 来源：deepseek-harness/.oxlintrc.json:253-358@687f282e
 
 <a id="engineering-no-unknown-assertions"></a>
 ## 16. 禁止新增 `as unknown` 断言与精确基线（engineering-no-unknown-assertions）
@@ -693,11 +580,7 @@
 
 **证据与限制**：源码有自动比较和只减不增的 `--prune` 实现，本次没有执行。命令通过只说明当前可信 baseline 下没有未列出的直接 `unknown` 断言；不认证 baseline 历史，不证明总体类型安全，也不解析 alias/intersection。`any`/隐藏转换 helper 的违规需要另行评审，不在这条 AST 检查的自动保证内。`deepseek-harness/scripts/verify-no-unknown-casts.ts:138-185@687f282e`
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-19-no-unknown-casts.md:13-35@687f282e
-来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:1-25@687f282e
-来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:76-134@687f282e
-来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:138-185@687f282e
-来源：deepseek-harness/AGENTS.md:146-146@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-09-19-no-unknown-casts.md:13-35@687f282e 来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:1-25@687f282e 来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:76-134@687f282e 来源：deepseek-harness/scripts/verify-no-unknown-casts.ts:138-185@687f282e 来源：deepseek-harness/AGENTS.md:146-146@687f282e
 
 <a id="engineering-discriminant-brands"></a>
 ## 17. 判别标签、穷尽 switch 与品牌化 id（engineering-discriminant-brands）
@@ -731,10 +614,7 @@
 
 **证据与限制**：编译器和 lint 是自动证据；运行时分派正确性还需测试。品牌只在编译期，运行时无保护。
 
-来源：deepseek-harness/AGENTS.md:135-135@687f282e
-来源：deepseek-harness/docs/subsystems/core.md:358-408@687f282e
-来源：deepseek-harness/docs/subsystems/llm-streaming.md:169-169@687f282e
-来源：deepseek-harness/.oxlintrc.json:177-182@687f282e
+来源：deepseek-harness/AGENTS.md:135-135@687f282e 来源：deepseek-harness/docs/subsystems/core.md:358-408@687f282e 来源：deepseek-harness/docs/subsystems/llm-streaming.md:169-169@687f282e 来源：deepseek-harness/.oxlintrc.json:177-182@687f282e
 
 <a id="engineering-typed-boundaries"></a>
 ## 18. 类型信任与验证边界（engineering-typed-boundaries）
@@ -767,10 +647,7 @@
 
 **证据与限制**：评审为主；边界测试可补充。类型系统不覆盖运行时输入，运行时校验也不证明业务正确。
 
-来源：deepseek-harness/AGENTS.md:145-145@687f282e
-来源：deepseek-harness/docs/defensive-patterns/general.md:13-18@687f282e
-来源：deepseek-harness/packages/AGENTS.md:16-16@687f282e
-来源：deepseek-harness/packages/AGENTS.md:18-18@687f282e
+来源：deepseek-harness/AGENTS.md:145-145@687f282e 来源：deepseek-harness/docs/defensive-patterns/general.md:13-18@687f282e 来源：deepseek-harness/packages/AGENTS.md:16-16@687f282e 来源：deepseek-harness/packages/AGENTS.md:18-18@687f282e
 
 <a id="engineering-performance-evidence"></a>
 ## 19. 性能改动的测量证据（engineering-performance-evidence）
@@ -803,8 +680,7 @@
 
 **证据与限制**：测量是经验证据，不是证明；CI 警报不是通过。源仓明确说 benchmark 不建模所有路径。
 
-来源：deepseek-harness/docs/defensive-patterns/general.md:149-172@687f282e
-来源：deepseek-harness/benchmarks/AGENTS.md:1-18@687f282e
+来源：deepseek-harness/docs/defensive-patterns/general.md:149-172@687f282e 来源：deepseek-harness/benchmarks/AGENTS.md:1-18@687f282e
 
 <a id="engineering-migration-behavior"></a>
 ## 20. 迁移保持可观察行为（engineering-migration-behavior）
@@ -835,8 +711,7 @@
 
 **证据与限制**：评审为主；测试/快照补充。移动 diff 小不证明行为相等。
 
-来源：deepseek-harness/docs/defensive-patterns/general.md:174-190@687f282e
-来源：deepseek-harness/AGENTS.md:7-11@687f282e
+来源：deepseek-harness/docs/defensive-patterns/general.md:174-190@687f282e 来源：deepseek-harness/AGENTS.md:7-11@687f282e
 
 <a id="engineering-untrusted-subprocess"></a>
 ## 21. 不受信边界：子进程环境、临时路径与凭据重定向（engineering-untrusted-subprocess）
@@ -869,9 +744,7 @@
 
 **证据与限制**：评审为主；安全测试可补充。未发现泄漏不等于没有竞争；redirect 目标未被联系需要真实 HTTP 回归，不能由配置代码推断。
 
-来源：deepseek-harness/docs/defensive-patterns/general.md:212-222@687f282e
-来源：deepseek-harness/packages/AGENTS.md:20-20@687f282e
-来源：deepseek-harness/packages/web/AGENTS.md:1-5@687f282e
+来源：deepseek-harness/docs/defensive-patterns/general.md:212-222@687f282e 来源：deepseek-harness/packages/AGENTS.md:20-20@687f282e 来源：deepseek-harness/packages/web/AGENTS.md:1-5@687f282e
 
 <a id="engineering-source-artifact-plane"></a>
 ## 22. 源平面 vs 产物平面（engineering-source-artifact-plane）
@@ -907,13 +780,7 @@
 
 **证据与限制**：`build:check`/`typecheck`/clean checkout 是自动证据；它们不证明发布包内容（由 hygiene/publint/smoke 负责）。
 
-来源：deepseek-harness/AGENTS.md:132-132@687f282e
-来源：deepseek-harness/AGENTS.md:147-147@687f282e
-来源：deepseek-harness/docs/development.md:59-110@687f282e
-来源：deepseek-harness/docs/testing.md:43-46@687f282e
-来源：deepseek-harness/scripts/verify-cordis-config.ts:413-448@687f282e
-来源：deepseek-harness/package.json:23-23@687f282e
-来源：deepseek-harness/package.json:61-61@687f282e
+来源：deepseek-harness/AGENTS.md:132-132@687f282e 来源：deepseek-harness/AGENTS.md:147-147@687f282e 来源：deepseek-harness/docs/development.md:59-110@687f282e 来源：deepseek-harness/docs/testing.md:43-46@687f282e 来源：deepseek-harness/scripts/verify-cordis-config.ts:413-448@687f282e 来源：deepseek-harness/package.json:23-23@687f282e 来源：deepseek-harness/package.json:61-61@687f282e
 
 <a id="engineering-compiler-faces"></a>
 ## 23. 显式编译面与 Host/Client 聚合隔离（engineering-compiler-faces）
@@ -948,19 +815,7 @@
 
 **证据与限制**：`constraints`/tsc 是自动证据；它们不证明运行时分包正确（由 build/bundle 检查负责）。
 
-来源：deepseek-harness/tsconfig.base.json:1-29@687f282e
-来源：deepseek-harness/tsconfig.client.json:1-30@687f282e
-来源：deepseek-harness/tsconfig.base.client.json:1-12@687f282e
-来源：deepseek-harness/AGENTS.md:148-148@687f282e
-来源：deepseek-harness/docs/development.md:59-75@687f282e
-来源：deepseek-harness/scripts/project-reference-faces.ts:1-129@687f282e
-来源：deepseek-harness/scripts/ts-project.ts:1-120@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:649-659@687f282e
-来源：deepseek-harness/tsconfig.host.json:220-223@687f282e
-来源：deepseek-harness/tsconfig.host.json:533-536@687f282e
-来源：deepseek-harness/tsconfig.client.json:47-53@687f282e
-来源：deepseek-harness/tsconfig.client.json:65-75@687f282e
-来源：deepseek-harness/tsconfig.client.json:155-155@687f282e
+来源：deepseek-harness/tsconfig.base.json:1-29@687f282e 来源：deepseek-harness/tsconfig.client.json:1-30@687f282e 来源：deepseek-harness/tsconfig.base.client.json:1-12@687f282e 来源：deepseek-harness/AGENTS.md:148-148@687f282e 来源：deepseek-harness/docs/development.md:59-75@687f282e 来源：deepseek-harness/scripts/project-reference-faces.ts:1-129@687f282e 来源：deepseek-harness/scripts/ts-project.ts:1-120@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:649-659@687f282e 来源：deepseek-harness/tsconfig.host.json:220-223@687f282e 来源：deepseek-harness/tsconfig.host.json:533-536@687f282e 来源：deepseek-harness/tsconfig.client.json:47-53@687f282e 来源：deepseek-harness/tsconfig.client.json:65-75@687f282e 来源：deepseek-harness/tsconfig.client.json:155-155@687f282e
 
 <a id="engineering-package-shape-exports"></a>
 ## 24. 包形态与标准导出键（engineering-package-shape-exports）
@@ -998,17 +853,7 @@
 
 **证据与限制**：`constraints`/client gate 是自动证据；它们只精确校验根 `exports["."].types`/`.default`、`files` 派生和 `/client` 声明，**不校验完整标准键集合**；`verify-package-meta` 已读全文（`deepseek-harness/scripts/verify-package-meta.ts:1-285@687f282e`），校验 locale/icon/resource export 与 `files`；`verify-client-packages` 已读全文（`deepseek-harness/scripts/verify-client-packages.ts:1-713@687f282e`），校验 client 包形态与 external/supplier 图；两者都不证明运行时 client boot，也不校验完整标准键集合。publint 是通用包 lint。标准键集合目前主要靠评审（源仓明确说计数不写死）；新增键的兼容性仍需消费者测试。
 
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:45-73@687f282e
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:75-113@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:71-71@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:142-152@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:145-161@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-package.md:7-40@687f282e
-来源：deepseek-harness/scripts/verify-package-meta.ts:1-285@687f282e
-来源：deepseek-harness/scripts/verify-client-packages.ts:1-713@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:362-381@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:420-542@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:551-570@687f282e
+来源：deepseek-harness/docs/defensive-patterns/package-surface.md:45-73@687f282e 来源：deepseek-harness/docs/defensive-patterns/package-surface.md:75-113@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:71-71@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:142-152@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:145-161@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-package.md:7-40@687f282e 来源：deepseek-harness/scripts/verify-package-meta.ts:1-285@687f282e 来源：deepseek-harness/scripts/verify-client-packages.ts:1-713@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:362-381@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:420-542@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:551-570@687f282e
 
 <a id="engineering-dependency-policy"></a>
 ## 25. 包依赖声明与 workspace 范围策略（engineering-dependency-policy）
@@ -1044,19 +889,7 @@
 
 **证据与限制**：扫描/`--fix` 是自动证据；`--fix` 不证明语义正确。`safeHostDependencyExports` 的新增由精确 roster 测试 + 人工评审阻止（policy 注释要求 PR 醒目标题），不是运行时禁令；不要把它描述成运行时强制。重复安装/共享身份在源仓只有单元测试 + `verify-npm-install-layout` 的合成 registry/metadata 布局断言，没有真实消费者安装 smoke；`scripts/release/verify-packed-install.ts` 是另一条未执行的打包安装检查。迁移时必须分别记录“策略/单元/合成布局/真实安装”的证据等级，不能把前三者当成真实安装已通过。peer 关系仍需要真实重复安装 smoke（Release/Supply 域）。
 
-来源：deepseek-harness/AGENTS.md:131-132@687f282e
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:115-186@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:28-34@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:593-655@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:853-867@687f282e
-来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:61-73@687f282e
-来源：deepseek-harness/AGENTS.md:183-185@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1039-1061@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
+来源：deepseek-harness/AGENTS.md:131-132@687f282e 来源：deepseek-harness/docs/defensive-patterns/package-surface.md:115-186@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:28-34@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:593-655@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:853-867@687f282e 来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:61-73@687f282e 来源：deepseek-harness/AGENTS.md:183-185@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1039-1061@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
 
 <a id="engineering-resolve-hook-ban"></a>
 ## 26. 禁止新增 resolve hook（engineering-resolve-hook-ban）
@@ -1087,8 +920,7 @@
 
 **证据与限制**：评审为主；没有自动门禁。解析 smoke 可证明现有路径，不证明未来 hook 安全。
 
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:188-225@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-29-dsh-source-launch-tsx-esm.md:15-24@687f282e
+来源：deepseek-harness/docs/defensive-patterns/package-surface.md:188-225@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-29-dsh-source-launch-tsx-esm.md:15-24@687f282e
 
 <a id="engineering-no-top-level-await"></a>
 ## 27. 包源码禁止模块级 await（engineering-no-top-level-await）
@@ -1120,12 +952,7 @@
 
 **证据与限制**：门禁自动且负向测试覆盖；它只检查语法位置，不证明初始化逻辑正确。
 
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:226-231@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:1-22@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:64-97@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:100-177@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:179-233@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:234-267@687f282e
+来源：deepseek-harness/docs/defensive-patterns/package-surface.md:226-231@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:1-22@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:64-97@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:100-177@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:179-233@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:234-267@687f282e
 
 <a id="engineering-product-classification"></a>
 ## 28. 非实验包的产品使用或显式分类（engineering-product-classification）
@@ -1159,13 +986,7 @@
 
 **证据与限制**：门禁自动且负向测试覆盖上述断言；它不执行运行时，不证明 reachable 包真的工作。测试体已确认覆盖 source reachability 与 effective Loader composition 的边界，但不覆盖真实 provider/API、打包产物或用户触发的每一条路径；这些仍需 Testing/Release 证据。
 
-来源：deepseek-harness/AGENTS.md:79-79@687f282e
-来源：deepseek-harness/packages/README.md:87-92@687f282e
-来源：deepseek-harness/scripts/product-package-policy.ts:1-50@687f282e
-来源：deepseek-harness/scripts/verify-product-use.ts:58-249@687f282e
-来源：deepseek-harness/scripts/verify-product-use.ts:250-275@687f282e
-来源：deepseek-harness/scripts/verify-product-use.ts:277-304@687f282e
-来源：deepseek-harness/scripts/verify-product-use.spec.ts:1-302@687f282e
+来源：deepseek-harness/AGENTS.md:79-79@687f282e 来源：deepseek-harness/packages/README.md:87-92@687f282e 来源：deepseek-harness/scripts/product-package-policy.ts:1-50@687f282e 来源：deepseek-harness/scripts/verify-product-use.ts:58-249@687f282e 来源：deepseek-harness/scripts/verify-product-use.ts:250-275@687f282e 来源：deepseek-harness/scripts/verify-product-use.ts:277-304@687f282e 来源：deepseek-harness/scripts/verify-product-use.spec.ts:1-302@687f282e
 
 <a id="engineering-experimental-isolation"></a>
 ## 29. 实验包状态、发布与默认产品隔离（engineering-experimental-isolation）
@@ -1203,15 +1024,7 @@
 
 **证据与限制**：静态隔离、构建输入、真实 runtime smoke 是相互独立的证据；它们不覆盖每个后续用户触发路径或显式安装的 profile 扩展（源仓自己声明）。发布策略不决定成熟度。
 
-来源：deepseek-harness/packages/experimental/README.md:24-34@687f282e
-来源：deepseek-harness/packages/experimental/AGENTS.md:5-9@687f282e
-来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e
-来源：deepseek-harness/scripts/verify-default-product-isolation.ts:1-30@687f282e
-来源：deepseek-harness/scripts/verify-default-product-isolation.ts:45-300@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-12-default-product-experimental-isolation.md:11-36@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md:11-30@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:362-381@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:593-613@687f282e
+来源：deepseek-harness/packages/experimental/README.md:24-34@687f282e 来源：deepseek-harness/packages/experimental/AGENTS.md:5-9@687f282e 来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e 来源：deepseek-harness/scripts/verify-default-product-isolation.ts:1-30@687f282e 来源：deepseek-harness/scripts/verify-default-product-isolation.ts:45-300@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-12-default-product-experimental-isolation.md:11-36@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md:11-30@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:362-381@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:593-613@687f282e
 
 <a id="engineering-client-component-contract"></a>
 ## 30. 客户端组件：注入、数据流与身份（engineering-client-component-contract）
@@ -1252,20 +1065,7 @@
 
 **证据与限制**：评审为主；组件行为测试可补充。通过渲染测试不证明没有隐藏订阅。
 
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:7-54@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:55-94@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:95-134@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:135-169@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:170-187@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:188-228@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:229-272@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:273-309@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:310-347@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:348-381@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:382-416@687f282e
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:417-449@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:7-33@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:42-45@687f282e
+来源：deepseek-harness/docs/defensive-patterns/client-components.md:7-54@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:55-94@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:95-134@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:135-169@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:170-187@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:188-228@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:229-272@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:273-309@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:310-347@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:348-381@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:382-416@687f282e 来源：deepseek-harness/docs/defensive-patterns/client-components.md:417-449@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:7-33@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:42-45@687f282e
 
 <a id="engineering-client-layering"></a>
 ## 31. 客户端分层与域图（engineering-client-layering）
@@ -1298,10 +1098,7 @@
 
 **证据与限制**：目录门禁自动；组件/集成测试补充。门禁只查相对 import 的目录级边界，不查语义。
 
-来源：deepseek-harness/docs/defensive-patterns/client-components.md:450-493@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:46-60@687f282e
-来源：deepseek-harness/packages/client/AGENTS.md:105-114@687f282e
-来源：deepseek-harness/scripts/verify-client-domain-graph.ts:1-104@687f282e
+来源：deepseek-harness/docs/defensive-patterns/client-components.md:450-493@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:46-60@687f282e 来源：deepseek-harness/packages/client/AGENTS.md:105-114@687f282e 来源：deepseek-harness/scripts/verify-client-domain-graph.ts:1-104@687f282e
 
 <a id="engineering-remote-capability"></a>
 ## 32. 远程能力：每能力一个 service 与 `@Remote` 纪律（engineering-remote-capability）
@@ -1334,9 +1131,7 @@
 
 **证据与限制**：生成产物编译/类型测试是自动证据；访问控制需要 denial 测试。没有真实调用路径的静态正确不等于运行时安全。
 
-来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:7-44@687f282e
-来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:45-82@687f282e
-来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:83-115@687f282e
+来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:7-44@687f282e 来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:45-82@687f282e 来源：deepseek-harness/docs/defensive-patterns/remote-and-api.md:83-115@687f282e
 
 <a id="engineering-conversation-render"></a>
 ## 33. 会话读取与渲染：投影单路径、增量计算、无业务分支（engineering-conversation-render）
@@ -1375,16 +1170,7 @@
 
 **证据与限制**：评审 + 性能测试；快照可证明输出。投影版本冲突要运行时测试；类型不覆盖。
 
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:7-49@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:50-84@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:85-127@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:128-161@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:162-196@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:197-232@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:233-278@687f282e
-来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:279-316@687f282e
-来源：deepseek-harness/AGENTS.md:137-137@687f282e
-来源：deepseek-harness/docs/architecture.md:118-128@687f282e
+来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:7-49@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:50-84@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:85-127@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:128-161@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:162-196@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:197-232@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:233-278@687f282e 来源：deepseek-harness/docs/defensive-patterns/conversation-and-session.md:279-316@687f282e 来源：deepseek-harness/AGENTS.md:137-137@687f282e 来源：deepseek-harness/docs/architecture.md:118-128@687f282e
 
 <a id="engineering-jsdoc-prose"></a>
 ## 34. 导出 JSDoc、契约措辞与禁用词（engineering-jsdoc-prose）
@@ -1419,12 +1205,7 @@
 
 **证据与限制**：JSDoc/terminology gate 自动；语义质量仍靠评审。Gate 通过不证明文档完整；constructor 不检查、prose-only alias、re-export 跳过、unknown fail-closed 都是 gate 的边界，不能解读为这些位置已有语义文档。
 
-来源：deepseek-harness/AGENTS.md:173-173@687f282e
-来源：deepseek-harness/AGENTS.md:175-175@687f282e
-来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e
-来源：deepseek-harness/scripts/verify-export-jsdoc.ts:1-607@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:13-39@687f282e
-来源：deepseek-harness/scripts/verify-concrete-terms.ts:1-105@687f282e
+来源：deepseek-harness/AGENTS.md:173-173@687f282e 来源：deepseek-harness/AGENTS.md:175-175@687f282e 来源：deepseek-harness/docs/AGENTS.md:38-48@687f282e 来源：deepseek-harness/scripts/verify-export-jsdoc.ts:1-607@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:13-39@687f282e 来源：deepseek-harness/scripts/verify-concrete-terms.ts:1-105@687f282e
 
 <a id="engineering-dependency-over-handrolling"></a>
 ## 35. 依赖优先、当前 owner 与对称性（engineering-dependency-over-handrolling）
@@ -1458,11 +1239,7 @@
 
 **证据与限制**：评审为主；净删除可量化。依赖健康度是判断，不是自动证明。
 
-来源：deepseek-harness/AGENTS.md:140-140@687f282e
-来源：deepseek-harness/AGENTS.md:153-153@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:11-31@687f282e
-来源：deepseek-harness/packages/AGENTS.md:11-11@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-package.md:46-75@687f282e
+来源：deepseek-harness/AGENTS.md:140-140@687f282e 来源：deepseek-harness/AGENTS.md:153-153@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:11-31@687f282e 来源：deepseek-harness/packages/AGENTS.md:11-11@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-package.md:46-75@687f282e
 
 <a id="engineering-todo-markers"></a>
 ## 36. TODO 标记的紧迫性语义（engineering-todo-markers）
@@ -1493,8 +1270,7 @@
 
 **证据与限制**：人工/扫描；没有自动语义检查。
 
-来源：deepseek-harness/AGENTS.md:164-164@687f282e
-来源：deepseek-harness/docs/development.md:196-204@687f282e
+来源：deepseek-harness/AGENTS.md:164-164@687f282e 来源：deepseek-harness/docs/development.md:196-204@687f282e
 
 <a id="engineering-duplication"></a>
 ## 37. 跨文件重复检测门禁（engineering-duplication）
@@ -1589,7 +1365,4 @@
 - `engineering-dependency-over-handrolling`：`deepseek-harness/.agents/notes/implemented/process/2026-07-26-dependencies-over-hand-rolling.md:11-31@687f282e`
 - `engineering-duplication`：`deepseek-harness/package.json:59-59@687f282e`
 
-来源：deepseek-harness/.jscpd.json:1-15@687f282e
-来源：deepseek-harness/package.json:59-59@687f282e
-来源：deepseek-harness/AGENTS.md:153-153@687f282e
-来源：deepseek-harness/.oxlintrc.json:230-252@687f282e
+来源：deepseek-harness/.jscpd.json:1-15@687f282e 来源：deepseek-harness/package.json:59-59@687f282e 来源：deepseek-harness/AGENTS.md:153-153@687f282e 来源：deepseek-harness/.oxlintrc.json:230-252@687f282e

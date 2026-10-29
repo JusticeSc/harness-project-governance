@@ -15,7 +15,10 @@
 ## Mechanisms
 
 <a id="m-runtime-residual-authority.native-launcher-cli-contract"></a>
-### runtime-residual-authority.native-launcher-cli-contract — landlock-run CLI 契约：跨仓兼容面、125 归因与 probe 三态 {#runtime-residual-authority.native-launcher-cli-contract}
+
+<a id="runtime-residual-authority.native-launcher-cli-contract"></a>
+
+### runtime-residual-authority.native-launcher-cli-contract — landlock-run CLI 契约：跨仓兼容面、125 归因与 probe 三态
 
 **问题。** `landlock-run` 是原生二进制与所有消费者之间的跨仓兼容面。退出码 `125` 既可能来自启动器，也可能是被包装命令自身的退出码；partial-ABI 内核仍能执行部分 Landlock，仅凭内核版本判断“不可用”会错误降级；argv、报告行或 probe 语义的静默变更会破坏 entry 的 `launcherPath`/`probe`/`grantArgs`。
 
@@ -39,23 +42,19 @@
 
 **失败模式与例外。** 把 partial 当 unusable 会不必要地降级；只看退出码会把子进程失败当启动器失败；把 allowlist 改成 denylist 会静默放行。非 Linux 没有 launcher，probe 必须是 unusable；不支持的内核返回 125/unusable，不能假装受限；browser worker 复用 JS API，但不经过该二进制。
 
-**证据。**
-来源：deepseek-harness/native/system/docs/cli-contract.md:1-34@687f282e
-来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e
-来源：deepseek-harness/native/system/docs/support-matrix.md:1-14@687f282e
-来源：deepseek-harness/native/system/scripts/build.ts:54-56@687f282e
+**证据。** 来源：deepseek-harness/native/system/docs/cli-contract.md:1-34@687f282e 来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e 来源：deepseek-harness/native/system/docs/support-matrix.md:1-14@687f282e 来源：deepseek-harness/native/system/scripts/build.ts:54-56@687f282e
 
 <a id="m-runtime-residual-authority-native-launcher-01"></a>
-- `deepseek-harness/native/system/docs/cli-contract.md:3-3@687f282e`：跨仓兼容面定义，以及“任何变更需家族版本提升 + release notes”的强制句。
-<a id="m-runtime-residual-authority-native-launcher-02"></a>
-- `deepseek-harness/native/system/docs/cli-contract.md:14-24@687f282e`：allowlist、非目录 grant、强制 `--`、125 的启动器级含义与“状态 125 + 前缀行”双信号归因、probe 三态。
-<a id="m-runtime-residual-authority-native-launcher-03"></a>
-- `deepseek-harness/native/system/docs/cli-contract.md:28-34@687f282e`：probe/partial 报告行、fatal 前缀、`no_new_privs` 与跨 exec 继承、ABI 上限。
-<a id="m-runtime-residual-authority-native-launcher-04"></a>
+- `deepseek-harness/native/system/docs/cli-contract.md:3-3@687f282e`：跨仓兼容面定义，以及“任何变更需家族版本提升 + release notes”的强制句。 <a id="m-runtime-residual-authority-native-launcher-02"></a>
+- `deepseek-harness/native/system/docs/cli-contract.md:14-24@687f282e`：allowlist、非目录 grant、强制 `--`、125 的启动器级含义与“状态 125 + 前缀行”双信号归因、probe 三态。 <a id="m-runtime-residual-authority-native-launcher-03"></a>
+- `deepseek-harness/native/system/docs/cli-contract.md:28-34@687f282e`：probe/partial 报告行、fatal 前缀、`no_new_privs` 与跨 exec 继承、ABI 上限。 <a id="m-runtime-residual-authority-native-launcher-04"></a>
 - `deepseek-harness/native/system/docs/support-matrix.md:12-14@687f282e`：probe 是可用性 oracle，Windows 没有 launcher/POSIX addon，未发布平台组合 probe unusable/flock 拒绝，新平台需要原生 builder 与已安装产物验证。
 
 <a id="m-runtime-residual-authority.native-flock-binding-contract"></a>
-### runtime-residual-authority.native-flock-binding-contract — POSIX flock 绑定：异步 errno、fd 所有权与独立 syscall oracle {#runtime-residual-authority.native-flock-binding-contract}
+
+<a id="runtime-residual-authority.native-flock-binding-contract"></a>
+
+### runtime-residual-authority.native-flock-binding-contract — POSIX flock 绑定：异步 errno、fd 所有权与独立 syscall oracle
 
 **问题。** `flock` 是 advisory 且以 open file description（OFD）为单位。把它实现成阻塞等待、在 JS 线程执行、由绑定关闭 fd，或用固定 sleep/毫秒阈值测试，都会产生“看似加锁成功”但语义错误的行为；异步回调的 errno 归属也容易在 C 与 JS 之间丢失。
 
@@ -83,22 +82,19 @@
 
 **失败模式与例外。** 在 JS 线程阻塞会冻结宿主；绑定关闭 fd 会提前释放锁；把 errno 留在 C 会丢失结构化失败；用 sleep 测试会把调度延迟误当锁语义。Windows/browser 有替代实现；测试只在 linux/darwin 构建 oracle。
 
-**证据。**
-来源：deepseek-harness/native/system/docs/flock-contract.md:1-36@687f282e
-来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e
-来源：deepseek-harness/native/system/scripts/build-test-oracle.mjs:1-23@687f282e
+**证据。** 来源：deepseek-harness/native/system/docs/flock-contract.md:1-36@687f282e 来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e 来源：deepseek-harness/native/system/scripts/build-test-oracle.mjs:1-23@687f282e
 
 <a id="m-runtime-residual-authority-native-flock-01"></a>
-- `deepseek-harness/native/system/docs/flock-contract.md:18-28@687f282e`：advisory 语义、OFD 继承/关闭、进程退出无 stale 超时、EBADF、回调 errno 与异常、并发与终止清理。
-<a id="m-runtime-residual-authority-native-flock-02"></a>
-- `deepseek-harness/native/system/docs/flock-contract.md:30-30@687f282e`：IPC/进程退出同步、禁止固定 sleep/毫秒阈值、oracle 永不发布。
-<a id="m-runtime-residual-authority-native-flock-03"></a>
-- `deepseek-harness/native/system/docs/architecture.md:15-19@687f282e`：stable Node-API v8、异步 worker 记录 errno、JS 拥有 promise、fd 所有权、Windows koffi semaphore 与 browser 单进程替代。
-<a id="m-runtime-residual-authority-native-flock-04"></a>
+- `deepseek-harness/native/system/docs/flock-contract.md:18-28@687f282e`：advisory 语义、OFD 继承/关闭、进程退出无 stale 超时、EBADF、回调 errno 与异常、并发与终止清理。 <a id="m-runtime-residual-authority-native-flock-02"></a>
+- `deepseek-harness/native/system/docs/flock-contract.md:30-30@687f282e`：IPC/进程退出同步、禁止固定 sleep/毫秒阈值、oracle 永不发布。 <a id="m-runtime-residual-authority-native-flock-03"></a>
+- `deepseek-harness/native/system/docs/architecture.md:15-19@687f282e`：stable Node-API v8、异步 worker 记录 errno、JS 拥有 promise、fd 所有权、Windows koffi semaphore 与 browser 单进程替代。 <a id="m-runtime-residual-authority-native-flock-04"></a>
 - `deepseek-harness/native/system/scripts/build-test-oracle.mjs:8-18@687f282e`：oracle 仅 POSIX、按 glibc/musl 选择编译器、macOS 11.0 目标与 musl 静态链接。
 
 <a id="m-runtime-residual-authority.native-family-release-versioning"></a>
-### runtime-residual-authority.native-family-release-versioning — 原生包家族单版本、bump/commit、命名与 tag/publish-order 约束 {#runtime-residual-authority.native-family-release-versioning}
+
+<a id="runtime-residual-authority.native-family-release-versioning"></a>
+
+### runtime-residual-authority.native-family-release-versioning — 原生包家族单版本、bump/commit、命名与 tag/publish-order 约束
 
 **问题。** 一个 entry 包加多个平台包必须共用一个版本。手工改 manifest 会漏掉平台包或根 lockfile；tag、dist-tag、发布顺序或命名不一致会让 entry 先于平台包出现、把预发布推到 `latest`，或让 npm 把包识别成另一个作用域。
 
@@ -127,28 +123,21 @@
 
 **失败模式与例外。** 漏改 manifest 或 lockfile 会让 verify 失败；tag 不匹配阻断发布；直接 pnpm publish 会丢可执行位；平台包晚于 entry 会让公开 entry 指向不存在的可选依赖。`--current-platform-only` 只用于每架构 CI leg；本地无 workflow 上下文时保留公开 source URL；预发布只进 next。
 
-**证据。**
-来源：deepseek-harness/native/system/docs/release.md:1-63@687f282e
-来源：deepseek-harness/native/system/docs/naming.md:1-30@687f282e
-来源：deepseek-harness/native/system/docs/packaging.md:1-26@687f282e
-来源：deepseek-harness/native/system/scripts/bump-release.mjs:1-91@687f282e
-来源：deepseek-harness/native/system/scripts/commit-release.mjs:1-42@687f282e
+**证据。** 来源：deepseek-harness/native/system/docs/release.md:1-63@687f282e 来源：deepseek-harness/native/system/docs/naming.md:1-30@687f282e 来源：deepseek-harness/native/system/docs/packaging.md:1-26@687f282e 来源：deepseek-harness/native/system/scripts/bump-release.mjs:1-91@687f282e 来源：deepseek-harness/native/system/scripts/commit-release.mjs:1-42@687f282e
 
 <a id="m-runtime-residual-authority-native-version-01"></a>
-- `deepseek-harness/native/system/docs/release.md:7-15@687f282e`：单版本、bump 更新全部 manifest/根 lockfile/verify-release、显式 prerelease 与 next、人工命名空间 tag 及 workflow tag 校验。
-<a id="m-runtime-residual-authority-native-version-02"></a>
-- `deepseek-harness/native/system/docs/release.md:51-53@687f282e`：publish-order（平台先于 entry）、OIDC/`NPM_TOKEN` fallback、新 scoped 包 bootstrap 与 trusted publisher 配置。
-<a id="m-runtime-residual-authority-native-version-03"></a>
-- `deepseek-harness/native/system/docs/release.md:63-63@687f282e`：禁止提交含 token 或 registry override 的 `.npmrc`。
-<a id="m-runtime-residual-authority-native-version-04"></a>
-- `deepseek-harness/native/system/scripts/bump-release.mjs:32-48@687f282e`、`deepseek-harness/native/system/scripts/bump-release.mjs:66-89@687f282e`：全部包 manifest、纯 x.y.z 增量的限制、完整 semver 显式版本、版本一致性检查、lockfile-only 刷新与 verify-release。
-<a id="m-runtime-residual-authority-native-version-05"></a>
-- `deepseek-harness/native/system/scripts/commit-release.mjs:31-42@687f282e`：精确 stage 三处路径、固定提交信息、tag 保持人工。
-<a id="m-runtime-residual-authority-native-version-06"></a>
+- `deepseek-harness/native/system/docs/release.md:7-15@687f282e`：单版本、bump 更新全部 manifest/根 lockfile/verify-release、显式 prerelease 与 next、人工命名空间 tag 及 workflow tag 校验。 <a id="m-runtime-residual-authority-native-version-02"></a>
+- `deepseek-harness/native/system/docs/release.md:51-53@687f282e`：publish-order（平台先于 entry）、OIDC/`NPM_TOKEN` fallback、新 scoped 包 bootstrap 与 trusted publisher 配置。 <a id="m-runtime-residual-authority-native-version-03"></a>
+- `deepseek-harness/native/system/docs/release.md:63-63@687f282e`：禁止提交含 token 或 registry override 的 `.npmrc`。 <a id="m-runtime-residual-authority-native-version-04"></a>
+- `deepseek-harness/native/system/scripts/bump-release.mjs:32-48@687f282e`、`deepseek-harness/native/system/scripts/bump-release.mjs:66-89@687f282e`：全部包 manifest、纯 x.y.z 增量的限制、完整 semver 显式版本、版本一致性检查、lockfile-only 刷新与 verify-release。 <a id="m-runtime-residual-authority-native-version-05"></a>
+- `deepseek-harness/native/system/scripts/commit-release.mjs:31-42@687f282e`：精确 stage 三处路径、固定提交信息、tag 保持人工。 <a id="m-runtime-residual-authority-native-version-06"></a>
 - `deepseek-harness/native/system/docs/naming.md:5-26@687f282e`：npm scope/前缀/平台后缀、固定二进制路径、NALR_ 仅测试、运行期不读环境变量。
 
 <a id="m-runtime-residual-authority.native-pack-payload-staging"></a>
-### runtime-residual-authority.native-pack-payload-staging — 原生 prepack 载荷校验与 workflow 打包 staging 隔离 {#runtime-residual-authority.native-pack-payload-staging}
+
+<a id="runtime-residual-authority.native-pack-payload-staging"></a>
+
+### runtime-residual-authority.native-pack-payload-staging — 原生 prepack 载荷校验与 workflow 打包 staging 隔离
 
 **问题。** npm `files` 使用 glob 时，匹配不到任何文件不会报错，而是打出没有 JS 的 tarball；平台包若缺少二进制或复制了别的架构，直到消费者运行才暴露。workflow 打包会改写 manifest 的 repository URL，若不隔离 staging，就会污染源 manifest、丢掉 license 或删除既有输出。
 
@@ -178,24 +167,19 @@
 
 **失败模式与例外。** 空 lib/ 会打出无 JS 的 entry；错误架构/缺二进制会在消费者运行时失败；manifest 改写泄漏会污染源仓库；非法变量若先删输出会毁掉上一次可发布产物。`--current-platform-only` 只用于本地预演；本地无 workflow 上下文时保留公开 URL。
 
-**证据。**
-来源：deepseek-harness/native/system/docs/packaging.md:1-26@687f282e
-来源：deepseek-harness/native/system/scripts/repo.mjs:1-122@687f282e
-来源：deepseek-harness/native/system/scripts/verify-entry-lib.mjs:1-28@687f282e
-来源：deepseek-harness/native/system/scripts/verify-launcher-binary.mjs:1-30@687f282e
-来源：deepseek-harness/native/system/test/release-packing.test.js:1-151@687f282e
+**证据。** 来源：deepseek-harness/native/system/docs/packaging.md:1-26@687f282e 来源：deepseek-harness/native/system/scripts/repo.mjs:1-122@687f282e 来源：deepseek-harness/native/system/scripts/verify-entry-lib.mjs:1-28@687f282e 来源：deepseek-harness/native/system/scripts/verify-launcher-binary.mjs:1-30@687f282e 来源：deepseek-harness/native/system/test/release-packing.test.js:1-151@687f282e
 
 <a id="m-runtime-residual-authority-native-pack-01"></a>
-- `deepseek-harness/native/system/scripts/verify-entry-lib.mjs:4-7@687f282e`：glob 空匹配会静默打包无 JS tarball，因此必须在 prepack 显式拒绝。
-<a id="m-runtime-residual-authority-native-pack-02"></a>
-- `deepseek-harness/native/system/scripts/repo.mjs:58-76@687f282e`、`deepseek-harness/native/system/scripts/repo.mjs:88-120@687f282e`：os/cpu 与 prebuilds 一致、bin 路径/重复/kind/libc、ELF/Mach-O/NAPI 导出与未声明 bin 文件检查。
-<a id="m-runtime-residual-authority-native-pack-03"></a>
-- `deepseek-harness/native/system/docs/packaging.md:22-26@687f282e`：prepack 拒绝规则、npm vs pnpm pack、workflow 仓库改写与 license/staging 清理、已安装产物预演。
-<a id="m-runtime-residual-authority-native-pack-04"></a>
+- `deepseek-harness/native/system/scripts/verify-entry-lib.mjs:4-7@687f282e`：glob 空匹配会静默打包无 JS tarball，因此必须在 prepack 显式拒绝。 <a id="m-runtime-residual-authority-native-pack-02"></a>
+- `deepseek-harness/native/system/scripts/repo.mjs:58-76@687f282e`、`deepseek-harness/native/system/scripts/repo.mjs:88-120@687f282e`：os/cpu 与 prebuilds 一致、bin 路径/重复/kind/libc、ELF/Mach-O/NAPI 导出与未声明 bin 文件检查。 <a id="m-runtime-residual-authority-native-pack-03"></a>
+- `deepseek-harness/native/system/docs/packaging.md:22-26@687f282e`：prepack 拒绝规则、npm vs pnpm pack、workflow 仓库改写与 license/staging 清理、已安装产物预演。 <a id="m-runtime-residual-authority-native-pack-04"></a>
 - `deepseek-harness/native/system/test/release-packing.test.js:96-103@687f282e`、`deepseek-harness/native/system/test/release-packing.test.js:125-151@687f282e`：publish-order、workflow/local repository 重写、非法身份先失败且保留旧输出、prepack 失败清理 staging。
 
 <a id="m-runtime-residual-authority.native-host-build-integrity"></a>
-### runtime-residual-authority.native-host-build-integrity — 宿主原生构建：libc 选择、Node 头文件、原子落盘与测试 oracle 构建 {#runtime-residual-authority.native-host-build-integrity}
+
+<a id="runtime-residual-authority.native-host-build-integrity"></a>
+
+### runtime-residual-authority.native-host-build-integrity — 宿主原生构建：libc 选择、Node 头文件、原子落盘与测试 oracle 构建
 
 **问题。** 原生 addon 不能跨平台编译；Linux 的 glibc 与 musl 是不同二进制，macOS 需要 Mach-O bundle；并发构建时读到截断文件会得到难以诊断的加载失败。若构建脚本猜测主机或静默跳过，就会产出错误平台载荷或空包。
 
@@ -222,23 +206,19 @@
 
 **失败模式与例外。** 交叉编译或错误 libc 会产生无法加载的 addon；缺头文件会失败；非原子写入会让并发检查读到截断文件；静默跳过会打出空平台包。`--host-addon-only` 允许非原生主机退 0；macOS 使用 `cc`，Linux 完整构建需要 `musl-gcc`；仓库测试只为宿主机构建。
 
-**证据。**
-来源：deepseek-harness/native/system/scripts/build.ts:1-92@687f282e
-来源：deepseek-harness/native/system/scripts/build-test-oracle.mjs:1-23@687f282e
-来源：deepseek-harness/native/system/docs/support-matrix.md:1-14@687f282e
-来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e
+**证据。** 来源：deepseek-harness/native/system/scripts/build.ts:1-92@687f282e 来源：deepseek-harness/native/system/scripts/build-test-oracle.mjs:1-23@687f282e 来源：deepseek-harness/native/system/docs/support-matrix.md:1-14@687f282e 来源：deepseek-harness/native/system/docs/architecture.md:1-25@687f282e
 
 <a id="m-runtime-residual-authority-native-build-01"></a>
-- `deepseek-harness/native/system/scripts/build.ts:28-35@687f282e`：非 linux/darwin 的拒绝、host 判定、process.report libc 选择与 Node 头文件路径。
-<a id="m-runtime-residual-authority-native-build-02"></a>
-- `deepseek-harness/native/system/scripts/build.ts:54-73@687f282e`：landlock 静态 musl flags、Node-API v8/头文件缺失、Linux libc 选择、macOS bundle/11.0 与不支持目标失败。
-<a id="m-runtime-residual-authority-native-build-03"></a>
-- `deepseek-harness/native/system/scripts/build.ts:83-92@687f282e`：临时文件 rename 的原子落盘、finally 清理与“本 host 无声明二进制”失败。
-<a id="m-runtime-residual-authority-native-build-04"></a>
+- `deepseek-harness/native/system/scripts/build.ts:28-35@687f282e`：非 linux/darwin 的拒绝、host 判定、process.report libc 选择与 Node 头文件路径。 <a id="m-runtime-residual-authority-native-build-02"></a>
+- `deepseek-harness/native/system/scripts/build.ts:54-73@687f282e`：landlock 静态 musl flags、Node-API v8/头文件缺失、Linux libc 选择、macOS bundle/11.0 与不支持目标失败。 <a id="m-runtime-residual-authority-native-build-03"></a>
+- `deepseek-harness/native/system/scripts/build.ts:83-92@687f282e`：临时文件 rename 的原子落盘、finally 清理与“本 host 无声明二进制”失败。 <a id="m-runtime-residual-authority-native-build-04"></a>
 - `deepseek-harness/native/system/scripts/build-test-oracle.mjs:8-18@687f282e`：oracle 仅 POSIX、按 libc 变体构建、musl 静态与 macOS 11.0 目标。
 
 <a id="m-runtime-residual-authority.desktop-packaging-environment"></a>
-### runtime-residual-authority.desktop-packaging-environment — Desktop 打包环境：应用标识、registry 与 macOS 签名/公证凭据解析 {#runtime-residual-authority.desktop-packaging-environment}
+
+<a id="runtime-residual-authority.desktop-packaging-environment"></a>
+
+### runtime-residual-authority.desktop-packaging-environment — Desktop 打包环境：应用标识、registry 与 macOS 签名/公证凭据解析
 
 **问题。** appId、registry、签名与公证设置若未在准备前校验，会把配置错误推迟到硬件或公证阶段。公证解析器负责按优先级选取完整凭据，mode-aware package preflight 才负责多策略排他；二者不是同一保证。
 
@@ -263,23 +243,19 @@
 
 **失败模式与例外。** 被选择策略缺成员时解析失败；需要公证的 macOS package preflight 拒绝混用策略；registry/appId/Team ID 畸形在环境校验处失败。绕过 package preflight 单独调用解析器不会获得多策略排他保证。macOS 非 unsigned preparation-only 仍要求签名，并默认要求公证，`skipNotarization` 只跳过公证、不跳过签名；测试产物不得当作生产证据。解析成功不证明证书、私钥或 Apple 服务可用；本轮未执行打包。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:1-121@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-release-environment.d.mts:1-71@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-package-environment.mjs:1-173@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-package-environment.d.mts:1-37@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:1-121@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-release-environment.d.mts:1-71@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-package-environment.mjs:1-173@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-package-environment.d.mts:1-37@687f282e
 
 <a id="m-runtime-residual-authority-desktop-env-01"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:46-55@687f282e`：默认公共 registry 与配置值的 HTTPS origin/无凭据/path/query/hash 校验。
-<a id="m-runtime-residual-authority-desktop-env-02"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:63-85@687f282e`：反向 DNS appId、无 `Developer ID Application:` 前缀、10 位大写字母数字 Team ID。
-<a id="m-runtime-residual-authority-desktop-env-03"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:88-121@687f282e`：Apple ID/API key/Keychain 按顺序选取，所选策略缺成员时失败；不自行拒绝其他完整策略。`deepseek-harness/apps/desktop/scripts/desktop-package-environment.mjs:142-170@687f282e`：mode-aware 的多策略拒绝与凭据文件检查。
-<a id="m-runtime-residual-authority-desktop-env-04"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:46-55@687f282e`：默认公共 registry 与配置值的 HTTPS origin/无凭据/path/query/hash 校验。 <a id="m-runtime-residual-authority-desktop-env-02"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:63-85@687f282e`：反向 DNS appId、无 `Developer ID Application:` 前缀、10 位大写字母数字 Team ID。 <a id="m-runtime-residual-authority-desktop-env-03"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-release-environment.mjs:88-121@687f282e`：Apple ID/API key/Keychain 按顺序选取，所选策略缺成员时失败；不自行拒绝其他完整策略。`deepseek-harness/apps/desktop/scripts/desktop-package-environment.mjs:142-170@687f282e`：mode-aware 的多策略拒绝与凭据文件检查。 <a id="m-runtime-residual-authority-desktop-env-04"></a>
 - `deepseek-harness/apps/desktop/scripts/desktop-release-environment.d.mts:3-15@687f282e`、`deepseek-harness/apps/desktop/scripts/desktop-release-environment.d.mts:52-71@687f282e`：变量名、签名身份与三种公证凭据类型的公开契约。
 
 <a id="m-runtime-residual-authority.desktop-mandatory-update-policy"></a>
-### runtime-residual-authority.desktop-mandatory-update-policy — 强制更新策略运行时：部署选择、阻塞保留、来源白名单与隔离测试登录 {#runtime-residual-authority.desktop-mandatory-update-policy}
+
+<a id="runtime-residual-authority.desktop-mandatory-update-policy"></a>
+
+### runtime-residual-authority.desktop-mandatory-update-policy — 强制更新策略运行时：部署选择、阻塞保留、来源白名单与隔离测试登录
 
 **问题。** 强制更新判定不能由渲染层或一次网络失败决定：瞬时传输/JSON/协议错误若清掉已知阻塞，会让受限客户端继续运行；若把测试登录 cookie 放进产品会话，会污染真实账户；若直接打开服务端返回的页面链接，会跳出允许来源。
 
@@ -314,23 +290,19 @@
 
 **失败模式与例外。** 瞬时错误清阻塞会放行受限客户端；renderer 提供身份会伪造版本；测试 cookie 进入产品 session 会串号；无来源校验的 page/window.open 会跳出允许站点。未配置策略的构建不查询；打包应用的身份嵌入构建、忽略环境覆盖；loopback HTTP 只用于显式 unpackaged/test 的 anonymous 模式；测试登录允许 F12 打开独立 devtools。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/desktop-policy-environment.mjs:1-44@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-policy-environment.d.mts:1-15@687f282e
-来源：deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:1-235@687f282e
-来源：deepseek-harness/apps/desktop/src/policy-test-auth.ts:1-159@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/desktop-policy-environment.mjs:1-44@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-policy-environment.d.mts:1-15@687f282e 来源：deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:1-235@687f282e 来源：deepseek-harness/apps/desktop/src/policy-test-auth.ts:1-159@687f282e
 
 <a id="m-runtime-residual-authority-desktop-policy-01"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-policy-environment.mjs:18-43@687f282e`：部署选择、HTTPS origin、config JSON 禁止 origin/authentication、test/production 的 auth origins 与模式。
-<a id="m-runtime-residual-authority-desktop-policy-02"></a>
-- `deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:26-33@687f282e`、`deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:59-91@687f282e`：已知阻塞跨失败保留、配置字段/时长/jitter/认证模式约束。
-<a id="m-runtime-residual-authority-desktop-policy-03"></a>
-- `deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:116-125@687f282e`、`deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:176-227@687f282e`：40005/no-force 解析、check 合并/超时/401/退避/dispose。
-<a id="m-runtime-residual-authority-desktop-policy-04"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-policy-environment.mjs:18-43@687f282e`：部署选择、HTTPS origin、config JSON 禁止 origin/authentication、test/production 的 auth origins 与模式。 <a id="m-runtime-residual-authority-desktop-policy-02"></a>
+- `deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:26-33@687f282e`、`deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:59-91@687f282e`：已知阻塞跨失败保留、配置字段/时长/jitter/认证模式约束。 <a id="m-runtime-residual-authority-desktop-policy-03"></a>
+- `deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:116-125@687f282e`、`deepseek-harness/apps/desktop/src/mandatory-update-policy.ts:176-227@687f282e`：40005/no-force 解析、check 合并/超时/401/退避/dispose。 <a id="m-runtime-residual-authority-desktop-policy-04"></a>
 - `deepseek-harness/apps/desktop/src/policy-test-auth.ts:17-61@687f282e`、`deepseek-harness/apps/desktop/src/policy-test-auth.ts:73-110@687f282e`、`deepseek-harness/apps/desktop/src/policy-test-auth.ts:136-139@687f282e`：隔离 partition、请求/导航限制、沙箱窗口与 dispose 清理。
 
 <a id="m-runtime-residual-authority.desktop-runtime-payload"></a>
-### runtime-residual-authority.desktop-runtime-payload — Desktop 运行时载荷：显式裁剪 allowlist、manifest 变换一致性与 ASAR 完整性 {#runtime-residual-authority.desktop-runtime-payload}
+
+<a id="runtime-residual-authority.desktop-runtime-payload"></a>
+
+### runtime-residual-authority.desktop-runtime-payload — Desktop 运行时载荷：显式裁剪 allowlist、manifest 变换一致性与 ASAR 完整性
 
 **问题。** 桌面运行时是带原生依赖的 node_modules 闭包。用排除规则或启发式裁剪会删掉运行时资源；electron-builder 在打包时会改写 package.json 字节，若先封存清单再变换 manifest，归档校验必然不一致；ASAR 链接或未声明的 unpacked 文件也会破坏不可变载荷。
 
@@ -355,20 +327,18 @@
 
 **失败模式与例外。** 过宽裁剪会删掉运行时资源；manifest 变换不一致会让每次校验失败；ASAR link 或未声明 unpacked 文件会绕过清单；执行位误判会让已安装产物不可执行。Windows 不检查 executable 位；没有 unpacked 条目时 `.unpacked/dsh` 可以不存在；未识别资产一律保留。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:1-48@687f282e
-来源：deepseek-harness/apps/desktop/scripts/prepare-runtime-manifests.ts:1-26@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-runtime-archive.ts:1-53@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:1-48@687f282e 来源：deepseek-harness/apps/desktop/scripts/prepare-runtime-manifests.ts:1-26@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-runtime-archive.ts:1-53@687f282e
 
 <a id="m-runtime-residual-authority-desktop-runtime-01"></a>
-- `deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:4-6@687f282e`、`deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:16-46@687f282e`：未识别资产保留与逐类裁剪 allowlist。
-<a id="m-runtime-residual-authority-desktop-runtime-02"></a>
-- `deepseek-harness/apps/desktop/scripts/prepare-runtime-manifests.ts:6-24@687f282e`：复用 electron-builder transformer 物化最终 package.json 字节。
-<a id="m-runtime-residual-authority-desktop-runtime-03"></a>
+- `deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:4-6@687f282e`、`deepseek-harness/apps/desktop/scripts/runtime-file-policy.ts:16-46@687f282e`：未识别资产保留与逐类裁剪 allowlist。 <a id="m-runtime-residual-authority-desktop-runtime-02"></a>
+- `deepseek-harness/apps/desktop/scripts/prepare-runtime-manifests.ts:6-24@687f282e`：复用 electron-builder transformer 物化最终 package.json 字节。 <a id="m-runtime-residual-authority-desktop-runtime-03"></a>
 - `deepseek-harness/apps/desktop/scripts/verify-runtime-archive.ts:16-18@687f282e`、`deepseek-harness/apps/desktop/scripts/verify-runtime-archive.ts:23-52@687f282e`：descriptor 字节相等、拒绝 link/未声明 unpacked、bytes/hash/执行位排序比较。
 
 <a id="m-runtime-residual-authority.desktop-installed-update-verification"></a>
-### runtime-residual-authority.desktop-installed-update-verification — 已安装更新包验证：不执行安装器、归档路径安全、输入不变与签名/时间戳 {#runtime-residual-authority.desktop-installed-update-verification}
+
+<a id="runtime-residual-authority.desktop-installed-update-verification"></a>
+
+### runtime-residual-authority.desktop-installed-update-verification — 已安装更新包验证：不执行安装器、归档路径安全、输入不变与签名/时间戳
 
 **问题。** 用“运行安装器”来验证安装包会改变机器状态，也无法证明签名字节；把不可信归档直接解压会遭遇链接/重解析点/Windows 保留名/大小写重复路径；验证过程中输入被替换会让记录与产物脱节；签名 shim 若把 PIN/容器变量留给子进程，会泄露凭据。
 
@@ -396,22 +366,19 @@
 
 **失败模式与例外。** 执行安装器会改变机器且无法证明签名；路径检查缺失会写出归档外/链接目标；输入被替换会让记录与产物脱节；未清理的签名变量会泄露 PIN。人工安装注册/启动/升级/数据保留不在自动脚本内；公开证书验证不证明私钥持有者；7-Zip 是外部评审工具。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:1-125@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-published-windows.ps1:1-16@687f282e
-来源：deepseek-harness/apps/desktop/scripts/windows-sign.cmd:1-17@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:1-125@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-published-windows.ps1:1-16@687f282e 来源：deepseek-harness/apps/desktop/scripts/windows-sign.cmd:1-17@687f282e
 
 <a id="m-runtime-residual-authority-desktop-update-01"></a>
-- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:20-28@687f282e`：链接/重解析点、大小写重复与 Windows 保留名/尾部点空格检查。
-<a id="m-runtime-residual-authority-desktop-update-02"></a>
-- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:38-51@687f282e`：公开证书/本地 7-Zip、不执行安装器、初始 passed=false 与人工检查清单。
-<a id="m-runtime-residual-authority-desktop-update-03"></a>
-- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:57-101@687f282e`：安装器/应用/运行时签名、输入重哈希与 plan 不变性检查。
-<a id="m-runtime-residual-authority-desktop-update-04"></a>
+- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:20-28@687f282e`：链接/重解析点、大小写重复与 Windows 保留名/尾部点空格检查。 <a id="m-runtime-residual-authority-desktop-update-02"></a>
+- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:38-51@687f282e`：公开证书/本地 7-Zip、不执行安装器、初始 passed=false 与人工检查清单。 <a id="m-runtime-residual-authority-desktop-update-03"></a>
+- `deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:57-101@687f282e`：安装器/应用/运行时签名、输入重哈希与 plan 不变性检查。 <a id="m-runtime-residual-authority-desktop-update-04"></a>
 - `deepseek-harness/apps/desktop/scripts/verify-published-windows.ps1:7-16@687f282e`、`deepseek-harness/apps/desktop/scripts/windows-sign.cmd:9-16@687f282e`：Authenticode 状态/签名者 thumbprint/时间戳，以及 signtool `/fd sha256`、eToken CSP、`/as` 与变量清理。
 
 <a id="m-runtime-residual-authority.desktop-publication-diagnostics"></a>
-### runtime-residual-authority.desktop-publication-diagnostics — Desktop 发布诊断与审批摘要：安全失败码、实际字节 SHA-256 与公开风险声明 {#runtime-residual-authority.desktop-publication-diagnostics}
+
+<a id="runtime-residual-authority.desktop-publication-diagnostics"></a>
+
+### runtime-residual-authority.desktop-publication-diagnostics — Desktop 发布诊断与审批摘要：安全失败码、实际字节 SHA-256 与公开风险声明
 
 **问题。** 发布失败时直接输出 SDK/HTTP 错误会泄露响应体或凭据；审批者若只看到版本号和 URL，无法确认实际要上传的字节；test release ID 是随机路径前缀，容易被误当作访问鉴权。
 
@@ -439,19 +406,18 @@
 
 **失败模式与例外。** 泄露响应体会暴露凭据/远端细节；摘要不含实际字节哈希会让审批与上传脱节；把随机前缀当鉴权会高估 test 下载的保密性。test 摘要包含 release ID，production 不包含；摘要只做展示，不执行上传或回滚；白名单之外的信息只以通用 operation-failed 呈现。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:1-57@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:1-71@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:1-57@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:1-71@687f282e
 
 <a id="m-runtime-residual-authority-desktop-publish-01"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:5-16@687f282e`、`deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:21-56@687f282e`：错误码白名单、AccessDenied 指引、requestId/status 范围、Zod/JSON 映射与原始输出省略。
-<a id="m-runtime-residual-authority-desktop-publish-02"></a>
-- `deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:16-21@687f282e`、`deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:29-35@687f282e`：验证后渲染、逐文件 size/SHA-256 与无凭据/本地路径。
-<a id="m-runtime-residual-authority-desktop-publish-03"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:5-16@687f282e`、`deepseek-harness/apps/desktop/scripts/desktop-publication-failure.ts:21-56@687f282e`：错误码白名单、AccessDenied 指引、requestId/status 范围、Zod/JSON 映射与原始输出省略。 <a id="m-runtime-residual-authority-desktop-publish-02"></a>
+- `deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:16-21@687f282e`、`deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:29-35@687f282e`：验证后渲染、逐文件 size/SHA-256 与无凭据/本地路径。 <a id="m-runtime-residual-authority-desktop-publish-03"></a>
 - `deepseek-harness/apps/desktop/scripts/desktop-publication-summary.ts:43-69@687f282e`：审批环境/版本/来源/签名/tag 计划、approval digest、test 摘要与公开仓库声明。
 
 <a id="m-runtime-residual-authority.desktop-macos-signature-cache"></a>
-### runtime-residual-authority.desktop-macos-signature-cache — macOS 薄 Mach-O 签名缓存：证书/工具/标识/entitlement/OS 绑定 {#runtime-residual-authority.desktop-macos-signature-cache}
+
+<a id="runtime-residual-authority.desktop-macos-signature-cache"></a>
+
+### runtime-residual-authority.desktop-macos-signature-cache — macOS 薄 Mach-O 签名缓存：证书/工具/标识/entitlement/OS 绑定
 
 **问题。** 为了加速重复打包而缓存已签名文件时，若缓存键只看路径或 mtime，证书轮换、entitlement 变化、签名脚本升级或 OS 变化都可能复用旧签名，产出无法通过 Gatekeeper/公证的运行时。
 
@@ -479,25 +445,18 @@
 
 **失败模式与例外。** 过期缓存会复用错误证书/标识/entitlement；只校验文件头会接受非薄 Mach-O；不校验工具版本会在脚本升级后继续用旧策略；缓存键含凭据会泄露 secret。entitlements 缺省时视为 `{}`；缓存按调用与 OS release 生效，不跨机器共享；外层公证/Gatekeeper 验证不在缓存层完成。
 
-**证据。**
-来源：deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:1-61@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-macos-signature.d.mts:1-89@687f282e
-来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache.ts:1-121@687f282e
-来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache-directory.mjs:1-38@687f282e
-来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache-directory.d.mts:1-15@687f282e
-来源：deepseek-harness/apps/desktop/scripts/macos-runtime.ts:1-85@687f282e
-来源：deepseek-harness/apps/desktop/tests/macos-signature-cache.spec.ts:1-139@687f282e
-来源：deepseek-harness/apps/desktop/tests/macos-signature-cache-directory.spec.ts:1-63@687f282e
+**证据。** 来源：deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:1-61@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-macos-signature.d.mts:1-89@687f282e 来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache.ts:1-121@687f282e 来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache-directory.mjs:1-38@687f282e 来源：deepseek-harness/apps/desktop/scripts/macos-signature-cache-directory.d.mts:1-15@687f282e 来源：deepseek-harness/apps/desktop/scripts/macos-runtime.ts:1-85@687f282e 来源：deepseek-harness/apps/desktop/tests/macos-signature-cache.spec.ts:1-139@687f282e 来源：deepseek-harness/apps/desktop/tests/macos-signature-cache-directory.spec.ts:1-63@687f282e
 
 <a id="m-runtime-residual-authority-desktop-macos-01"></a>
-- `deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:36-45@687f282e`：probe 证书摘要、四个签名工具/脚本摘要与包含证书/identifier/identity/entitlements/tools/OS 的 policy key。
-<a id="m-runtime-residual-authority-desktop-macos-02"></a>
-- `deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:47-57@687f282e`：仅薄 Mach-O、codesign strict、证书/Identifier/entitlements 全等校验。
-<a id="m-runtime-residual-authority-desktop-macos-03"></a>
+- `deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:36-45@687f282e`：probe 证书摘要、四个签名工具/脚本摘要与包含证书/identifier/identity/entitlements/tools/OS 的 policy key。 <a id="m-runtime-residual-authority-desktop-macos-02"></a>
+- `deepseek-harness/apps/desktop/scripts/macos-cache-policy.ts:47-57@687f282e`：仅薄 Mach-O、codesign strict、证书/Identifier/entitlements 全等校验。 <a id="m-runtime-residual-authority-desktop-macos-03"></a>
 - `deepseek-harness/apps/desktop/scripts/verify-macos-signature.d.mts:4-30@687f282e`、`deepseek-harness/apps/desktop/scripts/verify-macos-signature.d.mts:50-89@687f282e`：display/runtime 签名断言、逐文件 codesign、完整 app/公证 app/DMG 与 afterSign 验证 API。
 
 <a id="m-runtime-residual-authority.python-release-version-identity"></a>
-### runtime-residual-authority.python-release-version-identity — Python 发布身份与平台表：根版本单一来源、PEP 440 拼写与 wheel 自检 {#runtime-residual-authority.python-release-version-identity}
+
+<a id="runtime-residual-authority.python-release-version-identity"></a>
+
+### runtime-residual-authority.python-release-version-identity — Python 发布身份与平台表：根版本单一来源、PEP 440 拼写与 wheel 自检
 
 **问题。** Python wheel 的版本/标签/平台若与仓库版本或发布 tag 漂移，会在 PyPI 上产生无法安装或错误平台的产物；构建后端会把 prerelease 规范化成另一种拼写，若校验仍用仓库版本就会误判。测试若读取嵌套库的 dist-info 也会把错误 wheel 当成通过。
 
@@ -523,16 +482,12 @@
 
 **失败模式与例外。** 版本/tag 漂移会产生错误文件名或发布拒绝；PEP 440 拼写错误会让 wheel 名校验失败；嵌套 dist-info 会让错误 wheel 通过；非规范 executable 名会破坏 runtime 查找。非发布构建可以没有 tag；测试用临时 zip/pyproject fixture，不构建真实 wheel；平台表只列声明支持的平台。
 
-**证据。**
-来源：deepseek-harness/python/sdk/tests/test_release_version.py:1-199@687f282e
+**证据。** 来源：deepseek-harness/python/sdk/tests/test_release_version.py:1-199@687f282e
 
 <a id="m-runtime-residual-authority-python-version-01"></a>
-- `deepseek-harness/python/sdk/tests/test_release_version.py:19-26@687f282e`：根 package.json 版本与 `repository_version()` 相等、非发布构建可无 tag。
-<a id="m-runtime-residual-authority-python-version-02"></a>
-- `deepseek-harness/python/sdk/tests/test_release_version.py:41-70@687f282e`：tag 必须等于 `python-v<version>`、prerelease 接受、malformed 拒绝、PEP 440 拼写与不可拼写 prerelease 失败。
-<a id="m-runtime-residual-authority-python-version-03"></a>
-- `deepseek-harness/python/sdk/tests/test_release_version.py:73-93@687f282e`：macOS 14.0 平台 tag、Windows 仅 x64、平台表必须同时有 tag 与 executable。
-<a id="m-runtime-residual-authority-python-version-04"></a>
+- `deepseek-harness/python/sdk/tests/test_release_version.py:19-26@687f282e`：根 package.json 版本与 `repository_version()` 相等、非发布构建可无 tag。 <a id="m-runtime-residual-authority-python-version-02"></a>
+- `deepseek-harness/python/sdk/tests/test_release_version.py:41-70@687f282e`：tag 必须等于 `python-v<version>`、prerelease 接受、malformed 拒绝、PEP 440 拼写与不可拼写 prerelease 失败。 <a id="m-runtime-residual-authority-python-version-03"></a>
+- `deepseek-harness/python/sdk/tests/test_release_version.py:73-93@687f282e`：macOS 14.0 平台 tag、Windows 仅 x64、平台表必须同时有 tag 与 executable。 <a id="m-runtime-residual-authority-python-version-04"></a>
 - `deepseek-harness/python/sdk/tests/test_release_version.py:96-121@687f282e`、`deepseek-harness/python/sdk/tests/test_release_version.py:181-199@687f282e`：顶层 distribution metadata、SDK/runtime staging 分离、生成 carrier 剔除、规范 executable 名与 100 MB 上限。
 
 <a id="m-runtime-residual-authority.desktop-windows-packaging-runner"></a>
@@ -550,10 +505,7 @@
 
 **迁移与验证边界。** 参数化产品前缀、根、工具版本和预算，保留干净环境、任务归属、持久预算与身份绑定停止。当前账户可修改配置/脚本，不能声称隔离该账户或管理员；本地 worker 检查也不能预留 GitHub 的下一次派单。本次仅静态读源码，未注册任务、改 ACL、启动 runner 或执行真实停止。
 
-来源：deepseek-harness/apps/desktop/scripts/setup-windows-packaging.ps1:1-49@687f282e
-来源：deepseek-harness/apps/desktop/scripts/start-windows-packaging-runner.ps1:1-38@687f282e
-来源：deepseek-harness/apps/desktop/scripts/windows-runner-task.ps1:1-122@687f282e
-来源：deepseek-harness/apps/desktop/scripts/run-windows-runner-task.ps1:1-31@687f282e
+来源：deepseek-harness/apps/desktop/scripts/setup-windows-packaging.ps1:1-49@687f282e 来源：deepseek-harness/apps/desktop/scripts/start-windows-packaging-runner.ps1:1-38@687f282e 来源：deepseek-harness/apps/desktop/scripts/windows-runner-task.ps1:1-122@687f282e 来源：deepseek-harness/apps/desktop/scripts/run-windows-runner-task.ps1:1-31@687f282e
 
 <a id="m-runtime-residual-authority.desktop-windows-signing-preflight"></a>
 ### runtime-residual-authority.desktop-windows-signing-preflight — 构建前一次签名探针
@@ -566,9 +518,7 @@
 
 **恢复与信任。** 保留失败证据，经授权修复配置、设备和既有 interlock，在新 run 再做一次探针；不自动删 fatal 或循环硬件签名。工具摘要不代替供应链信任，成功不构成新 PIN/设备授权，也不证明完整构建、安装、启动或后续设备健康。当前只有原始源码和 mock spec 阅读，没有编译、真实 Authenticode、时间戳或硬件验证。
 
-来源：deepseek-harness/apps/desktop/scripts/windows-signing-preflight.ts:1-98@687f282e
-来源：deepseek-harness/apps/desktop/tests/windows-signing-preflight.spec.ts:1-119@687f282e
-来源：deepseek-harness/apps/desktop/scripts/package-target.ts:447-474@687f282e
+来源：deepseek-harness/apps/desktop/scripts/windows-signing-preflight.ts:1-98@687f282e 来源：deepseek-harness/apps/desktop/tests/windows-signing-preflight.spec.ts:1-119@687f282e 来源：deepseek-harness/apps/desktop/scripts/package-target.ts:447-474@687f282e
 
 ## References
 

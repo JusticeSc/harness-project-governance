@@ -26,10 +26,7 @@
 
 **边界。** 这是公开风险治理与审核程序，不宣称存在一个能判断所有安全声明真假的自动门禁。源仓未披露的实际审计、隔离设置或安全状态不能由本文件猜测。
 
-来源：deepseek-harness/SAFETY.md:5-9@687f282e
-来源：deepseek-harness/SAFETY.zh.md:5-9@687f282e
-来源：deepseek-harness/SAFETY.md:11-15@687f282e
-来源：deepseek-harness/SAFETY.zh.md:11-15@687f282e
+来源：deepseek-harness/SAFETY.md:5-9@687f282e 来源：deepseek-harness/SAFETY.zh.md:5-9@687f282e 来源：deepseek-harness/SAFETY.md:11-15@687f282e 来源：deepseek-harness/SAFETY.zh.md:11-15@687f282e
 
 <a id="privilege-and-risk-consent"></a>
 ## 最小权限与风险决定
@@ -53,10 +50,7 @@
 
 **来源与迁移的分界。** 上面的命令级范围记录、秘密通道和扩权复核是使源最小权限/风险决定可执行的迁移程序；不是声称源 `SAFETY.md` 已实现这些工具。该文件没有一个能自动证明安全的运行器。
 
-来源：deepseek-harness/SAFETY.md:17-23@687f282e
-来源：deepseek-harness/SAFETY.zh.md:17-23@687f282e
-来源：deepseek-harness/SAFETY.md:11-15@687f282e
-来源：deepseek-harness/SAFETY.zh.md:11-15@687f282e
+来源：deepseek-harness/SAFETY.md:17-23@687f282e 来源：deepseek-harness/SAFETY.zh.md:17-23@687f282e 来源：deepseek-harness/SAFETY.md:11-15@687f282e 来源：deepseek-harness/SAFETY.zh.md:11-15@687f282e
 
 <a id="license-and-warranty"></a>
 ## 许可证与保证
@@ -71,9 +65,7 @@
 
 **边界。** 本机制不声称实施了全依赖许可证审计，也不以一个 notices 文件证明不存在第三方或品牌权利问题。新的 Skill 支持与采用方许可证审阅仍须分别验证。
 
-来源：deepseek-harness/LICENSE:1-21@687f282e
-来源：deepseek-harness/SAFETY.md:25-27@687f282e
-来源：deepseek-harness/SAFETY.zh.md:25-27@687f282e
+来源：deepseek-harness/LICENSE:1-21@687f282e 来源：deepseek-harness/SAFETY.md:25-27@687f282e 来源：deepseek-harness/SAFETY.zh.md:25-27@687f282e
 
 <a id="ecosystem-identity"></a>
 ## 生态身份与品牌
@@ -90,5 +82,4 @@
 
 **证据边界。** 原规范为文本与权利沟通政策，没有自动品牌合规门禁。本参考不承诺商标法律合规，亦不把某次模型评审的通过当作权利人的授权。
 
-来源：deepseek-harness/BRAND_GUIDELINES.md:5-12@687f282e
-来源：deepseek-harness/BRAND_GUIDELINES.zh.md:5-12@687f282e
+来源：deepseek-harness/BRAND_GUIDELINES.md:5-12@687f282e 来源：deepseek-harness/BRAND_GUIDELINES.zh.md:5-12@687f282e

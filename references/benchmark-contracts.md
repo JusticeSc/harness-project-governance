@@ -32,7 +32,10 @@
 ## Mechanisms
 
 <a id="m-benchmark-contracts-case-selection-and-layout"></a>
-### `benchmark-contracts-case-selection-and-layout` — 按被测用户路径选案例、命名与 support 归属 {#benchmark-contracts-case-selection-and-layout}
+
+<a id="benchmark-contracts-case-selection-and-layout"></a>
+
+### `benchmark-contracts-case-selection-and-layout` — 按被测用户路径选案例、命名与 support 归属
 
 **触发。** 新增性能门禁；判断脚本应放包内还是 `benchmarks/`；决定后缀；把 helper 提升为共享 support。
 
@@ -86,7 +89,10 @@
 - `deepseek-harness/benchmarks/agent-continuation/README.zh.md:21-21@687f282e` — 中文契约同句：必需基准通道自动发现此文件。
 
 <a id="m-benchmark-contracts-built-worker-protocol"></a>
-### `benchmark-contracts-built-worker-protocol` — 编译型 worker、纯 Node 协议与 built lib 解析 {#benchmark-contracts-built-worker-protocol}
+
+<a id="benchmark-contracts-built-worker-protocol"></a>
+
+### `benchmark-contracts-built-worker-protocol` — 编译型 worker、纯 Node 协议与 built lib 解析
 
 **触发。** 新增或修改受预算约束的案例；把计时拆进 worker；升级构建器/Node/Vitest；怀疑 benchmark 跑在 src 或 TSX 下。
 
@@ -151,7 +157,10 @@
 - `deepseek-harness/benchmarks/session-corpus/README.md:21-21@687f282e` — 同一失败报告规则也适用于语料 worker。
 
 <a id="m-benchmark-contracts-measurement-attribution-and-report"></a>
-### `benchmark-contracts-measurement-attribution-and-report` — 端点归属、CPU/IO 份额与失败后仍生成的报告 {#benchmark-contracts-measurement-attribution-and-report}
+
+<a id="benchmark-contracts-measurement-attribution-and-report"></a>
+
+### `benchmark-contracts-measurement-attribution-and-report` — 端点归属、CPU/IO 份额与失败后仍生成的报告
 
 **触发。** 新增受预算约束的 wall-clock 或内存端点；迁移参考机器；失败后需要解释哪一段变慢；CI 缺少 benchmark-report。
 
@@ -214,7 +223,10 @@
 - `deepseek-harness/benchmarks/long-session-browser/long-session.bench.ts:439-454@687f282e` — 只把无 paced 等待的端点交给 `recordTimings`，streamWall 用绝对预算。
 
 <a id="m-benchmark-contracts-budget-calibration-and-file-deadlines"></a>
-### `benchmark-contracts-budget-calibration-and-file-deadlines` — 参考机期望、CI 时间尺度、方差余量与文件级时限 {#benchmark-contracts-budget-calibration-and-file-deadlines}
+
+<a id="benchmark-contracts-budget-calibration-and-file-deadlines"></a>
+
+### `benchmark-contracts-budget-calibration-and-file-deadlines` — 参考机期望、CI 时间尺度、方差余量与文件级时限
 
 **触发。** 首次设定预算；CI runner 或参考机更换；benchmark flaky 或持续超预算；新增内存/比值型预算。
 
@@ -302,7 +314,10 @@
 - `deepseek-harness/scripts/run-gates.ts:400-426@687f282e` — `ciPrimaryGates` 不含 `ci-bench`；master 串行聚合因此不运行 benchmark。
 
 <a id="m-benchmark-contracts-fixture-provenance-and-validity"></a>
-### `benchmark-contracts-fixture-provenance-and-validity` — 合成输入的来源约束、测量分布与 fixture 自校验 {#benchmark-contracts-fixture-provenance-and-validity}
+
+<a id="benchmark-contracts-fixture-provenance-and-validity"></a>
+
+### `benchmark-contracts-fixture-provenance-and-validity` — 合成输入的来源约束、测量分布与 fixture 自校验
 
 **触发。** 新增 corpus、synthetic history 或 adversarial 输入；要让 workload 代表性可审计；生产 Session 格式升级；比较两个 workload 的 scaling。
 
@@ -395,7 +410,10 @@
 - `deepseek-harness/benchmarks/long-session-browser/synthetic-history.ts:80-95@687f282e` — session id 与 cwd 用占位符，交给每个私有 scaffold 替换。
 
 <a id="m-benchmark-contracts-workload-fidelity-and-completion-proof"></a>
-### `benchmark-contracts-workload-fidelity-and-completion-proof` — 生产入口保真、私有适配器边界与完成度证明 {#benchmark-contracts-workload-fidelity-and-completion-proof}
+
+<a id="benchmark-contracts-workload-fidelity-and-completion-proof"></a>
+
+### `benchmark-contracts-workload-fidelity-and-completion-proof` — 生产入口保真、私有适配器边界与完成度证明
 
 **触发。** 新增需要真实 tool/session/客户端组合的案例；某个案例耗时异常偏低；考虑为 benchmark 新增生产导出；使用 synthetic provider。
 
@@ -477,7 +495,10 @@
 - `deepseek-harness/benchmarks/session-corpus/README.zh.md:7-7@687f282e` — 中文契约同句：已发布 profile 默认禁用该功能。
 
 <a id="m-benchmark-contracts-per-sample-isolation-and-cleanup"></a>
-### `benchmark-contracts-per-sample-isolation-and-cleanup` — 每次尝试独立世界、fresh 对象图与失败清理 {#benchmark-contracts-per-sample-isolation-and-cleanup}
+
+<a id="benchmark-contracts-per-sample-isolation-and-cleanup"></a>
+
+### `benchmark-contracts-per-sample-isolation-and-cleanup` — 每次尝试独立世界、fresh 对象图与失败清理
 
 **触发。** 新增需要 seed 或写盘的案例；多次 attempt 相互影响；重复 fold 的耗时递减；失败后残留临时目录或 worker 进程。
 
@@ -541,7 +562,10 @@
 - `deepseek-harness/benchmarks/long-session-browser/long-session.bench.ts:436-444@687f282e` — browser、scaffold、root 分层关闭/删除，错误聚合后再抛出。
 
 <a id="m-benchmark-contracts-browser-measurement-integrity"></a>
-### `benchmark-contracts-browser-measurement-integrity` — 浏览器样本世界、可见性等待与真实输入证据 {#benchmark-contracts-browser-measurement-integrity}
+
+<a id="benchmark-contracts-browser-measurement-integrity"></a>
+
+### `benchmark-contracts-browser-measurement-integrity` — 浏览器样本世界、可见性等待与真实输入证据
 
 **触发。** 新增或修改 Web GUI 的打开、分页、Trajectory、流式回复基准；浏览器结果波动；从 DOM 断言改为可见性断言；需要证明流式期间仍可输入。
 

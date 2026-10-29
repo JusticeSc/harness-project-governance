@@ -37,7 +37,9 @@
 
 ---
 
-## 1. 公网部署：公告、信任栅栏与 TLS {#user-and-publication-contracts.public-deployment-trust}
+<a id="user-and-publication-contracts.public-deployment-trust"></a>
+
+## 1. 公网部署：公告、信任栅栏与 TLS
 
 **何时读。** 把 `dsh --profile web` 放到 Caddy/Nginx/隧道后面；新增公开域名、挂载前缀；在监听器上直接终止 TLS；所有 API 突然 403；cookie 不回传。
 
@@ -81,7 +83,9 @@
 
 ---
 
-## 2. 出站代理、直连白名单与凭据不外泄 {#user-and-publication-contracts.proxy-egress-policy}
+<a id="user-and-publication-contracts.proxy-egress-policy"></a>
+
+## 2. 出站代理、直连白名单与凭据不外泄
 
 **何时读。** 在受限网络/企业代理后启动；配置 `NO_PROXY`；代理需要凭据或 TLS 拦截；模型运行的命令读取环境变量。
 
@@ -126,7 +130,9 @@
 
 ---
 
-## 3. 凭据只写、引用存储与环境回退边界 {#user-and-publication-contracts.credential-boundary}
+<a id="user-and-publication-contracts.credential-boundary"></a>
+
+## 3. 凭据只写、引用存储与环境回退边界
 
 **何时读。** 新增/编辑提供商或自定义网关；使用环境变量作凭据回退；给 MCP stdio 子进程传秘密；审计页面/API 是否回显密钥。
 
@@ -172,7 +178,9 @@
 
 ---
 
-## 4. bundle/profile 双 manifest、层顺序与安装期代码执行 {#user-and-publication-contracts.plugin-packaging-contract}
+<a id="user-and-publication-contracts.plugin-packaging-contract"></a>
+
+## 4. bundle/profile 双 manifest、层顺序与安装期代码执行
 
 **何时读。** 把本地 `--patch` 插件分发为可安装 bundle；新增/重置 profile；从 git 或 tarball 安装；排查插件未生效、peer 重复或配置被整体替换。
 
@@ -218,7 +226,9 @@
 
 ---
 
-## 5. 插件作者契约：apply/inject、Config schema、effect 与能力分层 {#user-and-publication-contracts.plugin-authoring-contract}
+<a id="user-and-publication-contracts.plugin-authoring-contract"></a>
+
+## 5. 插件作者契约：apply/inject、Config schema、effect 与能力分层
 
 **何时读。** 写第一个插件或 Tool；增加配置项；提供/消费服务或监听事件；拆分可替换能力；通过 Creator mode 持久化插件配置。
 
@@ -277,7 +287,9 @@
 
 ---
 
-## 6. LLM 适配器契约：StreamChunk 序列、稳定错误码与归因头 {#user-and-publication-contracts.llm-adapter-contract}
+<a id="user-and-publication-contracts.llm-adapter-contract"></a>
+
+## 6. LLM 适配器契约：StreamChunk 序列、稳定错误码与归因头
 
 **何时读。** 接入新的 LLM 提供商/自定义网关；实现或修改 `LlmAdapter.stream()`/`resolveModel()`；排查流式响应、工具调用或推理强度错误。
 
@@ -320,7 +332,9 @@
 
 ---
 
-## 7. 可运行教程契约：无密钥、固定命令、预期输出与失败诊断 {#user-and-publication-contracts.runnable-tutorial-contract}
+<a id="user-and-publication-contracts.runnable-tutorial-contract"></a>
+
+## 7. 可运行教程契约：无密钥、固定命令、预期输出与失败诊断
 
 **何时读。** 新增/修改教程章节；教程引用的 API/命令/输出变化；读者按章节操作却无输出或输出不同；审查教程难度顺序。
 
@@ -368,7 +382,9 @@
 
 ---
 
-## 8. 发布面契约：清单路由、双语投影、raw 孪生与 llms.txt {#user-and-publication-contracts.website-publication-surface}
+<a id="user-and-publication-contracts.website-publication-surface"></a>
+
+## 8. 发布面契约：清单路由、双语投影、raw 孪生与 llms.txt
 
 **何时读。** 新增/改名/下架发布页；调整侧栏/导航；新增语言；agent 抓取 raw Markdown/`llms.txt`；排查 404、导航旧路由或 raw 404。
 
@@ -416,7 +432,9 @@
 
 ---
 
-## 9. 构建输出包含：清理前校验根、真实路径与链接形状 {#user-and-publication-contracts.website-build-containment}
+<a id="user-and-publication-contracts.website-build-containment"></a>
+
+## 9. 构建输出包含：清理前校验根、真实路径与链接形状
 
 **何时读。** 修改 `docs:build`/`build.ts`/VitePress `outDir`；在 CI 或本地执行生产构建；出现陈旧输出、链接形状的 `.dist` 或跨平台路径差异；新增 MPA 构建。
 
@@ -460,7 +478,9 @@
 
 ---
 
-## 10. `website/` 内容所有权与 `docs:check` Markdown 门禁 {#user-and-publication-contracts.website-content-ownership}
+<a id="user-and-publication-contracts.website-content-ownership"></a>
+
+## 10. `website/` 内容所有权与 `docs:check` Markdown 门禁
 
 **何时读。** 在 `website/` 下新增文件；有人想把文档复制进站点树或建 locale/API 子目录；改动 website 配置/主题后跑检查；CI 运行 `docs:check`。
 
@@ -500,7 +520,9 @@
 
 ---
 
-## 11. 默认主题扩展契约：渐进增强、源节点保留、单模态与释放 {#user-and-publication-contracts.theme-interaction-contract}
+<a id="user-and-publication-contracts.theme-interaction-contract"></a>
+
+## 11. 默认主题扩展契约：渐进增强、源节点保留、单模态与释放
 
 **何时读。** 修改默认主题、页面操作按钮或查看器；新增可交互 Markdown 增强；排查路由切换后模态残留、滚动锁死、图片重复按钮；排查搜索摘录改变代码组选择。
 
@@ -554,7 +576,9 @@
 
 ---
 
-## 12. 网站测试与文件快照契约：双语言可访问标记作为金标 {#user-and-publication-contracts.website-test-snapshot-contract}
+<a id="user-and-publication-contracts.website-test-snapshot-contract"></a>
+
+## 12. 网站测试与文件快照契约：双语言可访问标记作为金标
 
 **何时读。** 修改主题组件、查看器或页面操作；新增网站测试或更新快照；CI 运行 `docs:check`；排查快照差异或 jsdom 与浏览器差异。
 
@@ -607,7 +631,9 @@
 
 ---
 
-## 13. 插件市场索引：发布格式、失败关闭与第三方信任边界 {#user-and-publication-contracts.plugin-market-index-contract}
+<a id="user-and-publication-contracts.plugin-market-index-contract"></a>
+
+## 13. 插件市场索引：发布格式、失败关闭与第三方信任边界
 
 **何时读。** 发布或生成插件市场索引；添加索引源或安装市场版本；排查索引被整份拒绝、图标不显示或安装源不对；审计第三方市场信任。
 
@@ -651,7 +677,9 @@
 
 ---
 
-## 14. 第三方 MCP 集成：默认关闭、环境隔离与三步验证 {#user-and-publication-contracts.third-party-mcp-contract}
+<a id="user-and-publication-contracts.third-party-mcp-contract"></a>
+
+## 14. 第三方 MCP 集成：默认关闭、环境隔离与三步验证
 
 **何时读。** 接入第三方记忆/工具 MCP 服务；通过 Creator mode 持久化 MCP 配置；排查 MCP 工具未出现、断线重连或秘密不可见。
 
@@ -696,7 +724,9 @@
 
 ---
 
-## 15. SDK 运行隔离：显式 home、fresh session 与危险默认 {#user-and-publication-contracts.isolated-runtime-profile}
+<a id="user-and-publication-contracts.isolated-runtime-profile"></a>
+
+## 15. SDK 运行隔离：显式 home、fresh session 与危险默认
 
 **何时读。** 用 Python SDK 嵌入 Harness；创建/隔离 DSH home、profile 或会话；评估 SDK 默认权限与数据上传；排查 SDK 读到错误 home 或 web profile 不可用。
 
@@ -739,7 +769,9 @@
 
 ---
 
-## 16. 迁移落地顺序 {#migration-order}
+<a id="migration-order"></a>
+
+## 16. 迁移落地顺序
 
 ### 16.1 新项目（从零建立发布面）
 
@@ -773,7 +805,9 @@
 
 ---
 
-## 17. 跨域边界 {#cross-domain}
+<a id="cross-domain"></a>
+
+## 17. 跨域边界
 
 - **documentation 域**拥有站点发布清单/投影、raw+llms 生成与 `docs:check` 组合的规范化细节；本域记录同一文件时只保留发布面、构建包含性与内容所有权视角。其覆盖见 `research/documentation-coverage.json`。
 - **engineering 域**拥有 effect/ownership、注册生命周期与可选服务访问的规范化机制；本域的 Cordis 教程记录只保留“可运行、无密钥、展示失败”的教学义务。其覆盖见 `research/engineering-coverage.json`。
@@ -782,7 +816,9 @@
 
 ---
 
-## 18. 未决与证据限制 {#evidence-limits}
+<a id="evidence-limits"></a>
+
+## 18. 未决与证据限制
 
 1. **中文正文语义未逐段对照。** 28 个中文对侧页只读标题/切换/首段结构，`public-deployments.zh.md` 全读；其余正文以英文为机制证据。逐 heading 哈希由 documentation 域门禁保证，但哈希一致不等于语义一致。
 2. **浏览器原生行为未验证。** 原生 dialog 焦点陷阱、SVG 实际布局、真实剪贴板权限不在 jsdom 覆盖内；本参考不宣称这些行为已通过。
