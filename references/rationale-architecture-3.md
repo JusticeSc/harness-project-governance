@@ -1,9 +1,6 @@
 # DeepSeek Harness 架构决策的可迁移治理机制（rationale-architecture-3）
 
-> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317`
-> 分区：`rationale-architecture-3`（architecture，94 个英文 Note 及其中文配对与 sidecar）
-> 证据边界：本参考只基于指定 Note 正文、中文正文、sidecar、固定分区与两份研究契约。没有读取旧 Skill/旧分析，没有运行实现、构建、测试、lint、格式化或远程调用。所有“验证”均为计划，不是执行结果。归档记录只作为历史；proposed 记录只作为提案；implemented 记录是决策证据，不等于当前代码仍完全如此。
-> 本文覆盖：94 个英文 Note（archived 47、implemented 42、proposed 5）及其中文配对，归纳为 40 个机制。
+> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317` 分区：`rationale-architecture-3`（architecture，94 个英文 Note 及其中文配对与 sidecar） 证据边界：本参考只基于指定 Note 正文、中文正文、sidecar、固定分区与两份研究契约。没有读取旧 Skill/旧分析，没有运行实现、构建、测试、lint、格式化或远程调用。所有“验证”均为计划，不是执行结果。归档记录只作为历史；proposed 记录只作为提案；implemented 记录是决策证据，不等于当前代码仍完全如此。 本文覆盖：94 个英文 Note（archived 47、implemented 42、proposed 5）及其中文配对，归纳为 40 个机制。
 
 ## 0. 如何使用
 
@@ -77,7 +74,9 @@
 
 ## A 事件、持久化与恢复
 
-### rationale-architecture-3.arch3-M01 事件 Turn 边界与日志完整性 {#rationale-architecture-3.arch3-M01}
+<a id="rationale-architecture-3.arch3-M01"></a>
+
+### rationale-architecture-3.arch3-M01 事件 Turn 边界与日志完整性
 
 **何时读。** 新增可持久化事件类型或写入点；在 turn 之外注入上下文/排队消息；修改扫描、恢复、压缩或 fork 逻辑；把文本提示当作结构化会话变更。
 
@@ -136,7 +135,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-20-dynamic-tool-updates.md:1-37@687f282e`
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-09-cordis-event-walk-backstop.md:1-39@687f282e`
 
-### rationale-architecture-3.arch3-M02 派生介质与缓存不得成为恢复权威 {#rationale-architecture-3.arch3-M02}
+<a id="rationale-architecture-3.arch3-M02"></a>
+
+### rationale-architecture-3.arch3-M02 派生介质与缓存不得成为恢复权威
 
 **何时读。** 新增缓存、索引、搜索或统计介质；启动时打开派生文件失败；派生数据需要跨重启复用；把模型输出/翻译/预览写入磁盘。
 
@@ -187,7 +188,9 @@
 - `deepseek-harness/.agents/notes/proposed/architecture/2026-07-28-storage-root-and-derived-medium-recovery.md:1-59@687f282e`
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-21-session-log-read-intent.md:1-33@687f282e`
 
-### rationale-architecture-3.arch3-M03 已发布格式、模式演进与保留字段 {#rationale-architecture-3.arch3-M03}
+<a id="rationale-architecture-3.arch3-M03"></a>
+
+### rationale-architecture-3.arch3-M03 已发布格式、模式演进与保留字段
 
 **何时读。** 重构会话/存储抽象；新增消息角色、工具变更或事件类型；调整 JSONL 物理布局/压缩；删除或重命名已发布字段；改变 header/turn 基数。
 
@@ -242,7 +245,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-17-developer-session-changes.md:1-35@687f282e`
 - `deepseek-harness/.agents/notes/proposed/architecture/2026-09-10-session-data-compatibility.md:1-43@687f282e`
 
-### rationale-architecture-3.arch3-M04 存储根解析与介质生命周期 {#rationale-architecture-3.arch3-M04}
+<a id="rationale-architecture-3.arch3-M04"></a>
+
+### rationale-architecture-3.arch3-M04 存储根解析与介质生命周期
 
 **何时读。** 配置相对 storage root；从不同目录启动同一部署；实现新的存储 backend；启动时打开损坏/版本不符的介质。
 
@@ -292,7 +297,9 @@
 
 ## B 配置、插件、凭据与决策生命周期
 
-### rationale-architecture-3.arch3-M05 配置与设置的写入完整性 {#rationale-architecture-3.arch3-M05}
+<a id="rationale-architecture-3.arch3-M05"></a>
+
+### rationale-architecture-3.arch3-M05 配置与设置的写入完整性
 
 **何时读。** 保存 profile/manifest/快捷键/设置；多个适配器共享同一事务逻辑；观察者/监听器在写入后触发；相对路径或禁用条目参与配置插值。
 
@@ -342,7 +349,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-14-current-profile-plugin-management.md:1-35@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-20-device-local-shortcut-preferences.md:1-27@687f282e`
 
-### rationale-architecture-3.arch3-M06 当前 profile 插件管理事务 {#rationale-architecture-3.arch3-M06}
+<a id="rationale-architecture-3.arch3-M06"></a>
+
+### rationale-architecture-3.arch3-M06 当前 profile 插件管理事务
 
 **何时读。** 安装/卸载/启用/禁用插件或 bundle；CLI 与 Web 同时修改 profile；HMR 观察到 manifest 变化；构建批准/allowBuilds 交互。
 
@@ -397,7 +406,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-21-live-config-inspect-provider.md:1-26@687f282e`
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-17-settings-pages-as-companion-packages.md:1-41@687f282e`
 
-### rationale-architecture-3.arch3-M07 声明式 Preset 与保留代际 {#rationale-architecture-3.arch3-M07}
+<a id="rationale-architecture-3.arch3-M07"></a>
+
+### rationale-architecture-3.arch3-M07 声明式 Preset 与保留代际
 
 **何时读。** 新增/编辑 Agent preset；运行中 Agent 仍引用旧定义；为某能力决定放在全局行还是 preset；重启/复用空白 Session 时解析 preset 身份。
 
@@ -452,7 +463,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-18-declarative-agent-presets.md:1-39@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-preset-scoped-time-context.md:1-37@687f282e`
 
-### rationale-architecture-3.arch3-M31 凭据优先级与 profile 级认证边界 {#rationale-architecture-3.arch3-M31}
+<a id="rationale-architecture-3.arch3-M31"></a>
+
+### rationale-architecture-3.arch3-M31 凭据优先级与 profile 级认证边界
 
 **何时读。** 新增认证来源/凭据存储；headless/CI 与 GUI 共享 Harness home；provider 需要登录/grant；凭据恢复。
 
@@ -500,7 +513,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-13-credential-records-and-authorization-flows.md:1-68@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-12-headless-environment-auth.md:1-30@687f282e`
 
-### rationale-architecture-3.arch3-M35 插件身份、显示元数据与设置页归属 {#rationale-architecture-3.arch3-M35}
+<a id="rationale-architecture-3.arch3-M35"></a>
+
+### rationale-architecture-3.arch3-M35 插件身份、显示元数据与设置页归属
 
 **何时读。** 新增插件/实验包；插件需要设置页/侧栏入口；本地化显示名称/说明；插件启用/禁用/卸载。
 
@@ -554,7 +569,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-18-localized-package-metadata.md:1-92@687f282e`
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-21-live-config-inspect-provider.md:1-26@687f282e`
 
-### rationale-architecture-3.arch3-M36 模型 Provider 声明与凭据 UI {#rationale-architecture-3.arch3-M36}
+<a id="rationale-architecture-3.arch3-M36"></a>
+
+### rationale-architecture-3.arch3-M36 模型 Provider 声明与凭据 UI
 
 **何时读。** 新增模型 provider/凭据流程；Models 页面扩展；登录/授权/刷新；provider 声明持久化。
 
@@ -604,7 +621,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-26-models-page-extension-slots.md:1-34@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-13-credential-records-and-authorization-flows.md:1-68@687f282e`
 
-### rationale-architecture-3.arch3-M38 部分取代与决策记录的生命周期 {#rationale-architecture-3.arch3-M38}
+<a id="rationale-architecture-3.arch3-M38"></a>
+
+### rationale-architecture-3.arch3-M38 部分取代与决策记录的生命周期
 
 **何时读。** 新决策改变旧记录的部分行为/所有权；旧记录仍拥有其他有效约束；提案中部分已落地/部分仍开放；重写/拆分架构决策。
 
@@ -656,7 +675,9 @@
 
 ## C 能力缝、资源所有权与清理
 
-### rationale-architecture-3.arch3-M08 能力缝：消费者定义形状，适配器拥有实现 {#rationale-architecture-3.arch3-M08}
+<a id="rationale-architecture-3.arch3-M08"></a>
+
+### rationale-architecture-3.arch3-M08 能力缝：消费者定义形状，适配器拥有实现
 
 **何时读。** 新增文件系统/目录选择/推理强度/代码执行等平台能力；模型或 provider 能力不一致；CLI/桌面/Web 需要不同实现；旧 seam 已无真实调用方。
 
@@ -709,7 +730,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-07-05-prompt-variables-and-tool-guidance-ownership.md:1-71@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-22-single-dsh-application-launcher.md:1-100@687f282e`
 
-### rationale-architecture-3.arch3-M09 Dispose 阶梯归消费者，而非子进程接缝 {#rationale-architecture-3.arch3-M09}
+<a id="rationale-architecture-3.arch3-M09"></a>
+
+### rationale-architecture-3.arch3-M09 Dispose 阶梯归消费者，而非子进程接缝
 
 **何时读。** 新增子进程、服务、组件或客户端资源；接缝需要释放多个资源；组件工厂/实例需要独立生命周期。
 
@@ -758,7 +781,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-component-factories-and-local-slots.md:1-105@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-client-resource-model.md:1-86@687f282e`
 
-### rationale-architecture-3.arch3-M10 Provider 注册与精确资源所有权 {#rationale-architecture-3.arch3-M10}
+<a id="rationale-architecture-3.arch3-M10"></a>
+
+### rationale-architecture-3.arch3-M10 Provider 注册与精确资源所有权
 
 **何时读。** 新增可插拔 provider（browser-use/CUA/subagent）；多个 Agent 共享同一外部应用/进程；同一路径发布不同构建；Agent 销毁/重载/切换。
 
@@ -809,7 +834,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-12-browser-use-provider-registration.md:1-53@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-cua-shared-native-helper.md:1-25@687f282e`
 
-### rationale-architecture-3.arch3-M11 独占附件与可取消资源操作 {#rationale-architecture-3.arch3-M11}
+<a id="rationale-architecture-3.arch3-M11"></a>
+
+### rationale-architecture-3.arch3-M11 独占附件与可取消资源操作
 
 **何时读。** 两个视图/Agent 操作同一外部资源；用户取消或超时；流式输出被中断；策略变化需要停旧工作。
 
@@ -862,7 +889,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-12-browser-use-provider-registration.md:1-53@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-ptc-owned-policy-cleanup.md:1-27@687f282e`
 
-### rationale-architecture-3.arch3-M12 沙箱策略、启动严格性与生命周期清理 {#rationale-architecture-3.arch3-M12}
+<a id="rationale-architecture-3.arch3-M12"></a>
+
+### rationale-architecture-3.arch3-M12 沙箱策略、启动严格性与生命周期清理
 
 **何时读。** PTC/代码执行 runtime 启动；权限/文件策略变化；宿主或消费方需要严格输入校验；启动失败/取消/资源清理。
 
@@ -914,7 +943,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-11-sandboxed-node-ptc-runtime.md:1-60@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-ptc-owned-policy-cleanup.md:1-27@687f282e`
 
-### rationale-architecture-3.arch3-M14 启动时一次性清理本地 Spill 文件 {#rationale-architecture-3.arch3-M14}
+<a id="rationale-architecture-3.arch3-M14"></a>
+
+### rationale-architecture-3.arch3-M14 启动时一次性清理本地 Spill 文件
 
 **何时读。** 应用启动/重启；本地 spill 目录增长；崩溃后残留文件。
 
@@ -960,7 +991,9 @@
 **源证据。**
 - `deepseek-harness/.agents/notes/archived/architecture/2026-07-17-local-spill-startup-cleanup.md:1-38@687f282e`
 
-### rationale-architecture-3.arch3-M15 等待式 Agent 初始化与上下文注入边界 {#rationale-architecture-3.arch3-M15}
+<a id="rationale-architecture-3.arch3-M15"></a>
+
+### rationale-architecture-3.arch3-M15 等待式 Agent 初始化与上下文注入边界
 
 **何时读。** 创建/恢复 Agent 或子 Agent；在轮次前注入上下文/提醒；父子/相邻 Agent 通信；启动/恢复失败。
 
@@ -1012,7 +1045,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-27-adjacent-agent-steer-messaging.md:1-82@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-09-awaited-agent-creation.md:1-31@687f282e`
 
-### rationale-architecture-3.arch3-M26 协作式取消与已交付前缀终结 {#rationale-architecture-3.arch3-M26}
+<a id="rationale-architecture-3.arch3-M26"></a>
+
+### rationale-architecture-3.arch3-M26 协作式取消与已交付前缀终结
 
 **何时读。** 用户取消/超时；流式响应中断；工具注册表拒绝调用；Remote 调用失败。
 
@@ -1065,7 +1100,9 @@
 
 ## D 启动、平台、传输与可观测性
 
-### rationale-architecture-3.arch3-M13 单一应用启动与平台启动同构 {#rationale-architecture-3.arch3-M13}
+<a id="rationale-architecture-3.arch3-M13"></a>
+
+### rationale-architecture-3.arch3-M13 单一应用启动与平台启动同构
 
 **何时读。** 新增运行平台（Web/Desktop/Preview/源码启动）；发布 profile 或可选 bundle；调整 dist chunk/模块布局；源文件启动。
 
@@ -1118,7 +1155,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-22-single-dsh-application-launcher.md:1-100@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-14-webworker-preview-profile-parity.md:1-105@687f282e`
 
-### rationale-architecture-3.arch3-M21 类型化远程调用与统一元数据 {#rationale-architecture-3.arch3-M21}
+<a id="rationale-architecture-3.arch3-M21"></a>
+
+### rationale-architecture-3.arch3-M21 类型化远程调用与统一元数据
 
 **何时读。** 新增 Remote 方法/端点；离线 CLI/MCP 需要元数据；Consumer 需要严格输入校验；源码/产物两种启动方式。
 
@@ -1170,7 +1209,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-28-ctx-remote-failure-vocabulary.md:1-88@687f282e`
 - `deepseek-harness/.agents/notes/proposed/architecture/2026-09-20-unified-typert-remote-metadata.md:1-191@687f282e`
 
-### rationale-architecture-3.arch3-M22 二进制结果的类型定向传输 {#rationale-architecture-3.arch3-M22}
+<a id="rationale-architecture-3.arch3-M22"></a>
+
+### rationale-architecture-3.arch3-M22 二进制结果的类型定向传输
 
 **何时读。** Remote 返回文件/图片/字节；需要 range/完整读取；HTTP 断连/取消；嵌套/多附件结果。
 
@@ -1220,7 +1261,9 @@
 **源证据。**
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-17-workspace-file-binary-transfer.md:1-31@687f282e`
 
-### rationale-architecture-3.arch3-M23 事件投递、路由与文档相对寻址 {#rationale-architecture-3.arch3-M23}
+<a id="rationale-architecture-3.arch3-M23"></a>
+
+### rationale-architecture-3.arch3-M23 事件投递、路由与文档相对寻址
 
 **何时读。** 新增浏览器下行/事件流；部署在剥离前缀的代理后；多标签页/重连；增加 Remote 事件类型。
 
@@ -1273,7 +1316,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-10-remote-event-delivery.md:1-202@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-14-web-document-relative-app-routes.md:1-47@687f282e`
 
-### rationale-architecture-3.arch3-M29 VFS 监听上下文、平台约束与懒加载归档 {#rationale-architecture-3.arch3-M29}
+<a id="rationale-architecture-3.arch3-M29"></a>
+
+### rationale-architecture-3.arch3-M29 VFS 监听上下文、平台约束与懒加载归档
 
 **何时读。** 在 Worker/VFS 中运行插件；实现文件监听/HMR；打包资源/搜索工具；平台缺少 worker_threads/模块。
 
@@ -1322,7 +1367,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-23-webworker-vfs-watch-and-landlock.md:1-81@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-14-webworker-preview-profile-parity.md:1-105@687f282e`
 
-### rationale-architecture-3.arch3-M30 原生致命恢复与桌面安装包页面 {#rationale-architecture-3.arch3-M30}
+<a id="rationale-architecture-3.arch3-M30"></a>
+
+### rationale-architecture-3.arch3-M30 原生致命恢复与桌面安装包页面
 
 **何时读。** Electron 主窗口/文档/preload/renderer/Web 初始化/后端失败；重复启动失败报告；安装/首次运行。
 
@@ -1372,7 +1419,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-10-windows-native-installer-pages.md:1-32@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-15-desktop-native-fatal-recovery.md:1-29@687f282e`
 
-### rationale-architecture-3.arch3-M40 显式反馈遥测与请求扩展字段 {#rationale-architecture-3.arch3-M40}
+<a id="rationale-architecture-3.arch3-M40"></a>
+
+### rationale-architecture-3.arch3-M40 显式反馈遥测与请求扩展字段
 
 **何时读。** 新增遥测/反馈上传；请求需要关联 Session/插件包；显示 token/上下文占用；插件包/实验功能。
 
@@ -1422,7 +1471,9 @@
 
 ## E 客户端状态、UI 不变量与重构纪律
 
-### rationale-architecture-3.arch3-M16 Client Session 引用、代际与空白写锁 {#rationale-architecture-3.arch3-M16}
+<a id="rationale-architecture-3.arch3-M16"></a>
+
+### rationale-architecture-3.arch3-M16 Client Session 引用、代际与空白写锁
 
 **何时读。** 打开/切换/关闭 Session 视图；并发异步操作持有 Session；同名 Session 重建/fork/replace；两个 Host 共享存储并打开 Workspace。
 
@@ -1473,7 +1524,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-15-client-session-references.md:1-226@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-17-process-local-blank-sessions.md:1-35@687f282e`
 
-### rationale-architecture-3.arch3-M17 Client 投影状态与工具呈现所有权 {#rationale-architecture-3.arch3-M17}
+<a id="rationale-architecture-3.arch3-M17"></a>
+
+### rationale-architecture-3.arch3-M17 Client 投影状态与工具呈现所有权
 
 **何时读。** 新增工具行/命令 UI；多个视图消费同一 Session；服务端事件到达但视图未挂载；需要派生标题/摘要/统计。
 
@@ -1526,7 +1579,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-23-client-derived-tool-presentation.md:1-710@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-25-session-observations-and-projection-owned-client-state.md:1-200@687f282e`
 
-### rationale-architecture-3.arch3-M18 Client 资源模型与地址生命周期 {#rationale-architecture-3.arch3-M18}
+<a id="rationale-architecture-3.arch3-M18"></a>
+
+### rationale-architecture-3.arch3-M18 Client 资源模型与地址生命周期
 
 **何时读。** 新增客户端资源类型；多视图共享资源；资源跨异步操作/重连；卸载/重载组件。
 
@@ -1573,7 +1628,9 @@
 **源证据。**
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-client-resource-model.md:1-86@687f282e`
 
-### rationale-architecture-3.arch3-M19 提交后激活与单一 UI 运动 {#rationale-architecture-3.arch3-M19}
+<a id="rationale-architecture-3.arch3-M19"></a>
+
+### rationale-architecture-3.arch3-M19 提交后激活与单一 UI 运动
 
 **何时读。** 保存偏好/快捷键/草稿；折叠上一轮工作详情；提交状态与通知顺序；读者滚动/阅读手势。
 
@@ -1624,7 +1681,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-20-device-local-shortcut-preferences.md:1-27@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-13-chat-single-fold-motion.md:1-92@687f282e`
 
-### rationale-architecture-3.arch3-M20 组件工厂、局部 Slot 与扩展点 {#rationale-architecture-3.arch3-M20}
+<a id="rationale-architecture-3.arch3-M20"></a>
+
+### rationale-architecture-3.arch3-M20 组件工厂、局部 Slot 与扩展点
 
 **何时读。** 同一组件需要多个 occurrence；插件需要扩展页面/设置/模型列表；响应式布局需要注入 tab 信息；工具行需要按视图独立。
 
@@ -1675,7 +1734,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-17-settings-pages-as-companion-packages.md:1-41@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-component-factories-and-local-slots.md:1-105@687f282e`
 
-### rationale-architecture-3.arch3-M37 机械重构与行为改动分离 {#rationale-architecture-3.arch3-M37}
+<a id="rationale-architecture-3.arch3-M37"></a>
+
+### rationale-architecture-3.arch3-M37 机械重构与行为改动分离
 
 **何时读。** 需要从大组件/大文件提取实现；同时要改变行为/所有权；多实例/共享状态需求；评审机械 diff。
 
@@ -1725,7 +1786,9 @@
 
 ## F 模型上下文与提示词
 
-### rationale-architecture-3.arch3-M24 路由化模型上下文与压缩策略 {#rationale-architecture-3.arch3-M24}
+<a id="rationale-architecture-3.arch3-M24"></a>
+
+### rationale-architecture-3.arch3-M24 路由化模型上下文与压缩策略
 
 **何时读。** 新增模型/provider/路由；上下文接近容量；压缩/摘要；请求扩展字段。
 
@@ -1775,7 +1838,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-07-29-projected-token-usage-and-request-context.md:1-61@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-21-deepseek-llm-api-request-extensions.md:1-92@687f282e`
 
-### rationale-architecture-3.arch3-M25 提示词区块、变量与工具指导所有权 {#rationale-architecture-3.arch3-M25}
+<a id="rationale-architecture-3.arch3-M25"></a>
+
+### rationale-architecture-3.arch3-M25 提示词区块、变量与工具指导所有权
 
 **何时读。** 新增提示词区块/变量；插件提供工具指导；调整 persona/系统提示；子 Agent 对话历史描述。
 
@@ -1825,7 +1890,9 @@
 
 ## G 文件、Schedule 与派生内容
 
-### rationale-architecture-3.arch3-M32 Schedule 硬删除与有界投递历史 {#rationale-architecture-3.arch3-M32}
+<a id="rationale-architecture-3.arch3-M32"></a>
+
+### rationale-architecture-3.arch3-M32 Schedule 硬删除与有界投递历史
 
 **何时读。** 删除任务；确认投递/追加回执；部署需要更长历史；preset 决定是否注入时间/提醒工具。
 
@@ -1874,7 +1941,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-22-schedule-hard-delete-and-bounded-history.md:1-33@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-preset-scoped-time-context.md:1-37@687f282e`
 
-### rationale-architecture-3.arch3-M33 派生内容（翻译/图像）的持久缓存与原始内容共存 {#rationale-architecture-3.arch3-M33}
+<a id="rationale-architecture-3.arch3-M33"></a>
+
+### rationale-architecture-3.arch3-M33 派生内容（翻译/图像）的持久缓存与原始内容共存
 
 **何时读。** 重新展开思考内容/预览；应用重启；翻译/图像 Provider 调用；Session 历史落盘。
 
@@ -1926,7 +1995,9 @@
 - `deepseek-harness/.agents/notes/archived/architecture/2026-09-02-durable-image-offload.md:1-56@687f282e`
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-10-05-persistent-machine-translation.md:1-35@687f282e`
 
-### rationale-architecture-3.arch3-M34 Workspace 文件服务、路径授权与原生字节 {#rationale-architecture-3.arch3-M34}
+<a id="rationale-architecture-3.arch3-M34"></a>
+
+### rationale-architecture-3.arch3-M34 Workspace 文件服务、路径授权与原生字节
 
 **何时读。** 读取/预览/上传 Workspace 文件；相对路径解析；Office/PDF 预览；HTTP 断连/取消。
 
@@ -1981,7 +2052,9 @@
 
 ## H 提案、核心协议与证据边界
 
-### rationale-architecture-3.arch3-M39 会话核心能力协议（提案）与证据边界 {#rationale-architecture-3.arch3-M39}
+<a id="rationale-architecture-3.arch3-M39"></a>
+
+### rationale-architecture-3.arch3-M39 会话核心能力协议（提案）与证据边界
 
 **何时读。** 重构会话/存储抽象；引入第二个 provider/索引；迁移已发布 Session 格式；评审“已实现”声明。
 
@@ -2034,7 +2107,9 @@
 
 ## I 读取意图与运行时检查
 
-### rationale-architecture-3.arch3-M27 日志读取意图与物化成本 {#rationale-architecture-3.arch3-M27}
+<a id="rationale-architecture-3.arch3-M27"></a>
+
+### rationale-architecture-3.arch3-M27 日志读取意图与物化成本
 
 **何时读。** 新增列表/搜索/统计/调试视图；读取冷 Session；需要进程/运行时快照；分页/懒加载。
 
@@ -2083,7 +2158,9 @@
 - `deepseek-harness/.agents/notes/implemented/architecture/2026-08-25-session-observations-and-projection-owned-client-state.md:1-200@687f282e`
 - `deepseek-harness/.agents/notes/archived/architecture/2026-08-27-process-table-snapshots.md:1-72@687f282e`
 
-### rationale-architecture-3.arch3-M28 Inspector 执行域、协议平面与快照 {#rationale-architecture-3.arch3-M28}
+<a id="rationale-architecture-3.arch3-M28"></a>
+
+### rationale-architecture-3.arch3-M28 Inspector 执行域、协议平面与快照
 
 **何时读。** 新增运行时/进程检查；调试器连接/断开；跨 realm 对象/标识；高频状态查询。
 

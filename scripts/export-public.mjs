@@ -9,6 +9,7 @@ const destination = resolve(process.argv[2] ?? join(root, 'dist/public'))
 if (existsSync(destination)) throw new Error('Public export refuses an existing destination; choose a new directory.')
 const extras = [
   '.gitignore', '.github/workflows/check.yml', 'scripts/export-public.mjs',
+  '.doc-gates/markdown-links.json', '.doc-gates/markdown-wrap.json',
   'research/doc-gates.test.mjs', 'research/doc-typecheck.test.mjs',
   'research/type-equiv.test.mjs', 'research/subsystem-pages.test.mjs',
   'research/package-readme-summaries.test.mjs', 'research/package-readme-limitations.test.mjs',

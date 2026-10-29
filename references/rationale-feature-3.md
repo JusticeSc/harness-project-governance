@@ -1,7 +1,6 @@
 # 项目治理机制参考：`rationale-feature-3`（feature 手记域）
 
-> 来源：`deepseek-harness/` 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，`.agents/notes/**/feature/` 的 89 个英文 Note 及其 89 个中文对照（另含 `.i18n.yaml` 一致性记录）。引用统一写作 `deepseek-harness/<path>:<start>-<end>@687f282e`。
-> 证据等级：本参考来自逐份 Note 正文的独立阅读与归类，不是运行时验证。每个机制在 knowledge JSON 中标记 `verification.evidence: "planned"`；Note 自带的 Testing/Verification 段落是源作者的声明，不是本参考执行过的测试。
+> 来源：`deepseek-harness/` 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，`.agents/notes/**/feature/` 的 89 个英文 Note 及其 89 个中文对照（另含 `.i18n.yaml` 一致性记录）。引用统一写作 `deepseek-harness/<path>:<start>-<end>@687f282e`。 证据等级：本参考来自逐份 Note 正文的独立阅读与归类，不是运行时验证。每个机制在 knowledge JSON 中标记 `verification.evidence: "planned"`；Note 自带的 Testing/Verification 段落是源作者的声明，不是本参考执行过的测试。
 
 ## 0. 范围、方法与使用方式
 
@@ -132,8 +131,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:1-101@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-09-web-sidebar-terminal.md:1-55@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:1-101@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-09-web-sidebar-terminal.md:1-55@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:1-101@687f282e
 
 <a id="rationale-feature-3-staged-atomic-publish"></a>
 ### `rationale-feature-3-staged-atomic-publish` — 先完整暂存，再原子发布并保留旧版
@@ -285,8 +283,7 @@
 - `deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:1-33@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:1-81@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:1-33@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:1-81@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:1-33@687f282e
 
 <a id="rationale-feature-3-fail-closed-classification"></a>
 ### `rationale-feature-3-fail-closed-classification` — 未知、非法或模糊分类一律失败关闭
@@ -324,9 +321,7 @@
 - `deepseek-harness/.agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md:1-56@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-10-parallel-tool-call-execution.md:1-107@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-present-filesystem-access.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md:1-56@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-10-parallel-tool-call-execution.md:1-107@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-present-filesystem-access.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md:1-56@687f282e
 
 <a id="rationale-feature-3-ownership-scoped-deletion"></a>
 ### `rationale-feature-3-ownership-scoped-deletion` — 只删除自己拥有的数据；共享数据受保护且遇锁继续
@@ -440,9 +435,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-25-promote-open-anywhere-plugin.md:1-62@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-sidebar-browser.md:1-74@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-present-filesystem-access.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-promote-open-anywhere-plugin.md:1-62@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-sidebar-browser.md:1-74@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-present-filesystem-access.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-promote-open-anywhere-plugin.md:1-62@687f282e
 
 <a id="rationale-feature-3-policy-vs-failure"></a>
 ### `rationale-feature-3-policy-vs-failure` — 策略决定与执行失败必须分离
@@ -484,9 +477,7 @@
 
 ## 三、状态真源、投影与诚实呈现
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:11-47@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:11-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:11-47@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-24-auto-review-user-approval-fallback.md:11-19@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e
 
 <a id="rationale-feature-3-durable-vs-projection"></a>
 ### `rationale-feature-3-durable-vs-projection` — 持久状态与请求投影分离
@@ -524,9 +515,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-24-web-per-turn-token-usage.md:1-32@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:1-70@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-route-priced-image-request-pressure.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-web-per-turn-token-usage.md:1-32@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:1-70@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-route-priced-image-request-pressure.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-web-per-turn-token-usage.md:1-32@687f282e
 
 <a id="rationale-feature-3-committed-state-only"></a>
 ### `rationale-feature-3-committed-state-only` — 只发布已提交的持久状态；忽略被丢弃尝试
@@ -563,8 +552,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-19-persisted-same-session-goal-domain.md:1-64@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:1-101@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-19-persisted-same-session-goal-domain.md:1-64@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:1-101@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-19-persisted-same-session-goal-domain.md:1-64@687f282e
 
 <a id="rationale-feature-3-complete-sequence-authority"></a>
 ### `rationale-feature-3-complete-sequence-authority` — 唯一完整顺序权威；过滤器只是投影
@@ -602,8 +590,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-07-25-session-list-browsing-and-manual-order.md:1-61@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md:1-80@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-25-session-list-browsing-and-manual-order.md:1-61@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md:1-80@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-25-session-list-browsing-and-manual-order.md:1-61@687f282e
 
 <a id="rationale-feature-3-stale-response-supersession"></a>
 ### `rationale-feature-3-stale-response-supersession` — 单一有序状态所有者；陈旧响应被取代
@@ -640,9 +627,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-workspace-sidebar-order-and-folding.md:1-60@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-24-web-session-model-selector.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md:14-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workspace-sidebar-order-and-folding.md:1-60@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-07-24-web-session-model-selector.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-session-pin-and-sidebar-archive.md:14-35@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workspace-sidebar-order-and-folding.md:1-60@687f282e
 
 <a id="rationale-feature-3-no-fabricated-coverage"></a>
 ### `rationale-feature-3-no-fabricated-coverage` — 只展示观察到的事实；命名未知与不可用状态
@@ -686,12 +671,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md:12-28@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-web-home-path-tilde.md:12-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-sidebar-browser.md:1-74@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-27-web-at-mention-discovery-and-row-content.md:20-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-loaded-turn-chat-navigation.md:1-46@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md:12-28@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-web-home-path-tilde.md:12-34@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-sidebar-browser.md:1-74@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-27-web-at-mention-discovery-and-row-content.md:20-32@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-loaded-turn-chat-navigation.md:1-46@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md:12-28@687f282e
 
 <a id="rationale-feature-3-preview-read-only"></a>
 ### `rationale-feature-3-preview-read-only` — 预览只读；绝不改动草稿、来源或激活状态
@@ -730,8 +710,7 @@
 
 ## 四、单一权威与共享呈现
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-10-composer-reference-previews.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-10-composer-reference-previews.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e
 
 <a id="rationale-feature-3-single-owner-contract"></a>
 ### `rationale-feature-3-single-owner-contract` — 每个资源、卡片、流程或设置一个显式所有者
@@ -769,11 +748,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md:1-30@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-web-cards-toolrow.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-settings-font-size-control.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-web-cards-toolrow.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-38@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-settings-font-size-control.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md:1-30@687f282e
 
 <a id="rationale-feature-3-single-authority-geometry"></a>
 ### `rationale-feature-3-single-authority-geometry` — 唯一几何/布局权威；表面接收 slot 而非坐标
@@ -809,8 +784,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-18-conversation-adaptive-content-width.md:1-36@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-04-right-sidebar-docking-infrastructure.md:21-60@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-conversation-adaptive-content-width.md:1-36@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-04-right-sidebar-docking-infrastructure.md:21-60@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-conversation-adaptive-content-width.md:1-36@687f282e
 
 <a id="rationale-feature-3-artifact-reference-store"></a>
 ### `rationale-feature-3-artifact-reference-store` — 持久工件以稳定句柄引用，不复制进每个表面
@@ -846,8 +820,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:16-32@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md:12-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:16-32@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-persistent-plan-cards.md:12-28@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:16-32@687f282e
 
 <a id="rationale-feature-3-machine-identity-vs-label"></a>
 ### `rationale-feature-3-machine-identity-vs-label` — 稳定机器身份与人类标签分离
@@ -883,8 +856,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-23-language-neutral-default-workspace-naming.md:12-23@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-23-language-neutral-default-workspace-naming.md:12-23@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-23-language-neutral-default-workspace-naming.md:12-23@687f282e
 
 <a id="rationale-feature-3-shared-presentation-defaults"></a>
 ### `rationale-feature-3-shared-presentation-defaults` — 跨表面共享一个呈现基线与 token 集
@@ -921,9 +893,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-18-settings-font-size-control.md:1-32@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-20-focus-ring-brand-primary.md:12-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-settings-font-size-control.md:1-32@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-16-unified-model-input-controls.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-20-focus-ring-brand-primary.md:12-26@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-settings-font-size-control.md:1-32@687f282e
 
 <a id="rationale-feature-3-single-flow-owner"></a>
 ### `rationale-feature-3-single-flow-owner` — 一个流程拥有披露状态与按键语义
@@ -961,9 +931,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-14-composer-selection-keyboard.md:16-30@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-14-composer-selection-keyboard.md:16-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-workflow-run-status-driven-disclosure.md:14-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-30@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-14-composer-selection-keyboard.md:16-30@687f282e
 
 <a id="rationale-feature-3-completion-delivery-lane"></a>
 ### `rationale-feature-3-completion-delivery-lane` — 按所有者状态选择完成投递车道
@@ -1006,9 +974,7 @@
 
 ## 五、契约、格式与必需事实
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-21-continuable-background-subagents.md:1-127@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-first-continuable-delegation.md:1-46@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:20-38@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-21-continuable-background-subagents.md:1-127@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-first-continuable-delegation.md:1-46@687f282e
 
 <a id="rationale-feature-3-machine-readable-contract"></a>
 ### `rationale-feature-3-machine-readable-contract` — 稳定的机器可读代码与事件形状；散文不是 API
@@ -1045,9 +1011,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-08-web-background-job-display.md:20-26@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:28-63@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-account-quota-top-up.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-08-web-background-job-display.md:20-26@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-09-headless-machine-readable-run-surface.md:28-63@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-18-account-quota-top-up.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-08-web-background-job-display.md:20-26@687f282e
 
 <a id="rationale-feature-3-claims-disclosed"></a>
 ### `rationale-feature-3-claims-disclosed` — 披露来源、范围与已知限制；不背书第三方声明
@@ -1088,12 +1052,7 @@
 - `deepseek-harness/.agents/notes/proposed/feature/2026-09-08-desktop-update-extensions.md:11-30@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-third-party-memory-mcp-examples.md:1-79@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-claude-code-and-codex-subagent-backends.md:1-96@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-context-source-and-steer-marks.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:229-236@687f282e
-来源：deepseek-harness/.agents/notes/proposed/feature/2026-09-08-desktop-update-extensions.md:11-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-third-party-memory-mcp-examples.md:1-79@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-claude-code-and-codex-subagent-backends.md:1-96@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-context-source-and-steer-marks.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:229-236@687f282e 来源：deepseek-harness/.agents/notes/proposed/feature/2026-09-08-desktop-update-extensions.md:11-30@687f282e
 
 <a id="rationale-feature-3-forward-compatible-strict-format"></a>
 ### `rationale-feature-3-forward-compatible-strict-format` — 版本化格式严格校验已定义字段；仅在契约允许时容忍未知成员
@@ -1131,8 +1090,7 @@
 - `deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:144-179@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-diff-card.md:16-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:144-179@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-07-30-web-diff-card.md:16-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:144-179@687f282e
 
 <a id="rationale-feature-3-required-not-optional"></a>
 ### `rationale-feature-3-required-not-optional` — 必需事实必须必需；每个概念一种表示
@@ -1172,9 +1130,7 @@
 
 ## 六、边界、恢复与默认开关
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:31-47@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md:12-18@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-product-subagent-named-instances.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-28-auto-review.md:31-47@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md:12-18@687f282e
 
 <a id="rationale-feature-3-bounded-io"></a>
 ### `rationale-feature-3-bounded-io` — 为每次读取、扇出与展示 payload 设界
@@ -1214,11 +1170,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-09-24-fixed-rate-floor-one-minute.md:1-30@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:96-130@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-24-fixed-rate-floor-one-minute.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-minimal-read-image-tool.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-search-multiple-queries.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md:96-130@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-24-fixed-rate-floor-one-minute.md:1-30@687f282e
 
 <a id="rationale-feature-3-bounded-remote-recovery"></a>
 ### `rationale-feature-3-bounded-remote-recovery` — 有界重连/重试、单一故障预算与静默销毁
@@ -1258,10 +1210,7 @@
 - `deepseek-harness/.agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md:11-27@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md:12-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:16-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md:11-27@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md:12-27@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-unified-image-request-pipeline.md:16-32@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-05-sidebar-text-preview-and-file-tree.md:30-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-desktop-primary-runtime.md:11-27@687f282e
 
 <a id="rationale-feature-3-batch-all-or-nothing"></a>
 ### `rationale-feature-3-batch-all-or-nothing` — 多项操作全有或全无，并只在界内扇出
@@ -1336,10 +1285,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-experimental-subcommand-gate.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-developer-tools-settings.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-20-developer-tools-default-on.md:12-16@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-experimental-subcommand-gate.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-developer-tools-settings.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-20-developer-tools-default-on.md:12-16@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e
 
 <a id="rationale-feature-3-scoped-enforcement"></a>
 ### `rationale-feature-3-scoped-enforcement` — 在最窄所有者处强制，并明确范围
@@ -1376,9 +1322,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-developer-tools-settings.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md:11-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-17-developer-tools-settings.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-19-windows-acl-mandatory-integrity-confinement.md:11-23@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-20@687f282e
 
 <a id="rationale-feature-3-single-base-default"></a>
 ### `rationale-feature-3-single-base-default` — 无表面覆盖时使用唯一共享基线默认值
@@ -1417,9 +1361,7 @@
 
 ## 七、外部协议、诊断与治理迁移
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-01-shared-base-web-fetch-default.md:14-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-web-default-search.md:14-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-minimal-profiles-bare-two-tool-runtime.md:1-40@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-01-shared-base-web-fetch-default.md:14-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-web-default-search.md:14-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-minimal-profiles-bare-two-tool-runtime.md:1-40@687f282e
 
 <a id="rationale-feature-3-predecessor-lineage"></a>
 ### `rationale-feature-3-predecessor-lineage` — 记录取代谱系并保留既有决定
@@ -1455,8 +1397,7 @@
 - `deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:1-20@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-06-14-acp-multi-session.md:1-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:1-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-06-14-acp-multi-session.md:1-26@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-background-job-completion-wakes-an-idle-owner.md:1-20@687f282e
 
 <a id="rationale-feature-3-maintained-protocol-owner"></a>
 ### `rationale-feature-3-maintained-protocol-owner` — 使用维护中的协议所有者；不 fork 或重写协商
@@ -1494,8 +1435,7 @@
 - `deepseek-harness/packages/mcp/mcp-client/src/tools.ts:118-143@687f282e`
 
 ---
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-12-mcp-sdk-protocol-negotiation.md:12-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md:12-27@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-09-12-mcp-sdk-protocol-negotiation.md:12-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-mcp-client-auto-reconnect.md:12-27@687f282e
 
 <a id="rationale-feature-3-diagnostic-reads"></a>
 ### `rationale-feature-3-diagnostic-reads` — 诊断只观察，不取得所有权或改动状态

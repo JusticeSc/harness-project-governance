@@ -42,7 +42,9 @@
 
 ---
 
-## 1. README 类型与页面职责 {#package-contracts-8.readme-kind-contract}
+<a id="package-contracts-8.readme-kind-contract"></a>
+
+## 1. README 类型与页面职责
 
 **源义务**
 
@@ -87,7 +89,9 @@
 
 ---
 
-## 2. 双语配对与逐标题哈希记录 {#package-contracts-8.bilingual-pair-record}
+<a id="package-contracts-8.bilingual-pair-record"></a>
+
+## 2. 双语配对与逐标题哈希记录
 
 **源义务**
 
@@ -125,7 +129,9 @@
 
 ---
 
-## 3. 限制清单与 Dev Note 的权威边界 {#package-contracts-8.limits-authority}
+<a id="package-contracts-8.limits-authority"></a>
+
+## 3. 限制清单与 Dev Note 的权威边界
 
 **源义务**
 
@@ -164,7 +170,9 @@
 
 ---
 
-## 4. 能力 seam：定义、提供方与消费者分离且单一提供方 {#package-contracts-8.seam-split-single-provider}
+<a id="package-contracts-8.seam-split-single-provider"></a>
+
+## 4. 能力 seam：定义、提供方与消费者分离且单一提供方
 
 **源义务**
 
@@ -206,7 +214,9 @@
 
 ---
 
-## 5. 注册作用域与贡献生命周期 {#package-contracts-8.scoped-registration}
+<a id="package-contracts-8.scoped-registration"></a>
+
+## 5. 注册作用域与贡献生命周期
 
 **源义务**
 
@@ -249,7 +259,9 @@
 
 ---
 
-## 6. 配置解析、默认值与整体替换 {#package-contracts-8.explicit-config-resolution}
+<a id="package-contracts-8.explicit-config-resolution"></a>
+
+## 6. 配置解析、默认值与整体替换
 
 **源义务**
 
@@ -294,7 +306,9 @@
 
 ---
 
-## 7. 实验性能力默认关闭、显式启用 {#package-contracts-8.experimental-opt-in}
+<a id="package-contracts-8.experimental-opt-in"></a>
+
+## 7. 实验性能力默认关闭、显式启用
 
 **源义务**
 
@@ -337,7 +351,9 @@
 
 ---
 
-## 8. 按所有者会话/身份围栏资源访问 {#package-contracts-8.owner-fencing}
+<a id="package-contracts-8.owner-fencing"></a>
+
+## 8. 按所有者会话/身份围栏资源访问
 
 **源义务**
 
@@ -380,7 +396,9 @@
 
 ---
 
-## 9. 会话日志是权威，派生状态可重建 {#package-contracts-8.durable-log-authority}
+<a id="package-contracts-8.durable-log-authority"></a>
+
+## 9. 会话日志是权威，派生状态可重建
 
 **源义务**
 
@@ -436,7 +454,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:1-37@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1-1318@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1376-1880@687f282e`
 
 
-## 10. 稳定错误码、失败关闭与可恢复提示 {#package-contracts-8.failure-taxonomy}
+<a id="package-contracts-8.failure-taxonomy"></a>
+
+## 10. 稳定错误码、失败关闭与可恢复提示
 
 **源义务**
 
@@ -491,7 +511,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:640-760@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:895-1110@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1570-1880@687f282e`、`deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:1-290@687f282e`、`deepseek-harness/apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts:415-534@687f282e`
 
 
-## 11. 最小能力面：不提供隐式回退或未声明操作 {#package-contracts-8.minimal-surface}
+<a id="package-contracts-8.minimal-surface"></a>
+
+## 11. 最小能力面：不提供隐式回退或未声明操作
 
 **源义务**
 
@@ -535,7 +557,9 @@
 
 ---
 
-## 12. bundle/profile 分层组合与覆盖规则 {#package-contracts-8.composition-layering}
+<a id="package-contracts-8.composition-layering"></a>
+
+## 12. bundle/profile 分层组合与覆盖规则
 
 **源义务**
 
@@ -576,7 +600,9 @@
 
 ---
 
-## 13. 测试支持包只提供骨架，测试拥有装配与清理 {#package-contracts-8.test-support-harness}
+<a id="package-contracts-8.test-support-harness"></a>
+
+## 13. 测试支持包只提供骨架，测试拥有装配与清理
 
 **源义务**
 
@@ -615,7 +641,9 @@
 
 ---
 
-## 14. 平台差异显式化与原生制品边界 {#package-contracts-8.platform-native}
+<a id="package-contracts-8.platform-native"></a>
+
+## 14. 平台差异显式化与原生制品边界
 
 **源义务**
 
@@ -659,7 +687,9 @@
 
 ---
 
-## 15. 扩展注册表：命名空间、回退链与失败隔离 {#package-contracts-8.extension-registries}
+<a id="package-contracts-8.extension-registries"></a>
+
+## 15. 扩展注册表：命名空间、回退链与失败隔离
 
 **源义务**
 
@@ -705,7 +735,9 @@
 
 ---
 
-## 16. 写前观察与版本新鲜度门 {#package-contracts-8.observation-before-write}
+<a id="package-contracts-8.observation-before-write"></a>
+
+## 16. 写前观察与版本新鲜度门
 
 **源义务**
 
@@ -756,7 +788,9 @@
 
 ---
 
-## 17. 协作式超时：工具声明预算与取消结算 {#package-contracts-8.cooperative-timeout}
+<a id="package-contracts-8.cooperative-timeout"></a>
+
+## 17. 协作式超时：工具声明预算与取消结算
 
 **源义务**
 

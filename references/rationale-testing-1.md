@@ -50,7 +50,9 @@
 
 ## 2. 程序
 
-### 2.1 录制-回放金标 {#proc-replay}
+<a id="proc-replay"></a>
+
+### 2.1 录制-回放金标
 
 `[源义务]` 录制真实模型的一次会话，提交每个逻辑会话的日志与规范化预期输出，在默认门禁中无密钥回放。模型是唯一被 mock 的边界；agent loop、工具、presenter、持久化和传输都走生产实现。源实现由 `dsh-llm-replay` 从持久 `assistant/message` 或 `assistant/attempt` settlement 派生每个 `stream()` 调用一条 replay entry。
 
@@ -78,7 +80,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-06-19-acp-snapshot-tests.md:1-87@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md:1-98@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-22-subagent-snapshot-replay.md:1-59@687f282e`。
 
-### 2.2 金标权威与刷新 {#proc-golden}
+<a id="proc-golden"></a>
+
+### 2.2 金标权威与刷新
 
 `[源义务]` 已提交的规范化预期输出是断言权威；refresh 是独立的开发者动作，不能出现在断言路径或 CI 中。快照比较使用普通相等，不在比较时写回 fixture；`fixtureContext()` 从各自 header 派生上下文，使已规范化 fixture 幂等。
 
@@ -105,7 +109,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-06-20-remove-redundant-snapshot-log-expected-output.md:1-38@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-08-18-session-snapshot-envelope-projection.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md:1-40@687f282e`。
 
-### 2.3 嵌套会话键控 {#proc-nested}
+<a id="proc-nested"></a>
+
+### 2.3 嵌套会话键控
 
 `[源义务]` 回放按调用方会话键控，而不是按全局调用顺序。父会话与进程内 subagent 在同一个 context 上交错流式输出时，单一全局游标会把父脚本发给子会话。fork 子会话的日志还以父会话的已播种前缀开头，从整份日志派生脚本会把父响应当作子模型调用重放。
 
@@ -135,7 +141,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-06-22-subagent-snapshot-replay.md:1-59@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-22-fork-child-replay-seed-boundary.md:1-45@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-22-fork-snapshot-scenarios.md:1-32@687f282e`。
 
-### 2.4 单一来源组合 {#proc-composition}
+<a id="proc-composition"></a>
+
+### 2.4 单一来源组合
 
 `[源义务]` 不维护生产配置的手工镜像。测试/回放组合用 include overlay 引入生产配置，只 patch 必须不同的条目。源实现中 `cordis.snapshot.yml` include `cordis.yml`，按 id 与 name 禁用 `llm-deepseek`，插入 `llm-replay`；录制仍启动 `cordis.yml`。
 
@@ -162,7 +170,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-04-single-source-acp-replay-config.md:1-28@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md:15-25@687f282e`。
 
-### 2.5 语义状态投影 {#proc-render}
+<a id="proc-render"></a>
+
+### 2.5 语义状态投影
 
 `[源义务]` 有状态渲染器的最终画面不能由 `Terminal.write()` 片段、组件行或栅格截图证明。源实现用 `HeadlessTerminal` 实现与生产相同的 pi-tui `Terminal` 接口，把每次 ANSI 写入交给固定版本 `@xterm/headless`，读取状态前等待同步帧稳定。
 
@@ -191,7 +201,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-18-tui-terminal-state-snapshots.md:1-62@687f282e`。
 
-### 2.6 模型可见表面 {#proc-modelsurface}
+<a id="proc-modelsurface"></a>
+
+### 2.6 模型可见表面
 
 `[源义务]` 功能工具断言证明工具执行了，但不证明模型实际收到了 system 段、tool schema 或 user context。源实现用最小 profile 记录 `minimal/model-visible.json`：对每个模型请求保存逐字 tool schema 与有序 message list；system 与 user 消息保留全文，只对临时目录做 token；assistant 与 tool 消息只保留调用身份，因为 PTY/FS 文本跨回放平台不同；profile 省略动态 runtime context，因此每条发出的消息都可比较。
 
@@ -218,7 +230,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-13-python-minimal-model-visible-snapshot.md:1-32@687f282e`。
 
-### 2.7 脱敏固定点 {#proc-redaction}
+<a id="proc-redaction"></a>
+
+### 2.7 脱敏固定点
 
 `[源义务]` 大提示词或 schema 在每个 JSONL 中重复时，一次编辑会改写几十条巨型单行记录。源实现把内容分类 token 化：`session.jsonl` 保留 config、reason、模型可见前缀，把 `header.system`/`header.tools` 存为 `"{{system}}"`/`"{{tools}}"`；每组请求头组合类别恰好一个 `pinsHeader` 场景，把完整 prompt 序列写入 `system-prompt.expected.md`、完整 schema 序列写入 `tool-schemas.expected.json`。
 
@@ -246,7 +260,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-08-24-session-log-snapshot-corpus.md:1-78@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-20-remove-redundant-snapshot-log-expected-output.md:1-38@687f282e`。
 
-### 2.8 封闭清单与 envelope 投影 {#proc-inventory}
+<a id="proc-inventory"></a>
+
+### 2.8 封闭清单与 envelope 投影
 
 `[源义务]` 每个场景的必需文件由封闭清单管理：拒绝缺失场景、缺失检查点、缺失必需文件、遗留预期文件；override sidecar 与会话日志必须互相一致；每类恰好一个 pin。提交的快照还投影掉非行为 envelope 字段：正文记录去掉 `seq`、`time`、`seq0`、`time0`，但保留每条正文记录的判别字段、payload 与其他顶层字段；嵌套 payload 中同名字段不变；第一条 `session` header 不投影。
 
@@ -273,7 +289,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-06-19-acp-snapshot-tests.md:1-87@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-08-18-session-snapshot-envelope-projection.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md:27-33@687f282e`。
 
-### 2.9 浏览器组装通道 {#proc-browser}
+<a id="proc-browser"></a>
+
+### 2.9 浏览器组装通道
 
 `[源义务]` 无密钥 Web 浏览器 lane 通过 `dsh-llm-replay` 回放 fixture，驱动真实 in-process web 组合：Chromium 跑完整套件，WebKit 只覆盖模型/推理强度选择器需要的原生鼠标焦点行为。`launchWebScaffold` 通过 Loader include 加载 shipped `cordis.yml`/web 配置，patch 临时持久化根、三个 skill 根（固定并关闭 watching）、agent instructions、session-title-llm 等测试专属项；浏览器驱动代码不能诚实地维持 per-file 100%，因此门禁逻辑放进受门禁的包。
 
@@ -303,7 +321,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md:1-98@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md:1-40@687f282e`。
 
-### 2.10 安装产物入口与更新资格 {#proc-installed}
+<a id="proc-installed"></a>
+
+### 2.10 安装产物入口与更新资格
 
 `[源义务]` 源码测试可能通过 fake peer 而打包产物已坏。必需 workflow 先构建 SDK wheel 与每个平台 runtime wheel，再把两个本地产物安装进新的 Python 3.10 venv；切换到仓库外目录，清空 `PYTHONPATH` 与 `DSH_RUNTIME_MODE`，只调用公共模块与打包可执行文件。黑盒 harness 拒绝非 venv 进程、仓库相对 cwd、源码/editable 导入与不相等版本。
 
@@ -333,7 +353,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md:1-51@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-14-desktop-installed-update-materials.md:1-49@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md:1-51@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-08-12-required-python-runtime-pull-request-ci.md:1-32@687f282e`。
 
-#### 更新生命周期资格 {#proc-update}
+<a id="proc-update"></a>
+
+#### 更新生命周期资格
 
 `[源义务]` 已安装更新需要两个递增版本与共享 app identity。测试专用 manifest 使用随机身份与 distribution namespace；复制已校验 runtime 到派生版本，只改 release-family 版本与匹配依赖；封存并校验 inventory；原始 source 重新校验且 descriptor hash 不变；不覆盖既有输出；失败复制保留 failure record 且不能创建 completion receipt。生成的 bootstrap 在 import 生产 main 前校验安装包身份。
 
@@ -347,7 +369,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-09-14-desktop-installed-update-materials.md:1-49@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md:1-51@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-14-desktop-installed-update-journal.md:1-29@687f282e`。
 
-### 2.11 真实组装与边界 mock {#proc-assembly}
+<a id="proc-assembly"></a>
+
+### 2.11 真实组装与边界 mock
 
 `[源义务]` 手搭 bench（裸 context、stand-in、slot 声明）断言的是 bench，不是产品；可编程 Remote fake 重新实现 Gateway 语义（follow-stream opening snapshots、page cuts、pumps、envelope），还可能允许真实系统禁止的 unary reject。源实现把组装层放进 `dsh-client-test-runtime` 的 `src/assembly`，用 `dsh-remote-mock` 按 endpoint name 回答；roster 从 bundle 读取（include 自己的 `entryListSchema`/`applyEntryPatches`），过滤 `dsh.client.platform: web`，携带 `inject`/`immediately`；`webApp` 在 import 时计算，用 closure/pick/without；不 import Host、不动态 import，只为 `fs` 用 node types。
 
@@ -375,7 +399,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-06-client-assembly-test-line.md:1-99@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-08-shared-acp-snapshot-package.md:1-41@687f282e`。
 
-#### 边界 mock 的判定 {#proc-boundary}
+<a id="proc-boundary"></a>
+
+#### 边界 mock 的判定
 
 `[源义务]` mock 只放在最窄的外部边界（socket、HTTP server、model stream、message writer）；shipping adapter、loop、retry、framing 与 parsing 留在测试路径中；不要在测试里重新实现 Gateway 语义。需要制造传输失败时，注入 connection 的 message writer 并传入真实 Node stream 会报告的异步 write callback error，保持真实 child 存活，不触碰平台 pipe 内部。边界 double 只报告事实，不替产品决定 retryability。源实现中 `dsh-llm-mock-server` 的 `random` profile 是可配置压力，不是生产事故频率；`connection_refused` 需要 listener-lifecycle 阶段，因为 bound handler 不能拒绝自己的连接。
 
@@ -385,7 +411,9 @@
 
 **证据边界**：double 仍需要自己的测试；arrival-ordered 共享 script 会让并发断言含糊；它不证明远程生产行为，只证明它建模的契约。
 
-### 2.12 子进程统一管线 {#proc-subprocess}
+<a id="proc-subprocess"></a>
+
+### 2.12 子进程统一管线
 
 `[源义务]` 约十个 e2e/smoke 文件各自重写 spawn、stdout 收集、`setTimeout` 到 `SIGKILL`、`once exit/error` settlement，变体改变 settlement 顺序并泄漏子进程。源实现统一用 Execa；publint 测试直接用 Execa 与 Vitest test-context signal，不再自带独立子进程 timeout，预算由 workflow/coverage 参数所有者负责；每个直接 Node 子进程在创建时立即登记，取消请求 `SIGKILL`，teardown 等待每个自有子进程的 result 与 close 后才移除资源；子 agent teardown 在 lane test budget 内等待 disposal，并在移除私有目录前等待 child 完成。
 
@@ -413,7 +441,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-26-execa-for-test-subprocess-plumbing.md:1-38@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-publint-test-subprocess-lifetime.md:1-26@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md:1-29@687f282e`。
 
-### 2.13 并发隔离 {#proc-isolation}
+<a id="proc-isolation"></a>
+
+### 2.13 并发隔离
 
 `[源义务]` 并发 Vitest 文件/worker/gate/job 共享 host 端口、可预测路径、外部 namespace 与继承子进程。进程隔离不隔离这些资源；全局 mutation 与不完整 teardown 会污染后续测试；测试可能单独跑对、整条 lane 错。适用场景：测试/fixture 获取 host 资源、修改进程全局态、依赖异步 readiness、拥有子进程/网络 listener，或出现概率性 CI 失败。
 
@@ -442,7 +472,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md:1-44@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md:1-52@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md:1-48@687f282e`。
 
-### 2.14 fixture 生命周期 {#proc-lifecycle}
+<a id="proc-lifecycle"></a>
+
+### 2.14 fixture 生命周期
 
 `[源义务]` fixture 在 setup 失败、超时或断言失败时也必须释放。用户 patch 测试即使初始化在进入局部清理块前失败，也会恢复 watcher 工厂并销毁 Context；plugin-install 拦截器在导航前注册并保留到浏览器关闭，每个阶段替换 typed handler，delivery/cancellation barrier 保持顺序；Windows 上 Git 子进程的环境要从自身进程删除索引式命令行配置组（`GIT_CONFIG_COUNT`、`GIT_CONFIG_KEY_n`、`GIT_CONFIG_VALUE_n`），否则清洗逻辑删掉 key 却留下 counter，Git 在打开配置前就以 exit 128 失败；测试结束后还原。
 
@@ -470,7 +502,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-09-user-patch-hmr-test-delivery.md:1-28@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-27-plugin-install-interceptor-lifetime.md:1-36@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-27-plugin-manager-git-child-environment.md:1-29@687f282e`。
 
-### 2.15 确定性屏障 {#proc-determinism}
+<a id="proc-determinism"></a>
+
+### 2.15 确定性屏障
 
 `[源义务]` 用 sleep 近似 readiness 会在快 host 通过、慢 host 失败；永久冻结的浏览器时钟会让“读两次 `Date.now()` 计算保持时长”的产品逻辑永远等不到保持结束；断言瞬时 DOM 会捕获错误状态。源实现用 `pinHostClock()`（从锚点起按真实流逝时间推进的 `Date.now` spy）与 `pinBrowserClock(page)`（按固定间隔从锚点重新施加同一冻结时刻），因为产品会在 `PROCESS_TITLE_MINIMUM_MS = 150` 与输入框 `compositionend` 后 10ms 合成守卫中读取两次时间；`remaining = Date.now() - previousReading` 在永久冻结时钟下永不推进。
 
@@ -498,7 +532,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md:1-48@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md:1-98@687f282e`。
 
-### 2.16 观察已观察状态 {#proc-observe}
+<a id="proc-observe"></a>
+
+### 2.16 观察已观察状态
 
 `[源义务]` golden 记录的 hover、focus、后续 Host 读取等状态必须由捕获自己确立，不能继承环境。源修复三类缺陷：折叠场景在侧栏捕获前 hover Workspace 行、在 first-batch 捕获前 hover 该批次第一行；turn-tail 先按一个不移动焦点的键清除 pointer-input flag，再聚焦 Copy 并等待 running golden 记录的 tooltip；install-cancel 改为轮询 `data-plugin-status`，因为 highlight 先于 directory reload 提交，三次本地运行中状态在 highlight 后 61ms 才从 `disabled` 变为 `running`。`captureStableAria` 已经等待连续两次快照相等，但错误状态同样能满足它，因此稳定性不是正确性。
 
@@ -528,7 +564,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:1-52@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-09-user-patch-hmr-test-delivery.md:1-28@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-12-connection-and-compaction-fixture-preconditions.md:1-28@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-27-spreadsheet-selection-by-keyboard-before-reflow.md:1-37@687f282e`。
 
-### 2.17 完成信号归属 {#proc-completion}
+<a id="proc-completion"></a>
+
+### 2.17 完成信号归属
 
 `[源义务]` HTTP 202、投影 UI、进程启动、durable completion 是不同观察。源测试在 HTTP 202 后 hold 住真实 Workspace 创建，先断言 Agent 与 model request 都不存在，再释放并等待匹配 Session 的 `turn/end`；PowerShell 测试接受任一受支持 readiness tier，拒绝 timeout 与 exit settlement，并在 scrollback 中观察格式化 child 输出以证明 env persistence/cwd/credential scrubbing；ACP 覆盖测试在 transport failure 后不能只等 registry 消失，因为 disconnect cleanup 包含 cancellation、drain、persistence 与 owner disposal；worker-runtime 的慢绑定预算把 worker init 计入 active、delayed binding 计入 idle。
 
@@ -556,7 +594,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-readiness-and-completion.md:1-46@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-08-ci-completion-observations.md:1-46@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-pwsh-ci-observable-completion.md:1-28@687f282e`。
 
-### 2.18 预算归属 {#proc-budget}
+<a id="proc-budget"></a>
+
+### 2.18 预算归属
 
 `[源义务]` `describe` 层 timeout 会覆盖 lane 传入的 `--testTimeout`：`translation-pairing-merge` 的 23 个用例全部继承 15s，而 Windows coverage lane 已给 90s；`install-lefthook` 的 30s describe 值还被复制成五个用例的常量。`coverageTestTimeoutArgs` 抬高了 `--testTimeout` 与 `--expect.poll.timeout`，却把 `--hookTimeout` 留在 Vitest 默认 10s，而 `removeFixtureSafely` 会在注释写明的 10s 窗口内重试 Windows 句柄释放，于是 setup/teardown 撞上 hook 默认值。源决策：套件取 `{ timeout: 90_000 }`，删除重复的 per-case 常量，`coverageTestTimeoutArgs` 同时发出 `--hookTimeout`；一个环境变量管一份预算，覆盖 case 与 setup/teardown。
 
@@ -584,7 +624,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-27-translation-pairing-merge-budget.md:1-32@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-08-29-windows-lane-hook-and-lefthook-budget.md:1-36@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md:1-28@687f282e`。
 
-### 2.19 平台中立 fixture {#proc-platform}
+<a id="proc-platform"></a>
+
+### 2.19 平台中立 fixture
 
 `[源义务]` 单元与覆盖率套件在 Windows/macOS/Linux 运行，但平台无关行为可能被平台特有 fixture 掩盖：字面 POSIX 路径在 Windows 变成 drive-relative；hosted `file:` URI 可能是合法 UNC；child-pipe 关闭或 event-loop 调度在不同 host 不同；FIFO、可执行位、目录搜索位没有直接 Windows fixture。源决策：用 host 的 `node:path`/`node:url` 构造绝对路径与 `file:` URI，断言原生绝对输出或稳定 workspace 相对输出；无效 URI 用所有平台都会被 `fileURLToPath()` 拒绝的编码；传输失败注入 connection message writer，传入真实 Node stream 会报告的异步 write callback error，保持真实 child 存活；语言服务器 teardown 在 POSIX 用负 process-group id，在 Windows 用同步 `taskkill /T /F`，只忽略 already-absent-tree 状态，其他失败仍是 teardown 失败；只对真正 POSIX-only 的单用例做窄 Windows 排除，并保留相邻跨平台断言；受支持 Windows 路径仍在 per-file coverage gate 内。
 
@@ -611,7 +653,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-22-cross-platform-test-fixtures.md:1-34@687f282e`。
 
-### 2.20 负向对照与阈值校准 {#proc-controls}
+<a id="proc-controls"></a>
+
+### 2.20 负向对照与阈值校准
 
 `[源义务]` 一个新 guard 只有先被证明会失败才可信。源实践用负向对照复现记录到的失败签名，再用正向对照证明修复：折叠场景改为 hover New Session 行而非 Workspace 行时，`sidebar.expected.md` 以缺失 actions 文本失败；turn-tail 只做裸鼠标按下、不按键时，running 捕获缺少 `tooltip "Copy"`；时钟场景只固定一个时钟时，`steering` 以 `9/26 {{clock}}` 失败，`message-actions` 以日期前缀加 `now` 替代 `1min` 失败；性能预算先测端点与基线，再以 1.25x 余量设阈值；凭据匹配同时包含匹配与不匹配输入；更新器资格用失败复制必须留失败记录来证明 receipt 不会被伪造。
 
@@ -640,7 +684,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-09-27-web-lane-assertions-name-their-input-state.md:1-52@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-26-web-conversation-clock-fixture-day.md:1-48@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:1-125@687f282e`。
 
-### 2.21 会咬人的 tripwire {#proc-tripwire}
+<a id="proc-tripwire"></a>
+
+### 2.21 会咬人的 tripwire
 
 `[源义务]` guard 必须能产生可区分失败。hook 矩阵为每个有确定性 transcript 足迹的 hook point 建 `hook-<dialect>-<point>-<outcome>` 场景；`SessionStart`/`SubagentStart` 的注入是 detached、无 turn binding 的 `void runPoint(...).then(agent.inject())`，`context/message` 会与它应先于的工作竞速，记录的预期输出在自己的 replay 中 10/10 次失败，因此不纳入快照，留在单元覆盖；`SubagentStop` 只观察、不写 transcript，预期输出会与无 hook 运行字节相同，永远无法证明失败，因此也不纳入。harness 对“活跃会话数多于录制脚本数”明确报错，绝不静默错路由。
 
@@ -668,7 +714,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-04-hook-snapshot-matrix.md:1-53@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-22-fork-child-replay-seed-boundary.md:1-45@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-06-22-fork-snapshot-scenarios.md:1-32@687f282e`。
 
-### 2.22 属性不变式 {#proc-property}
+<a id="proc-property"></a>
+
+### 2.22 属性不变式
 
 `[源义务]` 每个协议形态包有一个 `fast-check` 驱动的 `tests/properties.spec.ts`，生成器偏向逼真但对抗性的输入（小索引池、短字符串、畸形形状），`numRuns` 控制在本地套件远低于约 10 秒，失败打印可复现 seed。`BlockAssembler` 的任意 chunk 流不变式包括：`blocks()` 计数 ≤ 已见不同索引数；重组幂等；不抛异常且只产出合法内容块标签；`finish` 反映最后一个 finish，缺省 `{kind:'stop'}`。`dsh-session`：`deriveMessages` 确定性、从 seed 回放一致、seq 严格单调、非消息事件不影响推导历史、推导内容与日志解耦。`dsh-tools`：JSON Schema `required` 等于每层 `required:true` 键集、转换对合法声明全函数、与 `validateArgs` 组合时满足 spec 的参数通过而定向破坏被拒绝。`dsh-agent-loop`：任意 send 调度对永不耗尽 adapter，以 `agent/status` settle 驱动而非 sleep；无消息丢失、轮次严格递增、状态转换在合法状态机。
 
@@ -697,7 +745,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-06-11-property-based-testing.md:1-30@687f282e`、`deepseek-harness/.agents/notes/proposed/testing/2026-06-11-mutation-testing.md:1-36@687f282e`、`deepseek-harness/.agents/notes/proposed/testing/2026-06-11-deterministic-and-stress-testing.md:1-35@687f282e`。
 
-### 2.23 防假绿预检 {#proc-preflight}
+<a id="proc-preflight"></a>
+
+### 2.23 防假绿预检
 
 `[源义务]` 必需 lane 在缺 secret、缺浏览器、缺 runner 能力或缺运行时版本时必须大声失败，不能让 suite 自行 skip 后仍显示绿色。源实现把真实 API e2e 放进独立 `e2e.yml`，preflight 把缺失 secret 转为 loud failure；Node 兼容性汇总在每条声明支持的版本线上跑专用 jsdom smoke，同时断言条件 worker 参数与可用存储；Windows 文件夹对话框冒烟通过 PowerShell 探测 `CoCreateInstance(CLSID_FileOpenDialog)`，回答 `CLASS_E_CLASSNOTAVAILABLE (0x80040111)` 时跑 clean-rejection case 并跳过 real-dialog case，完全无法探测则保留 win32 假设。
 
@@ -726,7 +776,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-06-19-real-api-e2e-ci.md:1-100@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-30-vitest-jsdom-webstorage-ownership.md:1-27@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-10-hosted-image-test-assumptions.md:1-42@687f282e`。
 
-### 2.24 带密钥真实 API 门禁 {#proc-secret}
+<a id="proc-secret"></a>
+
+### 2.24 带密钥真实 API 门禁
 
 `[源义务]` 策略曾依赖真实 API 测试，但默认 `ci.yml` 对 fork 无 key，`test:e2e` 无 key 会 self-skip；把它加进 `ci.yml` 会在未执行时报告绿色。源决策：单独 `e2e.yml`，只跑 `test:e2e`，使用 repository secret，只接受 trusted events；触发器包括 `workflow_dispatch`、push main/master、nightly schedule，以及每个 trusted PR；运行每个匹配的 `*.e2e.ts`。成本不是约束，可靠性才是。`ci.yml` 保持 keyless/forkable/always-green；secret 消费 job 不与 always-green gate 耦合。缺少 secret 由 preflight 转为 loud failure。
 
@@ -754,7 +806,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-06-19-real-api-e2e-ci.md:1-100@687f282e`。
 
-#### 带密钥 lane 的执行 {#proc-live}
+<a id="proc-live"></a>
+
+#### 带密钥 lane 的执行
 
 `[源义务]` 该 lane 在 manual dispatch、protected branch push、nightly schedule 与 trusted PR 上运行每个匹配的 `*.e2e.ts`；成本不是约束，可靠性是。它不把 keyless 套件混入 keyed job，也不把 keyed job 混入 always-green `ci.yml`。
 
@@ -764,7 +818,9 @@
 
 **证据边界**：live 运行有外部非确定性；lane 只覆盖它 provision 的服务与平台；凭据轮换与成本是运维责任。
 
-### 2.25 可靠性治理 {#proc-governance}
+<a id="proc-governance"></a>
+
+### 2.25 可靠性治理
 
 `[源义务]` 测试跨并发文件、worker、gate、job 运行；进程隔离不隔离 host 资源；全局 mutation 与不完整 teardown 污染后续测试；测试可能只在单独运行时通过。源实现由 `dsh-ci-test-reliability` Skill 拥有测试隔离与 CI flake 诊断，适用于测试/fixture 获取 host 资源、修改进程全局态、依赖异步 readiness、拥有子进程/网络 listener，或出现概率性 CI 失败。要求建模并发资源、分类失败（确定性产品 bug、隔离缺陷、时序/readiness、host 容量、外部服务），修复所有权或观察，而不是 retry、加大预算或 skip。proposed 的 lint 规则、通用 replay fixture、nightly stress job 明确未实现。
 
@@ -792,7 +848,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-08-28-ci-test-reliability-skill.md:1-44@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/SKILL.md:1-131@687f282e`、`deepseek-harness/.agents/skills/dsh-ci-test-reliability/references/ci-flake-diagnosis.md:1-60@687f282e`、`deepseek-harness/.agents/skills/dsh-pre-push-checks/SKILL.md:30-32@687f282e`、`deepseek-harness/.agents/skills/dsh-code-review/SKILL.md:22-23@687f282e`、`:52-53@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-07-subagent-teardown-test-budgets.md:1-29@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-27-oxlint-contract-spawn-case-budgets.md:1-28@687f282e`。
 
-### 2.26 性能预算门禁 {#proc-perf}
+<a id="proc-perf"></a>
+
+### 2.26 性能预算门禁
 
 `[源义务]` 性能回归可能 unnoticed 到 master：first open 在 127,400-event 合成日志上从 35ms 退化到 5s，在 575,000-chunk 真实日志上从 0.3s 退化到 26s，2.7GB RSS，512MB 限制下 heap exhausted。单次 `open()` 不够，因为工作会在 open/read/restore/projection 间移动，endpoint `heapUsed` 无 GC 不能区分 retained 与 reclaimable。必需 Linux PR `node24/benchmarks` job 跑 `check:ci:bench` → `run-ci-bench.ts`；benchmark-only 依赖放 private workspace；构建 libs+workers；`vitest.bench.config.ts`；在 plain Node 下跑编译后 JS，移除 `NODE_OPTIONS`，不用 TS loader。gate 按 measured user path 分组，`*.bench.ts` 为主机侧，`*.bench.client.ts` 为客户端；package-local `.perf.ts` 是非门禁诊断。每个 sample 复制 source 到 private root、起 fresh compiled worker；seed 进程用生产 append/stream/persistence 生成 current-generation Zstd session，固定 timestamp/id；不依赖 recorded session、ambient repo、network、private home 或 deployed GUI 输入。endpoint budget 例：当前 generation `open` 用 50ms 标准 runner 预期，1.25x 余量得 63ms。memory-pressure 脚本先在无限制下构建，再在 cgroup v2 `memory.max` 4 或 8 GiB、`memory.swap.max=0` 下重跑固定 benchmark 列表；case 错过 normal budget 或 cgroup kill 进程即失败。
 
@@ -822,7 +880,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:1-125@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-06-frontend-performance-budgets.md:1-107@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-28-session-corpus-performance.md:1-80@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-10-07-memory-limited-benchmarks.md:1-42@687f282e`。
 
-### 2.27 证据与门禁分离 {#proc-stress}
+<a id="proc-stress"></a>
+
+### 2.27 证据与门禁分离
 
 `[源义务]` 浏览器压力 lane `pnpm run test:web:stress` 保持无密钥、显式 opt-in；测试持有的 adapter 通过真实 Host、Gateway、WebSocket、Session 归并和 live Think 行发 100,000 个 `reasoning-delta`。每批 128 个 chunk 等一次浏览器 timer turn 再发下一批，因此 50ms heartbeat 与预调度 DOM 事件按 250ms budget 测一个有界 ingestion/render interval，而不是累积 socket backlog；结尾 marker 证明所有 chunk 到达 UI；`DSH_WEB_STRESS_HEADFUL=1` 用可见浏览器 Performance 面板分析同一场景。该 lane 是手动性能诊断与修复验收证据，不是默认 CI gate，也不替代确定性调度单测。确定性 focused tests 固定 `Notifier` 的 per-frame coalescing、结构事件抢占、失效回调、无 rAF fallback，并在 `Session` 层证明一帧只发布一次最新累计文本且 finalization 不被旧帧回调重复通知。
 
@@ -850,7 +910,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-08-03-opt-in-reasoning-chunk-browser-stress.md:1-45@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-04-session-open-performance-gate.md:1-125@687f282e`。
 
-### 2.28 声明边界 {#proc-claims}
+<a id="proc-claims"></a>
+
+### 2.28 声明边界
 
 `[源义务]` green run 只覆盖它实际执行的 runtime、platform、runner class、corpus 与拓扑。源文档明确：web gate 不声称跨平台浏览器一致；benchmark runner 变更需要实际 hosted run 才能认定 job timeout 经过验证，本地 workflow 断言不能证明执行耗时；`ci-workflow.spec.ts` 的 YAML 解析用例要求三个 worker 都含 assignment 并拒绝 step-level override，但它们只证明配置，不证明 host capacity；corpus benchmark 只从一个开发者本地 DSH home 取 1,650 个 session 的聚合计数（22 个上分位锚点：p50 53 events/86,195 bytes/1 turn，p90 709/1,849,503/3，p99 7,229/8,479,554/18，max 84,467/48,139,877/2,181；rank r of n 取第一个 ≥ (r+1)/n 的锚点），不保留内容/身份/路径；memory clamp 的 4/8 GiB 结果不泛化；桌面更新资格在源中主要是 Windows 路径；proposed 机制不是已执行保证。
 
@@ -877,7 +939,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-30-web-browser-snapshot-ci-gate.md:29-33@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-06-standard-hosted-benchmark-runner.md:1-27@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-09-06-pr-ci-runner-temporary-storage.md:45-52@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-28-session-corpus-performance.md:13-19@687f282e`。
 
-### 2.29 覆盖平面诚实 {#proc-coverage}
+<a id="proc-coverage"></a>
+
+### 2.29 覆盖平面诚实
 
 `[源义务]` per-file 100% coverage gate 只测 `packages/*/*/src`；浏览器驱动代码、test harness、support module 在门外。快照层从一个示例测试目录里的三个模块起步，逐文件 100% gate 完全测不到这些机制，正是同类缺口推动 `dsh-llm-replay` 从 `examples/` 移入 `packages/support`。源决策：可复用机制放进受门禁的 support 包；浏览器驱动代码不能诚实维持 per-file 100%，因此只把 gate-worthy 逻辑放进门禁包；TUI 包测试不声称组装产品覆盖，产品入口移除后由部署拥有 journey/PTY；窄平台排除只排除单用例，受支持 Windows 路径仍在 gate 内；每个声明 runtime line 跑聚焦兼容 smoke，避免 Node 24 成为唯一信号。
 
@@ -905,7 +969,9 @@
 
 来源：`deepseek-harness/.agents/notes/implemented/testing/2026-07-24-web-gui-browser-e2e-lane.md:1-98@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-08-shared-acp-snapshot-package.md:1-41@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-18-tui-terminal-state-snapshots.md:17-21@687f282e`、`deepseek-harness/.agents/notes/archived/testing/2026-07-22-cross-platform-test-fixtures.md:23-34@687f282e`。
 
-### 2.30 故障注入与恢复 {#proc-faults}
+<a id="proc-faults"></a>
+
+### 2.30 故障注入与恢复
 
 `[源义务]` connection refusal、首个事件前 reset、无 `[DONE]` 的 clean EOF、合法无内容 completion、partial output 后 reset 有不同 adapter/recovery 结果；统一成一个 generic mock 会掩盖边界是否保留区别，以及失败 chunk 是否留在 committed history 之外。源实现 `@deepseek-ai/dsh-llm-mock-server`：可导入 Node HTTP server，`pnpm run mock:llm` 源码入口用于手动注入，不暴露可安装 binary；接受 OpenAI-compatible root 与 `/v1` chat-completions，校验 optional bearer，捕获请求，每个 accepted request 消耗一个显式 behavior；script exhaustion fail loud，重复需 `repeatLast`。behavior 覆盖 socket reset、post-header disconnect、partial disconnect、stall、valid empty completion、clean truncated stream、malformed payload、representative HTTP failure、complete text/reasoning/tool-call、slow streaming、max-token completion；真正 `connection_refused` 是 CLI listener-lifecycle phase，因为 bound handler 不能拒绝自己的 TCP 连接。`random` 每个请求重新加权选择，暴露/记录 unsigned 32-bit seed，接受 caller 权重，内置 success-heavy stress profile；该 profile 是可配置测试压力，不是生产事故频率估计，`connection_refused` 不在 request-level pool。server 只报告 wire facts，不判断 retryability。真实组合测试经 `dsh-llm-deepseek`、`dsh-agent-loop`、`dsh-llm-retry`：refusal、hard disconnect、partial reset、idle timeout、valid content-less completion 按现有默认策略恢复；clean partial EOF 仍是 `STREAM_CLOSED`，默认不重试。package 不改变这些策略。
 
@@ -934,7 +1000,9 @@
 
 来源：`deepseek-harness/.agents/notes/archived/testing/2026-07-25-scriptable-llm-wire-fault-server.md:1-44@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-09-10-desktop-local-updater-qualification.md:1-51@687f282e`、`deepseek-harness/.agents/notes/implemented/testing/2026-10-07-memory-limited-benchmarks.md:1-42@687f282e`。
 
-### 2.31 有界瞬时重试 {#proc-retry}
+<a id="proc-retry"></a>
+
+### 2.31 有界瞬时重试
 
 `[源义务]` `Install (immutable)` 每个 target 跑 `pnpm install`；install-time native build 从 nodejs.org 下载 Node headers，endpoint 偶发 stall。2026-09-06 `node24-macos-x64` 在 10s connect timeout 后以 `fs-ext node-gyp ConnectTimeoutError` 失败，整个 install 中止，除了人工 rerun 没有恢复。源决策：`pnpm install --frozen-lockfile` 最多三次总尝试，失败间 10s pause，所有平台用 bash（Windows 镜像用 Git Bash）；任一次成功立即结束该 step；lockfile 检查或会在每次尝试都失败的原生构建错误，在有界预算耗尽后仍失败。它镜像 Wine lane 的 bounded-transfer policy，但没有 mirror，因为 install 还必须验证真实 registry 行为。
 

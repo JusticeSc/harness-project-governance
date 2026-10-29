@@ -13,7 +13,9 @@
 
 ---
 
-## 1. 包 README 即包合同 {#package-contracts-1.readme-as-package-contract}
+<a id="package-contracts-1.readme-as-package-contract"></a>
+
+## 1. 包 README 即包合同
 
 ### 触发条件
 
@@ -75,7 +77,9 @@ kind: "package-reference"   # package-reference | package-bundle | package-group
 
 ---
 
-## 2. 双语配对与 `.i18n.yaml` 逐标题哈希 {#package-contracts-1.bilingual-pair-and-sidecar}
+<a id="package-contracts-1.bilingual-pair-and-sidecar"></a>
+
+## 2. 双语配对与 `.i18n.yaml` 逐标题哈希
 
 ### 触发条件
 
@@ -143,7 +147,9 @@ kind: "package-reference"   # package-reference | package-bundle | package-group
 
 ---
 
-## 3. 配置契约：生成目录、默认值与 fail-loud {#package-contracts-1.configuration-catalog-and-fail-loud}
+<a id="package-contracts-1.configuration-catalog-and-fail-loud"></a>
+
+## 3. 配置契约：生成目录、默认值与 fail-loud
 
 ### 触发条件
 
@@ -199,7 +205,9 @@ kind: "package-reference"   # package-reference | package-bundle | package-group
 
 ---
 
-## 4. 组合行、patch 覆盖与 profile 归属 {#package-contracts-1.composition-and-patch-surface}
+<a id="package-contracts-1.composition-and-patch-surface"></a>
+
+## 4. 组合行、patch 覆盖与 profile 归属
 
 ### 触发条件
 
@@ -257,7 +265,9 @@ kind: "package-reference"   # package-reference | package-bundle | package-group
 
 ---
 
-## 5. 模型可见面与 KV cache {#package-contracts-1.model-facing-and-cache-contract}
+<a id="package-contracts-1.model-facing-and-cache-contract"></a>
+
+## 5. 模型可见面与 KV cache
 
 ### 触发条件
 
@@ -305,7 +315,9 @@ KV cache 命中是 best-effort，README 只是声明；本域未测量 token 或
 
 ---
 
-## 6. 工具执行时权威与声明式结果 {#package-contracts-1.model-tool-authority-and-results}
+<a id="package-contracts-1.model-tool-authority-and-results"></a>
+
+## 6. 工具执行时权威与声明式结果
 
 ### 触发条件
 
@@ -351,7 +363,9 @@ KV cache 命中是 best-effort，README 只是声明；本域未测量 token 或
 
 ---
 
-## 7. UI/Slot/资源协议扩展点 {#package-contracts-1.extension-seams-ui-and-resources}
+<a id="package-contracts-1.extension-seams-ui-and-resources"></a>
+
+## 7. UI/Slot/资源协议扩展点
 
 ### 触发条件
 
@@ -397,7 +411,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 8. 状态所有者、持久化与生命周期 {#package-contracts-1.state-storage-and-ownership}
+<a id="package-contracts-1.state-storage-and-ownership"></a>
+
+## 8. 状态所有者、持久化与生命周期
 
 ### 触发条件
 
@@ -446,7 +462,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 9. 稳定错误码与恢复 {#package-contracts-1.failure-codes-and-recovery}
+<a id="package-contracts-1.failure-codes-and-recovery"></a>
+
+## 9. 稳定错误码与恢复
 
 ### 触发条件
 
@@ -496,7 +514,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 10. 兼容性、版本与弃用 {#package-contracts-1.compatibility-versioning-deprecation}
+<a id="package-contracts-1.compatibility-versioning-deprecation"></a>
+
+## 10. 兼容性、版本与弃用
 
 ### 触发条件
 
@@ -544,7 +564,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 11. 信任边界与数据外泄面 {#package-contracts-1.trust-and-data-boundaries}
+<a id="package-contracts-1.trust-and-data-boundaries"></a>
+
+## 11. 信任边界与数据外泄面
 
 ### 触发条件
 
@@ -590,7 +612,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 12. 限制、证据分层与开放验证 {#package-contracts-1.limits-evidence-and-open-verification}
+<a id="package-contracts-1.limits-evidence-and-open-verification"></a>
+
+## 12. 限制、证据分层与开放验证
 
 ### 触发条件
 
@@ -634,7 +658,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 13. Dev Note 非权威 {#package-contracts-1.dev-note-non-authoritative}
+<a id="package-contracts-1.dev-note-non-authoritative"></a>
+
+## 13. Dev Note 非权威
 
 ### 触发条件
 
@@ -674,7 +700,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 14. 单包单一职责与依赖方向 {#package-contracts-1.package-boundary-single-role}
+<a id="package-contracts-1.package-boundary-single-role"></a>
+
+## 14. 单包单一职责与依赖方向
 
 ### 触发条件
 
@@ -719,7 +747,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 15. Session 事件、投影与日志 {#package-contracts-1.session-event-and-projection-contract}
+<a id="package-contracts-1.session-event-and-projection-contract"></a>
+
+## 15. Session 事件、投影与日志
 
 ### 触发条件
 
@@ -764,7 +794,9 @@ Web shell 与 boot kernel 是 renderer 的直接消费者；dockkit 可被 Sideb
 
 ---
 
-## 16. CLI/headless 契约 {#package-contracts-1.cli-and-headless-contract}
+<a id="package-contracts-1.cli-and-headless-contract"></a>
+
+## 16. CLI/headless 契约
 
 ### 触发条件
 

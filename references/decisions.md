@@ -1,10 +1,6 @@
 # 决策记录与持久规则治理迁移参考（decisions）
 
-> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。
-> 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。引用只标实际检查过的范围；未检查的文件列入 `research/decisions-coverage.json` 的 `uninspectedCandidates`。
-> 标记约定：**[源规则]** 有明确文字、代码或配置要求；**[迁移设计]** 为让这些要求在采用项目中可执行而设计；**[建议]** 源仓未强制、采用时可降低风险的附加做法。实际顶层检查义务直接来自 AGENTS.md:175，不是由多个案例推导的建议；门禁拓扑仍由采用项目选择。
-> 未执行声明：作者阶段未运行源仓任何 build/lint/test；所有 `verification.status` 为 `unexecuted`，凡“门禁会通过/失败”均来自源码阅读。
-> 本域负责：Agent Note 的创建、分类、格式、状态迁移、取代、合并、删除、归档与冻结信任，Postmortem 准入，持久规则写入哪一层及机械门禁偏好，门禁接线。历史政策正文（为什么选择统一格式、为什么冻结）归 rationale 域；文档分层、双语配对归 documentation 域；CI 聚合与 hook 实现归 automation 域。交叉依赖见文末。
+> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。引用只标实际检查过的范围；未检查的文件列入 `research/decisions-coverage.json` 的 `uninspectedCandidates`。 标记约定：**[源规则]** 有明确文字、代码或配置要求；**[迁移设计]** 为让这些要求在采用项目中可执行而设计；**[建议]** 源仓未强制、采用时可降低风险的附加做法。实际顶层检查义务直接来自 AGENTS.md:175，不是由多个案例推导的建议；门禁拓扑仍由采用项目选择。 未执行声明：作者阶段未运行源仓任何 build/lint/test；所有 `verification.status` 为 `unexecuted`，凡“门禁会通过/失败”均来自源码阅读。 本域负责：Agent Note 的创建、分类、格式、状态迁移、取代、合并、删除、归档与冻结信任，Postmortem 准入，持久规则写入哪一层及机械门禁偏好，门禁接线。历史政策正文（为什么选择统一格式、为什么冻结）归 rationale 域；文档分层、双语配对归 documentation 域；CI 聚合与 hook 实现归 automation 域。交叉依赖见文末。
 
 ## 0. 使用契约与读者入口
 
@@ -65,7 +61,9 @@
 
 **[迁移设计]** 采用项目先画一张“载体—触发—门禁—所有者”表（可直接改写上表），再决定是否引入 Agent Note 机制。若项目没有双语、没有归档冻结需求，删掉对应列，不要照搬三件套与封印。
 
-## 2. M01 Agent Note 必要性准入 {#note-necessity}
+<a id="note-necessity"></a>
+
+## 2. M01 Agent Note 必要性准入
 
 > 机制 ID：`decisions-note-necessity`
 
@@ -96,7 +94,9 @@
 
 **证据限制.** 机械门禁只能检查“有 Note 且格式正确”，不能证明“这个改动真的需要 Note”或“写下的理据是真的”；后者只能评审。
 
-## 3. M02 生命周期、分类与路径 {#lifecycle-classification}
+<a id="lifecycle-classification"></a>
+
+## 3. M02 生命周期、分类与路径
 
 > 机制 ID：`decisions-lifecycle-classification`
 
@@ -128,7 +128,9 @@
 
 **证据限制.** 分类门禁证明路径合法，不证明类别选得对；“architecture vs process”的语义只能评审。该门禁同样没有独立 spec，负向行为来自源码阅读。**[已核对]**
 
-## 4. M03 文件格式门禁 {#note-format}
+<a id="note-format"></a>
+
+## 4. M03 文件格式门禁
 
 > 机制 ID：`decisions-note-format`
 
@@ -163,7 +165,9 @@
 
 **证据限制.** 门禁证明形状，不证明替代方案真实、后果诚实或 Problem 写得清楚；这些是评审责任。格式与分类两个门禁把规则写在脚本内联逻辑里，没有导出谓词，也没有对应 spec；它们的“会失败”只能由源码阅读推断，源仓唯一带正反用例的 Agent Note 门禁是归档校验器。**[已核对]**
 
-## 5. M04 生命周期迁移 {#lifecycle-transitions}
+<a id="lifecycle-transitions"></a>
+
+## 5. M04 生命周期迁移
 
 > 机制 ID：`decisions-lifecycle-transitions`
 
@@ -306,7 +310,9 @@
 
 **例外.** 删除整篇是唯一允许在活跃语料中“丢失文件”的路径，且必须逐条满足上述保留义务。
 
-## 10. M09 归档三件套操作 {#archive-triplet}
+<a id="archive-triplet"></a>
+
+## 10. M09 归档三件套操作
 
 > 机制 ID：`decisions-archive-triplet`
 
@@ -486,7 +492,9 @@
 
 **证据限制.** 仓库内看不到分支保护/ruleset，无法证明这些 check 是 required；hook 可被 `--no-verify` 绕过，CI 才是权威。
 
-## 15. M14 引用、链接与归档可见性 {#references}
+<a id="references"></a>
+
+## 15. M14 引用、链接与归档可见性
 
 > 机制 ID：`decisions-reference-integrity`
 
@@ -508,7 +516,9 @@
 
 **例外.** 有意引用历史时，活跃散文可链接进归档；该链接指向快照，不构成当前权威。**[源规则]** `deepseek-harness/.agents/notes/README.md:42@687f282e`
 
-## 16. 采用项目落地设计（参数化） {#migration}
+<a id="migration"></a>
+
+## 16. 采用项目落地设计（参数化）
 
 **[迁移设计]** 以下是让上述机制在另一个仓库可执行的最小落地顺序。每步都给出可删/可调参数，禁止直接照抄源仓常量。
 
@@ -529,7 +539,9 @@
 
 **采用时必须重设的参数（不得继承源仓值）**：格式生效日期与 grandfather 日期；归档日期下限规则；class 集合；双语/单语；预算上限；基线环境变量名；CI 车道名；例外登记；搜索排除路径；是否要求执行摘要/索引。
 
-## 17. 评审清单 {#review-checklist}
+<a id="review-checklist"></a>
+
+## 17. 评审清单
 
 - [ ] 该改动是否真的需要 Note？是否更新了既有 owner 而不是新建重复篇？
 - [ ] 路径的生命周期与 class 是否与决策性质一致？日期是否为首次提出日期？
@@ -546,7 +558,9 @@
 - [ ] 涉及扫描/政策实现的改动，是否取得领域所有者确认并把理由记录在该变更上？
 - [ ] 证据是否真实运行？是否只跑了定向检查却宣称语料级通过？
 
-## 18. 交叉域依赖 {#cross-domain}
+<a id="cross-domain"></a>
+
+## 18. 交叉域依赖
 
 - **rationale**：统一格式的理由与替代方案（`2026-07-05-uniform-agent-note-format`）、冻结归档的理由与替代方案（`2026-07-26-frozen-agent-note-archive`）应由 rationale 域承载；本域只引用结论与操作约束。
 - **documentation**：双语三件套、语言切换、配对门禁、`.zh.md` 结构镜像、文档分层与预算归 documentation；本域只保留“归档 sidecar 与现行配对记录格式不同”的接口事实。
@@ -557,7 +571,9 @@
 - **engineering**：防守模式的具体技术规则（生命周期、所有权、性能证据等）归 engineering；本域只保留“规则准入与门禁偏好”。
 - **supply-chain**：依赖面、workspace 协议、可选依赖、依赖目录与 `vendor/` 政策归 supply-chain；本域只把 `verify-package-dependencies`（含 `PACKAGE_DEPENDENCY_POLICY`）当作“机械强制 + 领域所有者确认例外”的例证。
 
-## 19. 证据与未知（写作时） {#evidence-limits}
+<a id="evidence-limits"></a>
+
+## 19. 证据与未知（写作时）
 
 - 本参考基于对源文件的直接阅读与少量只读统计：活跃 Note 343 篇（implemented 293、proposed 42、rejected 8）；归档 924 个英文 Note（三件套共 2772 条 manifest 记录）、6 个 class。计数用于理解规模，不构成判据。**[已核对]**
 - 未运行源仓门禁（BRIEF 要求作者阶段跳过 build/lint/test）；因此所有“门禁会通过/失败”的陈述来自代码阅读，不是执行证据。**[未执行]**

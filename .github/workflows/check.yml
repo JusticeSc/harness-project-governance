@@ -37,3 +37,13 @@ jobs:
           node-version: '24'
       - run: npm ci --prefix tools/doc-gates --ignore-scripts
       - run: npm run test-doc-gates
+      - run: npm run verify-md-links
+      - run: npm run verify-md-wrap
+      # The exporter copies the npm allowlist plus authored docs; run the exported copy as a consumer would.
+      - name: Export the allowlisted public package
+        run: node scripts/export-public.mjs "$RUNNER_TEMP/public-export"
+      - name: Run the exported copy
+        working-directory: ${{ runner.temp }}/public-export
+        run: |
+          npm run verify
+          npm run demo

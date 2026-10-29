@@ -17,7 +17,9 @@
 | 评估快照证据强度 | §5 | 能列出快照证明与不证明的清单 |
 | 迁移到另一个产品 | §7 | 参数化 capture 范围、writer 常量来源、生成区域 |
 
-## 1. 冻结基线 + 增量重放 {#persistence-release-history.frozen-baseline-and-delta}
+<a id="persistence-release-history.frozen-baseline-and-delta"></a>
+
+## 1. 冻结基线 + 增量重放
 
 **问题。** 只保留“当前 schema”会让旧 tag 的类型信息永久丢失；只保留每个 tag 的 diff 而不声明前驱，则无法从任何单条记录恢复该 tag 的完整状态；反过来，用当前 schema 回填旧 tag 会制造伪历史。
 
@@ -44,7 +46,9 @@
 
 **证据上限。** 链只能证明声明之间自洽；它不能证明被捕获的 tag 在远端真实存在，也不能证明抽取器没有漏类型。
 
-## 2. Digest 绑定、null 语义与图规范化 {#persistence-release-history.digest-and-union-binding}
+<a id="persistence-release-history.digest-and-union-binding"></a>
+
+## 2. Digest 绑定、null 语义与图规范化
 
 **问题。** 如果 digest 是对源文件文本做哈希，那么格式化、注释或相邻文件变化都会污染历史；如果 digest 没有方向绑定，before/after 可以互换或复制粘贴而不被发现。
 
@@ -71,7 +75,9 @@
 
 **【迁移设计】** 若无法复用源抽取器，至少实现：稳定 canonical form（字段排序、类型引用内联/编号一致）、对 root 与每个可达类型分别哈希、把 `before/after` 存为可重放的显式值、null 表示缺失、删除必须以 `after: null` 表达。
 
-## 3. 不可变发布与“只刷新有界区域” {#persistence-release-history.immutable-publication}
+<a id="persistence-release-history.immutable-publication"></a>
+
+## 3. 不可变发布与“只刷新有界区域”
 
 **问题。** 历史记录一旦被人手改（补一句“其实兼容”、把旧 digest 更新成当前值、把生成表格删掉），它就不再是发布证据。反过来，如果每次验证都重写整页，人工撰写的摘要与来源证据会丢失。
 
@@ -81,8 +87,7 @@
 
 - README 索引：`persistence-release-index:start/end`。
 - 每条记录的清单：`persistence-release-inventory:start/end`。
-- 每条记录的结构变化事实：`persistence-release-changes:start/end`。
-依据：`deepseek-harness/scripts/persistence-release-facts.ts:16-24@687f282e`、`deepseek-harness/scripts/persistence-release-facts.ts:53-95@687f282e`。
+- 每条记录的结构变化事实：`persistence-release-changes:start/end`。 依据：`deepseek-harness/scripts/persistence-release-facts.ts:16-24@687f282e`、`deepseek-harness/scripts/persistence-release-facts.ts:53-95@687f282e`。
 
 **【源实现】** 默认验证（不带 `--write`）把重新生成的 `.md` 内容与磁盘内容比较，任何差异都报 `Stale persistence release facts` 并失败；`--write` 才写入全部 changed artifacts。依据：`deepseek-harness/scripts/persistence-releases.ts:232-257@687f282e`。
 
@@ -93,8 +98,7 @@
 - frontmatter `kind: persistence-release`；
 - 恰好一个 ```yaml persistence-release``` 机器块；
 - 中英文机器块**逐字相等**；
-- 历史源码引用**禁止行号**（验证器正则拒绝 `.ts:12` 这类引用）。
-依据：`deepseek-harness/scripts/persistence-releases.ts:123-135@687f282e`。
+- 历史源码引用**禁止行号**（验证器正则拒绝 `.ts:12` 这类引用）。 依据：`deepseek-harness/scripts/persistence-releases.ts:123-135@687f282e`。
 
 **【源义务】** 配对 sidecar 记录每个 heading 的 en/zh 哈希；编辑任一侧后必须同步另一侧并重新记录。依据：`deepseek-harness/docs/persistence-changes/releases/README.i18n.yaml:1-31@687f282e`、`deepseek-harness/docs/persistence-changes/releases/dsh-v0.0.1-rc.1.i18n.yaml:1-31@687f282e`。
 
@@ -102,7 +106,9 @@
 
 **例外。** `--write` 允许刷新生成区域与 pairing；不允许改机器声明、schema 或人工概述。历史记录不能用“当前 schema 更好看”为理由重写。
 
-## 4. 捕获范围、tag 生命周期与 writer 常量 {#persistence-release-history.capture-scope-lifecycle}
+<a id="persistence-release-history.capture-scope-lifecycle"></a>
+
+## 4. 捕获范围、tag 生命周期与 writer 常量
 
 **问题。** 归档必须声明“覆盖到哪里”，否则读者会把“没记录”误当“没发生”。同时，产品 tag 的 writer 版本是源码常量，不能从 schema 的宽泛 `number` 声明推出来。
 
@@ -110,8 +116,7 @@
 
 - `schemaVersion: 1`；`capturedAt` 是 `YYYY-MM-DD` 且为真实日期；`releases` 非空。
 - tag 匹配 `^dsh-v<major>.<minor>.<patch>-(alpha|rc).<N>$`（无前导零），严格按语义版本递增且不重复。
-- 每条含 `tag`、`sourceDate`（必填 ISO 时间戳）、`publishedAt`（可为 `null`）、`sessionFormatVersion`（非负安全整数）。
-依据：`deepseek-harness/docs/persistence-changes/releases/manifest.json:1-162@687f282e`、`deepseek-harness/scripts/persistence-releases.ts:103-122@687f282e`。
+- 每条含 `tag`、`sourceDate`（必填 ISO 时间戳）、`publishedAt`（可为 `null`）、`sessionFormatVersion`（非负安全整数）。 依据：`deepseek-harness/docs/persistence-changes/releases/manifest.json:1-162@687f282e`、`deepseek-harness/scripts/persistence-releases.ts:103-122@687f282e`。
 
 **【源实现/事实】** 本归档捕获于 `2026-09-12`，共 26 个 tag：
 
@@ -130,7 +135,9 @@
 
 **证据上限。** 离线检查不会发现捕获日期之后才出现的新 tag；“完整性”只相对于 manifest 声明的范围。tag 是否真实存在、`publishedAt` 是否准确，需要联网或 Git 侧证据。
 
-## 5. 版本快照能证明与不能证明什么 {#persistence-release-history.snapshot-evidence-limits}
+<a id="persistence-release-history.snapshot-evidence-limits"></a>
+
+## 5. 版本快照能证明与不能证明什么
 
 **问题。** 快照看起来像“当年的 schema”，很容易被当成运行时兼容、迁移安全或源码逐字复现的证明。
 
@@ -163,7 +170,9 @@
 
 **证据上限。** 结构比较由当前分类器执行；它标出的 `review-required` 只是当前规则的阅读辅助，不是历史合规判决，也不是迁移义务。writer 推进时的只读全量归档另由 `persistence-historical-finalized.format-snapshot-archive` 与 `persistence-historical-finalized.historical-evidence-limits` 承担；本域的逐 tag 增量链不能替代它。
 
-## 6. 与当前兼容决策的边界 {#persistence-release-history.historical-vs-current-compatibility}
+<a id="persistence-release-history.historical-vs-current-compatibility"></a>
+
+## 6. 与当前兼容决策的边界
 
 **问题。** 两套东西长得很像：`docs/persistence-changes/` 根目录是**当前**的类型变更确认链（每个 dated change 一份 acknowledgement），`releases/` 是**历史** tag 快照。混淆会导致当前 PR 用一条回填记录逃避版本提升或 acknowledgement。
 
@@ -189,7 +198,9 @@
 
 **例外。** 历史归档可以作为“旧 tag 实际写出过该结构”的证据，用于设计迁移与回归 fixture；它不能作为“因此当前可以不做版本提升”的证据。
 
-## 7. 迁移到另一个产品 {#persistence-release-history.migration-checklist}
+<a id="persistence-release-history.migration-checklist"></a>
+
+## 7. 迁移到另一个产品
 
 **【迁移设计】** 参数化清单：
 

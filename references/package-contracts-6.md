@@ -37,7 +37,9 @@
 
 ---
 
-## 1. README 契约与 package-group map {#package-contracts-6.readme-contract-and-group-map}
+<a id="package-contracts-6.readme-contract-and-group-map"></a>
+
+## 1. README 契约与 package-group map
 
 **何时读**：新增包、拆分包组、移动能力归属、评审 README。
 
@@ -79,7 +81,9 @@
 
 ---
 
-## 2. 能力 seam：每个服务一个 provider、独占命名、裸 seam 惰性 {#package-contracts-6.capability-seam-one-provider}
+<a id="package-contracts-6.capability-seam-one-provider"></a>
+
+## 2. 能力 seam：每个服务一个 provider、独占命名、裸 seam 惰性
 
 **何时读**：引入 `ctx.*` 服务、替换后端、注册 route/扩展名/provider 名。
 
@@ -159,7 +163,9 @@
 
 ---
 
-## 4. Known Limitations、Deferred Work 与非权威 Dev Note {#package-contracts-6.limitations-and-deferred-work}
+<a id="package-contracts-6.limitations-and-deferred-work"></a>
+
+## 4. Known Limitations、Deferred Work 与非权威 Dev Note
 
 **何时读**：包在远程、headless、Windows、崩溃、多进程、无持久化等条件下不能兑现保证；或要写“未来会做”。
 
@@ -188,7 +194,9 @@
 
 ---
 
-## 5. 配置面：字段、默认值、校验边界与穷尽目录 {#package-contracts-6.configuration-surface-contract}
+<a id="package-contracts-6.configuration-surface-contract"></a>
+
+## 5. 配置面：字段、默认值、校验边界与穷尽目录
 
 **何时读**：新增/修改配置字段；新部署挂载包；生成 settings 表单或配置目录。
 
@@ -230,7 +238,9 @@
 
 ---
 
-## 6. 设置持久化、优先级、reset 与旧文件导入 {#package-contracts-6.settings-persistence-and-precedence}
+<a id="package-contracts-6.settings-persistence-and-precedence"></a>
+
+## 6. 设置持久化、优先级、reset 与旧文件导入
 
 **何时读**：做设置表单、加配置层、迁移旧 settings、改偏好 schema。
 
@@ -264,7 +274,9 @@
 
 ---
 
-## 7. 凭据与秘密边界 {#package-contracts-6.credential-and-secret-boundary}
+<a id="package-contracts-6.credential-and-secret-boundary"></a>
+
+## 7. 凭据与秘密边界
 
 **何时读**：接 provider key、发布凭据、远程主机、对象存储。
 
@@ -298,7 +310,9 @@
 
 ---
 
-## 8. 可选/实验 bundle 生命周期 {#package-contracts-6.optional-bundle-lifecycle}
+<a id="package-contracts-6.optional-bundle-lifecycle"></a>
+
+## 8. 可选/实验 bundle 生命周期
 
 **何时读**：发布实验功能、可选 UI、会花外部资源或改 workspace 的功能。
 
@@ -376,7 +390,9 @@
 
 ---
 
-## 10. Fail-closed：缺失执行器时拒绝，不降级 {#package-contracts-6.fail-closed-enforcement}
+<a id="package-contracts-6.fail-closed-enforcement"></a>
+
+## 10. Fail-closed：缺失执行器时拒绝，不降级
 
 **何时读**：受限执行、远程传输、发布、任何“组件缺失会改变保证”的地方。
 
@@ -411,7 +427,9 @@
 
 ---
 
-## 11. 信任边界与残余风险 {#package-contracts-6.trust-boundary-and-residual-risk}
+<a id="package-contracts-6.trust-boundary-and-residual-risk"></a>
+
+## 11. 信任边界与残余风险
 
 **何时读**：包名或 API 含 sandbox / isolation / scope / trust / approval。
 
@@ -445,7 +463,9 @@
 
 ---
 
-## 12. 注册生命周期、作用域与原子贡献 {#package-contracts-6.registration-lifetime-and-scope}
+<a id="package-contracts-6.registration-lifetime-and-scope"></a>
+
+## 12. 注册生命周期、作用域与原子贡献
 
 **何时读**：注册 tool、prompt section、command、extension、provider、projection、module；卸载/替换插件；做 per-agent registry。
 
@@ -490,7 +510,9 @@
 
 ---
 
-## 13. 持久性与重启语义 {#package-contracts-6.durability-and-restart-semantics}
+<a id="package-contracts-6.durability-and-restart-semantics"></a>
+
+## 13. 持久性与重启语义
 
 **何时读**：包保存状态、恢复会话、冷启动子 agent、发布多对象操作。
 
@@ -534,7 +556,9 @@
 
 ---
 
-## 14. 生成物、漂移 gate 与保留证据 {#package-contracts-6.generated-artifact-and-evidence-verification}
+<a id="package-contracts-6.generated-artifact-and-evidence-verification"></a>
+
+## 14. 生成物、漂移 gate 与保留证据
 
 **何时读**：改生成器/依赖/补丁；运行或决定不运行长诊断；发布构建物。
 
@@ -582,7 +606,9 @@ pnpm exec vitest run packages/client/ui-sidebar-documentpreview/tests/excel-open
 
 ---
 
-## 15. 兼容与版本迁移 {#package-contracts-6.compatibility-and-version-migration}
+<a id="package-contracts-6.compatibility-and-version-migration"></a>
+
+## 15. 兼容与版本迁移
 
 **何时读**：改持久格式、偏好 schema、wire 协议、工具 schema，或退役字段。
 
@@ -616,7 +642,9 @@ pnpm exec vitest run packages/client/ui-sidebar-documentpreview/tests/excel-open
 
 ---
 
-## 16. 出站数据披露 {#package-contracts-6.outbound-data-disclosure}
+<a id="package-contracts-6.outbound-data-disclosure"></a>
+
+## 16. 出站数据披露
 
 **何时读**：挂 telemetry、把推理/对话发给外部服务、嵌入网页、抓取 URL。
 
@@ -651,7 +679,9 @@ pnpm exec vitest run packages/client/ui-sidebar-documentpreview/tests/excel-open
 
 ---
 
-## 17. 人工审批与本地证据边界 {#package-contracts-6.human-approval-and-evidence-limits}
+<a id="package-contracts-6.human-approval-and-evidence-limits"></a>
+
+## 17. 人工审批与本地证据边界
 
 **何时读**：发布/提升制品、升权、加载动态包、任何不可逆写。
 
@@ -693,7 +723,9 @@ pnpm exec vitest run packages/client/ui-sidebar-documentpreview/tests/excel-open
 
 ---
 
-## 18. 打包载荷与供应链身份 {#package-contracts-6.packaging-payload-and-supply-chain}
+<a id="package-contracts-6.packaging-payload-and-supply-chain"></a>
+
+## 18. 打包载荷与供应链身份
 
 **何时读**：打平台 wheel、原生 addon、预构建运行时、客户端 bundle。
 

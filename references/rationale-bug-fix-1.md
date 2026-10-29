@@ -58,7 +58,9 @@
 
 ## 1. 诊断与缺失语义
 
-### rationale-bug-fix-1-RB01 保留失败因果链，并把退化成功归类为可重试的边界错误 {#rationale-bug-fix-1-RB01}
+<a id="rationale-bug-fix-1-RB01"></a>
+
+### rationale-bug-fix-1-RB01 保留失败因果链，并把退化成功归类为可重试的边界错误
 
 **触发。** 适配器/传输层把下层异常转换成本层错误；模型返回空内容、流被截断或停止原因未知；同一 turn 重试；子代理 terminal message 没有内容块。
 
@@ -89,7 +91,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-18-tool-row-file-open-failure.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-07-24-tui-turn-end-stop-reason-notices.md:1-28@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB02 确认缺失与元数据不可用必须分离，身份判定失败关闭 {#rationale-bug-fix-1-RB02}
+<a id="rationale-bug-fix-1-RB02"></a>
+
+### rationale-bug-fix-1-RB02 确认缺失与元数据不可用必须分离，身份判定失败关闭
 
 **触发。** 读取 root marker、workspace/session 元数据、Web 索引路径、目录项或 shell 关联。
 
@@ -120,7 +124,9 @@
 
 ## 2. 持久化、并发与生命周期
 
-### rationale-bug-fix-1-RB03 持久化记录先绑定稳定身份，再用显示字段做投影 {#rationale-bug-fix-1-RB03}
+<a id="rationale-bug-fix-1-RB03"></a>
+
+### rationale-bug-fix-1-RB03 持久化记录先绑定稳定身份，再用显示字段做投影
 
 **触发。** 创建/恢复 JSONL 会话、workspace、session row、schedule task、job 或锁记录；复用空白 run/session/tab；分页/过滤列表；锁持有者退出。
 
@@ -162,7 +168,9 @@
 - `deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-29-reused-blank-runs-requested-preset.md:1-37@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-30-job-session-lifecycle.md:1-37@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB04 分派前完成原子准入，只通过一个排序点发布，取消先落锁存 {#rationale-bug-fix-1-RB04}
+<a id="rationale-bug-fix-1-RB04"></a>
+
+### rationale-bug-fix-1-RB04 分派前完成原子准入，只通过一个排序点发布，取消先落锁存
 
 **触发。** 图片/消息/子代理任务入队或发远端；同一逻辑请求重放；取消与工作同时活跃；多个 produce/consume 需要稳定顺序；互斥编辑。
 
@@ -192,7 +200,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-07-cancel-convergence-wake-latch.md:1-30@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-drill-claim-precedes-the-drill-edit.md:1-38@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB05 失败步骤关闭前为每个未决 tool call 写入显式结果，不伪造成功 {#rationale-bug-fix-1-RB05}
+<a id="rationale-bug-fix-1-RB05"></a>
+
+### rationale-bug-fix-1-RB05 失败步骤关闭前为每个未决 tool call 写入显式结果，不伪造成功
 
 **触发。** turn/step 以失败、取消或超时结束；assistant message 已记录 tool calls，但 scheduler 未完成全部 result；需要在 resume/fork 后保持 call/result 配对。
 
@@ -216,7 +226,9 @@
 
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-failed-step-tool-results.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB21 owned-run finish reason 是区间观察，不是 prompt 因果 {#rationale-bug-fix-1-RB21}
+<a id="rationale-bug-fix-1-RB21"></a>
+
+### rationale-bug-fix-1-RB21 owned-run finish reason 是区间观察，不是 prompt 因果
 
 **触发。** Python SDK 需要 `RunResult` 级 finish reason；区间从 submitted message 的 durable inbox receipt 到 next whole-agent idle；区间内可能包含 steering/injected/queued work。
 
@@ -240,7 +252,9 @@
 
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-11-owned-run-finish-reason.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB22 owned job 生命周期只写持久观察，不承担调度/资源释放 {#rationale-bug-fix-1-RB22}
+<a id="rationale-bug-fix-1-RB22"></a>
+
+### rationale-bug-fix-1-RB22 owned job 生命周期只写持久观察，不承担调度/资源释放
 
 **触发。** owned job register/settle；需要重建执行区间或审计历史；registry restart、copied history、teardown；producer 拒绝或 teardown cancellation。
 
@@ -266,7 +280,9 @@
 
 - `deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-30-job-session-lifecycle.md:1-37@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB06 进程、锁与管道的完成点必须有可观测证据，等待必须有界 {#rationale-bug-fix-1-RB06}
+<a id="rationale-bug-fix-1-RB06"></a>
+
+### rationale-bug-fix-1-RB06 进程、锁与管道的完成点必须有可观测证据，等待必须有界
 
 **触发。** 终止子进程树、运行 pnpm、等待 shell 命令；持有/接管文件锁；读取子进程输出；Python/脚本运行时 load、settle 或 dispatch。
 
@@ -295,7 +311,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-code-runtime-python-settlement-fixes.md:1-152@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-code-runtime-python-load-and-dispatch-hardening.md:1-42@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB07 热重载按等待完成的补偿事务处理：候选验证、回滚与错误可见 {#rationale-bug-fix-1-RB07}
+<a id="rationale-bug-fix-1-RB07"></a>
+
+### rationale-bug-fix-1-RB07 热重载按等待完成的补偿事务处理：候选验证、回滚与错误可见
 
 **触发。** 配置/插件被修改并触发热重载；HMR 需要释放旧模块；候选配置非法或依赖初始化失败。
 
@@ -323,7 +341,9 @@
 
 ## 3. 执行边界、测试与指导校验
 
-### rationale-bug-fix-1-RB08 测试必须命中真实执行/生效边界，而不是表面结构 {#rationale-bug-fix-1-RB08}
+<a id="rationale-bug-fix-1-RB08"></a>
+
+### rationale-bug-fix-1-RB08 测试必须命中真实执行/生效边界，而不是表面结构
 
 **触发。** 安全/权限测试；构建产物/覆盖率/路径豁免；窄视口或真实浏览器布局；手势/可编辑区域判定；测试运行器自身的安装目录。
 
@@ -352,7 +372,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-10-built-bundle-css-exemption.md:1-26@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-13-partitioned-coverage-location-canonicalization.md:1-44@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB13 能力准入与信任边界放在 Host/执行器，页面/展示层不可信 {#rationale-bug-fix-1-RB13}
+<a id="rationale-bug-fix-1-RB13"></a>
+
+### rationale-bug-fix-1-RB13 能力准入与信任边界放在 Host/执行器，页面/展示层不可信
 
 **触发。** 工具 schema 暴露给模型但执行器仍需过滤；图片/附件进入会话；嵌入式 WebView 请求特权操作；会话写入与 writer 锁竞争。
 
@@ -380,7 +402,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-16-session-writer-held-feedback.md:1-26@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-20-windows-embedded-mandatory-update.md:1-26@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB18 指导/预设/目录内容必须由真实挂载与提交事件校验 {#rationale-bug-fix-1-RB18}
+<a id="rationale-bug-fix-1-RB18"></a>
+
+### rationale-bug-fix-1-RB18 指导/预设/目录内容必须由真实挂载与提交事件校验
 
 **触发。** preset/指导文档声称某种行为；插件提供自带 preset root；preset 切换后需要更新 slash catalog；损坏 preset 需要展示。
 
@@ -408,7 +432,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-20-plugin-owned-shipped-preset-root.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-24-system-prompt-section-order-ties.md:1-28@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB20 并发测试基础设施使用私有资源与真实夹具 {#rationale-bug-fix-1-RB20}
+<a id="rationale-bug-fix-1-RB20"></a>
+
+### rationale-bug-fix-1-RB20 并发测试基础设施使用私有资源与真实夹具
 
 **触发。** pnpm/包管理器在测试中运行；多个测试并发使用 runner 安装目录；浏览器/UI 测试需要清理真实夹具；热重载/进程测试需要独立工作目录。
 
@@ -440,7 +466,9 @@
 
 ## 4. 投影、完成事实与演进
 
-### rationale-bug-fix-1-RB09 持久证据保持原样，兼容降级只发生在出站投影 {#rationale-bug-fix-1-RB09}
+<a id="rationale-bug-fix-1-RB09"></a>
+
+### rationale-bug-fix-1-RB09 持久证据保持原样，兼容降级只发生在出站投影
 
 **触发。** 历史 tool input/messages 需要发送给不同版本对端；输入历史含未知 block type；token 用量字段缺失/未定价；请求重放需要补齐状态。
 
@@ -467,7 +495,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-16-messages-historical-tool-input.md:1-30@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-18-messages-input-history-compatibility.md:1-32@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB10 派生视图只从完成事实和原始来源计算 {#rationale-bug-fix-1-RB10}
+<a id="rationale-bug-fix-1-RB10"></a>
+
+### rationale-bug-fix-1-RB10 派生视图只从完成事实和原始来源计算
 
 **触发。** UI 显示 turn/step 计数、fork/retry 按钮或消息来源；历史被分页/截断/恢复；同一 turn 重试；transcript replacement 序列。
 
@@ -495,7 +525,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-12-full-session-turn-step-counts.md:1-39@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-20-turn-error-survives-same-turn-retry-history.md:1-32@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB14 面向模型的投影复用真实能力/编码规则，截断要代表性且可见 {#rationale-bug-fix-1-RB14}
+<a id="rationale-bug-fix-1-RB14"></a>
+
+### rationale-bug-fix-1-RB14 面向模型的投影复用真实能力/编码规则，截断要代表性且可见
 
 **触发。** 图片/多模态输入投影到模型请求；glob/搜索结果被截断；压缩摘要请求需要复用缓存前缀；多模态 tool result 需要保留/摘要。
 
@@ -523,7 +555,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-10-deepseek-v41-request-image-projection.md:1-32@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-21-multimodal-tool-result-retention.md:1-32@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB15 适配器升级、设置恢复与提示组合要显式分类并按所有权解析 {#rationale-bug-fix-1-RB15}
+<a id="rationale-bug-fix-1-RB15"></a>
+
+### rationale-bug-fix-1-RB15 适配器升级、设置恢复与提示组合要显式分类并按所有权解析
 
 **触发。** 升级模型 SDK/pi-ai 或插件；设置 catalog 需要恢复/迁移；包内转发 import 需要解析；系统提示/运行时上下文由多个来源组合。
 
@@ -558,7 +592,9 @@
 
 ## 5. 资源、平台与交互
 
-### rationale-bug-fix-1-RB11 为队列、扫描和并发加上限与协作式让出 {#rationale-bug-fix-1-RB11}
+<a id="rationale-bug-fix-1-RB11"></a>
+
+### rationale-bug-fix-1-RB11 为队列、扫描和并发加上限与协作式让出
 
 **触发。** 流式队列/回复 backlog 增长；大历史分页或大量参数扫描；单个 Host 的 Session 列表占用事件循环；脚本运行时处理大量请求。
 
@@ -589,7 +625,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-04-large-history-pagination-call-stack.md:1-28@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-30-session-list-host-fairness.md:1-69@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB12 Windows 路径/字符串/进程边界使用显式长度与创建期标志 {#rationale-bug-fix-1-RB12}
+<a id="rationale-bug-fix-1-RB12"></a>
+
+### rationale-bug-fix-1-RB12 Windows 路径/字符串/进程边界使用显式长度与创建期标志
 
 **触发。** 读取 Win32 picker/API 返回的 UTF-16 路径；列举/删除 junction/重解析点；启动 Windows 子进程；解析 Store pwsh 别名。
 
@@ -618,7 +656,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-12-resolve-store-pwsh-aliases.md:1-24@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-09-16-windows-subprocess-console-visibility.md:1-30@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB16 交互时序用显式状态/宽限/所有权，不靠延迟或位置猜测 {#rationale-bug-fix-1-RB16}
+<a id="rationale-bug-fix-1-RB16"></a>
+
+### rationale-bug-fix-1-RB16 交互时序用显式状态/宽限/所有权，不靠延迟或位置猜测
 
 **触发。** hover popup 进入/离开；outside-click 自关闭；同一 tick 的输入 echo；跨 session 草稿；drill claim 与编辑。
 
@@ -647,7 +687,9 @@
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-drill-claim-precedes-the-drill-edit.md:1-38@687f282e8625c6b8d11ff58211a90524be2e4317`
 - `deepseek-harness/.agents/notes/archived/bug-fix/2026-08-13-feedback-note-editor-popover.md:20-44@687f282e8625c6b8d11ff58211a90524be2e4317`
 
-### rationale-bug-fix-1-RB17 布局/滚动/显示状态要有单一所有权，测试相对几何而非绝对像素 {#rationale-bug-fix-1-RB17}
+<a id="rationale-bug-fix-1-RB17"></a>
+
+### rationale-bug-fix-1-RB17 布局/滚动/显示状态要有单一所有权，测试相对几何而非绝对像素
 
 **触发。** 折叠侧栏、sticky composer、滚动跟随、覆盖层/浮层定位；列表项/步骤卡顺序变化；窄视口/不同浏览器/滚动条差异；需要决定默认开合与 transient/持久状态边界。
 
@@ -689,7 +731,9 @@
 
 ## 6. 证据、范围与未决
 
-### rationale-bug-fix-1-RB19 把已确认事实、目标执行与未决问题分层记录 {#rationale-bug-fix-1-RB19}
+<a id="rationale-bug-fix-1-RB19"></a>
+
+### rationale-bug-fix-1-RB19 把已确认事实、目标执行与未决问题分层记录
 
 **触发。** 交付机制/文档/验证结论；声明性能、安全、兼容或恢复保证；存在跨域依赖、workaround 或未测平台；会话打开/恢复等并发路径存在未决状态。
 

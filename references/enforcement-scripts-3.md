@@ -17,7 +17,10 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 ## Mechanisms
 
 <a id="m-enforcement-scripts-3-snapshot-spill-locator-isolation"></a>
-### enforcement-scripts-3-snapshot-spill-locator-isolation — Replay spill locators are stable logical names scoped to one saved run {#enforcement-scripts-3-snapshot-spill-locator-isolation}
+
+<a id="enforcement-scripts-3-snapshot-spill-locator-isolation"></a>
+
+### enforcement-scripts-3-snapshot-spill-locator-isolation — Replay spill locators are stable logical names scoped to one saved run
 
 **Problem**: A replay records logical spill locators so a later run can refer to the same tool result. Concurrent replays of the same session/call can allocate the same physical file, overwriting each other's bytes; a locator saved by one run mapping into another reads unrelated content. Locator text must stay stable while routing to a run-private file.
 
@@ -37,16 +40,17 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 **Evidence**:
 
 <a id="m-enforcement-scripts-3-spill-private"></a>
-- `deepseek-harness/scripts/snapshot-spill-locators.spec.ts:12-67@687f282e` — two runs with the same session/call/content keep distinct physical paths, equal locator lengths and each other's bytes; both allocation orders are parameterized.
-<a id="m-enforcement-scripts-3-spill-unsaved"></a>
-- `deepseek-harness/scripts/snapshot-spill-locators.spec.ts:50-55@687f282e` — an unsaved locator throws `not saved by this run` from resolve and reverse mapping, while an ordinary path passes through.
-<a id="m-enforcement-scripts-3-spill-dispose"></a>
+- `deepseek-harness/scripts/snapshot-spill-locators.spec.ts:12-67@687f282e` — two runs with the same session/call/content keep distinct physical paths, equal locator lengths and each other's bytes; both allocation orders are parameterized. <a id="m-enforcement-scripts-3-spill-unsaved"></a>
+- `deepseek-harness/scripts/snapshot-spill-locators.spec.ts:50-55@687f282e` — an unsaved locator throws `not saved by this run` from resolve and reverse mapping, while an ordinary path passes through. <a id="m-enforcement-scripts-3-spill-dispose"></a>
 - `deepseek-harness/scripts/snapshot-spill-locators.spec.ts:56-60@687f282e` — after disposal the old locator no longer reaches the old physical file, and its stat is undefined.
 
 **Limitations**: one in-process store/adapter pair; no cross-process collision, crash recovery or exhaustive path-shape coverage. The spec does not assert locator text length equals the recorded byte count, does not exercise the bare locator root or backend containment, and does not prove every locator-independent code path uses the mapping. The synthetic locator root may not reproduce every Windows edge.
 
 <a id="m-enforcement-scripts-3-python-wheel-test-pruning"></a>
-### enforcement-scripts-3-python-wheel-test-pruning — Python runtime wheels: remove only distribution test trees and rewrite RECORD safely {#enforcement-scripts-3-python-wheel-test-pruning}
+
+<a id="enforcement-scripts-3-python-wheel-test-pruning"></a>
+
+### enforcement-scripts-3-python-wheel-test-pruning — Python runtime wheels: remove only distribution test trees and rewrite RECORD safely
 
 **Problem**: The unpacked Python runtime ships NumPy and pandas wheels whose tests dominate the payload. Deleting too much removes testing helpers, compiled support modules, licenses or data; rewriting RECORD naively drops quoted comma paths or hashes, and a malformed record can lead to deletion before corruption is noticed.
 
@@ -65,10 +69,8 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 **Evidence**:
 
 <a id="m-enforcement-scripts-3-prune-selection"></a>
-- `deepseek-harness/scripts/primary-runtime/prune-python-tests.spec.ts:16-60@687f282e` — only NumPy/pandas tests trees disappear; testing modules, compiled extension support files, data, licenses and other distributions survive; RECORD keeps original hashes and comma quoting.
-<a id="m-enforcement-scripts-3-prune-record"></a>
-- `deepseek-harness/scripts/primary-runtime/prune-python-tests.spec.ts:70-84@687f282e` — malformed RECORD inputs throw `invalid wheel RECORD` before the test file is deleted.
-<a id="m-enforcement-scripts-3-prune-idempotent"></a>
+- `deepseek-harness/scripts/primary-runtime/prune-python-tests.spec.ts:16-60@687f282e` — only NumPy/pandas tests trees disappear; testing modules, compiled extension support files, data, licenses and other distributions survive; RECORD keeps original hashes and comma quoting. <a id="m-enforcement-scripts-3-prune-record"></a>
+- `deepseek-harness/scripts/primary-runtime/prune-python-tests.spec.ts:70-84@687f282e` — malformed RECORD inputs throw `invalid wheel RECORD` before the test file is deleted. <a id="m-enforcement-scripts-3-prune-idempotent"></a>
 - `deepseek-harness/scripts/primary-runtime/prune-python-tests.spec.ts:61-64@687f282e` — the archive is byte-identical and a second prune leaves RECORD unchanged.
 
 **Ownership boundary**: wheel/platform policy belongs to `supply-chain-python-runtime`; this mechanism owns only pruning and RECORD integrity.
@@ -76,7 +78,10 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 **Limitations**: only NumPy/pandas are covered. Validation is exercised on synthetic rows with base64url sha256 and an unquote/quote expectation for plain vs comma paths; embedded-quote/escape/CRLF forms or a wheel whose RECORD omits rows may behave differently, and no version-mismatch negative case runs. The pruned extracted RECORD intentionally differs from the archive's original.
 
 <a id="m-enforcement-scripts-3-bounded-client-slot-report"></a>
-### enforcement-scripts-3-bounded-client-slot-report — Client slot catalog: teach every registrable slot within a bounded per-slot report {#enforcement-scripts-3-bounded-client-slot-report}
+
+<a id="enforcement-scripts-3-bounded-client-slot-report"></a>
+
+### enforcement-scripts-3-bounded-client-slot-report — Client slot catalog: teach every registrable slot within a bounded per-slot report
 
 **Problem**: A model adding UI to a dynamic package must know which slots exist, what each kind accepts, what props the component receives, who occupies the seat and when it exists. That contract lives in SlotMap merges and register call sites. Dumping the type graph makes one answer expensive; an undocumented or unresolvable slot yields an unusable catalog silently.
 
@@ -97,24 +102,21 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 **Evidence**:
 
 <a id="m-enforcement-scripts-3-slot-budget"></a>
-- `deepseek-harness/scripts/gen-client-catalog.ts:36-53@687f282e` — kind/scope sets, 1200-character declaration cap and the 122-line per-slot budget with its rationale.
-<a id="m-enforcement-scripts-3-slot-validate"></a>
-- `deepseek-harness/scripts/gen-client-catalog.ts:135-224@687f282e` — `collectSlotEntries` fails on contract violations and oversized reports; `validateSlotContracts` rejects duplicate keys, non-literal kind/scope, missing JSDoc, unresolvable owner types, undeclared registrations and untyped children.
-<a id="m-enforcement-scripts-3-slot-owner"></a>
-- `deepseek-harness/scripts/gen-client-catalog.ts:312-345@687f282e` — owner props expand the named type plus top-level composed aliases only; nested field types remain references.
-<a id="m-enforcement-scripts-3-slot-truncate"></a>
-- `deepseek-harness/scripts/gen-client-catalog.ts:403-408@687f282e` — over-long declarations are truncated with an explicit marker.
-<a id="m-enforcement-scripts-3-slot-check"></a>
-- `deepseek-harness/scripts/gen-client-catalog.ts:571-593@687f282e` — `--check` compares the committed artifact and exits 1 with the regeneration command when stale; it never writes.
-<a id="m-enforcement-scripts-3-slot-spec"></a>
-- `deepseek-harness/scripts/gen-client-catalog.spec.ts:1-264@687f282e` — hand-built cases pin contract validation, the 122-line budget and the real-workspace entry/field surface; the spec does not execute the 1200-character truncation, ambiguous-type dropping or a `--check` run.
-<a id="m-enforcement-scripts-3-slot-walk"></a>
+- `deepseek-harness/scripts/gen-client-catalog.ts:36-53@687f282e` — kind/scope sets, 1200-character declaration cap and the 122-line per-slot budget with its rationale. <a id="m-enforcement-scripts-3-slot-validate"></a>
+- `deepseek-harness/scripts/gen-client-catalog.ts:135-224@687f282e` — `collectSlotEntries` fails on contract violations and oversized reports; `validateSlotContracts` rejects duplicate keys, non-literal kind/scope, missing JSDoc, unresolvable owner types, undeclared registrations and untyped children. <a id="m-enforcement-scripts-3-slot-owner"></a>
+- `deepseek-harness/scripts/gen-client-catalog.ts:312-345@687f282e` — owner props expand the named type plus top-level composed aliases only; nested field types remain references. <a id="m-enforcement-scripts-3-slot-truncate"></a>
+- `deepseek-harness/scripts/gen-client-catalog.ts:403-408@687f282e` — over-long declarations are truncated with an explicit marker. <a id="m-enforcement-scripts-3-slot-check"></a>
+- `deepseek-harness/scripts/gen-client-catalog.ts:571-593@687f282e` — `--check` compares the committed artifact and exits 1 with the regeneration command when stale; it never writes. <a id="m-enforcement-scripts-3-slot-spec"></a>
+- `deepseek-harness/scripts/gen-client-catalog.spec.ts:1-264@687f282e` — hand-built cases pin contract validation, the 122-line budget and the real-workspace entry/field surface; the spec does not execute the 1200-character truncation, ambiguous-type dropping or a `--check` run. <a id="m-enforcement-scripts-3-slot-walk"></a>
 - `deepseek-harness/scripts/slot-walk.ts:120-147,196-227,302-311,333-336@687f282e` — ambiguous exported types are dropped; registrations require a literal name, a `slots`/`*.slots` receiver and a `register`/`registerFactory` callee; TSX is parsed as TSX.
 
 **Limitations**: line count is a proxy for rendered context cost, not measured tokens. The scan is lexical and does not resolve conditional/mapped types; one-level expansion can omit a cross-package shape. Duplicate-key detection is synthetic; the real-workspace case does not prove key uniqueness, and truncation/ambiguous-type dropping have no direct test. The 122/1200 numbers are source calibrations, and `--check` freshness was not executed here. Specs assert generator judgement, not the host tool's answer.
 
 <a id="m-enforcement-scripts-3-windows-safe-script-plumbing"></a>
-### enforcement-scripts-3-windows-safe-script-plumbing — Windows-safe script plumbing: JS entrypoints, tar cwd and junction-first cleanup {#enforcement-scripts-3-windows-safe-script-plumbing}
+
+<a id="enforcement-scripts-3-windows-safe-script-plumbing"></a>
+
+### enforcement-scripts-3-windows-safe-script-plumbing — Windows-safe script plumbing: JS entrypoints, tar cwd and junction-first cleanup
 
 **Problem**: POSIX-written scripts fail or destroy state on Windows: `spawnSync` cannot start a `.cmd` shim, GNU tar treats `C:/` as a remote host, and recursive deletion follows junctions into the repository's real `scripts/`, `node_modules` and tsx directories.
 
@@ -134,10 +136,8 @@ Reading was file-by-file. Ranges in the coverage record are the ranges actually 
 **Evidence**:
 
 <a id="m-enforcement-scripts-3-win-pnpm"></a>
-- `deepseek-harness/scripts/release/process.spec.ts:31-37@687f282e` — the pnpm command resolves to `pnpm` or a node executable plus a pnpm JS entry, and runs a real `--version`.
-<a id="m-enforcement-scripts-3-win-tar"></a>
-- `deepseek-harness/scripts/release/process.spec.ts:40-50@687f282e` — tar readers list members and read packed identity when run beside the archive; the comment names the Windows drive-colon failure.
-<a id="m-enforcement-scripts-3-win-cleanup"></a>
+- `deepseek-harness/scripts/release/process.spec.ts:31-37@687f282e` — the pnpm command resolves to `pnpm` or a node executable plus a pnpm JS entry, and runs a real `--version`. <a id="m-enforcement-scripts-3-win-tar"></a>
+- `deepseek-harness/scripts/release/process.spec.ts:40-50@687f282e` — tar readers list members and read packed identity when run beside the archive; the comment names the Windows drive-colon failure. <a id="m-enforcement-scripts-3-win-cleanup"></a>
 - `deepseek-harness/scripts/test-fixture-cleanup.ts:18-48@687f282e` — recursively unlink links before `rmSync`, with a 50×200 ms bounded retry and the Windows handle-release rationale.
 
 **Ownership boundary**: link-first deletion specializes `engineering-untrusted-subprocess`; this mechanism adds the pnpm JS entrypoint, tar cwd and bounded Windows retry.

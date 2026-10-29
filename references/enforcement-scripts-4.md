@@ -35,25 +35,16 @@
 - CSS/图片 loader 必须把物理文件注册为 watch 依赖：副作用 CSS 变成样式注入，`?inline` 变成无副作用的默认导出文本，图片变成 data URL，其他模块返回 null。实现的图片类型是 `.svg`/`.png`/`.webp`；本分区 spec 只执行 SVG 分支，PNG/WebP 未断言。
 - sourcemap 必须为 Vite 模块图外的 TS/TSX 生成，并串联 tsc map；第一方源码映射回仓库包路径。
 
-来源：deepseek-harness/packages/client/tsdown.client.ts:1-780@687f282e
-来源：deepseek-harness/scripts/client-bundle-purity.spec.ts:1-565@687f282e
-来源：deepseek-harness/scripts/client-bundle-css.spec.ts:1-124@687f282e
+来源：deepseek-harness/packages/client/tsdown.client.ts:1-780@687f282e 来源：deepseek-harness/scripts/client-bundle-purity.spec.ts:1-565@687f282e 来源：deepseek-harness/scripts/client-bundle-css.spec.ts:1-124@687f282e
 
 <a id="m-enforcement-scripts-4-bundle-config-name"></a>
-- 证据：预设从包目录 manifest 派生配置名与 loader 名，缺具名 manifest 的目录被拒绝。`deepseek-harness/scripts/client-bundle-purity.spec.ts:53@687f282e`
-<a id="m-enforcement-scripts-4-bundle-externals"></a>
-- 证据：默认 external 基线独立于包 manifest 生效，`dsh.client.external` 的请求与声明一致，malformed 声明直接失败。`deepseek-harness/scripts/client-bundle-purity.spec.ts:261@687f282e`
-<a id="m-enforcement-scripts-4-bundle-experimental"></a>
-- 证据：实验输入即使被静态库发射隐藏，或只由编译器 sourcemap 保留归属、或被别名/ external 运行时导入掩盖，仍必须被拒绝。`deepseek-harness/scripts/client-bundle-purity.spec.ts:386@687f282e`
-<a id="m-enforcement-scripts-4-bundle-sourcemaps"></a>
-- 证据：TS/TSX 产物带 sourcemap，生产构建串联 tsc map，第一方 sources 映射到仓库包路径。`deepseek-harness/scripts/client-bundle-purity.spec.ts:477@687f282e`
-<a id="m-enforcement-scripts-4-bundle-dual-client"></a>
-- 证据：预设的 `dualClient` 默认 false，只有 `dualClient === true` 才同时发射 Node 与浏览器配置；普通包只发射浏览器入口。`deepseek-harness/packages/client/tsdown.client.ts:125-129@687f282e`
-<a id="m-enforcement-scripts-4-bundle-image-types"></a>
-- 证据：图片 loader 注册 `.svg`/`.png`/`.webp` 三种类型；本分区 spec 只用 `preview.svg` 断言 data URL，PNG/WebP 分支未被本 spec 执行。`deepseek-harness/packages/client/tsdown.client.ts:39@687f282e`
-<a id="m-enforcement-scripts-4-bundle-css-watch"></a>
-- 证据：CSS/图片 loader 把被读取的物理样式表注册为 watch 依赖，虚拟模块不能隐藏它。`deepseek-harness/scripts/client-bundle-css.spec.ts:31@687f282e`
-<a id="m-enforcement-scripts-4-bundle-css-inject"></a>
+- 证据：预设从包目录 manifest 派生配置名与 loader 名，缺具名 manifest 的目录被拒绝。`deepseek-harness/scripts/client-bundle-purity.spec.ts:53@687f282e` <a id="m-enforcement-scripts-4-bundle-externals"></a>
+- 证据：默认 external 基线独立于包 manifest 生效，`dsh.client.external` 的请求与声明一致，malformed 声明直接失败。`deepseek-harness/scripts/client-bundle-purity.spec.ts:261@687f282e` <a id="m-enforcement-scripts-4-bundle-experimental"></a>
+- 证据：实验输入即使被静态库发射隐藏，或只由编译器 sourcemap 保留归属、或被别名/ external 运行时导入掩盖，仍必须被拒绝。`deepseek-harness/scripts/client-bundle-purity.spec.ts:386@687f282e` <a id="m-enforcement-scripts-4-bundle-sourcemaps"></a>
+- 证据：TS/TSX 产物带 sourcemap，生产构建串联 tsc map，第一方 sources 映射到仓库包路径。`deepseek-harness/scripts/client-bundle-purity.spec.ts:477@687f282e` <a id="m-enforcement-scripts-4-bundle-dual-client"></a>
+- 证据：预设的 `dualClient` 默认 false，只有 `dualClient === true` 才同时发射 Node 与浏览器配置；普通包只发射浏览器入口。`deepseek-harness/packages/client/tsdown.client.ts:125-129@687f282e` <a id="m-enforcement-scripts-4-bundle-image-types"></a>
+- 证据：图片 loader 注册 `.svg`/`.png`/`.webp` 三种类型；本分区 spec 只用 `preview.svg` 断言 data URL，PNG/WebP 分支未被本 spec 执行。`deepseek-harness/packages/client/tsdown.client.ts:39@687f282e` <a id="m-enforcement-scripts-4-bundle-css-watch"></a>
+- 证据：CSS/图片 loader 把被读取的物理样式表注册为 watch 依赖，虚拟模块不能隐藏它。`deepseek-harness/scripts/client-bundle-css.spec.ts:31@687f282e` <a id="m-enforcement-scripts-4-bundle-css-inject"></a>
 - 证据：副作用 CSS 编译为样式注入，`?inline` 编译为 watched text 且无模块副作用，图片内嵌为 data URL。`deepseek-harness/scripts/client-bundle-css.spec.ts:55@687f282e`
 
 **执行与失败。** 共享预设在 `packages/client/tsdown.client.ts`；`scripts/client-bundle-purity.spec.ts` 与 `scripts/client-bundle-css.spec.ts` 直接调用其插件钩子，在单元/覆盖率库存中执行。未批准的 resolveId 边会抛错；external 声明形状错误直接失败；实验输入残留使 spec 失败；漏注册 watch 会让开发模式保留旧模块。spec 只覆盖 fixture 与插件钩子，不证明每个真实包的完整 chunk 图；普通包确有反向断言（无 `/client-node` 配置，浏览器入口为 `client.js`，spec:93-98），PNG/WebP 图片分支只有实现阅读证据。以上是测试存在，不是本轮执行证明。
@@ -76,18 +67,13 @@
 - 文件数少于 450 时以“discovery narrowed”失败。450 是固定绝对下限，不是历史比例或 shrink 检测：合法删除文件使其降到 450 以下同样会失败；spec 没有执行该下限分支。
 - 违规按 `file:line:column` + 原因输出并以退出码 1 阻断；修复是补齐 locale 字典，不是关闭门禁。
 
-来源：deepseek-harness/scripts/verify-client-ui-i18n.ts:1-361@687f282e
-来源：deepseek-harness/scripts/verify-client-ui-i18n.spec.ts:1-90@687f282e
+来源：deepseek-harness/scripts/verify-client-ui-i18n.ts:1-361@687f282e 来源：deepseek-harness/scripts/verify-client-ui-i18n.spec.ts:1-90@687f282e
 
 <a id="m-enforcement-scripts-4-ui-minimum-corpus"></a>
-- 证据：门禁定义 `MINIMUM_CLIENT_UI_SOURCES = 450`，作为发现面的固定绝对下限，不是历史比例或 shrink 检测。`deepseek-harness/scripts/verify-client-ui-i18n.ts:15@687f282e`
-<a id="m-enforcement-scripts-4-ui-locale-owner"></a>
-- 证据：`findUiI18nViolations()` 对 locale owner 直接返回空，避免把字典本身当成硬编码。`deepseek-harness/scripts/verify-client-ui-i18n.ts:69@687f282e`
-<a id="m-enforcement-scripts-4-ui-discovery"></a>
-- 证据：`sourceFiles()` 组合多个 Client 面与 desktop 文件；文件数不足时 main() 抛出 discovery narrowed。`deepseek-harness/scripts/verify-client-ui-i18n.ts:343@687f282e`
-<a id="m-enforcement-scripts-4-ui-report"></a>
-- 证据：违规以 `file:line:column reason: text` 打印并设置退出码 1。`deepseek-harness/scripts/verify-client-ui-i18n.ts:349@687f282e`
-<a id="m-enforcement-scripts-4-ui-spec"></a>
+- 证据：门禁定义 `MINIMUM_CLIENT_UI_SOURCES = 450`，作为发现面的固定绝对下限，不是历史比例或 shrink 检测。`deepseek-harness/scripts/verify-client-ui-i18n.ts:15@687f282e` <a id="m-enforcement-scripts-4-ui-locale-owner"></a>
+- 证据：`findUiI18nViolations()` 对 locale owner 直接返回空，避免把字典本身当成硬编码。`deepseek-harness/scripts/verify-client-ui-i18n.ts:69@687f282e` <a id="m-enforcement-scripts-4-ui-discovery"></a>
+- 证据：`sourceFiles()` 组合多个 Client 面与 desktop 文件；文件数不足时 main() 抛出 discovery narrowed。`deepseek-harness/scripts/verify-client-ui-i18n.ts:343@687f282e` <a id="m-enforcement-scripts-4-ui-report"></a>
+- 证据：违规以 `file:line:column reason: text` 打印并设置退出码 1。`deepseek-harness/scripts/verify-client-ui-i18n.ts:349@687f282e` <a id="m-enforcement-scripts-4-ui-spec"></a>
 - 证据：spec 覆盖 JSX/属性、label 数据、helper 返回、Electron/DOM 文案、locale owner 豁免与路径归一化；没有执行 450 文件下限、真实 `sourceFiles()` 或对象属性分支外的 `.ts` 面。`deepseek-harness/scripts/verify-client-ui-i18n.spec.ts:1-90@687f282e`
 
 **执行与失败。** `pnpm run verify-client-ui-i18n` 与 `run-gates` 聚合执行。发现硬编码文案时退出 1；发现面低于 450 文件时抛错。spec 只证明给定源码片段上的规则判定；450 下限、真实 `sourceFiles()` 与 run-gates 聚合没有在本分区 spec 中执行，也不证明翻译质量、占位符一致性或运行时动态拼装字符串。
@@ -110,20 +96,14 @@
 - 发现器筛选带DOM lib的Client配置，跳过无`src/`的聚合壳及Host聚合同编译且有`src/client`半面的配置；后者由独立`src/client` glob补充。仅其余eligible face零贡献会失败；固定producer缺失另行失败。部分缩水仍非空不拒绝，无历史清单防缩保证。
 - 违规按 `file:line:column` + 规则 + hint 输出，退出码 1。
 
-来源：deepseek-harness/scripts/verify-client-route-resolution.ts:1-339@687f282e
-来源：deepseek-harness/scripts/verify-client-route-resolution.spec.ts:1-199@687f282e
+来源：deepseek-harness/scripts/verify-client-route-resolution.ts:1-339@687f282e 来源：deepseek-harness/scripts/verify-client-route-resolution.spec.ts:1-199@687f282e
 
 <a id="m-enforcement-scripts-4-route-prefixes"></a>
-- 证据：门禁只治理 `api`、`plugins`、`open-in-app` 三类 app-owned 前缀，`/assets/x` 等外来路径不在此列。`deepseek-harness/scripts/verify-client-route-resolution.ts:38@687f282e`
-<a id="m-enforcement-scripts-4-route-producers"></a>
-- 证据：静态浏览器引用生产者固定为 `packages/client/modules/src/index.ts`，其引用字段被单独扫描。`deepseek-harness/scripts/verify-client-route-resolution.ts:60@687f282e`
-<a id="m-enforcement-scripts-4-route-faces"></a>
-- 证据：`browserFaceSources()`的DOM-lib筛选后先有无`src/`与Host/Client半面跳过分支，仅剩余eligible face零贡献抛“discovery is broken”；独立glob补充Client半面。`deepseek-harness/scripts/verify-client-route-resolution.ts:275-305@687f282e`
-<a id="m-enforcement-scripts-4-route-slice"></a>
-- 证据：`unstrippedHostRouteKeys()` 对 `PATH`/`ENDPOINT` 标识符检查父节点是否为 `.slice` 属性访问；是则直接放行，不检查 slice 的实参或结果。`deepseek-harness/scripts/verify-client-route-resolution.ts:106-116@687f282e`
-<a id="m-enforcement-scripts-4-route-report"></a>
-- 证据：违规以 `file:line:column pattern — hint` 打印并设置退出码 1。`deepseek-harness/scripts/verify-client-route-resolution.ts:325@687f282e`
-<a id="m-enforcement-scripts-4-route-spec"></a>
+- 证据：门禁只治理 `api`、`plugins`、`open-in-app` 三类 app-owned 前缀，`/assets/x` 等外来路径不在此列。`deepseek-harness/scripts/verify-client-route-resolution.ts:38@687f282e` <a id="m-enforcement-scripts-4-route-producers"></a>
+- 证据：静态浏览器引用生产者固定为 `packages/client/modules/src/index.ts`，其引用字段被单独扫描。`deepseek-harness/scripts/verify-client-route-resolution.ts:60@687f282e` <a id="m-enforcement-scripts-4-route-faces"></a>
+- 证据：`browserFaceSources()`的DOM-lib筛选后先有无`src/`与Host/Client半面跳过分支，仅剩余eligible face零贡献抛“discovery is broken”；独立glob补充Client半面。`deepseek-harness/scripts/verify-client-route-resolution.ts:275-305@687f282e` <a id="m-enforcement-scripts-4-route-slice"></a>
+- 证据：`unstrippedHostRouteKeys()` 对 `PATH`/`ENDPOINT` 标识符检查父节点是否为 `.slice` 属性访问；是则直接放行，不检查 slice 的实参或结果。`deepseek-harness/scripts/verify-client-route-resolution.ts:106-116@687f282e` <a id="m-enforcement-scripts-4-route-report"></a>
+- 证据：违规以 `file:line:column pattern — hint` 打印并设置退出码 1。`deepseek-harness/scripts/verify-client-route-resolution.ts:325@687f282e` <a id="m-enforcement-scripts-4-route-spec"></a>
 - 证据：spec 覆盖四类拒绝、identity 读取放行、固定 producer 与 face 空贡献失败；`location` 只测 `new URL(relative, location)` 形态，未执行 `.slice(0)` 绕过。`deepseek-harness/scripts/verify-client-route-resolution.spec.ts:1-199@687f282e`
 
 **执行与失败。** 源入口与`run-gates`接线已读；实际源CLI曾因缺TypeScript依赖在加载阶段失败，不是门禁通过。四类路由违规设置退出码1；eligible face零贡献或固定producer缺失抛错。无`src/`壳及Host/Client分流配置跳过该零贡献检查，后者另由glob补充；部分缩水仍非空可通过。历史数量/预期清单防缩是可选目标增强，不是源自动保证。
@@ -146,18 +126,13 @@
 - 违规逐条输出 `file:line`、行为与源码行，给出 `proxyRouteFor` 修复建议并退出 1。
 - 评审者必须逐条审查豁免理由；门禁只证明标记存在。
 
-来源：deepseek-harness/scripts/verify-no-bare-dispatcher.ts:1-226@687f282e
-来源：deepseek-harness/scripts/verify-no-bare-dispatcher.spec.ts:1-143@687f282e
+来源：deepseek-harness/scripts/verify-no-bare-dispatcher.ts:1-226@687f282e 来源：deepseek-harness/scripts/verify-no-bare-dispatcher.spec.ts:1-143@687f282e
 
 <a id="m-enforcement-scripts-4-proxy-owner"></a>
-- 证据：`DISPATCHER_OWNER = 'packages/util/http-proxy/'` 是唯一允许构造 agent 的包。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:29@687f282e`
-<a id="m-enforcement-scripts-4-proxy-marker"></a>
-- 证据：`proxy-exempt:` 只在本行或上一行生效，注释锚定属性/`new` 表达式而非整条语句。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:36@687f282e`
-<a id="m-enforcement-scripts-4-proxy-corpus"></a>
-- 证据：`scanRepository()` 在 glob 未匹配到任何文件时抛出“scanned an empty corpus”。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:206@687f282e`
-<a id="m-enforcement-scripts-4-proxy-object-literal"></a>
-- 证据：dispatcher 识别覆盖任何对象字面量的 `dispatcher` 属性（含 shorthand 与引号键），不限于 fetch 的请求选项。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:185-211@687f282e`
-<a id="m-enforcement-scripts-4-proxy-spec"></a>
+- 证据：`DISPATCHER_OWNER = 'packages/util/http-proxy/'` 是唯一允许构造 agent 的包。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:29@687f282e` <a id="m-enforcement-scripts-4-proxy-marker"></a>
+- 证据：`proxy-exempt:` 只在本行或上一行生效，注释锚定属性/`new` 表达式而非整条语句。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:36@687f282e` <a id="m-enforcement-scripts-4-proxy-corpus"></a>
+- 证据：`scanRepository()` 在 glob 未匹配到任何文件时抛出“scanned an empty corpus”。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:206@687f282e` <a id="m-enforcement-scripts-4-proxy-object-literal"></a>
+- 证据：dispatcher 识别覆盖任何对象字面量的 `dispatcher` 属性（含 shorthand 与引号键），不限于 fetch 的请求选项。`deepseek-harness/scripts/verify-no-bare-dispatcher.ts:185-211@687f282e` <a id="m-enforcement-scripts-4-proxy-spec"></a>
 - 证据：spec 覆盖重命名/命名空间/动态导入解构、三种属性写法、行内与上一行豁免、owner 路径归一化、预过滤与当前树扫描。`deepseek-harness/scripts/verify-no-bare-dispatcher.spec.ts:1-143@687f282e`
 
 **执行与失败。** `pnpm run verify-no-bare-dispatcher` 与 `run-gates` 执行。违规退出 1；空语料抛错。门禁只扫描 packages/apps 的 `.ts`，不覆盖 `.tsx/.mjs/.cjs`、生成 JS、测试或依赖内部；任何含 `dispatcher` 属性的对象字面量都会被标记，可能误报非请求对象。
@@ -182,20 +157,14 @@
 - `dev:web` 不得与 `build`/`build:artifacts` 并行运行。这是模块头的文档 MUST NOT，没有锁文件或进程检查强制执行。
 - `dsh web` 必须经 `apps/cli/src/bin.ts` + tsx 启动，不得直接启动 package entry。
 
-来源：deepseek-harness/scripts/dev-web.ts:1-440@687f282e
-来源：deepseek-harness/scripts/dev-web.spec.ts:1-220@687f282e
+来源：deepseek-harness/scripts/dev-web.ts:1-440@687f282e 来源：deepseek-harness/scripts/dev-web.spec.ts:1-220@687f282e
 
 <a id="m-enforcement-scripts-4-dev-build-first"></a>
-- 证据：模块头声明“build once, serve through dsh web, and keep every stage alive”；顺序是构建后再 watch/serve。`deepseek-harness/scripts/dev-web.ts:2@687f282e`
-<a id="m-enforcement-scripts-4-dev-discovery"></a>
-- 证据：`discoverPluginDirs()` 与 `discoverLibraryDirs()` 分别发现 dsh.client 包与 shell 链接的 Client-preset 库。`deepseek-harness/scripts/dev-web.ts:134@687f282e`
-<a id="m-enforcement-scripts-4-dev-stop-grace"></a>
-- 证据：`STOP_GRACE_MS = 6_000` 是每一步升级之间的宽限期；`stop()` 依次转发初始信号、SIGTERM，最后 SIGKILL，每步等待 6 秒。`deepseek-harness/scripts/dev-web.ts:290@687f282e`
-<a id="m-enforcement-scripts-4-dev-supervisor"></a>
-- 证据：StageSupervisor 报告停止前自行退出的 stage，并在停止时等待/升级幸存者。`deepseek-harness/scripts/dev-web.ts:237@687f282e`
-<a id="m-enforcement-scripts-4-dev-spec-signal"></a>
-- 证据：spec 断言只转发一次信号、宽限后升级、且不把已中断的 stage 计入幸存者。`deepseek-harness/scripts/dev-web.spec.ts:50@687f282e`
-<a id="m-enforcement-scripts-4-dev-spec-env"></a>
+- 证据：模块头声明“build once, serve through dsh web, and keep every stage alive”；顺序是构建后再 watch/serve。`deepseek-harness/scripts/dev-web.ts:2@687f282e` <a id="m-enforcement-scripts-4-dev-discovery"></a>
+- 证据：`discoverPluginDirs()` 与 `discoverLibraryDirs()` 分别发现 dsh.client 包与 shell 链接的 Client-preset 库。`deepseek-harness/scripts/dev-web.ts:134@687f282e` <a id="m-enforcement-scripts-4-dev-stop-grace"></a>
+- 证据：`STOP_GRACE_MS = 6_000` 是每一步升级之间的宽限期；`stop()` 依次转发初始信号、SIGTERM，最后 SIGKILL，每步等待 6 秒。`deepseek-harness/scripts/dev-web.ts:290@687f282e` <a id="m-enforcement-scripts-4-dev-supervisor"></a>
+- 证据：StageSupervisor 报告停止前自行退出的 stage，并在停止时等待/升级幸存者。`deepseek-harness/scripts/dev-web.ts:237@687f282e` <a id="m-enforcement-scripts-4-dev-spec-signal"></a>
+- 证据：spec 断言只转发一次信号、宽限后升级、且不把已中断的 stage 计入幸存者。`deepseek-harness/scripts/dev-web.spec.ts:50@687f282e` <a id="m-enforcement-scripts-4-dev-spec-env"></a>
 - 证据：spec 断言启动时只采样一次本地环境，不用 watcher 输出做验证。`deepseek-harness/scripts/dev-web.spec.ts:111@687f282e`
 
 **执行与失败。** 入口是 `pnpm run dev:web`；`scripts/dev-web.spec.ts` 用假 stage 覆盖 supervisor 状态机、参数、发现与环境采样。stage 自退会退出 1；发现集合为空会抛错；`--no-serve` 收到服务参数会拒绝。单测不证明真实子进程在所有 shell 上都按时退出，也不证明 `build`/`dev:web` 互斥被操作系统强制。
@@ -220,22 +189,14 @@
 - `verifyNativePayload()` 由 `build-exe-for-ssh-helper.ts` 与 `verify-ssh-helper-artifact.ts` 在构建/验收时调用；`artifact.spec.ts` 只测试 `macosDeploymentVersions` 与 `prepareSshRelease`/`verifyPayload`，没有用原生文件调用 `verifyNativePayload`。
 - 检查必须在发布/上传前执行；修复是换旧基线或提高声明目标，不是放宽检查或伪造 tag。
 
-来源：deepseek-harness/scripts/check-macos-deployment-target.py:1-111@687f282e
-来源：deepseek-harness/scripts/build-python-release.py:48@687f282e
-来源：deepseek-harness/scripts/ssh-helper/native.ts:1-74@687f282e
-来源：deepseek-harness/scripts/ssh-helper/artifact.spec.ts:1-117@687f282e
+来源：deepseek-harness/scripts/check-macos-deployment-target.py:1-111@687f282e 来源：deepseek-harness/scripts/build-python-release.py:48@687f282e 来源：deepseek-harness/scripts/ssh-helper/native.ts:1-74@687f282e 来源：deepseek-harness/scripts/ssh-helper/artifact.spec.ts:1-117@687f282e
 
 <a id="m-enforcement-scripts-4-native-otool-parse"></a>
-- 证据：`parse_otool_deployment_target()` 只在 `LC_BUILD_VERSION` 读 minos、在 `LC_VERSION_MIN_MACOSX` 读 version，并返回最新值。`deepseek-harness/scripts/check-macos-deployment-target.py:37@687f282e`
-<a id="m-enforcement-scripts-4-native-compare"></a>
-- 证据：`ensure_compatible()` 逐段比较实际版本与 wheel tag claimed 版本，超出即抛 RuntimeError。`deepseek-harness/scripts/check-macos-deployment-target.py:74@687f282e`
-<a id="m-enforcement-scripts-4-native-payload"></a>
-- 证据：`verifyNativePayload()` 对每个 payload 检查 ELF/Mach-O family 与 arch，并在 Mach-O 上拒绝高于 14.0 的 deployment target。`deepseek-harness/scripts/ssh-helper/native.ts:42@687f282e`
-<a id="m-enforcement-scripts-4-native-glibc"></a>
-- 证据：ELF 的 `GLIBC_` 符号版本逐个与 2.28 比较，超出即失败。`deepseek-harness/scripts/ssh-helper/native.ts:61@687f282e`
-<a id="m-enforcement-scripts-4-native-test"></a>
-- 证据：artifact spec 断言 macOS 最低版本读取不会把 linked library version 当作 OS 版本；它调用 `prepareSshRelease`/`verifyPayload`，没有用原生文件调用 `verifyNativePayload`。`deepseek-harness/scripts/ssh-helper/artifact.spec.ts:79@687f282e`
-<a id="m-enforcement-scripts-4-native-empty"></a>
+- 证据：`parse_otool_deployment_target()` 只在 `LC_BUILD_VERSION` 读 minos、在 `LC_VERSION_MIN_MACOSX` 读 version，并返回最新值。`deepseek-harness/scripts/check-macos-deployment-target.py:37@687f282e` <a id="m-enforcement-scripts-4-native-compare"></a>
+- 证据：`ensure_compatible()` 逐段比较实际版本与 wheel tag claimed 版本，超出即抛 RuntimeError。`deepseek-harness/scripts/check-macos-deployment-target.py:74@687f282e` <a id="m-enforcement-scripts-4-native-payload"></a>
+- 证据：`verifyNativePayload()` 对每个 payload 检查 ELF/Mach-O family 与 arch，并在 Mach-O 上拒绝高于 14.0 的 deployment target。`deepseek-harness/scripts/ssh-helper/native.ts:42@687f282e` <a id="m-enforcement-scripts-4-native-glibc"></a>
+- 证据：ELF 的 `GLIBC_` 符号版本逐个与 2.28 比较，超出即失败。`deepseek-harness/scripts/ssh-helper/native.ts:61@687f282e` <a id="m-enforcement-scripts-4-native-test"></a>
+- 证据：artifact spec 断言 macOS 最低版本读取不会把 linked library version 当作 OS 版本；它调用 `prepareSshRelease`/`verifyPayload`，没有用原生文件调用 `verifyNativePayload`。`deepseek-harness/scripts/ssh-helper/artifact.spec.ts:79@687f282e` <a id="m-enforcement-scripts-4-native-empty"></a>
 - 证据：`verifyNativePayload()` 遍历 payload，只对 ELF/Mach-O 执行 family/arch/版本检查，其他文件 `continue`；全部跳过时返回空数组。`deepseek-harness/scripts/ssh-helper/native.ts:38-72@687f282e`
 
 **执行与失败。** Python 检查在 GitHub/GitLab 的 build-exe job 中运行；SSH helper 检查在 release 打包/验证路径中运行。超限、缺 load command、arch/family 不符都抛错/退出非零并阻断上传。检查读取已构建字节；本分区没有执行这些检查，也没有覆盖 native family/arch/GLIBC 的原生测试，不能把 artifact spec 的 otool 用例外推为完整 ABI 通过。

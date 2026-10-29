@@ -47,7 +47,9 @@
 
 ---
 
-## 1. 触发：只为仓库外可观察的破坏写指南 {#upgrade-guides.required-trigger}
+<a id="upgrade-guides.required-trigger"></a>
+
+## 1. 触发：只为仓库外可观察的破坏写指南
 
 ### 1.1 源义务
 
@@ -99,7 +101,9 @@ Session 格式或声明式持久类型的变化有两条并行记录：仍要走
 
 ---
 
-## 2. 生命周期：同改动写入、原位更新、回滚删除、bump 冻结、单 release 跨度 {#upgrade-guides.same-change-lifecycle}
+<a id="upgrade-guides.same-change-lifecycle"></a>
+
+## 2. 生命周期：同改动写入、原位更新、回滚删除、bump 冻结、单 release 跨度
 
 ### 2.1 源义务（原文语义）
 
@@ -161,7 +165,9 @@ vX/** 冻结；Y 的新破坏写入 vY/<item>；不再修改 vX
 
 ---
 
-## 3. 路径、版本目录与三件套布局 {#upgrade-guides.item-layout}
+<a id="upgrade-guides.item-layout"></a>
+
+## 3. 路径、版本目录与三件套布局
 
 ### 3.1 源义务
 
@@ -219,7 +225,9 @@ vX/** 冻结；Y 的新破坏写入 vY/<item>；不再修改 vX
 
 ---
 
-## 4. frontmatter：恰好两个键，kind 固定，description 非空 {#upgrade-guides.frontmatter}
+<a id="upgrade-guides.frontmatter"></a>
+
+## 4. frontmatter：恰好两个键，kind 固定，description 非空
 
 ### 4.1 源义务
 
@@ -259,7 +267,9 @@ description: "The externally perceptible surface that breaks and what replaces i
 
 ---
 
-## 5. 标题结构：一个 H1 加 Change/Migration（中文 变更/迁移） {#upgrade-guides.heading-structure}
+<a id="upgrade-guides.heading-structure"></a>
+
+## 5. 标题结构：一个 H1 加 Change/Migration（中文 变更/迁移）
 
 ### 5.1 源义务
 
@@ -308,7 +318,9 @@ headings must be one "#" title followed by "## Change", "## Migration"; got "# .
 
 ---
 
-## 6. 英文 500 词上限与超限外移 {#upgrade-guides.word-ceiling}
+<a id="upgrade-guides.word-ceiling"></a>
+
+## 6. 英文 500 词上限与超限外移
 
 ### 6.1 源义务
 
@@ -359,7 +371,9 @@ source.split(/\s+/u).filter(Boolean).length
 
 ---
 
-## 7. Change：旧/新行为、受影响者、可观察症状 {#upgrade-guides.change-section}
+<a id="upgrade-guides.change-section"></a>
+
+## 7. Change：旧/新行为、受影响者、可观察症状
 
 ### 7.1 源义务
 
@@ -400,7 +414,9 @@ source.split(/\s+/u).filter(Boolean).length
 
 ---
 
-## 8. Migration：有序步骤、精确标识符、可执行确认 {#upgrade-guides.migration-steps}
+<a id="upgrade-guides.migration-steps"></a>
+
+## 8. Migration：有序步骤、精确标识符、可执行确认
 
 ### 8.1 源义务
 
@@ -437,7 +453,9 @@ source.split(/\s+/u).filter(Boolean).length
 
 ---
 
-## 9. 双语配对：三件套、记录、同改动维护 {#upgrade-guides.bilingual-pair}
+<a id="upgrade-guides.bilingual-pair"></a>
+
+## 9. 双语配对：三件套、记录、同改动维护
 
 ### 9.1 源义务
 
@@ -512,7 +530,7 @@ source.split(/\s+/u).filter(Boolean).length
 
 ### 9.5 随包命令与目标语料配置（可执行，不是规格）
 
-本包交付了源 `scripts/verify-translation-pairing.ts` 及其依赖模块（`translation-pairing`、`translation-pairing-record`、`translation-pairing-git`、`translation-links`、`markdown`）的原生 Node ESM 移植：`tools/doc-gates/verify-translation-pairing.mjs`。保留的源语义：三文件 pair 完整性、以 `.zh.md`/`.i18n.yaml` 并集为锚点的半删除检测、canonical 记录与 `out of sync` diff、两侧 switcher 方向、链接 locale、generated region 归一化后等价、结构签名（heading 深度/顺序、列表、表格、代码块）、scoped `--write` 与显式 `--all`、`--list`、`--cached`（读 Git index 字节）。flag 约束与源一致：`--list` 只做 corpus 状态报告且不失败；`--cached` 必须点名已暂存的 pair 且不能与 `--write` 组合；点名 `--write` 缺 counterpart 时退出 2，`--write --all` 跳过无 counterpart 的 source。**未移植**：`gen-translation-brief`；目标项目没有等价命令，最小补丁需手工完成。命令本身不会挂进任何 CI；本包 CI 的 documentation-tools job 只跑 `test-doc-gates` 回归，没有在真实消费者语料上运行配对门。
+本包交付了源 `scripts/verify-translation-pairing.ts` 及其依赖模块（`translation-pairing`、`translation-pairing-record`、`translation-pairing-git`、`translation-links`、`markdown`）的原生 Node ESM 移植：`tools/doc-gates/verify-translation-pairing.mjs`。保留的源语义：三文件 pair 完整性、以 `.zh.md`/`.i18n.yaml` 并集为锚点的半删除检测、canonical 记录与 `out of sync` diff、两侧 switcher 方向、链接 locale、generated region 归一化后等价、结构签名（heading 深度/顺序、列表、表格、代码块）、scoped `--write` 与显式 `--all`、`--list`、`--cached`（读 Git index 字节）。flag 约束与源一致：`--list` 只做 corpus 状态报告且不失败；`--cached` 必须点名已暂存的 pair 且不能与 `--write` 组合；点名 `--write` 缺 counterpart 时退出 2，`--write --all` 跳过无 counterpart 的 source。**未移植**：`gen-translation-brief`；目标项目没有等价命令，最小补丁需手工完成。命令本身不会挂进任何 CI；本包 documentation-tools job 登记了工具回归、本产品链接/换行和公开导出检查，没有在真实消费者语料上运行配对门。
 
 语料参数化：源仓把 `docs/**`、README 与根文档集合硬编码为产品事实；移植版要求目标项目自己声明语料，缺省路径 `.doc-gates/translation-pairing.json`：
 
@@ -544,7 +562,9 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ---
 
-## 10. `verify-upgrade-guides` 到底检查什么 {#upgrade-guides.verifier-scope}
+<a id="upgrade-guides.verifier-scope"></a>
+
+## 10. `verify-upgrade-guides` 到底检查什么
 
 ### 10.1 自动检查与边界（可证明）
 
@@ -586,7 +606,7 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 【迁移设计】本包把该形态门交付为 `tools/doc-gates/verify-upgrade-guides.mjs`，并在 `package.json` 暴露 `verify-upgrade-guides`（`node tools/doc-gates/verify-upgrade-guides.mjs`）与 `test-doc-gates`（回归测试）。它是**目标可激活**的门：命令存在、可失败、可复现，但不会自动出现在目标 CI 里。采用方要自行加入真实 CI/钩子步骤，并保存一次真实失败输出；命令名与包内 `verify-upgrade-guides` 是迁移设计，不是源仓的 `pnpm` 脚本名。
 
-本包 CI 只有 `documentation-tools` job 运行 `test-doc-gates`（对临时 fixture 的回归），没有对真实消费者语料运行形态门或配对门；因此当前包不能声称“目标门已在消费者 CI 激活”。门禁接线也不是 forge 必需检查：仓库里的命令、workflow 或本地通过都不等于分支保护会阻断合并。
+本包 `documentation-tools` job 登记了 `test-doc-gates`（临时 fixture 回归）、本产品全量 Markdown 链接/换行和公开导出检查，没有对真实消费者语料运行升级形态门或配对门；因此不能声称“目标门已在消费者 CI 激活”。工作流登记与远端实际结果也须区分，门禁接线不是 forge 必需检查：仓库里的命令、workflow 或本地通过都不等于分支保护会阻断合并。
 
 【额外建议】本地脚本失败不等于 forge 阻断。要声称“合并会被阻止”，需要记录 CI 必需检查/分支保护的真实配置与一次被阻止的运行；本域没有查询远端配置。
 
@@ -602,7 +622,9 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ---
 
-## 11. 评审拥有的完整性、版本正确性与可执行性 {#upgrade-guides.review-completeness}
+<a id="upgrade-guides.review-completeness"></a>
+
+## 11. 评审拥有的完整性、版本正确性与可执行性
 
 ### 11.1 为什么必须有这一层
 
@@ -650,7 +672,9 @@ node <skill>/tools/doc-gates/verify-translation-pairing.mjs --cached docs/upgrad
 
 ---
 
-## 12. 版本分类：按 release 边界分目录（证据与参数化） {#upgrade-guides.version-taxonomy}
+<a id="upgrade-guides.version-taxonomy"></a>
+
+## 12. 版本分类：按 release 边界分目录（证据与参数化）
 
 ### 12.1 源规则
 
@@ -787,7 +811,7 @@ collect(root):
 3. **产品行为未验证**：指南中的命令、错误码、默认值、平台差异是文档作者声明；本域没有执行登录、插件安装、profile 启动或平台测试。
 4. **历史完整性未审计**：没有“变更日志/release note → 指南”的映射，也没有逐条审计 Git 历史；不能声称每个历史破坏都有指南。
 5. **当前版本目录缺失**：根版本 `0.2.1-rc.2` 没有对应目录；这是合法状态，但“新建当前目录”的行为只能由 SKILL 规则与评审证明。
-6. **CI 强制未验证**：`run-gates.ts`/`package.json` 证明门被注册，不证明 forge 分支保护会阻断合并。本包的 `documentation-tools` job 只运行 `test-doc-gates`（临时 fixture 回归），没有对真实消费者语料运行形态门或配对门；因此目标工具尚未在消费者 CI 激活。
+6. **CI 强制未验证**：`run-gates.ts`/`package.json` 证明门被注册，不证明 forge 分支保护会阻断合并。本包 `documentation-tools` job 登记了工具回归、本产品链接/换行与公开导出检查，没有对真实消费者语料运行升级形态门或配对门；这些消费者门仍须各自激活。
 7. **数量口径**：任务说明提到“41 items”，但按分区实际是 42 个 item 目录 × 3 = 126 个文件；本域按 126 个分配路径逐条记录。
 8. **未发现**：`docs/upgrade-guide` 下没有 README、索引或附件；没有生成式指南（guide.md/guide.zh.md 为手写/评审内容，guide.i18n.yaml 配对记录由命令生成）。
 9. **移植代码已交付但未执行**：`tools/doc-gates/verify-upgrade-guides.mjs`、`verify-translation-pairing.mjs` 及其同源模块、`research/doc-gates.test.mjs` 已写入本包，并通过 `node --check` 语法校验；但本次没有安装 `tools/doc-gates` 的依赖、没有运行测试，也没有在任何目标树上运行这两条命令。§14 的剧本仍是 `planned`，需独立执行者安装依赖后运行并记录真实输出。源仓的 `pnpm`/`vitest`/`doc-sync` 同样未运行。

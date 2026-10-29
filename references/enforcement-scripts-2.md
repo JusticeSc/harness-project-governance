@@ -11,7 +11,10 @@
 ## Mechanisms
 
 <a id="m-enforcement-scripts-2.locale-dictionary-key-parity"></a>
-### enforcement-scripts-2.locale-dictionary-key-parity — 已发布语言字典的 zh/en 键集必须对称 {#enforcement-scripts-2.locale-dictionary-key-parity}
+
+<a id="enforcement-scripts-2.locale-dictionary-key-parity"></a>
+
+### enforcement-scripts-2.locale-dictionary-key-parity — 已发布语言字典的 zh/en 键集必须对称
 
 **何时适用。** 新增或修改任何带 `locales.ts`、`locales/` 目录或插件内联 `register()` 字典的包；新增语言；把一份字典拆成 `zh.ts` / `en.ts`；修改 fallback locale 或字典解析顺序。
 
@@ -53,7 +56,10 @@
 **边界。** 不检查值是否为空、翻译是否正确或占位符是否一致；只发现 `packages/<group>/<pkg>/src` 下的 `.ts`，`.tsx` 与其他布局不在范围内；不覆盖仓库外第三方插件；非字面量 locale tag 被跳过；静态发现可能漏掉运行时拼装的字典，届时应扩展发现规则而不是放宽断言。
 
 <a id="m-enforcement-scripts-2.coverage-location-equivalence"></a>
-### enforcement-scripts-2.coverage-location-equivalence — 跨编译面的覆盖率位置必须先归一化再合并 {#enforcement-scripts-2.coverage-location-equivalence}
+
+<a id="enforcement-scripts-2.coverage-location-equivalence"></a>
+
+### enforcement-scripts-2.coverage-location-equivalence — 跨编译面的覆盖率位置必须先归一化再合并
 
 **何时适用。** 一个源文件被多个 Vitest project/编译面同时覆盖；启用覆盖率 blob 合并；修改 partition reporter；升级 istanbul-lib-coverage、Vitest 或合并实现。
 
@@ -98,7 +104,10 @@
 **边界。** 依赖 istanbul-lib-coverage 的合并语义；不同版本的列/区间处理可能变化。归一化处理所有非有限 `end.column`，不处理其他位置漂移；reporter 相对 blob 的实际执行顺序未由本仓证明；合并 fixture 是 synthetic。
 
 <a id="m-enforcement-scripts-2.bilingual-link-locale"></a>
-### enforcement-scripts-2.bilingual-link-locale — 双语对内的相对链接必须指向同语言兄弟 {#enforcement-scripts-2.bilingual-link-locale}
+
+<a id="enforcement-scripts-2.bilingual-link-locale"></a>
+
+### enforcement-scripts-2.bilingual-link-locale — 双语对内的相对链接必须指向同语言兄弟
 
 **何时适用。** 新增或修改 `.md` / `.zh.md` 中的仓库内相对链接；拆分、合并或移动双语对；运行双语配对门禁、合并驱动或链接归一化。
 
@@ -140,7 +149,10 @@
 **边界。** 不检查锚点是否存在、不检查目标语言页面是否真的有对应章节；不处理 HTML 内联链接或非 Markdown 链接语法。切换器形态是 source-product 特定的；pair 发现依赖调用方谓词，活动语料中缺 sibling 仍会报违规。
 
 <a id="m-enforcement-scripts-2.pinned-v3-vocabulary"></a>
-### enforcement-scripts-2.pinned-v3-vocabulary — 历史迁移词汇必须绑定不可变提交并核对写入器版本 {#enforcement-scripts-2.pinned-v3-vocabulary}
+
+<a id="enforcement-scripts-2.pinned-v3-vocabulary"></a>
+
+### enforcement-scripts-2.pinned-v3-vocabulary — 历史迁移词汇必须绑定不可变提交并核对写入器版本
 
 **何时适用。** 修改 `RELEASED_V3_EVENT_TYPES`；升级 V4 写入器或迁移包；准备历史迁移发布、复核 V3 词汇。
 
@@ -185,7 +197,10 @@
 **边界。** 不检查远端是否存在更新提交；不验证事件 payload 的字段级转换；依赖 Git 与 TypeScript。测试只用 synthetic V3 commit，不覆盖真实 release pin；`new Set([])` 不是解析错误，只会在双向比较时报 missing/extra。
 
 <a id="m-enforcement-scripts-2.workflow-guest-single-module"></a>
-### enforcement-scripts-2.workflow-guest-single-module — Workflow guest 必须打成只依赖 Node 内建的单模块 {#enforcement-scripts-2.workflow-guest-single-module}
+
+<a id="enforcement-scripts-2.workflow-guest-single-module"></a>
+
+### enforcement-scripts-2.workflow-guest-single-module — Workflow guest 必须打成只依赖 Node 内建的单模块
 
 **何时适用。** 修改 `workflow-ptc/src/guest.ts` 或其依赖；升级打包器、`tsconfig` 或 Node 版本；提交生成的 guest-source 文件。
 
@@ -220,7 +235,10 @@
 **边界。** 不验证 guest 逻辑、运行时 API 或 PTC 沙箱安全；只保证交付形状。单 chunk 与非内建 external 的拒绝只有生成器断言，spec 未构造多 chunk 或非内建 external 负例；自包含测试不执行生成的 guest-source.ts。
 
 <a id="m-enforcement-scripts-2.windows-packaging-dispatch"></a>
-### enforcement-scripts-2.windows-packaging-dispatch — Windows 桌面打包只走手动专用 runner 且只上传被选中的安装包 {#enforcement-scripts-2.windows-packaging-dispatch}
+
+<a id="enforcement-scripts-2.windows-packaging-dispatch"></a>
+
+### enforcement-scripts-2.windows-packaging-dispatch — Windows 桌面打包只走手动专用 runner 且只上传被选中的安装包
 
 **何时适用。** 修改 `.github/workflows/windows-package.yml`；修改桌面打包命令、签名/通道输入或 checkout 清理逻辑；新增 Windows 打包 preset 或 runner 标签。
 
@@ -261,7 +279,10 @@
 **边界。** 不验证签名证书、安装包可安装性或真实发布；spec 不检查独立 build 步骤，只检查 settings 在 package 命令之前。YAML 断言依赖 workflow 结构，重命名 step id 需同步测试。
 
 <a id="m-enforcement-scripts-2.ssh-helper-container-acceptance"></a>
-### enforcement-scripts-2.ssh-helper-container-acceptance — SSH helper 发布前必须在无 Node 的隔离容器里跑真实 OpenSSH {#enforcement-scripts-2.ssh-helper-container-acceptance}
+
+<a id="enforcement-scripts-2.ssh-helper-container-acceptance"></a>
+
+### enforcement-scripts-2.ssh-helper-container-acceptance — SSH helper 发布前必须在无 Node 的隔离容器里跑真实 OpenSSH
 
 **何时适用。** 构建或发布 ssh-helper archive；修改 `verify-ssh-helper-ssh`、`ssh-helper-runtime` 或 PTC worker；变更 sandbox profile、目标 glibc 或容器镜像。
 
@@ -304,7 +325,10 @@
 **边界。** 不覆盖生产 SSH 配置、网络故障注入或非 Linux 平台；容器平台映射只处理 arm64/amd64。HOME 是新建空目录而非 unset；嵌套 finally 的清理失败可能替换主错误。
 
 <a id="m-enforcement-scripts-2.office-render-content-oracle"></a>
-### enforcement-scripts-2.office-render-content-oracle — Office 渲染证据必须检查内容而不是只看命令成功 {#enforcement-scripts-2.office-render-content-oracle}
+
+<a id="enforcement-scripts-2.office-render-content-oracle"></a>
+
+### enforcement-scripts-2.office-render-content-oracle — Office 渲染证据必须检查内容而不是只看命令成功
 
 **何时适用。** 变更 Office 渲染路径或升级 LibreOffice/渲染库；为 Python runtime 或打包 skill 增加 Office 冒烟；修改 color-blocks fixture 或 manifest 字段。
 
@@ -343,7 +367,10 @@
 **边界。** 像素阈值依赖 fixture、dpi 与字体；不检查文本内容是否正确，只检查存在可见非白像素。红蓝规则是严格 10% 宽度间隔。没有本分区的 spec 证明该 oracle 被 installed-runtime 测试实际调用。
 
 <a id="m-enforcement-scripts-2.lifecycle-entrypoint-resolution"></a>
-### enforcement-scripts-2.lifecycle-entrypoint-resolution — pnpm 生命周期入口按类型解析而不是拼 shell 字符串 {#enforcement-scripts-2.lifecycle-entrypoint-resolution}
+
+<a id="enforcement-scripts-2.lifecycle-entrypoint-resolution"></a>
+
+### enforcement-scripts-2.lifecycle-entrypoint-resolution — pnpm 生命周期入口按类型解析而不是拼 shell 字符串
 
 **何时适用。** 新增通过 `pnpm run` 调用的脚本或 gate；支持 Windows/带空格路径；替换 pnpm 安装方式或 `npm_execpath` 形态。
 

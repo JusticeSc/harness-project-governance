@@ -114,19 +114,7 @@
 
 **源记录**：事件删除（`2026-06-20-drop-unconsumed-llm-adapter-change-event.md`）、便利表面（`2026-06-20-drop-unconsumed-llm-assembled-surfaces.md`）、seam 方法（`2026-06-20-prune-dead-seam-methods.md`）、图像块（`2026-07-04-drop-image-content-block.md`）、词汇变体（`2026-07-04-prune-producerless-vocabulary-variants.md`）、测试包（`2026-07-19-retire-subagent-mock-package.md`）、CLI demo（`2026-08-08-remove-cli-demo.md`）、SDK 工具链（`2026-08-11-remove-sdk-project-toolchain.md`），以及 proposed 的 55–58。精确行号见 `research/rationale-simplification-2-coverage.json`。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:16-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:22-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:8-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:18-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-prune-producerless-vocabulary-variants.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:8-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:8-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:13-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:16-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:22-27@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:8-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:18-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-prune-producerless-vocabulary-variants.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:8-13@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:8-13@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:13-20@687f282e
 
 <a id="removal-closure"></a>
 ### 4.2 `rationale-simplification-2-removal-closure` — 删除闭包
@@ -152,22 +140,7 @@
 
 **源记录**：hook 协议（`2026-07-04-tighten-hook-protocol-contract.md`）、mock 包（`2026-07-19-retire-subagent-mock-package.md`）、CLI demo、SDK 工具链、spine demo（`2026-08-26-remove-agent-spine-demo.md`）、catalog 投影（`2026-09-08-web-subagent-catalog-projections.md`）、membership-only（`2026-09-16-subagent-catalog-membership-only.md`）、log-only turns（`2026-07-28-remove-synthetic-log-only-turns.md`）、preset 组合（`2026-10-09-preset-owned-subagent-composition.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:22-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:34-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:17-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:27-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:24-29@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:14-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:33-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:24-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:18-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:22-25@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:34-40@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:17-20@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:27-30@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:24-29@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:14-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:33-35@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:24-27@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:18-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
 
 <a id="removal-verification"></a>
 ### 4.3 `rationale-simplification-2-removal-verification` — 让测试跟随行为
@@ -193,21 +166,7 @@
 
 **源记录**：缓存摘要的测试教训（`2026-06-19-drop-mutable-session-summary.md`）、readline 的 PTY 测试政策（`2026-07-20-retire-readline-front-door.md`）、Workspace 路由测试（`2026-07-31-one-route-to-add-a-workspace.md`）、Agent Teams 测试（`2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md`）、E2B 验证（`2026-09-11-remove-e2b-providers.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:32-36@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:30-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:35-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:24-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:24-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:33-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:33-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:33-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:26-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:50-53@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:18-21@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:37-40@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:47-51@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:27-32@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:32-36@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-assembled-surfaces.md:30-33@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:35-38@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:24-27@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:24-32@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:33-37@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:33-38@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:33-35@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:26-30@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:50-53@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:18-21@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:37-40@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:47-51@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:27-32@687f282e
 
 <a id="compatibility-cut"></a>
 ### 4.4 `rationale-simplification-2-compatibility-cut` — 代码快切，数据不可重写
@@ -232,21 +191,7 @@
 
 **源记录**：根部 pre-stable/released-session 政策；`2026-06-19-drop-mutable-session-summary.md` 的 No migration；`2026-08-08-remove-cli-demo.md`；`2026-08-11-remove-sdk-project-toolchain.md`；`2026-08-30-jsonl-only-session-persistence.md`；`2026-09-11-remove-e2b-providers.md`；`2026-10-05-native-or-ptc-presentation.md`；`2026-10-09-preset-owned-subagent-composition.md`。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:28-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:14-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:27-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:28-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:29-36@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:21-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:35-40@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-19-remove-desktop-profile-core-cleanup.md:13-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:28-31@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:14-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-08-remove-cli-demo.md:27-32@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:28-37@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:29-36@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:21-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:35-40@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-19-remove-desktop-profile-core-cleanup.md:13-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e
 
 <a id="single-route-owner"></a>
 ### 4.5 `rationale-simplification-2-single-route-owner` — 一个操作一条主路径
@@ -272,23 +217,7 @@
 
 **源记录**：stop API（`2026-06-20-public-agent-stop-api.md`）、boot glue（`2026-07-04-share-app-bin-boot-glue.md`）、surface manager（`2026-07-19-use-one-session-surface-manager.md`）、readline（`2026-07-20-retire-readline-front-door.md`）、Workspace 路由、Web steer、source installer、cmdline、spine demo、catalog 投影、Messages-only（`2026-09-19-deepseek-messages-only.md`）、id 统一、log-only turn、JSONL、native/PTC。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-share-app-bin-boot-glue.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:12-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-web-ui-no-steer-entry-or-interjection-chrome.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-10-source-run-without-managed-installer.md:14-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-19-deepseek-messages-only.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-share-app-bin-boot-glue.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:12-26@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-retire-readline-front-door.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-web-ui-no-steer-entry-or-interjection-chrome.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-10-source-run-without-managed-installer.md:14-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-19-deepseek-messages-only.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
 
 <a id="derived-authority"></a>
 ### 4.6 `rationale-simplification-2-derived-authority` — 从权威派生，不维护第二真相
@@ -315,21 +244,7 @@
 
 **源记录**：SessionSummary（`2026-06-19-drop-mutable-session-summary.md`）、surface manager、flush（`2026-07-23-collapse-persistence-flush-state.md`）、状态机（`2026-07-24-agent-loop-observable-state-machine.md`）、Schedule delivery（`2026-08-09-conversational-schedule-delivery.md`）、Agent Teams、catalog 投影、Workspace recency（`2026-09-10-derived-workspace-recency.md`）、membership-only、id 统一、时区（`2026-08-09-explicit-schedule-time-zone.md`）、JSONL。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:8-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:20-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:14-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-24-agent-loop-observable-state-machine.md:16-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-09-conversational-schedule-delivery.md:14-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:18-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-10-derived-workspace-recency.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-09-explicit-schedule-time-zone.md:13-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:8-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-19-drop-mutable-session-summary.md:20-27@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:14-25@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-24-agent-loop-observable-state-machine.md:16-32@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-09-conversational-schedule-delivery.md:14-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:18-33@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-10-derived-workspace-recency.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-07-28-remove-synthetic-log-only-turns.md:15-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-09-explicit-schedule-time-zone.md:13-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
 
 <a id="current-owner-bar"></a>
 ### 4.7 `rationale-simplification-2-current-owner-bar` — 当前所有者门槛
@@ -355,24 +270,7 @@
 
 **源记录**：事件死表面、seam 方法、图像块、词汇变体、todo opt-in、Workspace 路由、beta notice、PTC、availability、membership-only、E2B、native/PTC、preset 组合，以及 proposed 55–57、dependency-swaps 拒绝（`2026-07-26-dependency-swaps-rejected-by-nih-audit.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:18-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-prune-producerless-vocabulary-variants.md:8-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-73@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-omit-unneeded-invariant-companions.md:16-23@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-drop-unconsumed-llm-adapter-change-event.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-drop-image-content-block.md:18-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-prune-producerless-vocabulary-variants.md:8-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-73@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-omit-unneeded-invariant-companions.md:16-23@687f282e
 
 <a id="load-bearing-exceptions"></a>
 ### 4.8 `rationale-simplification-2-load-bearing-exceptions` — 承载例外
@@ -397,16 +295,7 @@
 
 **源记录**：whenIdle 保留（`2026-06-20-public-agent-stop-api.md`）、JSON 树（`2026-07-28-local-json-tree-renderer.md`）、PowerShell、Windows 修复、E2B、拒绝截断（`2026-06-20-truncate-interrupted-turns.md`）、拒绝 timer promises（`2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md`）、依赖审计。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-28-local-json-tree-renderer.md:21-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:18-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:14-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:15-24@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-73@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-prune-dead-seam-methods.md:29-34@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-06-20-public-agent-stop-api.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-28-local-json-tree-renderer.md:21-30@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:18-25@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:14-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:15-24@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:11-73@687f282e
 
 <a id="single-semantic-home"></a>
 ### 4.9 `rationale-simplification-2-single-semantic-home` — 共享语义只有一个家
@@ -431,25 +320,7 @@
 
 **源记录**：boot glue、hook 协议、mock 包、surface manager、flush、状态机、sandbox policy、cmdline、Agent Teams、diagnostics、spine demo、freeze evidence、catalog 投影、Host 校验（`2026-09-15-host-only-remote-input-validation.md`）、availability、id 统一、preset 组合、shell env。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-share-app-bin-boot-glue.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:17-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:12-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:14-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-24-agent-loop-observable-state-machine.md:16-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:18-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:14-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:45-54@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-host-only-remote-input-validation.md:14-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-share-app-bin-boot-glue.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-04-tighten-hook-protocol-contract.md:17-20@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-retire-subagent-mock-package.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-19-use-one-session-surface-manager.md:12-26@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:14-25@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-24-agent-loop-observable-state-machine.md:16-32@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-cmdline-program-action.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-trim-agent-teams-read-and-lifecycle-surface.md:18-33@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:14-44@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:45-54@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-26-remove-agent-spine-demo.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-host-only-remote-input-validation.md:14-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
 
 <a id="fallback-platform-scope"></a>
 ### 4.10 `rationale-simplification-2-fallback-platform-scope` — 回退与平台范围
@@ -474,12 +345,7 @@
 
 **源记录**：PowerShell（`2026-08-04-drop-windows-powershell-picker-fallback.md`）、Windows probe（`2026-08-28-windows-only-absent-probe-repair.md`）、Host-only validation、E2B、provider-only reads（`2026-09-19-provider-only-instruction-reads.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:8-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:18-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:14-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-host-only-remote-input-validation.md:14-21@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:8-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-04-drop-windows-powershell-picker-fallback.md:18-25@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:14-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-host-only-remote-input-validation.md:14-21@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:15-24@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e
 
 <a id="minimal-default"></a>
 ### 4.11 `rationale-simplification-2-minimal-default` — 最小默认组合
@@ -504,14 +370,7 @@
 
 **源记录**：todo opt-in（`2026-07-21-tui-todo-write-opt-in.md`）、Workspace 路由、PTC（`2026-09-01-ptc-omits-workflow-tool.md`）、catalog 投影、availability、native/PTC、preset 组合。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-todo-write-opt-in.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:14-28@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-08-web-subagent-catalog-projections.md:12-21@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
 
 <a id="model-surface-minimalism"></a>
 ### 4.12 `rationale-simplification-2-model-surface-minimalism` — 模型可见面最小化
@@ -536,17 +395,7 @@
 
 **源记录**：envelopes（`2026-07-20-unwrap-injected-content-envelopes.md`）、sandbox policy、diagnostics、PTC、availability、membership-only、native/PTC、preset、shell env。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-unwrap-injected-content-envelopes.md:8-16@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-unwrap-injected-content-envelopes.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:8-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:14-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-unwrap-injected-content-envelopes.md:8-16@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-20-unwrap-injected-content-envelopes.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-capability-neutral-sandbox-policy-context.md:14-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:8-13@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-21-product-subagent-minimal-diagnostics.md:14-44@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-ptc-omits-workflow-tool.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-15-model-agent-availability-and-team-targets.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-16-subagent-catalog-membership-only.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:11-20@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
 
 <a id="visual-preserves-behavior"></a>
 ### 4.13 `rationale-simplification-2-visual-preserves-behavior` — 视觉简化保留行为
@@ -571,15 +420,7 @@
 
 **源记录**：/cancel（`2026-07-21-tui-remove-cancel-command.md`）、侧栏 pill（`2026-07-30-sidebar-resize-without-visible-pill.md`）、steering caption（`2026-08-10-web-remove-steering-interjection-caption.md`）、beta notice（`2026-08-13-remove-first-run-beta-notice.md`）、CSS width（`2026-09-01-css-produced-file-layout.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-30-sidebar-resize-without-visible-pill.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-30-sidebar-resize-without-visible-pill.md:12-17@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-10-web-remove-steering-interjection-caption.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:8-11@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:12-15@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-css-produced-file-layout.md:8-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-css-produced-file-layout.md:14-19@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-21-tui-remove-cancel-command.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-30-sidebar-resize-without-visible-pill.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-30-sidebar-resize-without-visible-pill.md:12-17@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-10-web-remove-steering-interjection-caption.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:8-11@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-13-remove-first-run-beta-notice.md:12-15@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-css-produced-file-layout.md:8-13@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-01-css-produced-file-layout.md:14-19@687f282e
 
 <a id="measurement-evidence"></a>
 ### 4.14 `rationale-simplification-2-measurement-evidence` — 优化要有证明
@@ -604,13 +445,7 @@
 
 **源记录**：freeze evidence（`2026-09-06-agent-request-freeze-evidence.md`）、Windows probe、timer promises 拒绝、knip（`2026-08-19-knip-config-cleanup.md`）。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:20-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:38-59@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:18-30@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:15-24@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:35-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-19-knip-config-cleanup.md:12-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:20-37@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-06-agent-request-freeze-evidence.md:38-59@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-28-windows-only-absent-probe-repair.md:18-30@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:15-24@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:35-37@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-19-knip-config-cleanup.md:12-20@687f282e
 
 <a id="supersession-memory"></a>
 ### 4.15 `rationale-simplification-2-supersession-memory` — 取代与决策记忆
@@ -636,24 +471,7 @@
 
 **源记录**：flush 的 superseded cadence、Web steer 的部分取代、Workspace recency 的 owner gap、id/JSONL/E2B/desktop/preset 的取代或重新引入条件，以及四条 proposed（`2026-09-17-defer-office-background-scheduling.md`、`2026-09-19-provider-only-instruction-reads.md`、`2026-09-19-shell-env-key-declarations.md`、`2026-09-19-trim-session-query-convenience-api.md`）与三条 rejected（`2026-06-20-truncate-interrupted-turns.md`、`2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md`、`2026-07-26-dependency-swaps-rejected-by-nih-audit.md`）；归档/生命周期政策来自 `.agents/notes/README.md` 与 `.agents/notes/AGENTS.md`。
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:26-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:46-50@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-web-ui-no-steer-entry-or-interjection-chrome.md:22-29@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-10-derived-workspace-recency.md:32-37@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-19-remove-desktop-profile-core-cleanup.md:13-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:21-28@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e
-来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:13-20@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:35-37@687f282e
-来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:74-78@687f282e
-来源：deepseek-harness/.agents/notes/README.md:38-50@687f282e
-来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:26-35@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:46-50@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-web-ui-no-steer-entry-or-interjection-chrome.md:22-29@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-09-10-derived-workspace-recency.md:32-37@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-11-remove-e2b-providers.md:41-46@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-09-19-remove-desktop-profile-core-cleanup.md:13-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:21-28@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-17-defer-office-background-scheduling.md:15-22@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-provider-only-instruction-reads.md:13-22@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-shell-env-key-declarations.md:13-18@687f282e 来源：deepseek-harness/.agents/notes/proposed/simplification/2026-09-19-trim-session-query-convenience-api.md:13-20@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-06-20-truncate-interrupted-turns.md:28-31@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md:35-37@687f282e 来源：deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:74-78@687f282e 来源：deepseek-harness/.agents/notes/README.md:38-50@687f282e 来源：deepseek-harness/.agents/notes/AGENTS.md:1-7@687f282e
 
 <a id="reviewable-boundaries"></a>
 ### 4.16 `rationale-simplification-2-reviewable-boundaries` — 可审查边界
@@ -870,12 +688,4 @@
 - `rationale-simplification-2-supersession-memory`：`deepseek-harness/.agents/notes/archived/simplification/2026-07-23-collapse-persistence-flush-state.md:46-50@687f282e`、`deepseek-harness/.agents/notes/implemented/simplification/2026-10-09-preset-owned-subagent-composition.md:21-28@687f282e`、`deepseek-harness/.agents/notes/rejected/simplification/2026-07-26-dependency-swaps-rejected-by-nih-audit.md:74-78@687f282e`
 - `rationale-simplification-2-reviewable-boundaries`：`deepseek-harness/.agents/notes/archived/simplification/2026-08-12-separate-source-launch-from-build.md:14-21@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:29-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:33-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:28-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-separate-source-launch-from-build.md:8-13@687f282e
-来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-separate-source-launch-from-build.md:14-21@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e
-来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e
+来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:29-32@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-07-31-one-route-to-add-a-workspace.md:33-38@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:16-23@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-11-remove-sdk-project-toolchain.md:28-37@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-separate-source-launch-from-build.md:8-13@687f282e 来源：deepseek-harness/.agents/notes/archived/simplification/2026-08-12-separate-source-launch-from-build.md:14-21@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-06-20-unify-agent-and-session-id.md:17-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-08-30-jsonl-only-session-persistence.md:13-20@687f282e 来源：deepseek-harness/.agents/notes/implemented/simplification/2026-10-05-native-or-ptc-presentation.md:11-14@687f282e

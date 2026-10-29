@@ -87,9 +87,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:1-47@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-remove-generated-agent-note-index.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:1-45@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-require-agent-notes-for-non-trivial-changes.md:1-47@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-remove-generated-agent-note-index.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-frozen-agent-note-archive.md:1-45@687f282e
 
 <a id="rationale-process-1-frozen-archive-integrity"></a>
 ### rationale-process-1-frozen-archive-integrity — 冻结归档：完整三元组与追加式密封清单
@@ -177,13 +175,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-quality-gates.md:1-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-browser-gif-evidence-chain.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-19-remove-knip.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-27-gate-runner-fail-fast.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-playwright-video-gif.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-19-no-unknown-casts.md:1-35@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-quality-gates.md:1-31@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-browser-gif-evidence-chain.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-19-remove-knip.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-27-gate-runner-fail-fast.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-playwright-video-gif.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-19-no-unknown-casts.md:1-35@687f282e
 
 <a id="rationale-process-1-change-scope-and-reviewability"></a>
 ### rationale-process-1-change-scope-and-reviewability — 明确改动范围、具体化文本与可判定评审
@@ -222,11 +214,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-27-explicit-change-scope-report.md:1-42@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-web-styling-system.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-concrete-prose-names-actors-and-recorded-facts.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:1-67@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-39@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-27-explicit-change-scope-report.md:1-42@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-web-styling-system.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-concrete-prose-names-actors-and-recorded-facts.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-19-evidence-led-simplification-surveys.md:1-67@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-ban-ambiguous-origin-label.md:1-39@687f282e
 
 <a id="rationale-process-1-unknown-cast-baseline"></a>
 ### rationale-process-1-unknown-cast-baseline — 对新增 unknown 断言采用精确基线
@@ -296,9 +284,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-28-test-temp-dir-self-cleanup.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-31-windows-coverage-flaky-test-budgets.md:1-52@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:1-50@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-08-28-test-temp-dir-self-cleanup.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-31-windows-coverage-flaky-test-budgets.md:1-52@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:1-50@687f282e
 
 <a id="rationale-process-1-document-taxonomy-and-ownership"></a>
 ### rationale-process-1-document-taxonomy-and-ownership — 文档分层、预算、包锚定与维护模式
@@ -336,10 +322,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-03-documentation-graph-atlas.md:1-70@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-doc-tiers-and-budgets.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-web-styling-system.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-03-package-anchored-subsystem-pages.md:1-38@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-03-documentation-graph-atlas.md:1-70@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-doc-tiers-and-budgets.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-19-web-styling-system.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-03-package-anchored-subsystem-pages.md:1-38@687f282e
 
 <a id="rationale-process-1-bilingual-pairing-and-links"></a>
 ### rationale-process-1-bilingual-pairing-and-links — 双语配对、章节记录与本地化链接完整性
@@ -378,11 +361,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-18-markdown-cross-link-lint.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-02-bilingual-docs-and-pairing-gate.md:1-45@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-18-localized-bilingual-links.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-package-index-link-discovery.md:1-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-23-section-keyed-translation-pairing-records.md:1-57@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-06-18-markdown-cross-link-lint.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-02-bilingual-docs-and-pairing-gate.md:1-45@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-18-localized-bilingual-links.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-package-index-link-discovery.md:1-24@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-23-section-keyed-translation-pairing-records.md:1-57@687f282e
 
 <a id="rationale-process-1-documentation-publication"></a>
 ### rationale-process-1-documentation-publication — 单一源投影、原始 Markdown 孪生与自包含资产
@@ -421,11 +400,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-03-documentation-graph-atlas.md:1-70@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-generated-cordis-core-api.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-06-doc-site-carries-its-images.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-12-documentation-site-navigation-and-chrome.md:1-42@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-20-doc-site-raw-markdown-twins.md:1-40@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-03-documentation-graph-atlas.md:1-70@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-generated-cordis-core-api.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-06-doc-site-carries-its-images.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-12-documentation-site-navigation-and-chrome.md:1-42@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-20-doc-site-raw-markdown-twins.md:1-40@687f282e
 
 <a id="rationale-process-1-document-content-contracts"></a>
 ### rationale-process-1-document-content-contracts — README 限制、模型体验与公开 API 文档契约
@@ -464,10 +439,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-core-data-structures-catalog.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-cordis-jsdoc-completeness-gate.md:1-42@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-10-readme-known-limitations-gate.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-12-package-model-experience-contract.md:1-34@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-core-data-structures-catalog.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-cordis-jsdoc-completeness-gate.md:1-42@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-10-readme-known-limitations-gate.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-12-package-model-experience-contract.md:1-34@687f282e
 
 <a id="rationale-process-1-generated-reference-freshness"></a>
 ### rationale-process-1-generated-reference-freshness — 生成参考、目录与声明的新鲜度强制
@@ -509,13 +481,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-persistence-log-catalog.md:1-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-generated-config-catalog.md:1-41@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-generated-cordis-core-api.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-api-remotes-generated-contract-build.md:1-81@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-30-generated-third-party-notices.md:1-59@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-14-generated-cli-help-reference.md:1-25@687f282e
-来源：deepseek-harness/.agents/notes/proposed/process/2026-08-20-audience-first-documentation-quality.md:1-139@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-04-persistence-log-catalog.md:1-37@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-generated-config-catalog.md:1-41@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-generated-cordis-core-api.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-api-remotes-generated-contract-build.md:1-81@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-30-generated-third-party-notices.md:1-59@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-14-generated-cli-help-reference.md:1-25@687f282e 来源：deepseek-harness/.agents/notes/proposed/process/2026-08-20-audience-first-documentation-quality.md:1-139@687f282e
 
 <a id="rationale-process-1-package-manager-and-workspace-policy"></a>
 ### rationale-process-1-package-manager-and-workspace-policy — 固定包管理器、严格工作区链接与无 shell 重入
@@ -622,9 +588,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-23-client-cross-package-value-dependencies.md:1-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-15-shipped-optional-bundles.md:1-29@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-05-product-package-classification.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-08-23-client-cross-package-value-dependencies.md:1-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-15-shipped-optional-bundles.md:1-29@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-05-product-package-classification.md:1-29@687f282e
 
 <a id="rationale-process-1-build-command-separation"></a>
 ### rationale-process-1-build-command-separation — 拆分产物构建、类型检查与完整 build
@@ -731,8 +695,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-11-build-artifacts-check-split.md:1-157@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-12-local-gate-speedups.md:1-158@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-10-11-build-artifacts-check-split.md:1-157@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-12-local-gate-speedups.md:1-158@687f282e
 
 <a id="rationale-process-1-built-artifact-validation"></a>
 ### rationale-process-1-built-artifact-validation — 严格运行构建产物，并按编译 face 命名测试
@@ -767,8 +730,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-17-run-ci-examples-from-built-lib.md:1-43@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-12-face-named-client-test-files.md:1-62@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-17-run-ci-examples-from-built-lib.md:1-43@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-12-face-named-client-test-files.md:1-62@687f282e
 
 <a id="rationale-process-1-ci-topology-and-portability"></a>
 ### rationale-process-1-ci-topology-and-portability — 可移植的必需 CI、独立 job 与实测 runner 策略
@@ -815,17 +777,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-23-portable-required-pull-request-ci.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-pnpm-action-setup-for-symmetric-ci-caching.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-27-wine-windows-gates-experiment.md:1-48@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-30-independent-ci-consumer-build.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-28-ci-node-compile-cache-data-disk.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-master-only-platform-ci.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-preview-hosted-runner-sizing.md:1-47@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-release-rehearsal-selfhosted.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-09-cancel-superseded-ci.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-08-native-windows-pull-request-ci.md:1-57@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-23-portable-required-pull-request-ci.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-pnpm-action-setup-for-symmetric-ci-caching.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-27-wine-windows-gates-experiment.md:1-48@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-30-independent-ci-consumer-build.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-28-ci-node-compile-cache-data-disk.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-master-only-platform-ci.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-preview-hosted-runner-sizing.md:1-47@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-release-rehearsal-selfhosted.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-09-cancel-superseded-ci.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-26-ci-failover-runbook.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-08-native-windows-pull-request-ci.md:1-57@687f282e
 
 <a id="rationale-process-1-native-platform-evidence"></a>
 ### rationale-process-1-native-platform-evidence — 在可移植 Wine 检查之外提供原生平台证据
@@ -897,9 +849,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-11-python-publication-workflow.md:1-52@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-publish-all-experimental-packages.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-16-desktop-release-version-derivation.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-08-11-python-publication-workflow.md:1-52@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-publish-all-experimental-packages.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-16-desktop-release-version-derivation.md:1-30@687f282e
 
 <a id="rationale-process-1-signed-runtime-supply-chain"></a>
 ### rationale-process-1-signed-runtime-supply-chain — 签名运行时缓存与分离的时间戳完成
@@ -938,8 +888,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-windows-runtime-signature-cache.md:1-49@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-windows-signature-completion.md:1-35@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-windows-runtime-signature-cache.md:1-49@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-windows-signature-completion.md:1-35@687f282e
 
 <a id="rationale-process-1-installer-and-source-plane"></a>
 ### rationale-process-1-installer-and-source-plane — 安装器 checkout 检测、单一托管布局与源码平面解析
@@ -976,9 +925,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-installer-in-repo-skip-clone.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-30-cordis-config-source-plane-resolution-gate.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-31-installer-adopts-existing-checkout.md:1-52@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-installer-in-repo-skip-clone.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-30-cordis-config-source-plane-resolution-gate.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-31-installer-adopts-existing-checkout.md:1-52@687f282e
 
 <a id="rationale-process-1-worktree-local-hooks"></a>
 ### rationale-process-1-worktree-local-hooks — worktree 局部 Git hooks、所有权与迁移守卫
@@ -1058,11 +1005,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-review-driven-issue-lifecycle-triggers.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-31-pr-opened-issue-start-dates.md:1-42@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-03-semantic-issue-templates-and-policy.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-08-unified-github-label-taxonomy.md:1-76@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-event-directed-pr-review-status.md:1-41@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-review-driven-issue-lifecycle-triggers.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-31-pr-opened-issue-start-dates.md:1-42@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-03-semantic-issue-templates-and-policy.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-08-unified-github-label-taxonomy.md:1-76@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-event-directed-pr-review-status.md:1-41@687f282e
 
 <a id="rationale-process-1-pull-request-stack-and-review"></a>
 ### rationale-process-1-pull-request-stack-and-review — 官方 PR stack、lease 保护刷新与 blame 加权评审
@@ -1100,8 +1043,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-02-native-github-stacks-and-optional-rebases.md:1-43@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-11-production-blame-approval-weight.md:1-36@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-08-02-native-github-stacks-and-optional-rebases.md:1-43@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-11-production-blame-approval-weight.md:1-36@687f282e
 
 <a id="rationale-process-1-repository-tooling-hygiene"></a>
 ### rationale-process-1-repository-tooling-hygiene — linter 迁移等价、staged/full 分离与手动专属重流程
@@ -1139,10 +1081,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-29-oxlint-linter.md:1-46@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-lightweight-routine-documentation-translation.md:1-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-oxlint-only-fix-workflow.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-19-remove-knip.md:1-28@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-29-oxlint-linter.md:1-46@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-lightweight-routine-documentation-translation.md:1-31@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-oxlint-only-fix-workflow.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-19-remove-knip.md:1-28@687f282e
 
 <a id="rationale-process-1-design-token-system"></a>
 ### rationale-process-1-design-token-system — 设计 token、活样式规范与偏离记录

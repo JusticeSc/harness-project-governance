@@ -181,8 +181,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md:1-51@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-18-agent-lifecycle-and-ownership-contracts.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e
 
 <a id="rationale-architecture-1.capability-seam-contract"></a>
 ## rationale-architecture-1.capability-seam-contract — 能力 seam 的三角色、原子 provider 与有界外部实现
@@ -239,13 +238,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/proposed/architecture/2026-07-24-domain-kv-storage-and-workspace.md:1-329@687f282e8625c6b8d11ff58211a90524be2e4317（proposed）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-15-lsp-capability-seam.md:1-199@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-11-node-office-kit.md:1-66@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-23-client-plugin-loading-model.md:1-123@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-12-computer-use-provider-registration.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e
-来源：deepseek-harness/.agents/notes/proposed/architecture/2026-07-24-domain-kv-storage-and-workspace.md:1-329@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-15-lsp-capability-seam.md:1-199@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-11-node-office-kit.md:1-66@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-capability-seams.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-23-client-plugin-loading-model.md:1-123@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-12-computer-use-provider-registration.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e 来源：deepseek-harness/.agents/notes/proposed/architecture/2026-07-24-domain-kv-storage-and-workspace.md:1-329@687f282e
 
 <a id="rationale-architecture-1.registration-lifecycle"></a>
 ## rationale-architecture-1.registration-lifecycle — 注册即生命周期事件：typed 增删、最后发布/最先撤销
@@ -296,8 +289,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-07-05-subagent-provider-lifecycle-events.md:1-37@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/archived/architecture/2026-07-08-agent-scope-contexts.md:1-176@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-05-subagent-provider-lifecycle-events.md:1-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-08-agent-scope-contexts.md:1-176@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-05-subagent-provider-lifecycle-events.md:1-37@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-08-agent-scope-contexts.md:1-176@687f282e
 
 <a id="rationale-architecture-1.composition-scoped-capability"></a>
 ## rationale-architecture-1.composition-scoped-capability — 能力可用性由组合作用域决定，而非宿主服务存在
@@ -351,11 +343,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md:1-33@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-preset-scoped-schedule-tools.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-08-agent-scope-contexts.md:1-176@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-05-profile-plugin-bundles.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-experimental-voice-input.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-preset-scoped-schedule-tools.md:1-34@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-08-agent-scope-contexts.md:1-176@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-05-profile-plugin-bundles.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-experimental-voice-input.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-preset-scoped-schedule-tools.md:1-34@687f282e
 
 <a id="rationale-architecture-1.single-config-owner"></a>
 ## rationale-architecture-1.single-config-owner — 单一配置所有者、字段归属按生效时机与最少重建
@@ -410,11 +398,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-profile-owned-live-configuration.md:1-29@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-desktop-shell-configuration.md:1-29@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-28-user-settings-seam.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-29-request-level-llm-config-credentials.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-18-volatile-config-references.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-profile-owned-live-configuration.md:1-29@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-desktop-shell-configuration.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-28-user-settings-seam.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-29-request-level-llm-config-credentials.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-18-volatile-config-references.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-profile-owned-live-configuration.md:1-29@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-desktop-shell-configuration.md:1-29@687f282e
 
 <a id="rationale-architecture-1.authority-and-elevation"></a>
 ## rationale-architecture-1.authority-and-elevation — 权限升级按调用授予并绑定保留环境
@@ -465,8 +449,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-persistent-ptc-sandbox.md:1-31@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-persistent-ptc-sandbox.md:1-31@687f282e
+来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-16-creator-persistent-plugin-management.md:1-31@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-08-persistent-ptc-sandbox.md:1-31@687f282e
 
 <a id="rationale-architecture-1.boundary-validation"></a>
 ## rationale-architecture-1.boundary-validation — 边界验证：编译期只是声明，入口必须重建与拒绝
@@ -519,10 +502,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-09-19-lossless-projection-checkpoint-json.md:1-25@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-07-31-ptc-runtime-python-fd3-protocol.md:1-45@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-11-runtime-arg-validation.md:1-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-web-feature-routes-and-route-gate.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-19-lossless-projection-checkpoint-json.md:1-25@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-31-ptc-runtime-python-fd3-protocol.md:1-45@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-11-runtime-arg-validation.md:1-25@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-web-feature-routes-and-route-gate.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-19-lossless-projection-checkpoint-json.md:1-25@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-31-ptc-runtime-python-fd3-protocol.md:1-45@687f282e
 
 <a id="rationale-architecture-1.canonical-vocabulary"></a>
 ## rationale-architecture-1.canonical-vocabulary — 单一规范词汇与展示投影，生产者门控
@@ -580,15 +560,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-08-23-locale-owned-client-ui-copy.md:1-44@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-11-content-block-vocabulary.md:1-29@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-20-canonical-tool-output-contract.md:1-80@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-24-dsh-commander-argument-adapter.md:1-54@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-28-consolidated-tui-presentation.md:1-64@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-web-composer-lexical-editor.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-10-command-identities-and-composer-file-action.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md:1-55@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-23-locale-owned-client-ui-copy.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-11-content-block-vocabulary.md:1-29@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-20-canonical-tool-output-contract.md:1-80@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-24-dsh-commander-argument-adapter.md:1-54@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-28-consolidated-tui-presentation.md:1-64@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-web-composer-lexical-editor.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-10-command-identities-and-composer-file-action.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md:1-55@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-23-locale-owned-client-ui-copy.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e
 
 <a id="rationale-architecture-1.identity-and-correlation"></a>
 ## rationale-architecture-1.identity-and-correlation — 稳定业务身份、赋值只收窄与面域范围校验
@@ -645,14 +617,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-desktop-page-close-shortcuts.md:1-27@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-11-trajectory-conversation-context-assembly.md:1-108@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-01-streamed-tool-call-identity.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-10-command-identities-and-composer-file-action.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-31-explicit-agent-runtime-identity.md:1-47@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-image-offload-events.md:1-49@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-projection-cache-listing-identity-and-cached-rows.md:1-163@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-desktop-page-close-shortcuts.md:1-27@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-11-trajectory-conversation-context-assembly.md:1-108@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-01-streamed-tool-call-identity.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-10-command-identities-and-composer-file-action.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-31-explicit-agent-runtime-identity.md:1-47@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-image-offload-events.md:1-49@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-projection-cache-listing-identity-and-cached-rows.md:1-163@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-21-desktop-page-close-shortcuts.md:1-27@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e
 
 <a id="rationale-architecture-1.security-boundary"></a>
 ## rationale-architecture-1.security-boundary — 统一认证、principal/peer 分层与单一策略判定点
@@ -713,12 +678,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-operator-scoped-connect-handshake.md:1-55@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-12-peer-principal-and-remote-access.md:1-675@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-12-plugin-owned-settings-surface.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-28-api-browser-trust-boundary.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-24-browser-token-authentication.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-concrete-web-bind-address.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-operator-scoped-connect-handshake.md:1-55@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-12-peer-principal-and-remote-access.md:1-675@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-12-plugin-owned-settings-surface.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-28-api-browser-trust-boundary.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-24-browser-token-authentication.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-concrete-web-bind-address.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-09-operator-scoped-connect-handshake.md:1-55@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-12-peer-principal-and-remote-access.md:1-675@687f282e
 
 <a id="rationale-architecture-1.durable-projection-single-truth"></a>
 ## rationale-architecture-1.durable-projection-single-truth — 持久投影单一真源、句柄写路径与版本化追加
@@ -776,14 +736,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-image-offload-events.md:1-49@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-projection-cache-listing-identity-and-cached-rows.md:1-163@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-17-settings-describe-mirror.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-14-sidebar-layout-provider-recovery.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-18-session-surface.md:1-68@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-27-handle-based-session-persistence.md:1-43@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-02-system-prompt-as-surface-node.md:1-94@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-canonical-feedback-log.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-image-offload-events.md:1-49@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-projection-cache-listing-identity-and-cached-rows.md:1-163@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-17-settings-describe-mirror.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-14-sidebar-layout-provider-recovery.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-18-session-surface.md:1-68@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-27-handle-based-session-persistence.md:1-43@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-02-system-prompt-as-surface-node.md:1-94@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-canonical-feedback-log.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-10-image-offload-events.md:1-49@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-projection-cache-listing-identity-and-cached-rows.md:1-163@687f282e
 
 <a id="rationale-architecture-1.structured-state-preservation"></a>
 ## rationale-architecture-1.structured-state-preservation — 结构化状态恢复：语义快照先于消费者返回
@@ -887,10 +840,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-06-21-bounded-llm-request-recovery.md:1-139@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-timed-user-question-two-settlements.md:1-116@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-31-claimed-pre-step-inbox-lifecycle.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-21-bounded-llm-request-recovery.md:1-139@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-timed-user-question-two-settlements.md:1-116@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-31-claimed-pre-step-inbox-lifecycle.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-21-bounded-llm-request-recovery.md:1-139@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-19-timed-user-question-two-settlements.md:1-116@687f282e
 
 <a id="rationale-architecture-1.derived-state-single-source"></a>
 ## rationale-architecture-1.derived-state-single-source — Host 唯一计算派生状态，客户端只读序号守卫的值
@@ -942,8 +892,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-07-25-web-client-session-scope-and-provide-channel.md:1-142@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md:1-191@687f282e8625c6b8d11ff58211a90524be2e4317（proposed）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-25-web-client-session-scope-and-provide-channel.md:1-142@687f282e
-来源：deepseek-harness/.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md:1-191@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-25-web-client-session-scope-and-provide-channel.md:1-142@687f282e 来源：deepseek-harness/.agents/notes/proposed/architecture/2026-07-27-session-projection-and-command-log.md:1-191@687f282e
 
 <a id="rationale-architecture-1.whole-value-events"></a>
 ## rationale-architecture-1.whole-value-events — 状态事件携带完整变更后值，禁止裸增量
@@ -1097,11 +1046,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/archived/architecture/2026-09-02-protocol-specific-model-listing-discovery.md:1-44@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-02-projcache-cross-version-read-compat.md:1-79@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-09-deprecate-synchronous-session-event-reads.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-17-persistence-attribution-policy.md:1-35@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-02-protocol-specific-model-listing-discovery.md:1-44@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-02-projcache-cross-version-read-compat.md:1-79@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-09-deprecate-synchronous-session-event-reads.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-17-persistence-attribution-policy.md:1-35@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-02-protocol-specific-model-listing-discovery.md:1-44@687f282e
 
 <a id="rationale-architecture-1.change-transaction"></a>
 ## rationale-architecture-1.change-transaction — 变更单事务：预检、快照、单次重组合与回滚
@@ -1152,8 +1097,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-15-guided-plugin-installation.md:1-47@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-15-guided-plugin-installation.md:1-47@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e
+来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-15-guided-plugin-installation.md:1-47@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-10-01-replace-changed-package-modules-on-recomposition.md:1-86@687f282e
 
 <a id="rationale-architecture-1.distribution-and-target-binding"></a>
 ## rationale-architecture-1.distribution-and-target-binding — 发现与安装分离，目标由运行中的安装决定
@@ -1256,9 +1200,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-08-06-web-markdown-incremental-ast-renderer.md:1-34@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/archived/architecture/2026-08-20-web-composer-lexical-editor.md:1-62@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-27-tui-chat-channel-module-split.md:1-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-06-web-markdown-incremental-ast-renderer.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-web-composer-lexical-editor.md:1-62@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-27-tui-chat-channel-module-split.md:1-37@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-06-web-markdown-incremental-ast-renderer.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-web-composer-lexical-editor.md:1-62@687f282e
 
 <a id="rationale-architecture-1.versioned-artifact-contract"></a>
 ## rationale-architecture-1.versioned-artifact-contract — 构建期降级、产物版本契约与开发覆盖隔离
@@ -1311,9 +1253,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-08-27-inspector-development-mount.md:1-27@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md:1-55@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-webworker-pack-lowering-and-preview.md:1-45@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-27-inspector-development-mount.md:1-27@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md:1-55@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-20-webworker-pack-lowering-and-preview.md:1-45@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-27-inspector-development-mount.md:1-27@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-27-compiler-independent-typert-model.md:1-55@687f282e
 
 <a id="rationale-architecture-1.package-hierarchy-and-layering"></a>
 ## rationale-architecture-1.package-hierarchy-and-layering — 按角色分层、派生清单与单向依赖门禁
@@ -1368,12 +1308,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-09-18-profile-plugin-host-runtime-instances.md:1-38@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-08-20-client-session-conversation-ownership.md:1-462@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-20-package-hierarchy.md:1-79@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-19-gui-web-client-architecture.md:1-129@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-29-package-regrouping.md:1-82@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-07-workspace-files-dual-face-package.md:1-37@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-18-profile-plugin-host-runtime-instances.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-20-client-session-conversation-ownership.md:1-462@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-06-20-package-hierarchy.md:1-79@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-19-gui-web-client-architecture.md:1-129@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-07-29-package-regrouping.md:1-82@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-07-workspace-files-dual-face-package.md:1-37@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-18-profile-plugin-host-runtime-instances.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-20-client-session-conversation-ownership.md:1-462@687f282e
 
 <a id="rationale-architecture-1.startup-and-readiness"></a>
 ## rationale-architecture-1.startup-and-readiness — 单次启动真实后端，显式就绪/失败恢复面
@@ -1476,11 +1411,7 @@
 - deepseek-harness/.agents/notes/archived/architecture/2026-09-17-plugin-detail-page-extension-slots.md:1-36@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 - deepseek-harness/.agents/notes/archived/architecture/2026-09-17-session-row-menu-actions-slot.md:1-36@687f282e8625c6b8d11ff58211a90524be2e4317（archived）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-11-plugin-settings-tabs.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-12-plugin-owned-settings-surface.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-19-web-index-injection-table.md:1-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-plugin-detail-page-extension-slots.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-session-row-menu-actions-slot.md:1-36@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-11-plugin-settings-tabs.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-12-plugin-owned-settings-surface.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-08-19-web-index-injection-table.md:1-31@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-plugin-detail-page-extension-slots.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-17-session-row-menu-actions-slot.md:1-36@687f282e
 
 <a id="rationale-architecture-1.meaningful-invariants"></a>
 ## rationale-architecture-1.meaningful-invariants — 运行时不变式必须跨时间/可变状态，并提供伴随证据
@@ -1582,10 +1513,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-twin-llm-adapters.md:1-29@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-11-node-office-kit.md:1-66@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-18-chat-navigation-performance.md:1-62@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-twin-llm-adapters.md:1-29@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-11-node-office-kit.md:1-66@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-18-chat-navigation-performance.md:1-62@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-06-13-twin-llm-adapters.md:1-29@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-24-scheduled-message-framing.md:1-29@687f282e
 
 <a id="rationale-architecture-1.executable-coverage-contract"></a>
 ## rationale-architecture-1.executable-coverage-contract — 把人工维护的覆盖属性变成可执行模型、门禁与探测
@@ -1686,8 +1614,7 @@
 - deepseek-harness/.agents/notes/implemented/architecture/2026-07-23-client-plugin-loading-model.md:1-123@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 - deepseek-harness/.agents/notes/implemented/architecture/2026-09-22-fatal-diagnostics-and-crash-reports.md:1-61@687f282e8625c6b8d11ff58211a90524be2e4317（implemented）
 
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-23-client-plugin-loading-model.md:1-123@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-22-fatal-diagnostics-and-crash-reports.md:1-61@687f282e
+来源：deepseek-harness/.agents/notes/implemented/architecture/2026-07-23-client-plugin-loading-model.md:1-123@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-22-fatal-diagnostics-and-crash-reports.md:1-61@687f282e
 
 <a id="rationale-architecture-1.bounded-output-and-diagnostics"></a>
 ## rationale-architecture-1.bounded-output-and-diagnostics — 有界输出：存储 seam、定位器与独立后处理策略

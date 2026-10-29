@@ -130,18 +130,7 @@ Python wheel 的发布专用 gate 不经过 `run-gates.ts`：`build-exe-for-pyth
 
 ---
 
-来源：deepseek-harness/package.json:1-20@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:1-15@687f282e
-来源：deepseek-harness/package.json:275-275@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:31-56@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:17-24@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:57-105@687f282e
-来源：deepseek-harness/apps/desktop/packaging/README.md:227-227@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:513-515@687f282e
-来源：deepseek-harness/docs/development.md:27-31@687f282e
-来源：deepseek-harness/.github/workflows/ci.yml:96-102@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:28-36@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:1-281@687f282e
+来源：deepseek-harness/package.json:1-20@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:1-15@687f282e 来源：deepseek-harness/package.json:275-275@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:31-56@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:17-24@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:57-105@687f282e 来源：deepseek-harness/apps/desktop/packaging/README.md:227-227@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:513-515@687f282e 来源：deepseek-harness/docs/development.md:27-31@687f282e 来源：deepseek-harness/.github/workflows/ci.yml:96-102@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:28-36@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:1-281@687f282e
 
 <a id="sc-workspace-protocol"></a>
 ## 3. workspace 协议、版本家族与发布替换
@@ -224,27 +213,7 @@ Python wheel 的发布专用 gate 不经过 `run-gates.ts`：`build-exe-for-pyth
 
 ---
 
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:600-642@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:35-105@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:434-446@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:573-580@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:490-500@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-58@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:813-850@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:924-959@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1008-1028@687f282e
-来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e
-来源：deepseek-harness/scripts/release/bump.ts:274-345@687f282e
-来源：deepseek-harness/scripts/release/bump.ts:350-416@687f282e
-来源：deepseek-harness/scripts/release/families.ts:345-414@687f282e
-来源：deepseek-harness/scripts/release/families.ts:424-470@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e
-来源：deepseek-harness/scripts/release/tarball.ts:14-57@687f282e
-来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:171-182@687f282e
-来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:1-170@687f282e
-来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:183-553@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.ts:701-820@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:291-510@687f282e
+来源：deepseek-harness/scripts/check-workspace-constraints.ts:600-642@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:35-105@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:434-446@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:573-580@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:490-500@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-58@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:813-850@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:924-959@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1008-1028@687f282e 来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e 来源：deepseek-harness/scripts/release/bump.ts:274-345@687f282e 来源：deepseek-harness/scripts/release/bump.ts:350-416@687f282e 来源：deepseek-harness/scripts/release/families.ts:345-414@687f282e 来源：deepseek-harness/scripts/release/families.ts:424-470@687f282e 来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e 来源：deepseek-harness/scripts/release/tarball.ts:14-57@687f282e 来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:171-182@687f282e 来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:1-170@687f282e 来源：deepseek-harness/scripts/benchmark-npm-resolution.ts:183-553@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.ts:701-820@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:291-510@687f282e
 
 <a id="sc-dependency-faces"></a>
 ## 4. 四个依赖面：按源码使用事实推导
@@ -334,22 +303,7 @@ Host/Client 依赖面（`collectHostDependencyExportPolicyViolations`）：
 
 ---
 
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-58@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:59-592@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:596-655@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:656-703@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:704-823@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:824-923@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:924-1038@687f282e
-来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:208-250@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:301-344@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1008-1038@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1062-1134@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
+来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-58@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:59-592@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:596-655@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:656-703@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:704-823@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:824-923@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:924-1038@687f282e 来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:208-250@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:301-344@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1008-1038@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1062-1134@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
 
 <a id="sc-manifest-publication"></a>
 ## 5. 发布 manifest：分类、private/public、files、exports
@@ -493,20 +447,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:28-36@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:37-58@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:62-88@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:180-250@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:261-320@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:434-549@687f282e
-来源：deepseek-harness/scripts/publication-payload.ts:1-55@687f282e
-来源：deepseek-harness/scripts/release/pack.ts:22-35@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:91-361@687f282e
-来源：deepseek-harness/docs/defensive-patterns/package-surface.md:75-113@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:288-475@687f282e
-来源：deepseek-harness/apps/cli/package.json:5-7@687f282e
-来源：deepseek-harness/apps/cli/package.json:14-19@687f282e
-来源：deepseek-harness/apps/cli/package.json:165-172@687f282e
+来源：deepseek-harness/scripts/check-workspace-constraints.ts:28-36@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:37-58@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:62-88@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:180-250@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:261-320@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:434-549@687f282e 来源：deepseek-harness/scripts/publication-payload.ts:1-55@687f282e 来源：deepseek-harness/scripts/release/pack.ts:22-35@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:91-361@687f282e 来源：deepseek-harness/docs/defensive-patterns/package-surface.md:75-113@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:288-475@687f282e 来源：deepseek-harness/apps/cli/package.json:5-7@687f282e 来源：deepseek-harness/apps/cli/package.json:14-19@687f282e 来源：deepseek-harness/apps/cli/package.json:165-172@687f282e
 
 <a id="sc-package-paths"></a>
 ## 6. 包目录层级与文档中的包路径漂移
@@ -564,20 +505,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:549-570@687f282e
-来源：deepseek-harness/scripts/verify-package-paths.ts:1-113@687f282e
-来源：deepseek-harness/scripts/verify-package-paths.spec.ts:1-73@687f282e
-来源：deepseek-harness/scripts/gen-tsconfig-paths.ts:1-239@687f282e
-来源：deepseek-harness/scripts/gen-tsconfig-paths.spec.ts:1-96@687f282e
-来源：deepseek-harness/package.json:100-160@687f282e
-来源：deepseek-harness/tsconfig.base.json:1-30@687f282e
-来源：deepseek-harness/tsconfig.base.client.json:1-12@687f282e
-来源：deepseek-harness/tsconfig.host.json:1-10@687f282e
-来源：deepseek-harness/tsconfig.client.json:1-15@687f282e
-来源：deepseek-harness/tsconfig.base.json:207-214@687f282e
-来源：deepseek-harness/tsconfig.base.json:333-365@687f282e
-来源：deepseek-harness/tsconfig.base.json:366-366@687f282e
-来源：deepseek-harness/tsconfig.base.json:560-560@687f282e
+来源：deepseek-harness/scripts/check-workspace-constraints.ts:549-570@687f282e 来源：deepseek-harness/scripts/verify-package-paths.ts:1-113@687f282e 来源：deepseek-harness/scripts/verify-package-paths.spec.ts:1-73@687f282e 来源：deepseek-harness/scripts/gen-tsconfig-paths.ts:1-239@687f282e 来源：deepseek-harness/scripts/gen-tsconfig-paths.spec.ts:1-96@687f282e 来源：deepseek-harness/package.json:100-160@687f282e 来源：deepseek-harness/tsconfig.base.json:1-30@687f282e 来源：deepseek-harness/tsconfig.base.client.json:1-12@687f282e 来源：deepseek-harness/tsconfig.host.json:1-10@687f282e 来源：deepseek-harness/tsconfig.client.json:1-15@687f282e 来源：deepseek-harness/tsconfig.base.json:207-214@687f282e 来源：deepseek-harness/tsconfig.base.json:333-365@687f282e 来源：deepseek-harness/tsconfig.base.json:366-366@687f282e 来源：deepseek-harness/tsconfig.base.json:560-560@687f282e
 
 <a id="sc-esm-payload"></a>
 ## 7. ESM、exports、publint、NodeNext、顶层 await 与 package-meta
@@ -642,14 +570,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/package.json:6-6@687f282e
-来源：deepseek-harness/AGENTS.md:132-132@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:509-545@687f282e
-来源：deepseek-harness/scripts/publint-all.ts:1-245@687f282e
-来源：deepseek-harness/scripts/verify-node-next-types.ts:1-164@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:1-110@687f282e
-来源：deepseek-harness/scripts/verify-no-top-level-await.ts:140-220@687f282e
-来源：deepseek-harness/scripts/verify-package-meta.ts:1-285@687f282e
+来源：deepseek-harness/package.json:6-6@687f282e 来源：deepseek-harness/AGENTS.md:132-132@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:509-545@687f282e 来源：deepseek-harness/scripts/publint-all.ts:1-245@687f282e 来源：deepseek-harness/scripts/verify-node-next-types.ts:1-164@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:1-110@687f282e 来源：deepseek-harness/scripts/verify-no-top-level-await.ts:140-220@687f282e 来源：deepseek-harness/scripts/verify-package-meta.ts:1-285@687f282e
 
 <a id="sc-optional-deps"></a>
 ## 8. 可选依赖：静态 value import 必须为零
@@ -695,8 +616,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/scripts/verify-optional-dependency-imports.ts:1-213@687f282e
-来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:130-190@687f282e
+来源：deepseek-harness/scripts/verify-optional-dependency-imports.ts:1-213@687f282e 来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:130-190@687f282e
 
 <a id="sc-vendor-sync"></a>
 ## 9. vendored 框架同步（vendor-sync）
@@ -769,14 +689,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/vendor/README.md:1-13@687f282e
-来源：deepseek-harness/vendor/README.md:15-57@687f282e
-来源：deepseek-harness/vendor/README.md:59-73@687f282e
-来源：deepseek-harness/docs/rescope.md:18-30@687f282e
-来源：deepseek-harness/vendor/AGENTS.md:1-7@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:37-47@687f282e
-来源：deepseek-harness/scripts/check-vendor-manifest.sh:1-17@687f282e
-来源：deepseek-harness/lefthook.yml:5-33@687f282e
+来源：deepseek-harness/vendor/README.md:1-13@687f282e 来源：deepseek-harness/vendor/README.md:15-57@687f282e 来源：deepseek-harness/vendor/README.md:59-73@687f282e 来源：deepseek-harness/docs/rescope.md:18-30@687f282e 来源：deepseek-harness/vendor/AGENTS.md:1-7@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:37-47@687f282e 来源：deepseek-harness/scripts/check-vendor-manifest.sh:1-17@687f282e 来源：deepseek-harness/lefthook.yml:5-33@687f282e
 
 <a id="sc-vendor-rescope"></a>
 ## 10. vendored 包重命名（vendor-rescope）
@@ -836,11 +749,7 @@ App 包的特例（`appPackageFiles`）：
 
 ---
 
-来源：deepseek-harness/scripts/rescope-vendor.ts:1-661@687f282e
-来源：deepseek-harness/docs/rescope.md:1-34@687f282e
-来源：deepseek-harness/docs/rescope.md:44-51@687f282e
-来源：deepseek-harness/vendor/README.md:51-51@687f282e
-来源：deepseek-harness/AGENTS.md:131-131@687f282e
+来源：deepseek-harness/scripts/rescope-vendor.ts:1-661@687f282e 来源：deepseek-harness/docs/rescope.md:1-34@687f282e 来源：deepseek-harness/docs/rescope.md:44-51@687f282e 来源：deepseek-harness/vendor/README.md:51-51@687f282e 来源：deepseek-harness/AGENTS.md:131-131@687f282e
 
 <a id="sc-vendor-patches"></a>
 ## 11. 外部补丁（pnpm patchedDependencies）
@@ -897,19 +806,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/pnpm-workspace.yaml:108-116@687f282e
-来源：deepseek-harness/patches/@earendil-works__pi-ai@1.1.0.patch:1-73@687f282e
-来源：deepseek-harness/patches/@electron__osx-sign@1.3.3.patch:1-26@687f282e
-来源：deepseek-harness/patches/@fortune-sheet__core@1.0.4.patch:1-76@687f282e
-来源：deepseek-harness/patches/@fortune-sheet__react@1.0.4.patch:1-138@687f282e
-来源：deepseek-harness/patches/@yao-pkg__pkg@6.21.0.patch:1-134@687f282e
-来源：deepseek-harness/patches/app-builder-lib@26.17.0.patch:1-27@687f282e
-来源：deepseek-harness/patches/exceljs@4.4.0.patch:1-806@687f282e
-来源：deepseek-harness/patches/node-pty@1.2.0-beta.15.patch:1-45@687f282e
-来源：deepseek-harness/apps/desktop/scripts/runtime-patch-policy.ts:1-25@687f282e
-来源：deepseek-harness/apps/desktop/scripts/prepare-runtime-patches.ts:1-124@687f282e
-来源：deepseek-harness/apps/desktop/packaging/README.md:261-265@687f282e
-来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:130-190@687f282e
+来源：deepseek-harness/pnpm-workspace.yaml:108-116@687f282e 来源：deepseek-harness/patches/@earendil-works__pi-ai@1.1.0.patch:1-73@687f282e 来源：deepseek-harness/patches/@electron__osx-sign@1.3.3.patch:1-26@687f282e 来源：deepseek-harness/patches/@fortune-sheet__core@1.0.4.patch:1-76@687f282e 来源：deepseek-harness/patches/@fortune-sheet__react@1.0.4.patch:1-138@687f282e 来源：deepseek-harness/patches/@yao-pkg__pkg@6.21.0.patch:1-134@687f282e 来源：deepseek-harness/patches/app-builder-lib@26.17.0.patch:1-27@687f282e 来源：deepseek-harness/patches/exceljs@4.4.0.patch:1-806@687f282e 来源：deepseek-harness/patches/node-pty@1.2.0-beta.15.patch:1-45@687f282e 来源：deepseek-harness/apps/desktop/scripts/runtime-patch-policy.ts:1-25@687f282e 来源：deepseek-harness/apps/desktop/scripts/prepare-runtime-patches.ts:1-124@687f282e 来源：deepseek-harness/apps/desktop/packaging/README.md:261-265@687f282e 来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:130-190@687f282e
 
 <a id="sc-licenses-notices"></a>
 ## 12. 许可证、第三方 notices 与分发
@@ -976,17 +873,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:1-99@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:100-424@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:425-545@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:549-628@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:632-706@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:721-870@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.spec.ts:1-471@687f282e
-来源：deepseek-harness/scripts/verify-dsh-package-licenses.ts:1-89@687f282e
-来源：deepseek-harness/LICENSE:1-20@687f282e
-来源：deepseek-harness/THIRD_PARTY_NOTICES.md:1-304@687f282e
-来源：deepseek-harness/scripts/gen-third-party-notices.ts:741-745@687f282e
+来源：deepseek-harness/scripts/gen-third-party-notices.ts:1-99@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:100-424@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:425-545@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:549-628@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:632-706@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:721-870@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.spec.ts:1-471@687f282e 来源：deepseek-harness/scripts/verify-dsh-package-licenses.ts:1-89@687f282e 来源：deepseek-harness/LICENSE:1-20@687f282e 来源：deepseek-harness/THIRD_PARTY_NOTICES.md:1-304@687f282e 来源：deepseek-harness/scripts/gen-third-party-notices.ts:741-745@687f282e
 
 <a id="sc-runtime-closure"></a>
 ## 13. 可执行部署的运行时闭包（runtime-closure）
@@ -1030,8 +917,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/verify-runtime-closure.ts:1-130@687f282e
-来源：deepseek-harness/scripts/verify-runtime-closure.ts:131-237@687f282e
+来源：deepseek-harness/scripts/verify-runtime-closure.ts:1-130@687f282e 来源：deepseek-harness/scripts/verify-runtime-closure.ts:131-237@687f282e
 
 <a id="sc-install-layout"></a>
 ## 14. npm 双版本安装布局（双 release 共存）
@@ -1074,9 +960,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/verify-npm-install-layout.ts:1-275@687f282e
-来源：deepseek-harness/.github/workflows/release.yml:80-88@687f282e
-来源：deepseek-harness/scripts/verify-npm-install-layout.ts:129-217@687f282e
+来源：deepseek-harness/scripts/verify-npm-install-layout.ts:1-275@687f282e 来源：deepseek-harness/.github/workflows/release.yml:80-88@687f282e 来源：deepseek-harness/scripts/verify-npm-install-layout.ts:129-217@687f282e
 
 <a id="sc-packed-install"></a>
 
@@ -1123,23 +1007,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e
-来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e
-来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-73@687f282e
-来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e
-来源：deepseek-harness/scripts/release/families.ts:404-470@687f282e
-来源：deepseek-harness/scripts/release/tarball.ts:14-57@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:282-290@687f282e
-来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e
-来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e
-来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:1-129@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.ts:1-387@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.ts:471-700@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.ts:701-820@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:1-281@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:291-510@687f282e
-来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:518-559@687f282e
+来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e 来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e 来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e 来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-73@687f282e 来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e 来源：deepseek-harness/scripts/release/families.ts:404-470@687f282e 来源：deepseek-harness/scripts/release/tarball.ts:14-57@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:282-290@687f282e 来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e 来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e 来源：deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:1-129@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.ts:1-387@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.ts:471-700@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.ts:701-820@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:1-281@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:291-510@687f282e 来源：deepseek-harness/scripts/local-bundle-registry.spec.ts:518-559@687f282e
 
 <a id="sc-dependency-catalog"></a>
 ## 16. 消费者依赖目录（dependency-catalog）
@@ -1188,9 +1056,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/gen-dependency-catalog.ts:1-180@687f282e
-来源：deepseek-harness/scripts/gen-dependency-catalog.ts:180-304@687f282e
-来源：deepseek-harness/package.json:100-160@687f282e
+来源：deepseek-harness/scripts/gen-dependency-catalog.ts:1-180@687f282e 来源：deepseek-harness/scripts/gen-dependency-catalog.ts:180-304@687f282e 来源：deepseek-harness/package.json:100-160@687f282e
 
 <a id="sc-product-use"></a>
 ## 17. 产品使用：每个维护包必须有明确角色
@@ -1233,10 +1099,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/verify-product-use.ts:1-100@687f282e
-来源：deepseek-harness/scripts/verify-product-use.ts:100-317@687f282e
-来源：deepseek-harness/scripts/product-package-policy.ts:1-50@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:364-380@687f282e
+来源：deepseek-harness/scripts/verify-product-use.ts:1-100@687f282e 来源：deepseek-harness/scripts/verify-product-use.ts:100-317@687f282e 来源：deepseek-harness/scripts/product-package-policy.ts:1-50@687f282e 来源：deepseek-harness/scripts/run-gates.ts:364-380@687f282e
 
 <a id="sc-default-product-isolation"></a>
 ## 18. 默认产品隔离：实验包不能进入默认安装
@@ -1281,10 +1144,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/verify-default-product-isolation.ts:1-180@687f282e
-来源：deepseek-harness/scripts/verify-default-product-isolation.ts:180-413@687f282e
-来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-73@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:364-380@687f282e
+来源：deepseek-harness/scripts/verify-default-product-isolation.ts:1-180@687f282e 来源：deepseek-harness/scripts/verify-default-product-isolation.ts:180-413@687f282e 来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-73@687f282e 来源：deepseek-harness/scripts/run-gates.ts:364-380@687f282e
 
 <a id="sc-experimental-policy"></a>
 ## 19. 实验包策略：命名、发布与依赖隔离
@@ -1333,11 +1193,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:361-410@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:592-609@687f282e
-来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-63@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:106-258@687f282e
+来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:361-410@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:592-609@687f282e 来源：deepseek-harness/scripts/release/installed-product-isolation.ts:18-63@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:106-258@687f282e
 
 <a id="sc-config-source"></a>
 ## 20. 配置来源所有权：只禁止内联凭据/端点
@@ -1383,9 +1239,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/verify-config-source-ownership.ts:1-56@687f282e
-来源：deepseek-harness/scripts/verify-config-source-ownership.spec.ts:17-30@687f282e
-来源：deepseek-harness/scripts/verify-config-source-ownership.spec.ts:1-16@687f282e
+来源：deepseek-harness/scripts/verify-config-source-ownership.ts:1-56@687f282e 来源：deepseek-harness/scripts/verify-config-source-ownership.spec.ts:17-30@687f282e 来源：deepseek-harness/scripts/verify-config-source-ownership.spec.ts:1-16@687f282e
 
 <a id="sc-secrets"></a>
 ## 21. 凭据、密钥与发布注入
@@ -1427,11 +1281,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/.github/workflows/release-publish.yml:80-131@687f282e
-来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:80-126@687f282e
-来源：deepseek-harness/.github/workflows/node-addon-system-release.yml:150-188@687f282e
-来源：deepseek-harness/.github/workflows/python-release.yml:185-248@687f282e
-来源：deepseek-harness/scripts/release/publish.ts:124-200@687f282e
+来源：deepseek-harness/.github/workflows/release-publish.yml:80-131@687f282e 来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:80-126@687f282e 来源：deepseek-harness/.github/workflows/node-addon-system-release.yml:150-188@687f282e 来源：deepseek-harness/.github/workflows/python-release.yml:185-248@687f282e 来源：deepseek-harness/scripts/release/publish.ts:124-200@687f282e
 
 <a id="sc-dependency-updates"></a>
 ## 22. 依赖更新节奏与缺口
@@ -1471,8 +1321,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/.github/dependabot.yml:1-38@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:57-105@687f282e
+来源：deepseek-harness/.github/dependabot.yml:1-38@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:57-105@687f282e
 
 <a id="sc-node-manager-lock"></a>
 ## 23. Node、pnpm 与 lockfile 锚定
@@ -1507,11 +1356,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/package.json:1-10@687f282e
-来源：deepseek-harness/package.json:275-275@687f282e
-来源：deepseek-harness/pnpm-workspace.yaml:105-105@687f282e
-来源：deepseek-harness/.github/workflows/ci.yml:96-102@687f282e
-来源：deepseek-harness/docs/development.md:27-31@687f282e
+来源：deepseek-harness/package.json:1-10@687f282e 来源：deepseek-harness/package.json:275-275@687f282e 来源：deepseek-harness/pnpm-workspace.yaml:105-105@687f282e 来源：deepseek-harness/.github/workflows/ci.yml:96-102@687f282e 来源：deepseek-harness/docs/development.md:27-31@687f282e
 
 <a id="sc-release-consumer"></a>
 ## 24. 发布消费边界：verify → pack → publish
@@ -1551,13 +1396,7 @@ Desktop 不是简单复用整个 patch 列表，而是用 `apps/desktop/scripts/
 
 ---
 
-来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e
-来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e
-来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e
-来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e
-来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e
-来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:1-126@687f282e
+来源：deepseek-harness/scripts/release/pack.ts:1-108@687f282e 来源：deepseek-harness/scripts/release/verify.ts:40-100@687f282e 来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e 来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e 来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e 来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e 来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:1-126@687f282e
 
 <a id="sc-python-runtime"></a>
 ## 25. Python SDK runtime wheel、锁定资源与双阶段发布
@@ -1634,35 +1473,7 @@ Python 侧有两个发行物，不能混成一个 wheel：
 
 **证据边界**：本节为静态源码分析；没有运行 `uv build`、wheel 安装、`twine check`、Python workflow 或真实 PyPI 发布。PyPI environment/reviewer、`PYPI_PUBLISHER_REPOSITORY`、`PUBLIC_PYPI_RELEASE_ENABLED` 的真实配置未验证。`uv.lock` 既有声明已由1-45扩展到另有46-419补读，本批只复读1-18及UV项目调用来源；它是保存解析版本/来源/hash的生成数据，不是手写政策，完整语义/锁一致性与实际冻结安装仍未证明。`build-exe-for-python-sdk.ts` 本域只声明关键段（27-43、167-172、197-235、256-338、340-384、417-423、480-519、600-622），Release另有1-622声明，不能把peer读取算成本批新读。`lock.json` 具体版本/hash是源快照，目标必须按实际依赖重新生成并验证。
 
-来源：deepseek-harness/python/sdk/pyproject.toml:1-39@687f282e
-来源：deepseek-harness/python/sdk/uv.lock:1-45@687f282e
-来源：deepseek-harness/python/sdk-runtime/pyproject.toml:1-41@687f282e
-来源：deepseek-harness/python/sdk-runtime/package.json:1-164@687f282e
-来源：deepseek-harness/python/sdk-runtime/platforms.json:1-22@687f282e
-来源：deepseek-harness/python/sdk-runtime/hatch_build.py:1-108@687f282e
-来源：deepseek-harness/python/sdk-runtime/runtime-bootstrap.mjs:1-105@687f282e
-来源：deepseek-harness/python/sdk-runtime/src/deepseek_harness_runtime/_resources.py:1-121@687f282e
-来源：deepseek-harness/python/sdk-runtime/README.md:1-69@687f282e
-来源：deepseek-harness/scripts/primary-runtime/lock.json:1-180@687f282e
-来源：deepseek-harness/scripts/primary-runtime/prepare.ts:1-287@687f282e
-来源：deepseek-harness/scripts/primary-runtime/prepare.spec.ts:1-169@687f282e
-来源：deepseek-harness/scripts/primary-runtime/prune-python-tests.ts:1-41@687f282e
-来源：deepseek-harness/scripts/build-python-release.py:1-295@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:27-43@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:167-172@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:197-235@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:256-338@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:340-384@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:417-423@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:480-519@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:600-622@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk-staging.ts:1-103@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk-office.ts:1-63@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk-resources.ts:1-17@687f282e
-来源：deepseek-harness/.github/workflows/python-release.yml:1-248@687f282e
-来源：deepseek-harness/scripts/python-runtime-download.spec.ts:1-135@687f282e
-来源：deepseek-harness/python/development.md:7-17@687f282e
-来源：deepseek-harness/python/development.md:92-98@687f282e
+来源：deepseek-harness/python/sdk/pyproject.toml:1-39@687f282e 来源：deepseek-harness/python/sdk/uv.lock:1-45@687f282e 来源：deepseek-harness/python/sdk-runtime/pyproject.toml:1-41@687f282e 来源：deepseek-harness/python/sdk-runtime/package.json:1-164@687f282e 来源：deepseek-harness/python/sdk-runtime/platforms.json:1-22@687f282e 来源：deepseek-harness/python/sdk-runtime/hatch_build.py:1-108@687f282e 来源：deepseek-harness/python/sdk-runtime/runtime-bootstrap.mjs:1-105@687f282e 来源：deepseek-harness/python/sdk-runtime/src/deepseek_harness_runtime/_resources.py:1-121@687f282e 来源：deepseek-harness/python/sdk-runtime/README.md:1-69@687f282e 来源：deepseek-harness/scripts/primary-runtime/lock.json:1-180@687f282e 来源：deepseek-harness/scripts/primary-runtime/prepare.ts:1-287@687f282e 来源：deepseek-harness/scripts/primary-runtime/prepare.spec.ts:1-169@687f282e 来源：deepseek-harness/scripts/primary-runtime/prune-python-tests.ts:1-41@687f282e 来源：deepseek-harness/scripts/build-python-release.py:1-295@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:27-43@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:167-172@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:197-235@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:256-338@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:340-384@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:417-423@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:480-519@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:600-622@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk-staging.ts:1-103@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk-office.ts:1-63@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk-resources.ts:1-17@687f282e 来源：deepseek-harness/.github/workflows/python-release.yml:1-248@687f282e 来源：deepseek-harness/scripts/python-runtime-download.spec.ts:1-135@687f282e 来源：deepseek-harness/python/development.md:7-17@687f282e 来源：deepseek-harness/python/development.md:92-98@687f282e
 
 <a id="sc-migration"></a>
 ## 26. 迁移落地顺序

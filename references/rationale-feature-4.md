@@ -1,7 +1,6 @@
 # rationale-feature-4：功能决策中可迁移的治理机制参考
 
-> 来源：`deepseek-harness` 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317` 的 89 个 feature Note（英文正文与中文对读）。本文是 **source-only 提取**：机制来自已读 Note 正文与说明，迁移做法标注为设计建议；不表示任何自动检查、部署配置或目标项目执行已经发生。
-> 适用方式：先按“何时使用”判断，再读“前置条件”，按“操作步骤”落地，最后用“证据与限制”决定能声称什么。文中锚点与 knowledge JSON 的 `reference` 字段一一对应。
+> 来源：`deepseek-harness` 固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317` 的 89 个 feature Note（英文正文与中文对读）。本文是 **source-only 提取**：机制来自已读 Note 正文与说明，迁移做法标注为设计建议；不表示任何自动检查、部署配置或目标项目执行已经发生。 适用方式：先按“何时使用”判断，再读“前置条件”，按“操作步骤”落地，最后用“证据与限制”决定能声称什么。文中锚点与 knowledge JSON 的 `reference` 字段一一对应。
 
 ## 阅读约定：源义务 vs 迁移设计
 
@@ -36,13 +35,9 @@
 
 **证据与限制**：状态、链接和当前权威都是文本约定，需评审/检索执行；状态文本不能证明实现存在；链接可能失效；proposal 的缓存/安全论证未经验证。
 
-**源义务**：状态/取代链接、部分取代说明、替代方案与后果、提案不得冒充已交付（来源 Note 的状态行与替代/后果章节）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-08-dsh-run-headless-command.md:1-16@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:1-14@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:46-53@687f282e`；`deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:94-110@687f282e`。
+**源义务**：状态/取代链接、部分取代说明、替代方案与后果、提案不得冒充已交付（来源 Note 的状态行与替代/后果章节）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-08-dsh-run-headless-command.md:1-16@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:1-14@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:46-53@687f282e`；`deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:94-110@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-08-dsh-run-headless-command.md:1-16@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:1-14@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:46-53@687f282e
-来源：deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:94-110@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-08-dsh-run-headless-command.md:1-16@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:1-14@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:46-53@687f282e 来源：deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:94-110@687f282e
 
 <a id="m2-capability-declaration-gating"></a>
 ## m2-capability-declaration-gating：逐路由能力声明与显式降级
@@ -67,13 +62,9 @@
 
 **证据与限制**：本地声明不能证明远端真实支持；需要真实网关/模型 e2e；名称/协议族不能当能力证据；实验能力在目标环境可能不可用，须有拒绝/回退。
 
-**源义务**：显式逐路由能力、缺省替换、非法值拒绝、实际模式记录、所有权前失败（in-history、messages adapter、pi-ai、subagent 过滤 Note）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-25@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-32@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:62-68@687f282e`。
+**源义务**：显式逐路由能力、缺省替换、非法值拒绝、实际模式记录、所有权前失败（in-history、messages adapter、pi-ai、subagent 过滤 Note）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-25@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-32@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:62-68@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-25@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-32@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:62-68@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-25@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-32@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:62-68@687f282e
 
 <a id="m3-durable-authority-and-process-coordination"></a>
 ## m3-durable-authority-and-process-coordination：持久日志权威与进程协调
@@ -99,14 +90,9 @@
 
 **证据与限制**：flush 布尔/监听器参与不能证明后端已确认；仅接受未落日志的消息可能丢失；记录来源字段不能作为授权。
 
-**源义务**：日志拥有身份/历史/授权输入、进程状态仅协调、冷恢复、additive default、接受/丢失窗口（continuable、teams、archive、delivery）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:53-60@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:132-144@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e`。
+**源义务**：日志拥有身份/历史/授权输入、进程状态仅协调、冷恢复、additive default、接受/丢失窗口（continuable、teams、archive、delivery）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:53-60@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:132-144@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:53-60@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:132-144@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:53-60@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:132-144@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e
 
 <a id="m4-single-ordering-authority"></a>
 ## m4-single-ordering-authority：单一排序/所有权权威
@@ -132,14 +118,9 @@
 
 **证据与限制**：单进程权威不协调两个宿主，跨进程需 lease/邮箱；单队列降低吞吐，应按域拆分而非复制同一语义；CAS 不证明业务语义。
 
-**源义务**：唯一 inbox/队列、single-flight、revision CAS、单 retry 调度器、身份集合（continuable、teams、archive、PTY、connection recovery）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:61-102@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:39-50@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e`。
+**源义务**：唯一 inbox/队列、single-flight、revision CAS、单 retry 调度器、身份集合（continuable、teams、archive、PTY、connection recovery）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:61-102@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:39-50@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:61-102@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:39-50@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:61-102@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:39-50@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e
 
 <a id="m5-boundary-snapshot-and-exact-cut"></a>
 ## m5-boundary-snapshot-and-exact-cut：边界快照与精确切点
@@ -165,14 +146,9 @@
 
 **证据与限制**：父级后续收紧不会自动作用于已存在子级；精确切点可能保留不完整历史；固定间隔只追赶最新点；快照不证明外部副作用已发生。
 
-**源义务**：同步快照、随记录传递、冷恢复不重捕、精确切点、时区/DST、授权冻结（policy inheritance、fork、schedule、archive、delivery）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-continuable-subagent-policy-inheritance.md:12-18@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:16-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:12-20@687f282e`。
+**源义务**：同步快照、随记录传递、冷恢复不重捕、精确切点、时区/DST、授权冻结（policy inheritance、fork、schedule、archive、delivery）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-continuable-subagent-policy-inheritance.md:12-18@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:16-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:12-20@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-continuable-subagent-policy-inheritance.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:16-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:12-20@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-continuable-subagent-policy-inheritance.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:16-32@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:12-20@687f282e
 
 <a id="m6-transactional-unpublished-setup"></a>
 ## m6-transactional-unpublished-setup：未发布设置与事务式准入
@@ -198,13 +174,9 @@
 
 **证据与限制**：未发布设置在单进程成立；跨进程创建需额外协议；回执不保证已落日志（见 m3）；只能回滚自己创建的资源，外部副作用另行处理。
 
-**源义务**：发布前组装、回执边界、调用方取消范围、最终准入检查、回滚（subagent、continuable、teams、PTY）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:68-74@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:37-53@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`。
+**源义务**：发布前组装、回执边界、调用方取消范围、最终准入检查、回滚（subagent、continuable、teams、PTY）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:68-74@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:37-53@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:68-74@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:37-53@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:68-74@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:37-53@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e
 
 <a id="m7-fail-closed-configuration"></a>
 ## m7-fail-closed-configuration：配置/引用失败关闭
@@ -231,14 +203,9 @@
 
 **证据与限制**：只能证明本地契约；远端可能忽略字段；外部编辑的 last-good 可能没有用户可见通道；拒绝不证明业务正确。
 
-**源义务**：未知/非法键失败、过滤器校验、最早引用解析、恢复冲突、错误点名（pi-ai、teams、image paths、spawn preset、subagent 过滤）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:26-32@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-20-spawn-agent-preset-selection.md:11-19@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:37-52@687f282e`。
+**源义务**：未知/非法键失败、过滤器校验、最早引用解析、恢复冲突、错误点名（pi-ai、teams、image paths、spawn preset、subagent 过滤）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:26-32@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-20-spawn-agent-preset-selection.md:11-19@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:37-52@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:26-32@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-20-spawn-agent-preset-selection.md:11-19@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:37-52@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:26-32@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-20-spawn-agent-preset-selection.md:11-19@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:37-52@687f282e
 
 <a id="m8-compile-time-exhaustiveness"></a>
 ## m8-compile-time-exhaustiveness：编译期穷尽门禁
@@ -263,12 +230,9 @@
 
 **证据与限制**：编译期只证明结构一致，不证明分类语义或远端接受；类型技巧增加维护成本；动态扩展无法完全穷尽。
 
-**源义务**：disposition 映射、AssertNever、schema 注解、字段派生、协议集派生、完整结果 schema（pi-ai、teams、messages adapter）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-26@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`。
+**源义务**：disposition 映射、AssertNever、schema 注解、字段派生、协议集派生、完整结果 schema（pi-ai、teams、messages adapter）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-26@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-pi-ai-wire-compat-surface.md:16-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
 
 <a id="m9-bounded-resources-and-streaming"></a>
 ## m9-bounded-resources-and-streaming：有界资源、分页与流式背压
@@ -294,14 +258,9 @@
 
 **证据与限制**：字节/矩阵限制不等于硬沙箱（解压后仍可能超限）；流式导出是逐会话读取边界快照，不是整树原子快照；完整 DOM 仍可能增长。
 
-**源义务**：流式 ZIP、字节/行/矩阵上限、背压、分页/截断、最小预算（export、PTY、Excel、turn rail、teams）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:12-19@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:52-75@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-30-web-turn-rail-outline-jump.md:12-24@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`。
+**源义务**：流式 ZIP、字节/行/矩阵上限、背压、分页/截断、最小预算（export、PTY、Excel、turn rail、teams）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:12-19@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:52-75@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-30-web-turn-rail-outline-jump.md:12-24@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:12-19@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:52-75@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-30-web-turn-rail-outline-jump.md:12-24@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:12-19@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:52-75@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-30-web-turn-rail-outline-jump.md:12-24@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e
 
 <a id="m10-typed-evidence-and-uncertainty"></a>
 ## m10-typed-evidence-and-uncertainty：类型化证据与未知
@@ -327,14 +286,9 @@
 
 **证据与限制**：启发式仍可能误判（静默构建、网络阻塞）；未知可能永久保留资源，需人工处置；精确证据依赖平台能力。
 
-**源义务**：精确/推断/超时分离、缺失省略、unknown 保留、PID 不猜、精度保持区别（PTY、reclamation、metrics、high-cache、schedule）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:75-89@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-19-high-cache-hit-decimal-display.md:14-27@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:28-32@687f282e`。
+**源义务**：精确/推断/超时分离、缺失省略、unknown 保留、PID 不猜、精度保持区别（PTY、reclamation、metrics、high-cache、schedule）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:75-89@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-19-high-cache-hit-decimal-display.md:14-27@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:28-32@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:75-89@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-19-high-cache-hit-decimal-display.md:14-27@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:28-32@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:75-89@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-19-high-cache-hit-decimal-display.md:14-27@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-05-durable-web-schedule.md:28-32@687f282e
 
 <a id="m11-replay-determinism-and-presentation-fidelity"></a>
 ## m11-replay-determinism-and-presentation-fidelity：回放确定性与呈现保真
@@ -360,15 +314,9 @@
 
 **证据与限制**：完整字节保真可能牺牲可读性；窗口分页限制可见历史，未加载部分不能冒充已加载；快照归一化可能掩盖真实性能变化。
 
-**源义务**：只读持久源、opaque 字节、不臆造、惰性链接、增量等价、快照归一化（skill row、opaque prompt、metrics、markdown links、image paths、streaming fence）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-system-prompt-opaque-body.md:12-16@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:28-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-15-markdown-file-preview-links.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:12-23@687f282e`。
+**源义务**：只读持久源、opaque 字节、不臆造、惰性链接、增量等价、快照归一化（skill row、opaque prompt、metrics、markdown links、image paths、streaming fence）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-system-prompt-opaque-body.md:12-16@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:28-32@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-15-markdown-file-preview-links.md:12-20@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:12-23@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-system-prompt-opaque-body.md:12-16@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:28-32@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-15-markdown-file-preview-links.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:12-23@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-17-web-system-prompt-opaque-body.md:12-16@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-04-web-latency-throughput-metrics.md:28-32@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-15-markdown-file-preview-links.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:12-23@687f282e
 
 <a id="m12-composition-ownership-and-public-contracts"></a>
 ## m12-composition-ownership-and-public-contracts：组合所有权与公共契约
@@ -394,15 +342,9 @@
 
 **证据与限制**：拆包增加成本；可选服务缺席的降级路径需单独测试；实验隔离不是权限/安全边界。
 
-**源义务**：唯一所有者、公开契约、可选 provider、单行组合、实验隔离、删除旧包（attachments、inline mentions、onboarding、teams、unified task、export）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-07-web-inline-file-mentions.md:14-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e`。
+**源义务**：唯一所有者、公开契约、可选 provider、单行组合、实验隔离、删除旧包（attachments、inline mentions、onboarding、teams、unified task、export）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-07-web-inline-file-mentions.md:14-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-07-web-inline-file-mentions.md:14-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-07-web-inline-file-mentions.md:14-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e
 
 <a id="m13-explicit-opt-in-and-consent"></a>
 ## m13-explicit-opt-in-and-consent：显式启用与正向同意
@@ -427,14 +369,9 @@
 
 **证据与限制**：外部代理/网关仍可能记录；无部署脱敏规则时可外发完整内容。撤回不证明远端抹除；旧授权批次按 SDK 关闭期限处置，不能声称切换 disabled 即取消在途请求或存在 durable outbox。
 
-**源义务**：正向授权、当前反馈门控默认、硬 opt-out、可信启动边界、逐能力的默认消费者移除与显式重能力（session search、PTY、teams、worktree）。归档默认禁用/FULL 不覆盖当前实现。
-**源引用**：历史遥测决策见下；当前以 `deepseek-harness/packages/bundle/base/cordis.patch.yml:205-221@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/src/index.ts:31-63@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/README.md:32-68,142-144@687f282e` 为准。硬 opt-out 的实现：`deepseek-harness/packages/boot/app-boot/src/profile-context.ts:29-64@687f282e` 在加载前把非空值转成 disabled patch，`deepseek-harness/apps/cli/src/profile-boot.ts:314-322@687f282e` 传入启动环境值；相关模式/拒绝测试见 `deepseek-harness/packages/session/session-telemetry-otel/tests/otel.spec.ts:732-773@687f282e`（本包未执行）。后继 Note `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-32@687f282e` 仍残留省略插件 mode=DISABLED 的旧句，不能机械照搬。
+**源义务**：正向授权、当前反馈门控默认、硬 opt-out、可信启动边界、逐能力的默认消费者移除与显式重能力（session search、PTY、teams、worktree）。归档默认禁用/FULL 不覆盖当前实现。 **源引用**：历史遥测决策见下；当前以 `deepseek-harness/packages/bundle/base/cordis.patch.yml:205-221@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/src/index.ts:31-63@687f282e`、`deepseek-harness/packages/session/session-telemetry-otel/README.md:32-68,142-144@687f282e` 为准。硬 opt-out 的实现：`deepseek-harness/packages/boot/app-boot/src/profile-context.ts:29-64@687f282e` 在加载前把非空值转成 disabled patch，`deepseek-harness/apps/cli/src/profile-boot.ts:314-322@687f282e` 传入启动环境值；相关模式/拒绝测试见 `deepseek-harness/packages/session/session-telemetry-otel/tests/otel.spec.ts:732-773@687f282e`（本包未执行）。后继 Note `deepseek-harness/.agents/notes/archived/feature/2026-08-25-feedback-gated-telemetry-default.md:12-32@687f282e` 仍残留省略插件 mode=DISABLED 的旧句，不能机械照搬。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-telemetry-default-off.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-02-session-search-not-shipped-default.md:12-18@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:15-21@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-telemetry-default-off.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-02-session-search-not-shipped-default.md:12-18@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:15-21@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:15-23@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e
 
 <a id="m14-versioned-compatibility-and-reader-refusal"></a>
 ## m14-versioned-compatibility-and-reader-refusal：版本化兼容与读者拒绝
@@ -460,14 +397,9 @@
 
 **证据与限制**：旧读者拒绝依赖部署顺序；release 身份依赖构建注入，源码启动可能只有版本；刷新提示不能保证用户立即执行。
 
-**源义务**：版本默认、旧读者拒绝、校验器不修改、release gate、不自动 reload、未知回退（fork、delivery、release prompt、archive、messages adapter）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:20-50@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`。
+**源义务**：版本默认、旧读者拒绝、校验器不修改、release gate、不自动 reload、未知回退（fork、delivery、release prompt、archive、messages adapter）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:20-50@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:20-50@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-18-arbitrary-seq-session-fork.md:12-24@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-08-web-explicit-file-delivery.md:32-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:20-50@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-07-31-session-archive-global-set.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
 
 <a id="m15-authority-not-visibility"></a>
 ## m15-authority-not-visibility：可见性不是授权
@@ -493,13 +425,9 @@
 
 **证据与限制**：同进程可信模型无法防止恶意插件直接调用服务；共享 checkout 冲突只能降低；过滤器不阻止直接服务调用、不要求子集、不沙箱插件。
 
-**源义务**：过滤非安全边界、确切直接父级、目标本地窄例外、来源字段非授权、写作用域非锁（subagent 过滤、inbox control、teams、worktree）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:74-82@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-27-continuable-subagent-human-inbox-control.md:14-30@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:51-57@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e`。
+**源义务**：过滤非安全边界、确切直接父级、目标本地窄例外、来源字段非授权、写作用域非锁（subagent 过滤、inbox control、teams、worktree）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:74-82@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-27-continuable-subagent-human-inbox-control.md:14-30@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:51-57@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:74-82@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-27-continuable-subagent-human-inbox-control.md:14-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:51-57@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-12-subagent-persona-tool-filter-and-depth.md:74-82@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-27-continuable-subagent-human-inbox-control.md:14-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:51-57@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-13-explicit-worktree-creation.md:11-21@687f282e
 
 <a id="m16-lifecycle-teardown-and-resource-ownership"></a>
 ## m16-lifecycle-teardown-and-resource-ownership：结构化生命周期拆卸
@@ -525,15 +453,9 @@
 
 **证据与限制**：进程内拆卸不清理持久日志；崩溃后仍可能需恢复；外部副作用（push/API）不能由本地 teardown 撤销。
 
-**源义务**：结构化 owner、child-first、drain/quiescence、closing promise、失败聚合、身份不复用（continuable、PTY、teams、reclamation）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:102-116@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:176-204@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:95-103@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`。
+**源义务**：结构化 owner、child-first、drain/quiescence、closing promise、失败聚合、身份不复用（continuable、PTY、teams、reclamation）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:102-116@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:176-204@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:95-103@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:102-116@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:176-204@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:95-103@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:102-116@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-28-continuable-subagent-conversations.md:176-204@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:31-41@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:95-103@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:31-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e
 
 <a id="m17-ui-state-accessibility-and-layout-stability"></a>
 ## m17-ui-state-accessibility-and-layout-stability：UI 状态、焦点、无障碍与布局稳定
@@ -561,15 +483,9 @@
 
 **证据与限制**：快照/组件测试不覆盖所有屏幕阅读器；仍需人工检查；视觉产品决策本身不是治理机制。
 
-**源义务**：组件状态、隐藏面卸载、busy 守卫、焦点/DOM identity、portal、固定几何、刷新不丢草稿、显式动作结果（question card、onboarding、release prompt、connection recovery、attachments、folder pick/drill）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-11-collapsible-ask-user-question-card.md:12-23@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:107-117@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-24-folder-reference-pick-vs-drill.md:1-32@687f282e`。
+**源义务**：组件状态、隐藏面卸载、busy 守卫、焦点/DOM identity、portal、固定几何、刷新不丢草稿、显式动作结果（question card、onboarding、release prompt、connection recovery、attachments、folder pick/drill）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-11-collapsible-ask-user-question-card.md:12-23@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:107-117@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-24-folder-reference-pick-vs-drill.md:1-32@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-collapsible-ask-user-question-card.md:12-23@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:107-117@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-folder-reference-pick-vs-drill.md:1-32@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-collapsible-ask-user-question-card.md:12-23@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-13-shared-modal-product-onboarding.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-10-14-host-release-change-refresh-prompt.md:107-117@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-28-web-connection-recovery-control.md:12-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-11-web-attachment-display-alignment.md:16-22@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-24-folder-reference-pick-vs-drill.md:1-32@687f282e
 
 <a id="m18-verification-matrix-and-honest-limits"></a>
 ## m18-verification-matrix-and-honest-limits：分层验证矩阵与诚实限制
@@ -595,16 +511,9 @@
 
 **证据与限制**：测试通过只证明被测场景；不能证明所有代理/网关/平台；人工检查不能冒充自动保证。
 
-**源义务**：分层测试、真实引擎/平台、确定性 fixture、组装/安装验证、手动/未覆盖声明（PTY、export、wide table、streaming fence、reclamation、Excel、teams）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:161-185@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:26-31@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-19-web-markdown-wide-table-view.md:28-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:23-27@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:48-56@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:41-45@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:81-87@687f282e`。
+**源义务**：分层测试、真实引擎/平台、确定性 fixture、组装/安装验证、手动/未覆盖声明（PTY、export、wide table、streaming fence、reclamation、Excel、teams）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:161-185@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:26-31@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-19-web-markdown-wide-table-view.md:28-38@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:23-27@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:48-56@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:41-45@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:81-87@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:161-185@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:26-31@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-19-web-markdown-wide-table-view.md:28-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:23-27@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:48-56@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:41-45@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:81-87@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:161-185@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:26-31@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-19-web-markdown-wide-table-view.md:28-38@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-20-web-streaming-fence-highlight.md:23-27@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:48-56@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:41-45@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-08-05-agent-teams.md:81-87@687f282e
 
 <a id="m19-no-dead-surfaces-and-clean-cutover"></a>
 ## m19-no-dead-surfaces-and-clean-cutover：删除死接口与干净切换
@@ -629,13 +538,9 @@
 
 **证据与限制**：删除可能破坏外部消费者；需版本政策；动态调用可能漏检；本机制面向预发布/内部替换。
 
-**源义务**：迁移所有调用方、删除旧 RPC/包/常量、预发布直改、无禁用行（export、unified task、skill row、messages adapter）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:29-39@687f282e`。
+**源义务**：迁移所有调用方、删除旧 RPC/包/常量、预发布直改、无禁用行（export、unified task、skill row、messages adapter）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:29-39@687f282e`。
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:29-39@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-10-web-session-log-export.md:19-26@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-25-unified-task-list.md:14-25@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-06-web-skill-tool-row.md:12-20@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:29-39@687f282e
 
 <a id="m20-cache-prefix-and-context-stability"></a>
 ## m20-cache-prefix-and-context-stability：缓存前缀稳定
@@ -661,13 +566,9 @@
 
 **证据与限制**：追加节点每请求付出 token，直到被压缩遮蔽；外部模型契约可能收窄；本地测试不能证明远端缓存。
 
-**源义务**：分离动态事实、追加/重写能力、系列开始重基线、环境排除、缓存成本披露（in-history、image paths、messages adapter；proposal 仅历史）。
-**源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-42@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`；`deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:51-58@687f282e`（proposal，仅历史）。
+**源义务**：分离动态事实、追加/重写能力、系列开始重基线、环境排除、缓存成本披露（in-history、image paths、messages adapter；proposal 仅历史）。 **源引用**：`deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-42@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e`；`deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:51-58@687f282e`（proposal，仅历史）。
 
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-42@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e
-来源：deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:51-58@687f282e
+来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-02-in-history-system-prompt-replacement.md:15-42@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-08-21-model-readable-image-paths.md:12-28@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-07-deepseek-messages-adapter.md:11-19@687f282e 来源：deepseek-harness/.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:51-58@687f282e
 
 <a id="m21-native-risk-containment-and-platform-gating"></a>
 ## m21-native-risk-containment-and-platform-gating：原生风险隔离与平台门禁
@@ -692,8 +593,7 @@
 
 **证据与限制**：打包后自我 spawn/真实渲染可能无法自动测试；平台矩阵可能不完整；原生风险只是被限制，不是消失。
 
-**源义务**：进程隔离、平台门禁、有界中止、ABI 风险分层、best-effort 增强（win32 dialog、macOS titlebar、PTY、reclamation、Excel）。
-**源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-02-win32-in-process-folder-dialog.md:12-28@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-13-macos-hidden-titlebar-vibrancy.md:12-30@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:41-52@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e`。
+**源义务**：进程隔离、平台门禁、有界中止、ABI 风险分层、best-effort 增强（win32 dialog、macOS titlebar、PTY、reclamation、Excel）。 **源引用**：`deepseek-harness/.agents/notes/archived/feature/2026-08-02-win32-in-process-folder-dialog.md:12-28@687f282e`；`deepseek-harness/.agents/notes/archived/feature/2026-09-13-macos-hidden-titlebar-vibrancy.md:12-30@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:41-52@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e`；`deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e`。
 
 ## 采用顺序建议
 
@@ -740,8 +640,4 @@
 | `rationale-feature-4.cache-prefix-and-context-stability` | `#m20-cache-prefix-and-context-stability` |
 | `rationale-feature-4.native-risk-containment-and-platform-gating` | `#m21-native-risk-containment-and-platform-gating` |
 
-来源：deepseek-harness/.agents/notes/archived/feature/2026-08-02-win32-in-process-folder-dialog.md:12-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/feature/2026-09-13-macos-hidden-titlebar-vibrancy.md:12-30@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:41-52@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e
-来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/feature/2026-08-02-win32-in-process-folder-dialog.md:12-28@687f282e 来源：deepseek-harness/.agents/notes/archived/feature/2026-09-13-macos-hidden-titlebar-vibrancy.md:12-30@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-07-16-persistent-pty-sessions.md:41-52@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-14-unattended-browser-terminal-reclamation.md:11-38@687f282e 来源：deepseek-harness/.agents/notes/implemented/feature/2026-09-16-browser-excel-preview.md:13-29@687f282e

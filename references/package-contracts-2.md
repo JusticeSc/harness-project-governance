@@ -8,7 +8,9 @@
 
 ## 你要接入 Remote、API 或 Client 装配
 
-### Remote 能力选择层：单一门面、构建期装配与转发事件白名单 {#package-contracts-2.remote-layer-selection}
+<a id="package-contracts-2.remote-layer-selection"></a>
+
+### Remote 能力选择层：单一门面、构建期装配与转发事件白名单
 
 来源：`deepseek-harness/packages/api/README.md:1-60@687f282e`、`deepseek-harness/packages/api/remotes/README.md:1-92@687f282e`、`deepseek-harness/packages/api/workspace-controller/README.md:1-74@687f282e`。
 
@@ -29,7 +31,9 @@
 
 迁移：先冻结门面与白名单，再接第二个 Client 消费者；不要为每个 UI 包生成独立 Gateway 依赖。
 
-### Workspace 投影流：完整基线 + 有序增量、重连换代与访问过滤 {#package-contracts-2.workspace-projection-stream}
+<a id="package-contracts-2.workspace-projection-stream"></a>
+
+### Workspace 投影流：完整基线 + 有序增量、重连换代与访问过滤
 
 来源：`deepseek-harness/packages/api/workspace-controller/README.md:1-74@687f282e`、`deepseek-harness/packages/api/remotes/README.md:1-92@687f282e`。
 
@@ -48,7 +52,9 @@
 
 迁移：先实现“基线 + 有序增量 + 换代丢弃”，再优化增量体积。
 
-### 首次使用默认 Workspace：固定目录名、Documents 定位与幂等初始化 {#package-contracts-2.default-workspace-initialization}
+<a id="package-contracts-2.default-workspace-initialization"></a>
+
+### 首次使用默认 Workspace：固定目录名、Documents 定位与幂等初始化
 
 来源：`deepseek-harness/packages/api/workspace-controller/README.md:31-50@687f282e`、`deepseek-harness/packages/api/workspace-controller/README.zh.md:31-50@687f282e`。
 
@@ -67,7 +73,9 @@
 
 迁移：先让 Host 唯一拥有默认路径与标题，再接启动流程；成功返回才 upsert，无资格走目录选择器；不要由多个客户端各自推导目录。
 
-### Host/Client 双编译面：仅生成产物受阻的拆分包与单一来源声明 {#package-contracts-2.client-build-face-split}
+<a id="package-contracts-2.client-build-face-split"></a>
+
+### Host/Client 双编译面：仅生成产物受阻的拆分包与单一来源声明
 
 来源：`deepseek-harness/packages/api/remotes/README.md:1-92@687f282e`。
 
@@ -86,7 +94,9 @@
 
 迁移：先建立生成步骤与单一声明源，再拆包；不要用编译器全局开关换取“先跑起来”。
 
-### 语音转写 Remote：瞬态录音、Provider 发现与准备/取消生命周期 {#package-contracts-2.speech-audio-transient}
+<a id="package-contracts-2.speech-audio-transient"></a>
+
+### 语音转写 Remote：瞬态录音、Provider 发现与准备/取消生命周期
 
 来源：`deepseek-harness/packages/experimental/api-speech-to-text/README.md:1-80@687f282e`、`deepseek-harness/packages/experimental/api-speech-to-text/README.zh.md:1-80@687f282e`。
 
@@ -109,7 +119,9 @@
 
 ## 你要组合插件或扩展 UI
 
-### Profile 插件生命周期：patch 分层、bundle 选择、安装事务与失败恢复 {#package-contracts-2.profile-plugin-lifecycle}
+<a id="package-contracts-2.profile-plugin-lifecycle"></a>
+
+### Profile 插件生命周期：patch 分层、bundle 选择、安装事务与失败恢复
 
 来源：`deepseek-harness/packages/boot/plugin-manager/README.md:1-172@687f282e`。
 
@@ -128,7 +140,9 @@
 
 迁移：先定义 patch 层序与 manifest，再实现安装事务；不要用复制目录代替事务。
 
-### 插件兼容性豁免：精确版本对、显式风险确认与不继承 {#package-contracts-2.plugin-compatibility-exemption}
+<a id="package-contracts-2.plugin-compatibility-exemption"></a>
+
+### 插件兼容性豁免：精确版本对、显式风险确认与不继承
 
 来源：`deepseek-harness/packages/boot/plugin-manager/README.md:1-172@687f282e`。
 
@@ -148,7 +162,9 @@
 
 迁移：把豁免实现为 profile 的 `compatibility.json` 中最小、可撤销的精确版本对映射，不要改全局版本检查。
 
-### Client Slot 扩展：单值槽冲突、贡献撤回与固定展示边界 {#package-contracts-2.ui-slot-extension}
+<a id="package-contracts-2.ui-slot-extension"></a>
+
+### Client Slot 扩展：单值槽冲突、贡献撤回与固定展示边界
 
 来源：`deepseek-harness/packages/client/README.md:1-114@687f282e`、`deepseek-harness/packages/client/ui-deepseek-model-label-1017/README.md:1-91@687f282e`、`deepseek-harness/packages/client/ui-message-feedback/README.md:1-91@687f282e`、`deepseek-harness/packages/client/ui-workflow-run/README.md:1-101@687f282e`、`deepseek-harness/packages/api/workspace-controller/README.md:29-29@687f282e`。
 
@@ -168,7 +184,9 @@
 
 迁移：先定义 slot 契约与冲突规则，再让业务包接入；不要用条件渲染模拟多贡献者。
 
-### UI 贡献所有权：每 Session 单控制器、版本冲突对账与失败面分离 {#package-contracts-2.ui-contribution-ownership}
+<a id="package-contracts-2.ui-contribution-ownership"></a>
+
+### UI 贡献所有权：每 Session 单控制器、版本冲突对账与失败面分离
 
 来源：`deepseek-harness/packages/client/ui-message-feedback/README.md:1-91@687f282e`、`deepseek-harness/packages/client/ui-workflow-run/README.md:1-101@687f282e`、`deepseek-harness/packages/client/ui-settings-account/README.md:1-119@687f282e`。
 
@@ -187,7 +205,9 @@
 
 迁移：先实现“单控制器 + 版本对账 + stale 释放”，再接更多 UI。
 
-### Workflow run 对话节点：持久事件确定性重放、披露选择与实时导航 {#package-contracts-2.workflow-run-replay}
+<a id="package-contracts-2.workflow-run-replay"></a>
+
+### Workflow run 对话节点：持久事件确定性重放、披露选择与实时导航
 
 来源：`deepseek-harness/packages/client/ui-workflow-run/README.md:1-101@687f282e`。
 
@@ -213,7 +233,9 @@
 
 ## 你要改会话、命令、目标或持久化
 
-### Session 事件日志：append-only、无损 JSON 校验、投影与请求头重建 {#package-contracts-2.session-event-log}
+<a id="package-contracts-2.session-event-log"></a>
+
+### Session 事件日志：append-only、无损 JSON 校验、投影与请求头重建
 
 来源：`deepseek-harness/packages/core/session/README.md:1-215@687f282e`。
 
@@ -233,7 +255,9 @@
 
 迁移：先冻结事件 schema 与序列，再实现投影；不要用内存镜像作为恢复源。
 
-### 实验插件记录：命名空间、ignorable 与生产调用边界 {#package-contracts-2.session-plugin-records}
+<a id="package-contracts-2.session-plugin-records"></a>
+
+### 实验插件记录：命名空间、ignorable 与生产调用边界
 
 来源：`deepseek-harness/packages/core/session/README.md:1-215@687f282e`。
 
@@ -252,7 +276,9 @@
 
 迁移：先在核心之外定义命名空间与 ignorable 规则，再让插件写入。
 
-### 命令 seam：后端无关控制、日志型生命周期与空闲约束 {#package-contracts-2.command-seam-contract}
+<a id="package-contracts-2.command-seam-contract"></a>
+
+### 命令 seam：后端无关控制、日志型生命周期与空闲约束
 
 来源：`deepseek-harness/packages/compaction/command-compact/README.md:1-155@687f282e`。
 
@@ -272,7 +298,9 @@
 
 迁移：先冻结 seam 与日志事件，再接 UI 适配器。
 
-### /goal 命令适配器：精确控制词语法、直出 UI 输出与附件单消息边界 {#package-contracts-2.goal-command-adapter}
+<a id="package-contracts-2.goal-command-adapter"></a>
+
+### /goal 命令适配器：精确控制词语法、直出 UI 输出与附件单消息边界
 
 来源：`deepseek-harness/packages/goal/command-goal/README.md:1-140@687f282e`。
 
@@ -293,7 +321,9 @@
 
 迁移：先接 goal service 与命令注册表，再做精确语法与附件 followup。
 
-### 会话持久化与相邻格式链：一次消费物理行、标头分类与恢复策略 {#package-contracts-2.session-persistence-format-chain}
+<a id="package-contracts-2.session-persistence-format-chain"></a>
+
+### 会话持久化与相邻格式链：一次消费物理行、标头分类与恢复策略
 
 来源：`deepseek-harness/packages/session/session-format/README.md:1-112@687f282e`、`deepseek-harness/packages/session/README.md:1-87@687f282e`。
 
@@ -313,7 +343,9 @@
 
 迁移：先固定格式版本与迁移链，再接新后端。
 
-### 会话标题辅助请求：共享执行策略、路由回退、全量输入上限与迟到拒绝 {#package-contracts-2.session-title-execution}
+<a id="package-contracts-2.session-title-execution"></a>
+
+### 会话标题辅助请求：共享执行策略、路由回退、全量输入上限与迟到拒绝
 
 来源：`deepseek-harness/packages/session/session-title-llm/README.md:1-130@687f282e`。
 
@@ -339,7 +371,9 @@
 
 ## 你要接执行 seam、模型或子进程
 
-### 能力 seam 的三角色划分：Service Definition、Provider 与 Consumer {#package-contracts-2.capability-seam-roles}
+<a id="package-contracts-2.capability-seam-roles"></a>
+
+### 能力 seam 的三角色划分：Service Definition、Provider 与 Consumer
 
 来源：`deepseek-harness/packages/llm/llm/README.md:1-197@687f282e`、`deepseek-harness/packages/llm/llm/src/index.ts:956-964@687f282e`、`deepseek-harness/packages/llm/llm/src/index.ts:1016-1019@687f282e`、`deepseek-harness/packages/web/README.md:1-55@687f282e`、`deepseek-harness/docs/subsystems/web.md:121-162@687f282e`、`deepseek-harness/packages/subprocess/README.md:1-51@687f282e`、`deepseek-harness/packages/sandbox/sandbox/README.md:1-184@687f282e`、`deepseek-harness/packages/ptc-runtime/ptc-runtime/README.md:1-150@687f282e`、`deepseek-harness/packages/storage/README.md:1-51@687f282e`。
 
@@ -361,7 +395,9 @@
 
 迁移：先冻结 Definition 与失败词汇，再接第一个 provider；不要先写 provider 再倒推接口。
 
-### LLM 服务边界：提供方中立词汇、适配器注册与单次尝试终态 {#package-contracts-2.llm-provider-boundary}
+<a id="package-contracts-2.llm-provider-boundary"></a>
+
+### LLM 服务边界：提供方中立词汇、适配器注册与单次尝试终态
 
 来源：`deepseek-harness/packages/llm/llm/README.md:1-197@687f282e`。
 
@@ -381,7 +417,9 @@
 
 迁移：先定义中立词汇与单次尝试，再接供应商。
 
-### 模型请求重试：先持久化后等待、按提供方策略与开放步骤边界 {#package-contracts-2.llm-retry-durable}
+<a id="package-contracts-2.llm-retry-durable"></a>
+
+### 模型请求重试：先持久化后等待、按提供方策略与开放步骤边界
 
 来源：`deepseek-harness/packages/llm/llm-retry/README.md:1-147@687f282e`。
 
@@ -403,7 +441,9 @@
 
 迁移：先在持久会话日志上定义重试调度事件与开放步骤恢复点，再接可取消退避、provider 策略和同 turn 重跑；不要把重试塞进裸流读取循环。
 
-### Token 计量：回放日志、提供方用量锚点与位置替换投影 {#package-contracts-2.token-meter-replay}
+<a id="package-contracts-2.token-meter-replay"></a>
+
+### Token 计量：回放日志、提供方用量锚点与位置替换投影
 
 来源：`deepseek-harness/packages/llm/token-meter/README.md:1-159@687f282e`。
 
@@ -426,7 +466,9 @@
 
 迁移：先定义事件与锚点，再做 UI 汇总。
 
-### Subagent 委派：工具镜像 provider 生命周期、activation 结果与深度/预设/模型选择 {#package-contracts-2.subagent-delegation}
+<a id="package-contracts-2.subagent-delegation"></a>
+
+### Subagent 委派：工具镜像 provider 生命周期、activation 结果与深度/预设/模型选择
 
 来源：`deepseek-harness/packages/subagent/tool-subagent/README.md:1-252@687f282e`、`deepseek-harness/packages/subagent/subagent-spawn-in-process/README.md:1-150@687f282e`。
 
@@ -446,7 +488,9 @@
 
 迁移：先实现 provider 生命周期与 fresh child，再做工具镜像。
 
-### LSP stdio 提供方：按工作区池化、临时打开查询、先读后生成与有界关闭 {#package-contracts-2.lsp-transient-open}
+<a id="package-contracts-2.lsp-transient-open"></a>
+
+### LSP stdio 提供方：按工作区池化、临时打开查询、先读后生成与有界关闭
 
 来源：`deepseek-harness/packages/lsp/lsp-stdio/README.md:1-159@687f282e`。
 
@@ -468,7 +512,9 @@
 
 迁移：先做池化与临时打开，再做缓存；不要反过来。
 
-### 子进程 seam 与 Win32 原语：统一生命周期、受管范围与 ABI 证据 {#package-contracts-2.subprocess-and-win32}
+<a id="package-contracts-2.subprocess-and-win32"></a>
+
+### 子进程 seam 与 Win32 原语：统一生命周期、受管范围与 ABI 证据
 
 来源：`deepseek-harness/packages/subprocess/README.md:1-51@687f282e`、`deepseek-harness/packages/subprocess/win32-process/README.md:1-89@687f282e`。
 
@@ -492,7 +538,9 @@
 
 迁移：先收敛所有 spawn 到一个 seam，再各平台实现受管范围。
 
-### Bash 工具：job 化执行、前台超时转后台、退出标记与升权重试 {#package-contracts-2.bash-job-lifecycle}
+<a id="package-contracts-2.bash-job-lifecycle"></a>
+
+### Bash 工具：job 化执行、前台超时转后台、退出标记与升权重试
 
 来源：`deepseek-harness/packages/shell/tool-bash/README.md:1-229@687f282e`。
 
@@ -512,7 +560,9 @@
 
 迁移：先 job 化与退出标记，再做升权。
 
-### 进程沙箱：逐调用策略、fail-closed、完整度披露与单次升权阶梯 {#package-contracts-2.sandbox-fail-closed}
+<a id="package-contracts-2.sandbox-fail-closed"></a>
+
+### 进程沙箱：逐调用策略、fail-closed、完整度披露与单次升权阶梯
 
 来源：`deepseek-harness/packages/sandbox/sandbox/README.md:1-184@687f282e`。
 
@@ -532,7 +582,9 @@
 
 迁移：先接 fail-closed 与逐调用策略，再实现升权。
 
-### PTC 执行 seam：可移植绑定名、结构化结果与一次性运行 {#package-contracts-2.ptc-runtime-portable}
+<a id="package-contracts-2.ptc-runtime-portable"></a>
+
+### PTC 执行 seam：可移植绑定名、结构化结果与一次性运行
 
 来源：`deepseek-harness/packages/ptc-runtime/ptc-runtime/README.md:1-150@687f282e`。
 
@@ -553,7 +605,9 @@
 
 迁移：先冻结可移植标识符与结果词汇，再接后端。
 
-### 超时库：夹取提示、截止融合、首次原因分类与空闲看门狗 {#package-contracts-2.timeout-deadline}
+<a id="package-contracts-2.timeout-deadline"></a>
+
+### 超时库：夹取提示、截止融合、首次原因分类与空闲看门狗
 
 来源：`deepseek-harness/packages/util/timeout/README.md:1-153@687f282e`。
 
@@ -579,7 +633,9 @@
 
 ## 你要控制 agent 行为或人工交互
 
-### Plan mode：仅日志整值状态、步骤边界追加与人工评审退出 {#package-contracts-2.plan-mode}
+<a id="package-contracts-2.plan-mode"></a>
+
+### Plan mode：仅日志整值状态、步骤边界追加与人工评审退出
 
 来源：`deepseek-harness/packages/plan/plan-mode/README.md:1-202@687f282e`。
 
@@ -602,7 +658,9 @@
 
 迁移：先做仅日志状态与步骤边界追加，再做命令与退出工具。
 
-### Preset Persona：作用域内遮蔽、complete 模式与运行时上下文抑制 {#package-contracts-2.persona-scoped}
+<a id="package-contracts-2.persona-scoped"></a>
+
+### Preset Persona：作用域内遮蔽、complete 模式与运行时上下文抑制
 
 来源：`deepseek-harness/packages/preset/persona/README.md:1-127@687f282e`。
 
@@ -622,7 +680,9 @@
 
 迁移：先确认注册表已有部署级 persona 段，再把该行实现为 scoped shadow。
 
-### Ask-user 工具：阻塞/定时双模式、pending 结果与子 agent 拒绝 {#package-contracts-2.ask-user-timed}
+<a id="package-contracts-2.ask-user-timed"></a>
+
+### Ask-user 工具：阻塞/定时双模式、pending 结果与子 agent 拒绝
 
 来源：`deepseek-harness/packages/interaction/tool-ask-user/README.md:1-168@687f282e`。
 
@@ -645,7 +705,9 @@
 
 迁移：先实现阻塞 seam，再加 timed 与 projection；不要用超时暗示批准。
 
-### 循环卫生 guard 家族：重复调用提醒与声明式工具超时 {#package-contracts-2.guard-loop-hygiene}
+<a id="package-contracts-2.guard-loop-hygiene"></a>
+
+### 循环卫生 guard 家族：重复调用提醒与声明式工具超时
 
 来源：`deepseek-harness/packages/guard/README.md:1-51@687f282e`。
 
@@ -668,7 +730,9 @@
 
 ## 你要接浏览器、钩子、Webhook 或运行时反射
 
-### Computer-use 单提供者槽：名称注册、effect 释放与共享桌面边界 {#package-contracts-2.computer-use-provider-slot}
+<a id="package-contracts-2.computer-use-provider-slot"></a>
+
+### Computer-use 单提供者槽：名称注册、effect 释放与共享桌面边界
 
 来源：`deepseek-harness/packages/computer-use/computer-use/README.md:1-87@687f282e`。
 
@@ -687,7 +751,9 @@
 
 迁移：先定义单槽与动作词汇，再接 provider。
 
-### 浏览器会话预留：单 Agent 附着、配置而非工具参数、清理失败保留 {#package-contracts-2.browser-session-reservation}
+<a id="package-contracts-2.browser-session-reservation"></a>
+
+### 浏览器会话预留：单 Agent 附着、配置而非工具参数、清理失败保留
 
 来源：`deepseek-harness/packages/experimental/browser-use-stagehand-native/README.md:1-169@687f282e`。
 
@@ -706,7 +772,9 @@
 
 迁移：先实现预留与所有权，再接工具。
 
-### Claude Code 钩子桥：明确子集、失败包容与串行顺序 {#package-contracts-2.hook-bridge-compat-subset}
+<a id="package-contracts-2.hook-bridge-compat-subset"></a>
+
+### Claude Code 钩子桥：明确子集、失败包容与串行顺序
 
 来源：`deepseek-harness/packages/experimental/hooks-claude-code/README.md:1-195@687f282e`。
 
@@ -725,7 +793,9 @@
 
 迁移：先列子集与失败策略，再实现映射。
 
-### Webhook 可信规则：提交点、失败回滚与进程内尽力投递 {#package-contracts-2.webhook-trusted-rule}
+<a id="package-contracts-2.webhook-trusted-rule"></a>
+
+### Webhook 可信规则：提交点、失败回滚与进程内尽力投递
 
 来源：`deepseek-harness/packages/experimental/webhook/README.md:1-86@687f282e`。
 
@@ -744,7 +814,9 @@
 
 迁移：先定义规则提交与信任边界，再做投递。
 
-### 浏览器 Worker VFS 镜像：发布视图、可达性扫描与惰性分块 {#package-contracts-2.webworker-vfs-pack}
+<a id="package-contracts-2.webworker-vfs-pack"></a>
+
+### 浏览器 Worker VFS 镜像：发布视图、可达性扫描与惰性分块
 
 来源：`deepseek-harness/packages/experimental/webworker-packer/README.md:1-74@687f282e`；`deepseek-harness/packages/experimental/webworker-packer/tests/exports.spec.ts:1-69@687f282e`。
 
@@ -765,7 +837,9 @@
 
 迁移：将目标项目自己的 roster、发布切片、runtime exports/seeds 与 chunk 形式作为明确输入，不照搬源仓 CLI 的目录假设。只有目标确有 Worker VFS 交付时激活这些特定构建校验；启用后必须保留 declaration-only/runtime 请求拒绝、发布视图与 fixture 代际的约束效果。
 
-### 运行时 API 检视：只读工具、每进程单注册与 preset 边界 {#package-contracts-2.runtime-api-inspection}
+<a id="package-contracts-2.runtime-api-inspection"></a>
+
+### 运行时 API 检视：只读工具、每进程单注册与 preset 边界
 
 来源：`deepseek-harness/packages/extensions/tool-cordis/README.md:1-77@687f282e`。
 
@@ -788,7 +862,9 @@
 
 ## 你要接技能、文件、存储、工作区或搜索
 
-### 本地 Skill 发现：目录/扁平格式、frontmatter 门槛、根优先级与监视失效 {#package-contracts-2.skill-discovery}
+<a id="package-contracts-2.skill-discovery"></a>
+
+### 本地 Skill 发现：目录/扁平格式、frontmatter 门槛、根优先级与监视失效
 
 来源：`deepseek-harness/packages/skill/skill-filesystem/README.md:1-161@687f282e`。
 
@@ -807,7 +883,9 @@
 
 迁移：先定义根优先级与 frontmatter 门槛，再做监视。
 
-### Office Skill：渐进加载、资源校验与渲染/导出边界 {#package-contracts-2.office-progressive-loading}
+<a id="package-contracts-2.office-progressive-loading"></a>
+
+### Office Skill：渐进加载、资源校验与渲染/导出边界
 
 来源：`deepseek-harness/packages/skill/skill-office/README.md:1-136@687f282e`。
 
@@ -826,7 +904,9 @@
 
 迁移：先定义操作路由与资源校验，再接引擎。
 
-### 文件搜索工具：子进程 seam、打包 rg、双层预算与溢出回收 {#package-contracts-2.fs-search-budgets}
+<a id="package-contracts-2.fs-search-budgets"></a>
+
+### 文件搜索工具：子进程 seam、打包 rg、双层预算与溢出回收
 
 来源：`deepseek-harness/packages/fs/tool-fs-search/README.md:1-223@687f282e`。
 
@@ -846,7 +926,9 @@
 
 迁移：先接子进程 seam 与预算，再做分页/溢出。
 
-### Storage 组：具名后端、domain KV 校验与宿主侧可选边界 {#package-contracts-2.storage-domain}
+<a id="package-contracts-2.storage-domain"></a>
+
+### Storage 组：具名后端、domain KV 校验与宿主侧可选边界
 
 来源：`deepseek-harness/packages/storage/README.md:1-51@687f282e`。
 
@@ -865,7 +947,9 @@
 
 迁移：先选后端与 domain schema，再接首个消费者。
 
-### Workspace 生命周期：持久项目、隐藏而非删除与首次使用目录 {#package-contracts-2.workspace-lifecycle}
+<a id="package-contracts-2.workspace-lifecycle"></a>
+
+### Workspace 生命周期：持久项目、隐藏而非删除与首次使用目录
 
 来源：`deepseek-harness/packages/workspace/README.md:1-49@687f282e`、`deepseek-harness/packages/api/workspace-controller/README.md:1-74@687f282e`。
 
@@ -887,7 +971,9 @@
 
 迁移：先定义删除语义与默认目录，再实现 registry 与导航。
 
-### Web 搜索提供方：可用性、错误码、结果上限与引用回退 {#package-contracts-2.web-search-provider}
+<a id="package-contracts-2.web-search-provider"></a>
+
+### Web 搜索提供方：可用性、错误码、结果上限与引用回退
 
 来源：`deepseek-harness/packages/web/README.md:1-55@687f282e`、`deepseek-harness/packages/web/web-search-perplexity/README.md:1-165@687f282e`。
 
@@ -912,7 +998,9 @@
 
 ## 你要接遥测、共享工具或测试
 
-### 产品遥测：显式事件、批量预算与匿名安装 id {#package-contracts-2.telemetry-and-identity}
+<a id="package-contracts-2.telemetry-and-identity"></a>
+
+### 产品遥测：显式事件、批量预算与匿名安装 id
 
 来源：`deepseek-harness/packages/host/product-telemetry-otel/README.md:1-109@687f282e`、`deepseek-harness/packages/identity/README.md:1-37@687f282e`。
 
@@ -934,7 +1022,9 @@
 
 迁移：先定义事件 schema 与禁用自动采集，再接收集器。
 
-### 不可变分块列表：有界追加复制、插入序迭代与检查点校验 {#package-contracts-2.util-immutable-chunked-list}
+<a id="package-contracts-2.util-immutable-chunked-list"></a>
+
+### 不可变分块列表：有界追加复制、插入序迭代与检查点校验
 
 来源：`deepseek-harness/packages/util/chunked-list/README.md:1-91@687f282e`。
 
@@ -954,7 +1044,9 @@
 
 迁移：先确认访问模式只有追加与全量迭代，再替换数组复制。
 
-### 单一扩展名语言表：Map 原型安全、持久 lang 提示投影与纯文本回退 {#package-contracts-2.util-code-language-table}
+<a id="package-contracts-2.util-code-language-table"></a>
+
+### 单一扩展名语言表：Map 原型安全、持久 lang 提示投影与纯文本回退
 
 来源：`deepseek-harness/packages/util/code-language/README.md:1-48@687f282e`。
 
@@ -975,7 +1067,9 @@
 
 迁移：先抽单表与纯函数，再把 Client/Host 两处消费者切过来。
 
-### 测试支持：端点为名的 Remote mock、真实客户端连接与提交式二进制夹具 {#package-contracts-2.test-support-fixtures}
+<a id="package-contracts-2.test-support-fixtures"></a>
+
+### 测试支持：端点为名的 Remote mock、真实客户端连接与提交式二进制夹具
 
 来源：`deepseek-harness/packages/test-support/remote-mock/README.md:1-147@687f282e`、`deepseek-harness/apps/web/tests/fixtures/office/README.md:1-7@687f282e`。
 
@@ -1003,7 +1097,9 @@
 
 ## 你要写 SDK、桌面打包或发布安装包
 
-### Python SDK：显式 home、惰性运行时、resume 语义与 profile 定制 {#package-contracts-2.python-sdk-contract}
+<a id="package-contracts-2.python-sdk-contract"></a>
+
+### Python SDK：显式 home、惰性运行时、resume 语义与 profile 定制
 
 来源：`deepseek-harness/python/sdk/README.md:1-100@687f282e`。
 
@@ -1030,7 +1126,9 @@
 
 迁移：先强制显式 home 与惰性启动，再实现 resume 与 profile 定制。
 
-### Desktop 打包：版本确认、预设/密钥分离、目标隔离与构建发布分离 {#package-contracts-2.desktop-build-config}
+<a id="package-contracts-2.desktop-build-config"></a>
+
+### Desktop 打包：版本确认、预设/密钥分离、目标隔离与构建发布分离
 
 来源：`deepseek-harness/apps/desktop/packaging/README.md:1-279@687f282e`。
 
@@ -1064,7 +1162,9 @@
 
 迁移：先分离配置/密钥与 target 状态，再把发布设为独立显式步骤。
 
-### Desktop 运行时文件策略：显式过滤、运行时补丁分类与安装/冒烟证据 {#package-contracts-2.desktop-runtime-file-policy}
+<a id="package-contracts-2.desktop-runtime-file-policy"></a>
+
+### Desktop 运行时文件策略：显式过滤、运行时补丁分类与安装/冒烟证据
 
 来源：`deepseek-harness/apps/desktop/packaging/README.md:151-279@687f282e`。
 

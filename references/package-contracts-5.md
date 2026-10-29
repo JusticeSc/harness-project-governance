@@ -25,7 +25,9 @@
 
 ---
 
-## 能力 seam：服务定义、单一提供方与消费者解耦 {#package-contracts-5.capability-seam-ownership}
+<a id="package-contracts-5.capability-seam-ownership"></a>
+
+## 能力 seam：服务定义、单一提供方与消费者解耦
 
 **触发**：新增可替换后端；把实现拆成定义/提供方；同一 `ctx` 键出现第二个提供方；消费者想直接 import 具体后端。
 
@@ -53,7 +55,9 @@
 
 ---
 
-## 失败即关闭并点名缺口 {#package-contracts-5.fail-closed-dependencies}
+<a id="package-contracts-5.fail-closed-dependencies"></a>
+
+## 失败即关闭并点名缺口
 
 **触发**：组合缺提供方/控制器；调用发生在依赖就绪前；TLS、凭据、审批只配置了一半；安装损坏或平台不支持。
 
@@ -83,7 +87,9 @@
 
 ---
 
-## 所有者作用域生命周期：注册即 effect，卸载即释放 {#package-contracts-5.owner-scoped-lifecycle}
+<a id="package-contracts-5.owner-scoped-lifecycle"></a>
+
+## 所有者作用域生命周期：注册即 effect，卸载即释放
 
 **触发**：插件注册服务、slot、工具或任务；会话/所有者释放；服务整体卸载；持久产物与运行期状态混淆。
 
@@ -110,7 +116,9 @@
 
 ---
 
-## 配置目录一致性：schema 校验、生成目录与生效配置可视化 {#package-contracts-5.configuration-catalog-conformance}
+<a id="package-contracts-5.configuration-catalog-conformance"></a>
+
+## 配置目录一致性：schema 校验、生成目录与生效配置可视化
 
 **触发**：新增/删除/重命名字段；改默认值或校验；用户说“配置没生效”；需要解释 profile 层叠。
 
@@ -137,7 +145,9 @@
 
 ---
 
-## 持久性检查点与恢复语义 {#package-contracts-5.durability-checkpoints-and-recovery}
+<a id="package-contracts-5.durability-checkpoints-and-recovery"></a>
+
+## 持久性检查点与恢复语义
 
 **触发**：持久化 agent 可能崩溃；resume/fork/close；新增带状态的领域事件；用户看到“已记录”。
 
@@ -168,7 +178,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:1-290@687f282e`、`deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:21-54@687f282e`
 
 
-## 写入串行化、原子替换与冲突可见 {#package-contracts-5.serialized-writes-and-atomic-publication}
+<a id="package-contracts-5.serialized-writes-and-atomic-publication"></a>
+
+## 写入串行化、原子替换与冲突可见
 
 **触发**：多进程/多编辑器写同一文件；整文件替换；带 revision 的表单提交；并发配置或 HMR 重载。
 
@@ -196,7 +208,9 @@
 
 ---
 
-## 外部内容与不可信输入的信任边界 {#package-contracts-5.external-content-trust-boundary}
+<a id="package-contracts-5.external-content-trust-boundary"></a>
+
+## 外部内容与不可信输入的信任边界
 
 **触发**：网页/文件/截图/子代理内容进入模型或 UI；跨 Host/Client 或进程 wire 传数据；桌面自动化输入；凭据或路径跨边界。
 
@@ -227,7 +241,9 @@
 
 ---
 
-## 人工审批、策略与升权词汇 {#package-contracts-5.human-approval-and-escalation}
+<a id="package-contracts-5.human-approval-and-escalation"></a>
+
+## 人工审批、策略与升权词汇
 
 **触发**：工具执行需要 `ask` 决策；沙箱模式/升权；桌面自动化启动或输入；需要人工提供凭据；无头/CI 运行。
 
@@ -257,7 +273,9 @@
 
 ---
 
-## 扩展点注册：slot/注册表身份、冲突与替换路径 {#package-contracts-5.extension-point-registration}
+<a id="package-contracts-5.extension-point-registration"></a>
+
+## 扩展点注册：slot/注册表身份、冲突与替换路径
 
 **触发**：新增 UI slot 贡献或工具视图；两个包声明同一 kind/id；替换内置呈现；插件卸载/作用域变化；暴露 Host 数据到 Client。
 
@@ -284,7 +302,9 @@
 
 ---
 
-## 模型可见契约与 KV Cache 稳定性 {#package-contracts-5.model-visible-contract-stability}
+<a id="package-contracts-5.model-visible-contract-stability"></a>
+
+## 模型可见契约与 KV Cache 稳定性
 
 **触发**：新增/重命名/删除模型可见工具；修改 schema、提示词段或结果字符串；新增 UI 呈现；插件挂载/作用域变化；宣称“仅展示”的包。
 
@@ -312,7 +332,9 @@
 
 ---
 
-## 宿主环境探测：home、环境层、平台与桌面可用性 {#package-contracts-5.host-environment-detection}
+<a id="package-contracts-5.host-environment-detection"></a>
+
+## 宿主环境探测：home、环境层、平台与桌面可用性
 
 **触发**：解析用户数据目录；选择平台后端或原生包；判断桌面/显示/SSH；在 UI 展示路径；启动 Web/桌面交互。
 
@@ -342,7 +364,9 @@
 
 ---
 
-## 版本化格式与生成产物 {#package-contracts-5.versioned-formats-and-generated-artifacts}
+<a id="package-contracts-5.versioned-formats-and-generated-artifacts"></a>
+
+## 版本化格式与生成产物
 
 **触发**：持久化结构或状态字段变化；生成工具目录/配置目录/CLI 帮助；发布构建产物；协议能力变化；存储布局变化。
 
@@ -370,7 +394,9 @@
 
 ---
 
-## 限制声明、权威层级与开发备注非权威 {#package-contracts-5.documented-limitations-and-authority}
+<a id="package-contracts-5.documented-limitations-and-authority"></a>
+
+## 限制声明、权威层级与开发备注非权威
 
 **触发**：新增包 README；能力有明确不支持面；维护者留下开放问题；用户问“能不能做 X”；发布前检查文档。
 
@@ -397,7 +423,9 @@
 
 ---
 
-## 双语三文件配对与逐标题一致性记录 {#package-contracts-5.bilingual-pair-maintenance}
+<a id="package-contracts-5.bilingual-pair-maintenance"></a>
+
+## 双语三文件配对与逐标题一致性记录
 
 **触发**：新增/编辑范围内 README 或文档；翻译一侧；合并 PR；生成区域重新生成。
 
@@ -426,7 +454,9 @@
 
 ---
 
-## 包角色、组映射与依赖方向 {#package-contracts-5.package-role-and-dependency-direction}
+<a id="package-contracts-5.package-role-and-dependency-direction"></a>
+
+## 包角色、组映射与依赖方向
 
 **触发**：新增包或包组；拆分包角色；写组 README；测试需要 import 另一侧产物；工具/能力包依赖另一个能力。
 
@@ -454,7 +484,9 @@
 
 ---
 
-## 降级启动、跳过与有界重试 {#package-contracts-5.degraded-startup-and-retry}
+<a id="package-contracts-5.degraded-startup-and-retry"></a>
+
+## 降级启动、跳过与有界重试
 
 **触发**：启动/重载时插件导入或激活失败；bundle 不兼容或不可读；后端进程崩溃/超时；可选 Worker 不可用；懒加载依赖失败。
 

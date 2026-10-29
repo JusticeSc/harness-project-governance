@@ -739,6 +739,4 @@ ci-master 另有 master-only `serial-windows` standby：`runs-on [self-hosted, d
 
 ## 来源索引（固定提交）
 
-来源：deepseek-harness/scripts/install-lefthook.spec.ts:1-217@687f282e
-来源：deepseek-harness/scripts/install-lefthook.spec.ts:851-882@687f282e
-来源：deepseek-harness/scripts/ci-compatible-selfhosted.spec.ts:41-181@687f282e
+来源：deepseek-harness/scripts/install-lefthook.spec.ts:1-217@687f282e 来源：deepseek-harness/scripts/install-lefthook.spec.ts:851-882@687f282e 来源：deepseek-harness/scripts/ci-compatible-selfhosted.spec.ts:41-181@687f282e

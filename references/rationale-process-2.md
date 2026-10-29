@@ -13,26 +13,19 @@
 
 - 来源中 `implemented` 表示源项目已采纳；`archived` 表示已归档但仍记录当时有效的机制；`proposed` 表示仅为提案，本文明确标注。
 - 引用格式为 `deepseek-harness/<path>:<start>-<end>@687f282e`，路径相对源仓库根。
-- 任何“自动阻止”必须以实际运行的正例、反例和恢复证据为准；仅有脚本或工作流文件不构成运行时证明。
-<a id="doc-code-sync-gates"></a>
-**机制 ID**：`rationale-process-2/doc-code-sync-gates`
+- 任何“自动阻止”必须以实际运行的正例、反例和恢复证据为准；仅有脚本或工作流文件不构成运行时证明。 <a id="doc-code-sync-gates"></a> **机制 ID**：`rationale-process-2/doc-code-sync-gates`
 
-**角色**：doc author、doc-sync owner、CI。
-**前置**：文档包含可编译示例、规范命令清单或分类表；比例参数与聚合命令名需按项目重定。
+**角色**：doc author、doc-sync owner、CI。 **前置**：文档包含可编译示例、规范命令清单或分类表；比例参数与聚合命令名需按项目重定。
 
 ### 文档同步机械门禁
 
 **何时用**：文档含可执行 TypeScript 围栏、命令清单或分类表时。**做法**：用共享 `doc-sync` 聚合校验围栏能否针对真实工程编译、检查 ignore-check 注解比例（超过一半即失败）、要求每个自然段只占一个物理行；本地按面选择，CI 跑全集。**完成信号**：聚合退出 0，诊断带 `path:line`。**失败/例外**：编译失败、比例超限或段落未回卷即失败；围栏可显式 ignore，但受比例上限约束，生成目录围栏不计入比例。**证据限制**：只证明被编码的表面，不证明正文正确；分类表部分已被后续生成目录取代。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-doc-sync-enforcement.md:1-33@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-doc-sync-enforcement.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-doc-sync-enforcement.md:1-33@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-doc-sync-enforcement.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
 
-<a id="build-tool-risk-selection"></a>
-**机制 ID**：`rationale-process-2/build-tool-risk-selection`
+<a id="build-tool-risk-selection"></a> **机制 ID**：`rationale-process-2/build-tool-risk-selection`
 
-**角色**：build owner、reviewer、release owner。
-**前置**：任何考虑替换构建/测试工具的项目；数值阈值因项目而异。
+**角色**：build owner、reviewer、release owner。 **前置**：任何考虑替换构建/测试工具的项目；数值阈值因项目而异。
 
 ### 构建工具的维护证据选型
 
@@ -40,11 +33,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-tsdown-over-dumble.md:1-31@687f282e
 
-<a id="vendored-source-manifest"></a>
-**机制 ID**：`rationale-process-2/vendored-source-manifest`
+<a id="vendored-source-manifest"></a> **机制 ID**：`rationale-process-2/vendored-source-manifest`
 
-**角色**：vendoring owner、author、pre-commit/CI。
-**前置**：Vendor 依赖或内嵌上游源码的项目；清单格式与钩子可调整。
+**角色**：vendoring owner、author、pre-commit/CI。 **前置**：Vendor 依赖或内嵌上游源码的项目；清单格式与钩子可调整。
 
 ### Vendor 源码来源清单
 
@@ -52,11 +43,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-11-vendor-cordis-as-source.md:1-29@687f282e
 
-<a id="compiler-single-ownership"></a>
-**机制 ID**：`rationale-process-2/compiler-single-ownership`
+<a id="compiler-single-ownership"></a> **机制 ID**：`rationale-process-2/compiler-single-ownership`
 
-**角色**：build owner、package author、release verifier。
-**前置**：具有多个构建面的 TypeScript monorepo；命令名与聚合形状可变。
+**角色**：build owner、package author、release verifier。 **前置**：具有多个构建面的 TypeScript monorepo；命令名与聚合形状可变。
 
 ### 单一编译器所有权
 
@@ -64,11 +53,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-17-ts-build-config.md:1-91@687f282e
 
-<a id="clean-safety-guards"></a>
-**机制 ID**：`rationale-process-2/clean-safety-guards`
+<a id="clean-safety-guards"></a> **机制 ID**：`rationale-process-2/clean-safety-guards`
 
-**角色**：build owner、author。
-**前置**：任何带破坏性 clean 脚本的项目。
+**角色**：build owner、author。 **前置**：任何带破坏性 clean 脚本的项目。
 
 ### clean 命令的安全护栏
 
@@ -76,11 +63,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-17-ts-build-config.md:1-91@687f282e
 
-<a id="agent-note-classification"></a>
-**机制 ID**：`rationale-process-2/agent-note-classification`
+<a id="agent-note-classification"></a> **机制 ID**：`rationale-process-2/agent-note-classification`
 
-**角色**：note author、CI。
-**前置**：使用持久决策记录的仓库；类别名属于本地策略。
+**角色**：note author、CI。 **前置**：使用持久决策记录的仓库；类别名属于本地策略。
 
 ### 决策笔记的路径分类
 
@@ -88,11 +73,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-agent-note-classification.md:1-49@687f282e
 
-<a id="generated-reference-catalogs"></a>
-**机制 ID**：`rationale-process-2/generated-reference-catalogs`
+<a id="generated-reference-catalogs"></a> **机制 ID**：`rationale-process-2/generated-reference-catalogs`
 
-**角色**：catalog owner、doc author、CI。
-**前置**：文档或清单由代码派生的项目；生成器语言与路径可变。
+**角色**：catalog owner、doc author、CI。 **前置**：文档或清单由代码派生的项目；生成器语言与路径可变。
 
 ### 生成式参考目录与漂移校验
 
@@ -100,11 +83,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-06-20-generated-cordis-catalog.md:1-42@687f282e
 
-<a id="runtime-surface-cataloging"></a>
-**机制 ID**：`rationale-process-2/runtime-surface-cataloging`
+<a id="runtime-surface-cataloging"></a> **机制 ID**：`rationale-process-2/runtime-surface-cataloging`
 
-**角色**：tooling owner、doc author、CI。
-**前置**：具有运行时注册机制的插件/工具系统。
+**角色**：tooling owner、doc author、CI。 **前置**：具有运行时注册机制的插件/工具系统。
 
 ### 启动采集运行时表面目录
 
@@ -112,11 +93,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-02-tool-schema-catalog.md:1-56@687f282e
 
-<a id="agent-note-format-gate"></a>
-**机制 ID**：`rationale-process-2/agent-note-format-gate`
+<a id="agent-note-format-gate"></a> **机制 ID**：`rationale-process-2/agent-note-format-gate`
 
-**角色**：note author、CI。
-**前置**：任何带生命周期状态的决策记录语料。
+**角色**：note author、CI。 **前置**：任何带生命周期状态的决策记录语料。
 
 ### 统一决策笔记格式门禁
 
@@ -124,11 +103,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-05-uniform-agent-note-format.md:1-31@687f282e
 
-<a id="export-documentation-gate"></a>
-**机制 ID**：`rationale-process-2/export-documentation-gate`
+<a id="export-documentation-gate"></a> **机制 ID**：`rationale-process-2/export-documentation-gate`
 
-**角色**：package author、API owner、CI。
-**前置**：发布公共 API 的 TypeScript 库。
+**角色**：package author、API owner、CI。 **前置**：发布公共 API 的 TypeScript 库。
 
 ### 导出 API 文档门禁
 
@@ -136,11 +113,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-export-jsdoc-gate.md:1-46@687f282e
 
-<a id="ci-parallel-lane-topology"></a>
-**机制 ID**：`rationale-process-2/ci-parallel-lane-topology`
+<a id="ci-parallel-lane-topology"></a> **机制 ID**：`rationale-process-2/ci-parallel-lane-topology`
 
-**角色**：CI owner、reviewer、branch protection。
-**前置**：任何多泳道、单一合并门禁的 CI。
+**角色**：CI owner、reviewer、branch protection。 **前置**：任何多泳道、单一合并门禁的 CI。
 
 ### 必需 CI 泳道与聚合裁决
 
@@ -148,40 +123,29 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-github-ci-gates.md:1-51@687f282e
 
-<a id="gate-scheduler"></a>
-**机制 ID**：`rationale-process-2/gate-scheduler`
+<a id="gate-scheduler"></a> **机制 ID**：`rationale-process-2/gate-scheduler`
 
-**角色**：gate owner、CI、developer。
-**前置**：检查项很多且本地与 CI 都会调用的 monorepo。
+**角色**：gate owner、CI、developer。 **前置**：检查项很多且本地与 CI 都会调用的 monorepo。
 
 ### 声明式门禁调度器
 
 **何时用**：大量独立门禁同时被本地与 CI 调用时。**做法**：用一份声明式叶子清单作为模式真源；执行前拒绝无效/歧义依赖图；区分 `needs` 与 `after`，`allowFailure` 只报告不失败聚合；仅为有归属子进程的协调器流式输出，其余按门禁缓冲；并发上限按实测资源成本设定。**完成信号**：稳定 summary 行 + 退出码。**失败/例外**：重复/未知叶子或必需门禁失败即失败；`allowFailure` 例外。**证据限制**：依赖图需持续维护；缓冲会隐藏进度。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-github-ci-gates.md:1-51@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-pre-push-gates.md:1-47@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-21-doc-sync-through-gate-scheduler.md:1-26@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-github-ci-gates.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-pre-push-gates.md:1-47@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-21-doc-sync-through-gate-scheduler.md:1-26@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-github-ci-gates.md:1-51@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-pre-push-gates.md:1-47@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-21-doc-sync-through-gate-scheduler.md:1-26@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-github-ci-gates.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-06-parallel-pre-push-gates.md:1-47@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-21-doc-sync-through-gate-scheduler.md:1-26@687f282e
 
-<a id="single-source-site-projection"></a>
-**机制 ID**：`rationale-process-2/single-source-site-projection`
+<a id="single-source-site-projection"></a> **机制 ID**：`rationale-process-2/single-source-site-projection`
 
-**角色**：doc owner、site owner、release operator。
-**前置**：将自有文档发布到站点生成器的项目。
+**角色**：doc owner、site owner、release operator。 **前置**：将自有文档发布到站点生成器的项目。
 
 ### 单一源文档站点投影
 
 **何时用**：文档既要留在所属层级又要发布到站点时。**做法**：规范文档留在原层级，显式发布清单映射到稳定路由；投影到一次性目录后再渲染，绝不编辑副本；重写链接并对缺失目标失败；拒绝清单外的站点 Markdown；生产构建在 doc-sync，发布用 release tag 触发的独立工作流；base path 取自托管元数据。**完成信号**：渲染页面可访问、链接有效。**失败/例外**：站点私有文件或坏链失败；外部链接/生成资源需显式处理。**证据限制**：不校验正文；路由规则需按宿主参数化。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-13-documentation-site-projection.md:1-52@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-13-documentation-site-projection.md:1-52@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-13-documentation-site-projection.md:1-52@687f282e；deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-13-documentation-site-projection.md:1-52@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-cordis-tutorial-docs.md:1-33@687f282e
 
-<a id="program-semantic-gates"></a>
-**机制 ID**：`rationale-process-2/program-semantic-gates`
+<a id="program-semantic-gates"></a> **机制 ID**：`rationale-process-2/program-semantic-gates`
 
-**角色**：gate owner、author、CI。
-**前置**：具有注册表或 API 表面的 TypeScript 系统。
+**角色**：gate owner、author、CI。 **前置**：具有注册表或 API 表面的 TypeScript 系统。
 
 ### 基于 Program 的语义门禁
 
@@ -189,11 +153,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-14-typescript-program-backed-semantic-gates.md:1-66@687f282e
 
-<a id="layered-test-evidence"></a>
-**机制 ID**：`rationale-process-2/layered-test-evidence`
+<a id="layered-test-evidence"></a> **机制 ID**：`rationale-process-2/layered-test-evidence`
 
-**角色**：feature author、test owner、reviewer。
-**前置**：同时具有 UI 与宿主/运行时层的应用。
+**角色**：feature author、test owner、reviewer。 **前置**：同时具有 UI 与宿主/运行时层的应用。
 
 ### 按架构层划分的测试证据
 
@@ -201,11 +163,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-gui-testing-system.md:1-61@687f282e
 
-<a id="regression-pinning"></a>
-**机制 ID**：`rationale-process-2/regression-pinning`
+<a id="regression-pinning"></a> **机制 ID**：`rationale-process-2/regression-pinning`
 
-**角色**：fix author、reviewer。
-**前置**：所有缺陷修复。
+**角色**：fix author、reviewer。 **前置**：所有缺陷修复。
 
 ### 回归用例钉住
 
@@ -213,11 +173,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-20-gui-testing-system.md:1-61@687f282e
 
-<a id="capacity-evidence-benchmarking"></a>
-**机制 ID**：`rationale-process-2/capacity-evidence-benchmarking`
+<a id="capacity-evidence-benchmarking"></a> **机制 ID**：`rationale-process-2/capacity-evidence-benchmarking`
 
-**角色**：CI owner、reviewer、operator。
-**前置**：CI 机队与 runner 规格决策。
+**角色**：CI owner、reviewer、operator。 **前置**：CI 机队与 runner 规格决策。
 
 ### 容量决策依赖实测基准
 
@@ -236,11 +194,9 @@
 来源：deepseek-harness/.github/preview-sizing/README.md:1-35@687f282e；deepseek-harness/.github/preview-sizing/README.zh.md:1-35@687f282e
 
 
-<a id="tiered-local-ci-evidence"></a>
-**机制 ID**：`rationale-process-2/tiered-local-ci-evidence`
+<a id="tiered-local-ci-evidence"></a> **机制 ID**：`rationale-process-2/tiered-local-ci-evidence`
 
-**角色**：developer、agent、reviewer、CI。
-**前置**：具有昂贵穷举矩阵的仓库。
+**角色**：developer、agent、reviewer、CI。 **前置**：具有昂贵穷举矩阵的仓库。
 
 ### 本地钩子与 CI 的分层证据
 
@@ -248,11 +204,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-fast-local-git-hooks.md:1-37@687f282e
 
-<a id="readme-entry-point-maintenance"></a>
-**机制 ID**：`rationale-process-2/readme-entry-point-maintenance`
+<a id="readme-entry-point-maintenance"></a> **机制 ID**：`rationale-process-2/readme-entry-point-maintenance`
 
-**角色**：maintainer、doc owner、reviewer。
-**前置**：任何作为入口的根 README。
+**角色**：maintainer、doc owner、reviewer。 **前置**：任何作为入口的根 README。
 
 ### 产品优先的根 README 维护
 
@@ -260,24 +214,19 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-product-first-root-readme.md:1-32@687f282e
 
-<a id="tsconfig-graph-boundaries"></a>
-**机制 ID**：`rationale-process-2/tsconfig-graph-boundaries`
+<a id="tsconfig-graph-boundaries"></a> **机制 ID**：`rationale-process-2/tsconfig-graph-boundaries`
 
-**角色**：build owner、package author。
-**前置**：同时具有浏览器与宿主面的 TypeScript monorepo。
+**角色**：build owner、package author。 **前置**：同时具有浏览器与宿主面的 TypeScript monorepo。
 
 ### 双聚合 Program 的 solution 根
 
 **何时用**：仓库同时有 Host/Client 编译面或 DOM/Node 库冲突时。**做法**：保留无 program 的 solution 根，仅引用显式聚合；绝不直接构建根，而是构建聚合；每个包只注册进一个聚合；生成的合同在 Host/Client 间流动时保持两阶段串行。**完成信号**：每个包在所属聚合中被检查。**失败/例外**：直接构建根或包只被根引用会漏诊断；共享 base 只能放 compilerOptions，不能放 include/files。**证据限制**：两聚合有配置重复；生成合同顺序需维护。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-tsconfig-solution-root-two-aggregates.md:1-46@687f282e
-来源：deepseek-harness/tsconfig.json:1-15@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-07-22-tsconfig-solution-root-two-aggregates.md:1-46@687f282e 来源：deepseek-harness/tsconfig.json:1-15@687f282e
 
-<a id="demo-evidence-provenance"></a>
-**机制 ID**：`rationale-process-2/demo-evidence-provenance`
+<a id="demo-evidence-provenance"></a> **机制 ID**：`rationale-process-2/demo-evidence-provenance`
 
-**角色**：demo author、reviewer、attachment operator。
-**前置**：用作 PR 证据的 UI/产品演示。
+**角色**：demo author、reviewer、attachment operator。 **前置**：用作 PR 证据的 UI/产品演示。
 
 ### 带来源标注的演示录制
 
@@ -285,11 +234,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-23-browser-demo-gif-recording.md:1-30@687f282e
 
-<a id="atomic-staging-cutover"></a>
-**机制 ID**：`rationale-process-2/atomic-staging-cutover`
+<a id="atomic-staging-cutover"></a> **机制 ID**：`rationale-process-2/atomic-staging-cutover`
 
-**角色**：operator、maintenance tool、launcher。
-**前置**：从检出安装并原地维护的工具。
+**角色**：operator、maintenance tool、launcher。 **前置**：从检出安装并原地维护的工具。
 
 ### 已安装检出的原子维护切换
 
@@ -297,11 +244,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-23-personal-staging-maintenance-skills.md:1-36@687f282e
 
-<a id="calibrated-translation-pipeline"></a>
-**机制 ID**：`rationale-process-2/calibrated-translation-pipeline`
+<a id="calibrated-translation-pipeline"></a> **机制 ID**：`rationale-process-2/calibrated-translation-pipeline`
 
-**角色**：translation owner、translator、CI。
-**前置**：结构化文档的 LLM 翻译。
+**角色**：translation owner、translator、CI。 **前置**：结构化文档的 LLM 翻译。
 
 ### 作为可执行资产的校准翻译流水线
 
@@ -309,11 +254,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-23-translation-prompt-v4-contract.md:1-40@687f282e
 
-<a id="translation-pairing-maintenance"></a>
-**机制 ID**：`rationale-process-2/translation-pairing-maintenance`
+<a id="translation-pairing-maintenance"></a> **机制 ID**：`rationale-process-2/translation-pairing-maintenance`
 
-**角色**：doc author、translator、CI。
-**前置**：需维护的双语文档对。
+**角色**：doc author、translator、CI。 **前置**：需维护的双语文档对。
 
 ### 带 brief 的最小翻译更新
 
@@ -321,11 +264,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-briefed-minimal-translation-updates.md:1-52@687f282e
 
-<a id="visual-change-evidence"></a>
-**机制 ID**：`rationale-process-2/visual-change-evidence`
+<a id="visual-change-evidence"></a> **机制 ID**：`rationale-process-2/visual-change-evidence`
 
-**角色**：PR author、reviewer、assets operator。
-**前置**：具有可评审视觉行为的 UI 产品。
+**角色**：PR author、reviewer、assets operator。 **前置**：具有可评审视觉行为的 UI 产品。
 
 ### 用户可见 GUI 改动的证据
 
@@ -333,11 +274,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-gui-pr-gif-evidence-and-assets-branch.md:1-40@687f282e
 
-<a id="merge-forward-checkpoints"></a>
-**机制 ID**：`rationale-process-2/merge-forward-checkpoints`
+<a id="merge-forward-checkpoints"></a> **机制 ID**：`rationale-process-2/merge-forward-checkpoints`
 
-**角色**：merge author、reviewer。
-**前置**：采用 merge-forward 策略的长生命周期 PR。
+**角色**：merge author、reviewer。 **前置**：采用 merge-forward 策略的长生命周期 PR。
 
 ### 合并前进检查点
 
@@ -345,11 +284,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-26-incremental-pr-base-retargeting.md:1-28@687f282e
 
-<a id="dependency-update-quarantine"></a>
-**机制 ID**：`rationale-process-2/dependency-update-quarantine`
+<a id="dependency-update-quarantine"></a> **机制 ID**：`rationale-process-2/dependency-update-quarantine`
 
-**角色**：dependency owner、automation、reviewer。
-**前置**：使用自动依赖更新的项目。
+**角色**：dependency owner、automation、reviewer。 **前置**：使用自动依赖更新的项目。
 
 ### 带发布年龄隔离期的依赖更新
 
@@ -357,11 +294,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-27-dependabot-version-updates.md:1-35@687f282e
 
-<a id="generated-region-pairing"></a>
-**机制 ID**：`rationale-process-2/generated-region-pairing`
+<a id="generated-region-pairing"></a> **机制 ID**：`rationale-process-2/generated-region-pairing`
 
-**角色**：catalog owner、doc author、pairing gate。
-**前置**：同时含生成清单与翻译对的文档。
+**角色**：catalog owner、doc author、pairing gate。 **前置**：同时含生成清单与翻译对的文档。
 
 ### 自有页面中的生成区域与配对保护
 
@@ -369,11 +304,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-28-per-subsystem-cordis-surface-regions.md:1-37@687f282e
 
-<a id="coverage-instrumentation-split"></a>
-**机制 ID**：`rationale-process-2/coverage-instrumentation-split`
+<a id="coverage-instrumentation-split"></a> **机制 ID**：`rationale-process-2/coverage-instrumentation-split`
 
-**角色**：test owner、CI。
-**前置**：带覆盖率阈值的大型测试套件。
+**角色**：test owner、CI。 **前置**：带覆盖率阈值的大型测试套件。
 
 ### 覆盖率插桩分离而不减少测试
 
@@ -381,11 +314,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-07-31-coverage-exempt-heavy-suites.md:1-69@687f282e
 
-<a id="monotonic-status-projection"></a>
-**机制 ID**：`rationale-process-2/monotonic-status-projection`
+<a id="monotonic-status-projection"></a> **机制 ID**：`rationale-process-2/monotonic-status-projection`
 
-**角色**：automation、issue owner。
-**前置**：具有有序阶段的问题/PR 生命周期自动化。
+**角色**：automation、issue owner。 **前置**：具有有序阶段的问题/PR 生命周期自动化。
 
 ### 只向前的 issue 状态投影
 
@@ -393,11 +324,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-04-forward-only-pr-issue-status.md:1-40@687f282e
 
-<a id="actionable-gate-diagnostics"></a>
-**机制 ID**：`rationale-process-2/actionable-gate-diagnostics`
+<a id="actionable-gate-diagnostics"></a> **机制 ID**：`rationale-process-2/actionable-gate-diagnostics`
 
-**角色**：test owner、developer、CI。
-**前置**：具有逐文件覆盖率门禁的项目。
+**角色**：test owner、developer、CI。 **前置**：具有逐文件覆盖率门禁的项目。
 
 ### 覆盖率失败的可操作诊断
 
@@ -405,11 +334,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-06-coverage-uncovered-locations.md:1-43@687f282e
 
-<a id="release-artifact-verification"></a>
-**机制 ID**：`rationale-process-2/release-artifact-verification`
+<a id="release-artifact-verification"></a> **机制 ID**：`rationale-process-2/release-artifact-verification`
 
-**角色**：release owner、CI、reviewer。
-**前置**：原生或多平台包族。
+**角色**：release owner、CI、reviewer。 **前置**：原生或多平台包族。
 
 ### 发布前构建、打包并实际运行产物
 
@@ -417,11 +344,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-06-in-repository-landlock-release.md:1-45@687f282e
 
-<a id="translation-pairing-merge-driver"></a>
-**机制 ID**：`rationale-process-2/translation-pairing-merge-driver`
+<a id="translation-pairing-merge-driver"></a> **机制 ID**：`rationale-process-2/translation-pairing-merge-driver`
 
-**角色**：pairing owner、merge author、CI。
-**前置**：使用哈希配对双语产物的仓库。
+**角色**：pairing owner、merge author、CI。 **前置**：使用哈希配对双语产物的仓库。
 
 ### 翻译配对侧车的自定义合并驱动
 
@@ -429,11 +354,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-08-automatic-translation-pairing-merges.md:1-56@687f282e
 
-<a id="terminology-authority"></a>
-**机制 ID**：`rationale-process-2/terminology-authority`
+<a id="terminology-authority"></a> **机制 ID**：`rationale-process-2/terminology-authority`
 
-**角色**：terminology owner、translator、doc author。
-**前置**：共享概念的双语技术文档。
+**角色**：terminology owner、translator、doc author。 **前置**：共享概念的双语技术文档。
 
 ### 双语文档的单一术语权威
 
@@ -441,11 +364,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-chinese-contract-terminology.md:1-34@687f282e
 
-<a id="committed-artifact-citations"></a>
-**机制 ID**：`rationale-process-2/committed-artifact-citations`
+<a id="committed-artifact-citations"></a> **机制 ID**：`rationale-process-2/committed-artifact-citations`
 
-**角色**：note author、reviewer、CI。
-**前置**：引用会话或瞬时证据的决策记录与文档。
+**角色**：note author、reviewer、CI。 **前置**：引用会话或瞬时证据的决策记录与文档。
 
 ### 只引用已提交且可解析的工件
 
@@ -453,25 +374,19 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-committed-artifact-citations.md:1-40@687f282e
 
-<a id="fragment-anchor-integrity"></a>
-**机制 ID**：`rationale-process-2/fragment-anchor-integrity`
+<a id="fragment-anchor-integrity"></a> **机制 ID**：`rationale-process-2/fragment-anchor-integrity`
 
-**角色**：doc author、CI、site builder。
-**前置**：文档站点与 Markdown 链接语料。
+**角色**：doc author、CI、site builder。 **前置**：文档站点与 Markdown 链接语料。
 
 ### Markdown 片段与渲染锚点完整性
 
 **何时用**：Markdown 链接带 fragment，或文档要渲染成站点时。**做法**：校验 fragment（含同文件链接）对应真实 HTML 流中的 heading slug 或显式 `<a id>`；代码/注释不注册锚点；处理内联标记、下划线、占用集后缀、大小写；站点构建后对每个输出 HTML 再验证，失败于缺页/缺 id/歧义路由/畸形 href；源码校验与发布后校验相互独立。**完成信号**：源码与渲染输出中的锚点都可解析。**失败/例外**：外部/非 Markdown/根绝对目标不在范围；渲染器差异用显式别名。**证据限制**：JS 动态锚点不覆盖；slug 算法随渲染器变化。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-md-fragment-anchor-gate.md:1-33@687f282e；deepseek-harness/.agents/notes/archived/process/2026-08-13-published-document-fragments.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-md-fragment-anchor-gate.md:1-33@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-13-published-document-fragments.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-md-fragment-anchor-gate.md:1-33@687f282e；deepseek-harness/.agents/notes/archived/process/2026-08-13-published-document-fragments.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-09-md-fragment-anchor-gate.md:1-33@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-13-published-document-fragments.md:1-30@687f282e
 
-<a id="publication-identity-normalization"></a>
-**机制 ID**：`rationale-process-2/publication-identity-normalization`
+<a id="publication-identity-normalization"></a> **机制 ID**：`rationale-process-2/publication-identity-normalization`
 
-**角色**：release owner、author、CI。
-**前置**：以新 scope 发布 fork/vendor 包的项目。
+**角色**：release owner、author、CI。 **前置**：以新 scope 发布 fork/vendor 包的项目。
 
 ### 发布身份规范化
 
@@ -479,11 +394,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-10-vendor-package-rescope.md:1-52@687f282e
 
-<a id="release-access-sequences"></a>
-**机制 ID**：`rationale-process-2/release-access-sequences`
+<a id="release-access-sequences"></a> **机制 ID**：`rationale-process-2/release-access-sequences`
 
-**角色**：release owner、author、CI。
-**前置**：发布多个 scope/序列的 monorepo。
+**角色**：release owner、author、CI。 **前置**：发布多个 scope/序列的 monorepo。
 
 ### 访问级别属于发布序列而非 scope
 
@@ -491,11 +404,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-13-public-vendor-and-native-sequences.md:1-46@687f282e
 
-<a id="scoped-publication-credentials"></a>
-**机制 ID**：`rationale-process-2/scoped-publication-credentials`
+<a id="scoped-publication-credentials"></a> **机制 ID**：`rationale-process-2/scoped-publication-credentials`
 
-**角色**：asset publisher、security owner。
-**前置**：向 CDN/对象存储发布资产的项目。
+**角色**：asset publisher、security owner。 **前置**：向 CDN/对象存储发布资产的项目。
 
 ### 前缀受控的资源发布凭据
 
@@ -503,11 +414,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-17-readme-assets-on-cdn.md:1-36@687f282e
 
-<a id="partitioned-test-execution"></a>
-**机制 ID**：`rationale-process-2/partitioned-test-execution`
+<a id="partitioned-test-execution"></a> **机制 ID**：`rationale-process-2/partitioned-test-execution`
 
-**角色**：test owner、CI。
-**前置**：需合并覆盖率的大型 Vitest/Jest 风格套件。
+**角色**：test owner、CI。 **前置**：需合并覆盖率的大型 Vitest/Jest 风格套件。
 
 ### 作业内测试分区与合并阈值
 
@@ -515,11 +424,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-18-in-job-partitioned-coverage.md:1-54@687f282e
 
-<a id="release-gated-publication"></a>
-**机制 ID**：`rationale-process-2/release-gated-publication`
+<a id="release-gated-publication"></a> **机制 ID**：`rationale-process-2/release-gated-publication`
 
-**角色**：release operator、docs owner、reviewer。
-**前置**：与发布绑定的公开文档。
+**角色**：release operator、docs owner、reviewer。 **前置**：与发布绑定的公开文档。
 
 ### 发布标签触发的公开文档发布
 
@@ -527,11 +434,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-21-documentation-site-tag-release.md:1-42@687f282e
 
-<a id="resolution-alias-completeness"></a>
-**机制 ID**：`rationale-process-2/resolution-alias-completeness`
+<a id="resolution-alias-completeness"></a> **机制 ID**：`rationale-process-2/resolution-alias-completeness`
 
-**角色**：build owner、CI。
-**前置**：采用路径别名解析的 TypeScript/node monorepo。
+**角色**：build owner、CI。 **前置**：采用路径别名解析的 TypeScript/node monorepo。
 
 ### 生成显式解析别名并断言完整性
 
@@ -539,11 +444,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-27-explicit-workspace-path-aliases.md:1-62@687f282e
 
-<a id="environment-conditional-install"></a>
-**机制 ID**：`rationale-process-2/environment-conditional-install`
+<a id="environment-conditional-install"></a> **机制 ID**：`rationale-process-2/environment-conditional-install`
 
-**角色**：CI owner、developer。
-**前置**：具有文件系统特定包管理器行为的跨平台仓库。
+**角色**：CI owner、developer。 **前置**：具有文件系统特定包管理器行为的跨平台仓库。
 
 ### 按文件系统条件选择安装方式
 
@@ -551,11 +454,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-30-windows-refs-store-block-clone-install.md:1-48@687f282e
 
-<a id="test-timeout-budget"></a>
-**机制 ID**：`rationale-process-2/test-timeout-budget`
+<a id="test-timeout-budget"></a> **机制 ID**：`rationale-process-2/test-timeout-budget`
 
-**角色**：test owner、CI owner。
-**前置**：反复出现超时的 CI 泳道。
+**角色**：test owner、CI owner。 **前置**：反复出现超时的 CI 泳道。
 
 ### 修复超时根因并对齐泳道预算
 
@@ -563,11 +464,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-08-31-serial-windows-notices-timeout-budget.md:1-31@687f282e
 
-<a id="project-field-ownership"></a>
-**机制 ID**：`rationale-process-2/project-field-ownership`
+<a id="project-field-ownership"></a> **机制 ID**：`rationale-process-2/project-field-ownership`
 
-**角色**：automation owner、security owner。
-**前置**：基于 GitHub Projects 的规划自动化。
+**角色**：automation owner、security owner。 **前置**：基于 GitHub Projects 的规划自动化。
 
 ### 项目规划元数据的单一所有者
 
@@ -575,11 +474,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-02-project-local-issue-planning-fields.md:1-44@687f282e
 
-<a id="version-coherence-gate"></a>
-**机制 ID**：`rationale-process-2/version-coherence-gate`
+<a id="version-coherence-gate"></a> **机制 ID**：`rationale-process-2/version-coherence-gate`
 
-**角色**：release owner、CI、reviewer。
-**前置**：共享单一发布版本的 monorepo。
+**角色**：release owner、CI、reviewer。 **前置**：共享单一发布版本的 monorepo。
 
 ### 工作区版本一致性门禁
 
@@ -587,11 +484,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-03-workspace-version-coherence-gate.md:1-30@687f282e
 
-<a id="evidence-driven-performance"></a>
-**机制 ID**：`rationale-process-2/evidence-driven-performance`
+<a id="evidence-driven-performance"></a> **机制 ID**：`rationale-process-2/evidence-driven-performance`
 
-**角色**：performance author、reviewer、CI。
-**前置**：任何性能敏感变更。
+**角色**：performance author、reviewer、CI。 **前置**：任何性能敏感变更。
 
 ### 证据驱动的性能工作
 
@@ -601,11 +496,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-evidence-driven-performance-skill.md:1-49@687f282e
 
-<a id="self-hosted-trust-routing"></a>
-**机制 ID**：`rationale-process-2/self-hosted-trust-routing`
+<a id="self-hosted-trust-routing"></a> **机制 ID**：`rationale-process-2/self-hosted-trust-routing`
 
-**角色**：CI owner、security owner。
-**前置**：处理 PR 的自托管 CI runner。
+**角色**：CI owner、security owner。 **前置**：处理 PR 的自托管 CI runner。
 
 ### 自托管 runner 的信任谓词与隔离
 
@@ -613,11 +506,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-node-compatibility-selfhosted.md:1-36@687f282e
 
-<a id="selective-policy-evaluation"></a>
-**机制 ID**：`rationale-process-2/selective-policy-evaluation`
+<a id="selective-policy-evaluation"></a> **机制 ID**：`rationale-process-2/selective-policy-evaluation`
 
-**角色**：automation owner、reviewer。
-**前置**：带作用域令牌的事件驱动仓库自动化。
+**角色**：automation owner、reviewer。 **前置**：带作用域令牌的事件驱动仓库自动化。
 
 ### 先判资格再执行昂贵策略
 
@@ -625,24 +516,19 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-07-selective-issue-policy-evaluation.md:1-44@687f282e
 
-<a id="dependency-face-classification"></a>
-**机制 ID**：`rationale-process-2/dependency-face-classification`
+<a id="dependency-face-classification"></a> **机制 ID**：`rationale-process-2/dependency-face-classification`
 
-**角色**：package author、verifier、reviewer。
-**前置**：从单一 manifest 同时发布浏览器与 Node 表面的包。
+**角色**：package author、verifier、reviewer。 **前置**：从单一 manifest 同时发布浏览器与 Node 表面的包。
 
 ### 按分发内容分类依赖区段
 
 **何时用**：同一包分发浏览器与Node表面时。**做法**：仅浏览器实现/静态输入/共享React放 devDependencies；实际第三方Host运行时值依赖优先放 dependencies；纯类型引用放 devDependencies，不产生Host运行时依赖，绝不是“两边都不放”。双面包保留Host库；被分发代码的许可披露独立于npm区段，依真实构建配置解析；分类基于源码且幂等，发布检查拒绝React安装泄漏。共享身份的workspace导出仍按 published-dependency-faces 的peer+dev/审核分类处理。**验证**：目标清洁树类型检查、Host闭包与分发披露均须符合；banner注入和第三方许可不由该机制自动解决。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-browser-third-party-build-inputs.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:23-35@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-09-08-browser-third-party-build-inputs.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:23-35@687f282e
 
-<a id="approval-status-semantics"></a>
-**机制 ID**：`rationale-process-2/approval-status-semantics`
+<a id="approval-status-semantics"></a> **机制 ID**：`rationale-process-2/approval-status-semantics`
 
-**角色**：approval bot、reviewer、merge queue。
-**前置**：自定义批准/积分合并门禁。
+**角色**：approval bot、reviewer、merge queue。 **前置**：自定义批准/积分合并门禁。
 
 ### 区分待满足条件与发布器故障
 
@@ -650,11 +536,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-09-blocked-weighted-approvals-remain-pending.md:1-34@687f282e
 
-<a id="workflow-identity-verification"></a>
-**机制 ID**：`rationale-process-2/workflow-identity-verification`
+<a id="workflow-identity-verification"></a> **机制 ID**：`rationale-process-2/workflow-identity-verification`
 
-**角色**：publisher owner、security reviewer。
-**前置**：由其他工作流触发的特权工作流。
+**角色**：publisher owner、security reviewer。 **前置**：由其他工作流触发的特权工作流。
 
 ### 按路径而非显示名识别受信工作流
 
@@ -662,24 +546,19 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-10-approval-review-workflow-identity.md:1-26@687f282e
 
-<a id="precompiled-asset-release"></a>
-**机制 ID**：`rationale-process-2/precompiled-asset-release`
+<a id="precompiled-asset-release"></a> **机制 ID**：`rationale-process-2/precompiled-asset-release`
 
-**角色**：release owner、packager、reviewer。
-**前置**：以包形式发布重型二进制依赖的项目。
+**角色**：release owner、packager、reviewer。 **前置**：以包形式发布重型二进制依赖的项目。
 
 ### 历史预编译资产要求与独立引擎归属
 
 **状态与作用**：历史/条件性模式，固定提交下没有 active automatic gate。早期Note要求独立版本、asset-only export、无install编译、显式dispatch/版本tag/受保护环境发布，以及receipt、源码pin/patch/full diff、许可证与notices验证。其链接的 `native/libreoffice-wasm/package.json`、release工作流和包装测试在固定提交不存在，不能当成现有可执行门禁。后续独立LibreOffice kit由外部仓库拥有API/Worker/引擎资格与发布；Harness精确消费npm版本和锁文件，不编译或发布kit。**迁移要求**：保留发布侧编译、来源核验与真实引擎/安装/offline资格，不把移除的产品构建复制为假门禁；缺少实际发布者/合格产物时记为实现阻塞。首次发布未完成是历史限制，不是允许未资格产物上线的例外；源文也未证明receipt是加密签名。目标产品验证仍planned。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-11-independent-libreoffice-package.md:1-32@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md:11-31@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-09-11-independent-libreoffice-package.md:1-32@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-14-independent-libreoffice-kit.md:11-31@687f282e
 
-<a id="publication-default-policy"></a>
-**机制 ID**：`rationale-process-2/publication-default-policy`
+<a id="publication-default-policy"></a> **机制 ID**：`rationale-process-2/publication-default-policy`
 
-**角色**：release owner、package author、CI。
-**前置**：有公开 release 的实验包族。
+**角色**：release owner、package author、CI。 **前置**：有公开 release 的实验包族。
 
 ### 实验包默认公开 + 私有 denylist
 
@@ -687,11 +566,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-experimental-publication-denylist.md:1-28@687f282e
 
-<a id="repository-reference-policy"></a>
-**机制 ID**：`rationale-process-2/repository-reference-policy`
+<a id="repository-reference-policy"></a> **机制 ID**：`rationale-process-2/repository-reference-policy`
 
-**角色**：doc author、CI。
-**前置**：具有长期文档与被改写历史的仓库。
+**角色**：doc author、CI。 **前置**：具有长期文档与被改写历史的仓库。
 
 ### 长期可用的仓库引用形式
 
@@ -699,11 +576,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-maintained-repository-references.md:1-32@687f282e
 
-<a id="approval-delegation"></a>
-**机制 ID**：`rationale-process-2/approval-delegation`
+<a id="approval-delegation"></a> **机制 ID**：`rationale-process-2/approval-delegation`
 
-**角色**：delegating reviewer、recipient、approval bot。
-**前置**：允许评审者授权的自定义批准系统。
+**角色**：delegating reviewer、recipient、approval bot。 **前置**：允许评审者授权的自定义批准系统。
 
 ### PR 级审批委托与单跳计分
 
@@ -711,11 +586,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-15-pr-approval-delegation.md:1-34@687f282e
 
-<a id="approval-scoring"></a>
-**机制 ID**：`rationale-process-2/approval-scoring`
+<a id="approval-scoring"></a> **机制 ID**：`rationale-process-2/approval-scoring`
 
-**角色**：approval bot、PR author、reviewer、maintainer。
-**前置**：加权批准系统；权重因项目而异。
+**角色**：approval bot、PR author、reviewer、maintainer。 **前置**：加权批准系统；权重因项目而异。
 
 ### 审批评分中的作者封顶信用
 
@@ -723,11 +596,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-16-author-approval-credit.md:1-26@687f282e
 
-<a id="build-provenance"></a>
-**机制 ID**：`rationale-process-2/build-provenance`
+<a id="build-provenance"></a> **机制 ID**：`rationale-process-2/build-provenance`
 
-**角色**：release engineer、packager、uploader。
-**前置**：带更新源、需要打包的桌面/CLI 发布。
+**角色**：release engineer、packager、uploader。 **前置**：带更新源、需要打包的桌面/CLI 发布。
 
 ### 将构建版本作为显式输入
 
@@ -735,11 +606,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-21-desktop-build-version-as-input.md:1-38@687f282e
 
-<a id="clean-tree-build-invariant"></a>
-**机制 ID**：`rationale-process-2/clean-tree-build-invariant`
+<a id="clean-tree-build-invariant"></a> **机制 ID**：`rationale-process-2/clean-tree-build-invariant`
 
-**角色**：build owner、CI、packager。
-**前置**：消费 workspace 包的打包应用。
+**角色**：build owner、CI、packager。 **前置**：消费 workspace 包的打包应用。
 
 ### 干净检出构建不变量与打包导入检查
 
@@ -747,11 +616,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-22-desktop-main-bundle-after-workspace-tsdown.md:1-30@687f282e
 
-<a id="release-range-policy"></a>
-**机制 ID**：`rationale-process-2/release-range-policy`
+<a id="release-range-policy"></a> **机制 ID**：`rationale-process-2/release-range-policy`
 
-**角色**：package author、release owner、CI。
-**前置**：各包族独立发布的 workspace。
+**角色**：package author、release owner、CI。 **前置**：各包族独立发布的 workspace。
 
 ### 按发布家族确定依赖范围
 
@@ -759,11 +626,9 @@
 
 来源：deepseek-harness/.agents/notes/archived/process/2026-09-22-workspace-release-ranges.md:1-28@687f282e
 
-<a id="runtime-support-contract"></a>
-**机制 ID**：`rationale-process-2/runtime-support-contract`
+<a id="runtime-support-contract"></a> **机制 ID**：`rationale-process-2/runtime-support-contract`
 
-**角色**：runtime owner、CI、dependency owner。
-**前置**：发布 engines 范围声明的库/应用。
+**角色**：runtime owner、CI、dependency owner。 **前置**：发布 engines 范围声明的库/应用。
 
 ### 将运行时范围视为安装后工作区合同
 
@@ -771,11 +636,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-06-node-engine-floor.md:1-39@687f282e
 
-<a id="ci-completeness-reference"></a>
-**机制 ID**：`rationale-process-2/ci-completeness-reference`
+<a id="ci-completeness-reference"></a> **机制 ID**：`rationale-process-2/ci-completeness-reference`
 
-**角色**：CI owner、release owner、reviewer。
-**前置**：单一必需聚合门禁的高优化 CI。
+**角色**：CI owner、release owner、reviewer。 **前置**：单一必需聚合门禁的高优化 CI。
 
 ### 独立串行 CI 完整性参考
 
@@ -783,11 +646,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-07-21-serial-cross-platform-ci-reference.md:1-52@687f282e
 
-<a id="release-families"></a>
-**机制 ID**：`rationale-process-2/release-families`
+<a id="release-families"></a> **机制 ID**：`rationale-process-2/release-families`
 
-**角色**：release owner、publisher、release manager、CI。
-**前置**：多包族发布。
+**角色**：release owner、publisher、release manager、CI。 **前置**：多包族发布。
 
 ### 独立发布家族与 registry 驱动发布
 
@@ -795,11 +656,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:1-186@687f282e
 
-<a id="optional-dependency-load-gate"></a>
-**机制 ID**：`rationale-process-2/optional-dependency-load-gate`
+<a id="optional-dependency-load-gate"></a> **机制 ID**：`rationale-process-2/optional-dependency-load-gate`
 
-**角色**：package author、verifier。
-**前置**：含可选 peer/依赖的已发布包。
+**角色**：package author、verifier。 **前置**：含可选 peer/依赖的已发布包。
 
 ### optional 依赖绝不在模块作用域加载
 
@@ -807,11 +666,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:1-186@687f282e
 
-<a id="published-artifact-verification"></a>
-**机制 ID**：`rationale-process-2/published-artifact-verification`
+<a id="published-artifact-verification"></a> **机制 ID**：`rationale-process-2/published-artifact-verification`
 
-**角色**：release verifier、CI。
-**前置**：已发布的包族。
+**角色**：release verifier、CI。 **前置**：已发布的包族。
 
 ### 验证已安装产物而不仅是 workspace
 
@@ -819,39 +676,29 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:1-186@687f282e
 
-<a id="published-dependency-faces"></a>
-**机制 ID**：`rationale-process-2/published-dependency-faces`
+<a id="published-dependency-faces"></a> **机制 ID**：`rationale-process-2/published-dependency-faces`
 
-**角色**：package author、dependency verifier、reviewer。
-**前置**：发布具有多个构建面的包的 monorepo。
+**角色**：package author、dependency verifier、reviewer。 **前置**：发布具有多个构建面的包的 monorepo。
 
 ### 依赖区段跟随已发布产物归属
 
 **何时用**：包同时有 client/Host/类型关系时。**做法**：按发布面区分：client/纯类型/仅元数据 → devDependencies；Host 运行时值导入 → 仅当 duplicate-safe 或已做导出分类时进 dependencies；需要共享身份的导出 → peer + dev；选包机械化（client 目录 + 显式标记）并维护窄的 include/exclude/host 名单；拒绝未知/陈旧/冗余/重复/重叠/无效策略项；实验包不享受组级豁免；从构建配置扫描 worker/子进程入口而非猜源码；在无新构建产物的源码树运行，存在未分类导出时阻止 `--fix` 写入。**完成信号**：所有导入有分类，区段与安装图一致。**失败/例外**：经评审的包/导出分类与配置专用 dev 边例外。**证据限制**：banner 注入导入不可见；Host-only 覆盖依赖显式名单；改分类会改变安装图。
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e
 
-<a id="ci-runner-failover"></a>
-**机制 ID**：`rationale-process-2/ci-runner-failover`
+<a id="ci-runner-failover"></a> **机制 ID**：`rationale-process-2/ci-runner-failover`
 
-**角色**：CI owner、operator、security owner。
-**前置**：具有多个 runner 池/提供方的 CI。
+**角色**：CI owner、operator、security owner。 **前置**：具有多个 runner 池/提供方的 CI。
 
 ### 显式且受控的 CI runner failover
 
 **何时用**：runner 池降级，或评估第三方 runner 时。**做法**：failover 是写者可管理的显式变量，绝不默认；只重定向具名参与作业；排除持凭据、发布形态、spec 钉死基准和需要特殊宿主能力的作业；正确性泳道不得耦合到无关 failover 状态，失败实验回到 hosted；路由前在实际池重验吞吐与失败可复现性，并记录未来约束；用 workflow spec 钉住路由并演练回退。**完成信号**：设置变量后仅名单内作业迁移且通过隔离检查。**失败/例外**：凭据/发布作业始终 hosted；池故障不成为默认。**证据限制**：休眠分支会老化；provider 行为与费用不同。
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md:1-27@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md:1-27@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md:1-27@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-09-blacksmith-failover-leg.md:1-27@687f282e
 
-<a id="artifact-promotion-gate"></a>
-**机制 ID**：`rationale-process-2/artifact-promotion-gate`
+<a id="artifact-promotion-gate"></a> **机制 ID**：`rationale-process-2/artifact-promotion-gate`
 
-**角色**：packager、release verifier。
-**前置**：多产物发布流水线。
+**角色**：packager、release verifier。 **前置**：多产物发布流水线。
 
 ### 并行产物泳道在提升前汇合
 
@@ -859,26 +706,19 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-09-parallel-macos-notarization.md:1-37@687f282e
 
-<a id="schema-change-acknowledgement"></a>
-**机制 ID**：`rationale-process-2/schema-change-acknowledgement`
+<a id="schema-change-acknowledgement"></a> **机制 ID**：`rationale-process-2/schema-change-acknowledgement`
 
-**角色**：schema owner、author、reviewer、CI。
-**前置**：有兼容性承诺的持久化格式。
+**角色**：schema owner、author、reviewer、CI。 **前置**：有兼容性承诺的持久化格式。
 
 ### 逐根 schema 变更确认
 
 **何时用**：持久化 schema/类型或 writer 版本变化时。**做法**：规范化传递类型图，排除源码位置、别名、注释、属性顺序；把确认绑定到受影响根的 after schema，并串成 predecessor → successor；保守分类：可选新增、必选改可选、普通事件新增可同版本；其他结构变化需显式 same-version 决策或 header bump；同版本要求读取器证据（旧读取器恢复、安全忽略可选、或执行/修改/尾部修复前拒绝必需特性）；每个结构差异都要确认，写清双向读取与已执行检查；生成器绝不编造说明或测试结果；冻结已接受的机器记录/检查点，历史格式由 writer 常量推导。**完成信号**：当前源码匹配终端记录，链无歧义。**失败/例外**：未确认、陈旧链或缺 header bump 失败。**证据限制**：只证明当前树一致，不证明历史未被改写或说明符合运行行为；opaque 结构不可见。
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e；deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e
 
-<a id="product-boundary-isolation"></a>
-**机制 ID**：`rationale-process-2/product-boundary-isolation`
+<a id="product-boundary-isolation"></a> **机制 ID**：`rationale-process-2/product-boundary-isolation`
 
-**角色**：product owner、verifier、CI。
-**前置**：具有可选/实验插件族的产品。
+**角色**：product owner、verifier、CI。 **前置**：具有可选/实验插件族的产品。
 
 ### 证明可选包留在默认产品之外
 
@@ -886,11 +726,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-12-default-product-experimental-isolation.md:1-39@687f282e
 
-<a id="build-artifact-check-split"></a>
-**机制 ID**：`rationale-process-2/build-artifact-check-split`
+<a id="build-artifact-check-split"></a> **机制 ID**：`rationale-process-2/build-artifact-check-split`
 
-**角色**：build owner、CI、reviewer。
-**前置**：存在重复编译产物消费者的 CI。
+**角色**：build owner、CI、reviewer。 **前置**：存在重复编译产物消费者的 CI。
 
 ### 将产物发射与完整诊断所有权分离
 
@@ -898,11 +736,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-05-pr-artifact-typechecks.md:1-45@687f282e
 
-<a id="lossless-performance-change"></a>
-**机制 ID**：`rationale-process-2/lossless-performance-change`
+<a id="lossless-performance-change"></a> **机制 ID**：`rationale-process-2/lossless-performance-change`
 
-**角色**：optimizer、reviewer、CI。
-**前置**：编译器/打包器优化工作。
+**角色**：optimizer、reviewer、CI。 **前置**：编译器/打包器优化工作。
 
 ### 以字节与诊断平价约束的构建提速
 
@@ -910,11 +746,9 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-11-lossless-build-speedups.md:1-136@687f282e
 
-<a id="module-evaluation-invariant"></a>
-**机制 ID**：`rationale-process-2/module-evaluation-invariant`
+<a id="module-evaluation-invariant"></a> **机制 ID**：`rationale-process-2/module-evaluation-invariant`
 
-**角色**：package author、verifier。
-**前置**：被其他模块导入的 ESM/CommonJS 包。
+**角色**：package author、verifier。 **前置**：被其他模块导入的 ESM/CommonJS 包。
 
 ### 可导入包源码禁止顶层 await
 
@@ -922,8 +756,7 @@
 
 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-no-top-level-await-in-packages.md:1-45@687f282e
 
-<a id="supply-chain-verification"></a>
-**机制 ID**：`rationale-process-2/supply-chain-verification`
+<a id="supply-chain-verification"></a> **机制 ID**：`rationale-process-2/supply-chain-verification`
 
 **角色**：supply-chain owner、CI、maintainer。
 
@@ -937,8 +770,7 @@
 
 来源：deepseek-harness/.agents/notes/proposed/process/2026-06-11-supply-chain-and-vendor-drift.md:1-35@687f282e
 
-<a id="generated-inventory-drift"></a>
-**机制 ID**：`rationale-process-2/generated-inventory-drift`
+<a id="generated-inventory-drift"></a> **机制 ID**：`rationale-process-2/generated-inventory-drift`
 
 **角色**：build owner、doc owner、CI。
 
@@ -952,11 +784,9 @@
 
 来源：deepseek-harness/.agents/notes/proposed/process/2026-06-20-discover-package-inventory.md:1-32@687f282e
 
-<a id="review-feedback-maintenance"></a>
-**机制 ID**：`rationale-process-2/review-feedback-maintenance`
+<a id="review-feedback-maintenance"></a> **机制 ID**：`rationale-process-2/review-feedback-maintenance`
 
-**角色**：maintainer、two reviewer adapters、promotion helper。
-**可用性/前置**：本包保留提案协议，不提供私有扫描器、双评审适配器、调度器或晋升 helper；来源也将这些实现与凭据留在维护者机器，未提交到固定源仓。缺任一组件时由目标维护者记录阻塞并停止本工作流，不能把“未执行”报告成“无候选”，也不能把来源中的私有命令当作本包入口。实际部署还须干净完整历史、获授权的分页 GitHub 历史访问、独立提供方/模型与凭据、目标 docs/lint 门及持久通知。
+**角色**：maintainer、two reviewer adapters、promotion helper。 **可用性/前置**：本包保留提案协议，不提供私有扫描器、双评审适配器、调度器或晋升 helper；来源也将这些实现与凭据留在维护者机器，未提交到固定源仓。缺任一组件时由目标维护者记录阻塞并停止本工作流，不能把“未执行”报告成“无候选”，也不能把来源中的私有命令当作本包入口。实际部署还须干净完整历史、获授权的分页 GitHub 历史访问、独立提供方/模型与凭据、目标 docs/lint 门及持久通知。
 
 ### 从人工评审反馈做定期双评审维护（提案）
 

@@ -1,9 +1,10 @@
 # 子树常驻指令治理迁移参考（subtree-instructions）
 
-> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317`
-> 覆盖：三个曾被读取但未进入来源账的子树 `AGENTS.md`，以及八个快照工作区夹具指令。夹具 `AGENTS.md` 只作为测试输入，不是项目指令。
+> 源提交：`687f282e8625c6b8d11ff58211a90524be2e4317` 覆盖：三个曾被读取但未进入来源账的子树 `AGENTS.md`，以及八个快照工作区夹具指令。夹具 `AGENTS.md` 只作为测试输入，不是项目指令。
 
-## 机制 1：定时任务是持久 Host 状态 {#subtree-instructions.schedule-durable-tasks}
+<a id="subtree-instructions.schedule-durable-tasks"></a>
+
+## 机制 1：定时任务是持久 Host 状态
 
 **何时读**：修改 `packages/schedule` 的存储、扫描器、重复规则、投递、关停或历史事件时。
 
@@ -18,11 +19,11 @@
 7. 历史 `schedule/change` 事件保留原始三 kind `LegacyScheduleRecord`；加载含活动历史提醒的 Session 时告警，不隐式迁移所有历史 Session，也不从一次性提示推断 `daily` 意图。
 8. 重复计算保持纯函数；生产用平台墙钟与分段定时器，测试用显式样本或恢复的 fake timers。
 
-**完成信号**：重启后任务仍被唯一扫描器发现并按规则恢复一次；失败可见且记录仍在。
-**失败处理**：内存定时器、隐式重试、隐式迁移历史事件、把投递当完成，均视为设计失败。
-**证据边界**：仓库未观察到针对重复语义与时区的专用校验器；产品测试覆盖范围需在目标项目复核。
+**完成信号**：重启后任务仍被唯一扫描器发现并按规则恢复一次；失败可见且记录仍在。 **失败处理**：内存定时器、隐式重试、隐式迁移历史事件、把投递当完成，均视为设计失败。 **证据边界**：仓库未观察到针对重复语义与时区的专用校验器；产品测试覆盖范围需在目标项目复核。
 
-## 机制 2：原生能力以契约、矩阵与打包验证为中心 {#subtree-instructions.native-contract-first}
+<a id="subtree-instructions.native-contract-first"></a>
+
+## 机制 2：原生能力以契约、矩阵与打包验证为中心
 
 **何时读**：修改 `landlock-run` 的参数/退出码/诊断/限制，或 `system.node`、`flock`、平台包、发布流程时。
 
@@ -39,11 +40,11 @@
 9. prepack 拒绝缺失、未声明、格式错误、架构错误与非 Node-API 载荷；启动器可执行位单独检查。平台 tarball 用 `npm pack` 保留可执行位；entry 用 `pnpm pack` 转换 workspace 版本。
 10. packed-install 验证检查 manifest、无 registry 安装本地 tarball、字节固定载荷，并实际运行 flock 与 Landlock 探测。构建输出保持忽略；源与行为测试同批落地；保留双语 README 与独立发布。
 
-**完成信号**：目标平台原生构建、prepack 通过、无 registry 安装后两个能力实际可用。
-**失败处理**：安装期编译回退、环境变量覆盖、缺失载荷静默授予、契约漂移、错误平台载荷，均阻断发布。
-**例外**：macOS 用 cc；Linux 完整构建需 musl-gcc；仓库测试只为宿主机建 addon；syscall 夹具仅测试用。
+**完成信号**：目标平台原生构建、prepack 通过、无 registry 安装后两个能力实际可用。 **失败处理**：安装期编译回退、环境变量覆盖、缺失载荷静默授予、契约漂移、错误平台载荷，均阻断发布。 **例外**：macOS 用 cc；Linux 完整构建需 musl-gcc；仓库测试只为宿主机建 addon；syscall 夹具仅测试用。
 
-## 机制 3：Profile 集成测试按证据边界放置 {#subtree-instructions.profile-test-placement}
+<a id="subtree-instructions.profile-test-placement"></a>
+
+## 机制 3：Profile 集成测试按证据边界放置
 
 **何时读**：新增跨包 profile 行为测试，或决定入口、夹具、快照与 expected 输出位置时。
 
@@ -56,9 +57,7 @@
 5. 录制会话回放放在顶层 `snapshots/`；其他 expected 输出使用 `*.expected.e2e.ts` 与 owner 本地 `expected/`。
 6. 面向用户的可选 overlay 放在 `apps/cli/config/examples/`，并在 `docs/user/` 有发布指南；它们是产品资产，不是测试夹具。
 
-**完成信号**：测试经真实入口启动，目录归属与证据类型一致。
-**失败处理**：用包内夹具冒充跨包行为、把回放放进包测试、把用户 overlay 当夹具，均应在评审阻断。
-**证据边界**：该规则明确没有机械强制；放置正确性只能由评审确认。
+**完成信号**：测试经真实入口启动，目录归属与证据类型一致。 **失败处理**：用包内夹具冒充跨包行为、把回放放进包测试、把用户 overlay 当夹具，均应在评审阻断。 **证据边界**：该规则明确没有机械强制；放置正确性只能由评审确认。
 
 ## 采用参数化
 

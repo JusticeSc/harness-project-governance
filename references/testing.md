@@ -1,9 +1,6 @@
 # 测试域治理迁移参考（testing）
 
-> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。
-> 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。引用只标出实际检查过的范围；未检查的文件列入 `research/testing-coverage.json` 的 `uninspectedCandidates`。
-> 标记约定：**[源规则]** 表示源仓有明确文字、配置或代码要求；**[迁移设计]** 表示为了让这些要求在采用项目中可执行而设计的落地步骤；**[建议]** 表示源仓未强制、但采用时可降低风险的附加做法。迁移设计不冒充源规则。
-> 本文只覆盖测试域。发布流水线、文档配对、会话格式语义、安全审批等只在测试域需要时引用，交叉依赖汇总在文末。
+> 源仓：`deepseek-harness`，固定提交 `687f282e8625c6b8d11ff58211a90524be2e4317`，只读。 引用格式：`deepseek-harness/<path>:<start>-<end>@687f282e`。引用只标出实际检查过的范围；未检查的文件列入 `research/testing-coverage.json` 的 `uninspectedCandidates`。 标记约定：**[源规则]** 表示源仓有明确文字、配置或代码要求；**[迁移设计]** 表示为了让这些要求在采用项目中可执行而设计的落地步骤；**[建议]** 表示源仓未强制、但采用时可降低风险的附加做法。迁移设计不冒充源规则。 本文只覆盖测试域。发布流水线、文档配对、会话格式语义、安全审批等只在测试域需要时引用，交叉依赖汇总在文末。
 
 ## 0. 使用契约与读者入口
 
@@ -31,7 +28,9 @@
 
 **[迁移设计]** 采用项目先建立自己的“触发 → 层级 → 命令 → 所有者 → 证据”表，不要直接照抄命令名。表中每一行必须能回答：谁运行、在哪个环境运行、失败时谁修、允许哪些例外、哪些结论这层证据不能证明。
 
-## 1. M01 证据层级与命令选择 {#m01-tiered-evidence}
+<a id="m01-tiered-evidence"></a>
+
+## 1. M01 证据层级与命令选择
 
 **机制 ID.** `testing-tiered-evidence-selection`。
 
@@ -66,7 +65,9 @@
 
 **证据限制.** 源仓能证明测试分层、命令和审查文字存在；不能证明每个 PR 实际都按此执行。采用项目必须用自己的 CI 日志、审查记录和失败样本证明执行力。
 
-## 2. M02 执行拓扑：四层并发与资源所有权 {#m02-topology}
+<a id="m02-topology"></a>
+
+## 2. M02 执行拓扑：四层并发与资源所有权
 
 **机制 ID.** `testing-execution-topology`。
 
@@ -91,7 +92,9 @@
 
 **证据限制.** 源仓的配置和共享 runner 说明能证明拓扑存在；具体宿主的 CPU/内存竞争、容器配额和外部服务状态需要采用项目自己的运行记录。
 
-## 3. M03 资源分配与清理 {#m03-resources}
+<a id="m03-resources"></a>
+
+## 3. M03 资源分配与清理
 
 **机制 ID.** `testing-resource-isolation`。
 
@@ -119,7 +122,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/cli/tests/profiles/packed-installation.ts:1-129@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:462-475@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:620-700@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:967-990@687f282e`
 
 
-## 4. M04 进程全局状态与平台语义 {#m04-global-state}
+<a id="m04-global-state"></a>
+
+## 4. M04 进程全局状态与平台语义
 
 **机制 ID.** `testing-global-state-and-platform-semantics`。
 
@@ -146,7 +151,9 @@
 
 **证据限制.** 源仓能证明规则和示例；不能证明所有平台组合都被覆盖。采用项目需要 Windows/macOS/Linux 至少各一条真实 lane。
 
-## 5. M05 同步、超时预算与静止处置 {#m05-synchronization}
+<a id="m05-synchronization"></a>
+
+## 5. M05 同步、超时预算与静止处置
 
 **机制 ID.** `testing-deterministic-synchronization`。
 
@@ -178,7 +185,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/web/tests/scaffold.ts:964-1000@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:1516-1709@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1376-1880@687f282e`
 
 
-## 6. M06 覆盖率门禁：per-file 100% {#m06-coverage}
+<a id="m06-coverage"></a>
+
+## 6. M06 覆盖率门禁：per-file 100%
 
 **机制 ID.** `testing-coverage-per-file-100`。
 
@@ -206,7 +215,9 @@
 
 **证据限制.** 源仓能证明阈值和 include/exclude；不能证明每个文件的行为都被有效断言。覆盖率必须与 M12/M14 的世界断言配合。
 
-## 7. M07 覆盖率排除台账与重套件 {#m07-exclusions}
+<a id="m07-exclusions"></a>
+
+## 7. M07 覆盖率排除台账与重套件
 
 **机制 ID.** `testing-coverage-exclusion-ledger`。
 
@@ -232,7 +243,9 @@
 
 **证据限制.** guard 能证明“filter 和 exclude 选到同一批文件”，不能证明这些套件本身有意义；仍需 M31/M32 的预算和 M02 的并发证据。
 
-## 8. M08 覆盖率分区、合并与计时 {#m08-partitioning}
+<a id="m08-partitioning"></a>
+
+## 8. M08 覆盖率分区、合并与计时
 
 **机制 ID.** `testing-coverage-partitioning`。
 
@@ -262,7 +275,9 @@
 
 **证据限制.** 源仓能证明算法、校验和 CI 变量；不能证明任意 CI 机器上的时长分布。采用项目需要自己的 timing 基线和失败样本。
 
-## 9. M09 覆盖率 worker 退出诊断 {#m09-fork-diagnostics}
+<a id="m09-fork-diagnostics"></a>
+
+## 9. M09 覆盖率 worker 退出诊断
 
 **机制 ID.** `testing-coverage-fork-diagnostics`。
 
@@ -286,7 +301,9 @@
 
 **证据限制.** 诊断不是根因证明；仍需复现、资源监控和失败测试输出。
 
-## 10. M10 真实 API e2e：key 策略与信任边界 {#m10-e2e-key}
+<a id="m10-e2e-key"></a>
+
+## 10. M10 真实 API e2e：key 策略与信任边界
 
 **机制 ID.** `testing-e2e-real-api-key-policy`。
 
@@ -313,7 +330,9 @@
 
 **证据限制.** 源仓能证明 workflow 和 preflight；不能证明远端 secret、分支保护或 required check 已配置。真实 key 的运行结果必须由采用项目自己保存。
 
-## 11. M11 e2e 凭据、网络与副作用隔离 {#m11-e2e-isolation}
+<a id="m11-e2e-isolation"></a>
+
+## 11. M11 e2e 凭据、网络与副作用隔离
 
 **机制 ID.** `testing-e2e-credential-and-egress-isolation`。
 
@@ -344,7 +363,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts:457-620@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:380-475@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:849-949@687f282e`
 
 
-## 12. M12 世界验证：不要相信自述 {#m12-world-verification}
+<a id="m12-world-verification"></a>
+
+## 12. M12 世界验证：不要相信自述
 
 **机制 ID.** `testing-world-verification`。
 
@@ -372,7 +393,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/snapshots/session/headless.snapshot.ts:644-672@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:817-898@687f282e`
 
 
-## 13. M13 mock 边界：只 mock 昂贵/不确定的边界 {#m13-mock-boundary}
+<a id="m13-mock-boundary"></a>
+
+## 13. M13 mock 边界：只 mock 昂贵/不确定的边界
 
 **机制 ID.** `testing-real-implementation-mock-boundary`。
 
@@ -397,7 +420,9 @@
 
 **证据限制.** 任何 mock 都不能证明被替换边界之外的现实；采用项目要记录 mock 清单和未覆盖风险。
 
-## 14. M14 真入口组合：Loader + app/process {#m14-real-entry}
+<a id="m14-real-entry"></a>
+
+## 14. M14 真入口组合：Loader + app/process
 
 **机制 ID.** `testing-real-entry-composition`。
 
@@ -425,7 +450,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts:300-1211@687f282e`
 
 
-## 15. M15 源平面与构建平面：两套入口，不混用 {#m15-source-built}
+<a id="m15-source-built"></a>
+
+## 15. M15 源平面与构建平面：两套入口，不混用
 
 **机制 ID.** `testing-source-built-entry-modes`。
 
@@ -452,7 +479,9 @@
 
 **证据限制.** 源平面测试不能证明发布 tarball；built smoke 能证明选中的入口，不能证明所有发布组合。采用项目需要自己的打包/安装测试。
 
-## 16. M16 快照何时必需、放在哪里 {#m16-snapshot-required}
+<a id="m16-snapshot-required"></a>
+
+## 16. M16 快照何时必需、放在哪里
 
 **机制 ID.** `testing-snapshot-required-and-placement`。
 
@@ -479,7 +508,9 @@
 
 **证据限制.** 快照证明录制 transcript 的组装结果，不证明真实 provider 接受该请求（M10）或发布产物可运行（M15）。
 
-## 17. M17 Snapshot manifest 与机械守卫 {#m17-manifest-guards}
+<a id="m17-manifest-guards"></a>
+
+## 17. M17 Snapshot manifest 与机械守卫
 
 **机制 ID.** `testing-snapshot-manifest-and-guards`。
 
@@ -515,7 +546,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/scripts/session-fixture-layout.ts:61-219@687f282e`、`deepseek-harness/scripts/session-fixture-layout.ts:276-294@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:1728-1788@687f282e`、`deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1200-1225@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:1135-1192@687f282e`
 
 
-## 18. M18 场景选择、命名与代际 {#m18-selection}
+<a id="m18-selection"></a>
+
+## 18. M18 场景选择、命名与代际
 
 **机制 ID.** `testing-snapshot-selection-and-generations`。
 
@@ -543,7 +576,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/test-support/session-snapshot/src/session-files.ts:84-253@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:145-199@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:1131-1172@687f282e`
 
 
-## 19. M19 录制语料政策（corpus） {#m19-corpus}
+<a id="m19-corpus"></a>
+
+## 19. M19 录制语料政策（corpus）
 
 **机制 ID.** `testing-snapshot-corpus-policy`。
 
@@ -574,7 +609,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1200-1225@687f282e`、`deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1746-1760@687f282e`
 
 
-## 20. M20 快照模式：replay / record / refresh {#m20-modes}
+<a id="m20-modes"></a>
+
+## 20. M20 快照模式：replay / record / refresh
 
 **机制 ID.** `testing-snapshot-modes`。
 
@@ -609,7 +646,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/web/tests/scaffold.ts:132-140@687f282e`、`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:1097-1145@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:1135-1192@687f282e`
 
 
-## 21. M21 归一化：只抹环境噪声 {#m21-normalization}
+<a id="m21-normalization"></a>
+
+## 21. M21 归一化：只抹环境噪声
 
 **机制 ID.** `testing-snapshot-normalization`。
 
@@ -640,7 +679,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/web/tests/scaffold.ts:1010-1198@687f282e`、`deepseek-harness/packages/test-support/session-snapshot/src/normalize.ts:301-665@687f282e`
 
 
-## 22. M22 身份、凭据与 typed token {#m22-identity}
+<a id="m22-identity"></a>
+
+## 22. M22 身份、凭据与 typed token
 
 **机制 ID.** `testing-snapshot-identity-and-credentials`。
 
@@ -668,7 +709,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:611-786@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:1280-1373@687f282e`
 
 
-## 23. M23 Header pins：系统提示与工具 schema 的单一所有者 {#m23-header-pins}
+<a id="m23-header-pins"></a>
+
+## 23. M23 Header pins：系统提示与工具 schema 的单一所有者
 
 **机制 ID.** `testing-snapshot-header-pins`。
 
@@ -697,7 +740,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/test-support/session-snapshot/src/suite.ts:1411-1584@687f282e`、`deepseek-harness/snapshots/sdk/sdk.snapshot.ts:442-443@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:279-325@687f282e`
 
 
-## 24. M24 Workspace oracle：完整最终树 {#m24-workspace}
+<a id="m24-workspace"></a>
+
+## 24. M24 Workspace oracle：完整最终树
 
 **机制 ID.** `testing-snapshot-workspace-oracle`。
 
@@ -726,7 +771,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/web/tests/scaffold.ts:146-158@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:1199-1220@687f282e`、`deepseek-harness/snapshots/session/headless.snapshot.ts:817-835@687f282e`
 
 
-## 25. M25 Loopback HTTP fixture：生命周期、映射与代理隔离 {#m25-network}
+<a id="m25-network"></a>
+
+## 25. M25 Loopback HTTP fixture：生命周期、映射与代理隔离
 
 **机制 ID.** `testing-snapshot-network-fixtures`。
 
@@ -752,7 +799,9 @@
 
 **证据限制.** loopback fixture 证明本地服务器生命周期、fetch 映射和所有权；不证明 live 网络、CDN、限流或 provider 保真。
 
-## 26. M26 LLM replay：脚本、覆盖与消费校验 {#m26-replay}
+<a id="m26-replay"></a>
+
+## 26. M26 LLM replay：脚本、覆盖与消费校验
 
 **机制 ID.** `testing-llm-replay-scripts`。
 
@@ -783,7 +832,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/test-support/llm-replay/src/index.ts:1-1030@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:849-949@687f282e`
 
 
-## 27. M27 回放语料的 token 还原 {#m27-replay-corpus}
+<a id="m27-replay-corpus"></a>
+
+## 27. M27 回放语料的 token 还原
 
 **机制 ID.** `testing-replay-corpus-token-restoration`。
 
@@ -808,7 +859,9 @@
 
 **证据限制.** token 还原证明关系映射，不证明真实 provider 会接受这些值。
 
-## 28. M28 Owner-local expected output {#m28-expected}
+<a id="m28-expected"></a>
+
+## 28. M28 Owner-local expected output
 
 **机制 ID.** `testing-expected-output-placement`。
 
@@ -837,7 +890,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts:84-1211@687f282e`、`deepseek-harness/apps/web/tests/scaffold.ts:1697-1720@687f282e`
 
 
-## 29. M29 Web 浏览器 lane {#m29-web}
+<a id="m29-web"></a>
+
+## 29. M29 Web 浏览器 lane
 
 **机制 ID.** `testing-web-browser-lane`。
 
@@ -865,7 +920,9 @@
 
 **证据限制.** 浏览器 lane 证明选定浏览器/视口的行为，不证明所有设备/浏览器；不证明真实 provider。
 
-## 30. M30 Web 性能与压力 lane {#m30-web-perf}
+<a id="m30-web-perf"></a>
+
+## 30. M30 Web 性能与压力 lane
 
 **机制 ID.** `testing-web-performance-and-stress`。
 
@@ -889,7 +946,9 @@
 
 **证据限制.** 源仓能证明 lane 和配置；不能证明任意机器上的绝对性能。
 
-## 31. M31 性能基准门禁 {#m31-benchmark-gate}
+<a id="m31-benchmark-gate"></a>
+
+## 31. M31 性能基准门禁
 
 **机制 ID.** `testing-benchmark-gate`。
 
@@ -918,7 +977,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/benchmarks/session-open/session-open.bench.ts:311-495@687f282e`
 
 
-## 32. M32 Benchmark 工作负载卫生 {#m32-benchmark-hygiene}
+<a id="m32-benchmark-hygiene"></a>
+
+## 32. M32 Benchmark 工作负载卫生
 
 **机制 ID.** `testing-benchmark-workload-hygiene`。
 
@@ -949,7 +1010,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/benchmarks/session-open/session-open.bench.ts:261-495@687f282e`
 
 
-## 33. M33 测试支持包选择 {#m33-support-roster}
+<a id="m33-support-roster"></a>
+
+## 33. M33 测试支持包选择
 
 **机制 ID.** `testing-support-harness-roster`。
 
@@ -980,7 +1043,9 @@
 
 **证据限制.** 每个包只证明其边界；组合使用不会自动变成端到端证明。
 
-## 34. M34 `llm-mock-server` 的无凭据协议替身 {#m34-llm-mock-server}
+<a id="m34-llm-mock-server"></a>
+
+## 34. M34 `llm-mock-server` 的无凭据协议替身
 
 **机制 ID.** `testing-llm-mock-server-contract`。
 
@@ -1007,7 +1072,9 @@
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/apps/cli/tests/profiles/headless/tests/headless.expected.e2e.ts:97-217@687f282e`
 
 
-## 35. M35 测试可靠性 Skill：设计与诊断 {#m35-reliability-skill}
+<a id="m35-reliability-skill"></a>
+
+## 35. M35 测试可靠性 Skill：设计与诊断
 
 **机制 ID.** `testing-reliability-skill`。
 
@@ -1032,7 +1099,9 @@
 
 **证据限制.** Skill 是指导和审查框架，不是自动检查器；采用项目需要自己的 lint/review/CI 证据。
 
-## 36. M36 推送前检查 Skill {#m36-pre-push}
+<a id="m36-pre-push"></a>
+
+## 36. M36 推送前检查 Skill
 
 **机制 ID.** `testing-pre-push-evidence-selection`。
 
@@ -1061,7 +1130,9 @@
 
 **证据限制.** `change-scope` 依赖正确 base；本地环境不等于 CI；Skill 不能替代 CI 的平台矩阵。
 
-## 37. M37 CI 编排与证据信任 {#m37-ci}
+<a id="m37-ci"></a>
+
+## 37. M37 CI 编排与证据信任
 
 **机制 ID.** `testing-ci-orchestration-and-trust`。
 
@@ -1090,7 +1161,9 @@
 
 **证据限制.** 无法从源仓确认远端保护；采用项目必须提供自己的 required-check 截图/配置/运行记录。
 
-## 38. M38 平台跳过与条件豁免 {#m38-skips}
+<a id="m38-skips"></a>
+
+## 38. M38 平台跳过与条件豁免
 
 **机制 ID.** `testing-platform-skips-and-conditional-exemptions`。
 
@@ -1116,7 +1189,9 @@
 
 **证据限制.** 源仓能证明列表/条件；不能证明每个平台的 CI 都实际运行。采用项目需要平台矩阵运行记录。
 
-## 39. M39 秘密与凭据卫生 {#m39-secrets}
+<a id="m39-secrets"></a>
+
+## 39. M39 秘密与凭据卫生
 
 **机制 ID.** `testing-secret-and-credential-hygiene`。
 
@@ -1143,7 +1218,9 @@
 
 **证据限制.** 源仓能证明策略/隔离代码；不能证明历史提交、第三方日志或远端 secret 没有被泄露。采用项目需要独立扫描/审计。
 
-## 40. M40 Python SDK：pytest、installed-wheel keyless、trusted real API {#m40-python-sdk}
+<a id="m40-python-sdk"></a>
+
+## 40. M40 Python SDK：pytest、installed-wheel keyless、trusted real API
 
 **机制 ID.** `testing-python-sdk-keyless-blackbox`。
 
@@ -1172,7 +1249,9 @@
 
 **证据限制.** keyless 证明发行物和入口，不证明真实 provider；real API 证明该 key/网络/模型/平台，不证明所有 provider；场景覆盖有限；源仓没有证明所有平台每次同时运行。Python 期望输出与 runtime/打包/发布是 Supply 域的交叉依赖。
 
-## 41. 迁移实施顺序（采用项目执行） {#migration-plan}
+<a id="migration-plan"></a>
+
+## 41. 迁移实施顺序（采用项目执行）
 
 以下是 **[迁移设计]**，不是源仓命令。目标是把上述机制落到一个真实项目，而不是复制 deepseek-harness 的目录。
 
@@ -1232,7 +1311,9 @@
 - [ ] 未执行/未知项明确标为 planned/unknown，不写成 verified。
 - [ ] 远端 required check/分支保护/secret 权限有独立证据，未验证就写未知。
 
-## 42. 适用范围与明确不适用 {#applicability}
+<a id="applicability"></a>
+
+## 42. 适用范围与明确不适用
 
 **适用.**
 - 多包/多入口的 TypeScript/JavaScript 仓库，尤其有 CLI、server、Web、SDK、子进程。
@@ -1256,7 +1337,9 @@
 - per-file 100% → 你的门槛；源仓的选择不是普遍真理，但“per-file 而非聚合”是关键。
 - `mock-key`/`127.0.0.1` → 你的本地 mock 端点。
 
-## 43. 证据限制与未决项 {#limits}
+<a id="limits"></a>
+
+## 43. 证据限制与未决项
 
 1. **远端信任未验证**：源仓能证明 workflow/gate 定义，不能证明 GitHub 分支保护、required checks、secret 权限、组织策略。采用项目必须单独提供。
 2. **不是全量审阅**：本次审阅覆盖测试策略、配置、核心守卫、支持包 README、Skills 和关键 CI；没有逐行读完全部 `packages/*/tests/**`、所有 workflow、所有 benchmark case、所有 Web e2e。覆盖率报告列出未检查候选。
@@ -1268,7 +1351,9 @@
 8. **秘密审计未做**：没有扫描历史提交/第三方日志；只审阅了 secret 隔离和 fixture 规则。
 9. **机制数量不是目标**：40 个是按源仓证据归纳的可操作单元；采用项目应按风险合并/删减，不要为了数量造检查器。
 
-## 44. 交叉域依赖 {#cross-domain}
+<a id="cross-domain"></a>
+
+## 44. 交叉域依赖
 
 | 依赖域 | 本文使用点 | 需要对方域确认 |
 |---|---|---|
@@ -1347,7 +1432,4 @@ pnpm run check:all                      # 本地完整演练（opt-in）
 
 ## 来源索引（固定提交）
 
-来源：deepseek-harness/scripts/lane-test-budget.spec.ts:1-55@687f282e
-来源：deepseek-harness/vitest.config.ts:229-403@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:1139-1300@687f282e
-来源：deepseek-harness/python/sdk/tests/test_bundled_runtime.py:84-106@687f282e
+来源：deepseek-harness/scripts/lane-test-budget.spec.ts:1-55@687f282e 来源：deepseek-harness/vitest.config.ts:229-403@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:1139-1300@687f282e 来源：deepseek-harness/python/sdk/tests/test_bundled_runtime.py:84-106@687f282e

@@ -94,8 +94,7 @@
 **【源义务】** 版本由本地 bump 命令写进 manifest 和 lockfile，然后人工提交、人工打 tag；CI 不写仓库、不需要 `contents: write`。发布版本因此可从仓库读出，tag 只是一个已提交版本的指针。
 
 - dsh：`release:dsh major|minor|patch|<explicit>` 把同一版本写入公开集、`packages/*/*` 下私有包和 workspace root，再运行 `pnpm install --lockfile-only` 并提交。私有包不进入 pack/publish，只跟随版本以满足版本一致性门。依据：`deepseek-harness/scripts/release/bump.ts:1-416@687f282e`；`deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:36-52@687f282e`。
-- vendor：以 manifest 版本与“最新已打 tag 版本”的较高者为基线，稳定版后 patch +1；`--prerelease rc.1|alpha.1` 选择预发布。一次 release 推进全部九个包，每包独立版本与 tag；不能只发有 diff 的目录，因为从另一仓库状态重打包可能改变依赖范围或构建字节。依据：`deepseek-harness/scripts/release/bump.ts:1-416@687f282e`；同 Note `:54-76@687f282e`。
-  vendor 的基线比较只看 release numbers。只有 tag 是预发布，且其 numbers 更高、或 numbers 相同且 manifest 仍为预发布时，才复用基线 numbers；否则 patch+1，再按请求追加预发布标识。例如源测试中 `4.0.0-rc.7` 首次预演为 `4.0.1-rc.1`，随后稳定版复用 `4.0.1`；已有稳定 `4.0.1` 则下一次为 `4.0.2`。最新 tag 由 `compareVersions` 比较，而非 Git refname 版本排序：同 numbers 下 stable 高于 prerelease，预发布数字字段按数值、数字低于非数字、相同前缀的短列表较低。依据：`deepseek-harness/scripts/release/bump.ts:105-130,168-185,211-216@687f282e`；`deepseek-harness/scripts/release/families.spec.ts:409-458@687f282e`。
+- vendor：以 manifest 版本与“最新已打 tag 版本”的较高者为基线，稳定版后 patch +1；`--prerelease rc.1|alpha.1` 选择预发布。一次 release 推进全部九个包，每包独立版本与 tag；不能只发有 diff 的目录，因为从另一仓库状态重打包可能改变依赖范围或构建字节。依据：`deepseek-harness/scripts/release/bump.ts:1-416@687f282e`；同 Note `:54-76@687f282e`。 vendor 的基线比较只看 release numbers。只有 tag 是预发布，且其 numbers 更高、或 numbers 相同且 manifest 仍为预发布时，才复用基线 numbers；否则 patch+1，再按请求追加预发布标识。例如源测试中 `4.0.0-rc.7` 首次预演为 `4.0.1-rc.1`，随后稳定版复用 `4.0.1`；已有稳定 `4.0.1` 则下一次为 `4.0.2`。最新 tag 由 `compareVersions` 比较，而非 Git refname 版本排序：同 numbers 下 stable 高于 prerelease，预发布数字字段按数值、数字低于非数字、相同前缀的短列表较低。依据：`deepseek-harness/scripts/release/bump.ts:105-130,168-185,211-216@687f282e`；`deepseek-harness/scripts/release/families.spec.ts:409-458@687f282e`。
 - native：`native/system` 自己的 bump 脚本把版本写进包 manifest 并提交；tag 由人工创建。依据：`deepseek-harness/native/system/scripts/verify-release.mjs:1-54@687f282e`；`deepseek-harness/.github/workflows/node-addon-system-release.yml:1-188@687f282e`。
 
 **【源义务】** 标签不证明发布成功：它只保留版本并标识提交。发布失败时 tag 仍可能存在；release manager 必须另外核对注册表。这是源明确接受的成本，不能把“tag 存在”当作“包已发布”。依据：`deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:77-81@687f282e`、`:181-186@687f282e`。
@@ -121,12 +120,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:1-186@687f282e
-来源：deepseek-harness/scripts/release/families.ts:1-495@687f282e
-来源：deepseek-harness/scripts/release/bump.ts:1-416@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-publish-all-experimental-packages.md:1-30@687f282e
-来源：deepseek-harness/packages/experimental/README.md:1-24@687f282e
-来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:1-186@687f282e 来源：deepseek-harness/scripts/release/families.ts:1-495@687f282e 来源：deepseek-harness/scripts/release/bump.ts:1-416@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-12-publish-all-experimental-packages.md:1-30@687f282e 来源：deepseek-harness/packages/experimental/README.md:1-24@687f282e 来源：deepseek-harness/scripts/experimental-package-policy.ts:1-67@687f282e
 
 <a id="publish-order"></a>
 ## 2. 成员发现、发布顺序与 payload 政策
@@ -169,11 +163,7 @@
 
 **【迁移设计】** 把“哪些文件允许发布”做成 family 级策略函数，而不是散落在工作流 grep；payload 政策必须能对单包单独测试。迁移到别的 registry 时，source/map 政策可保留，但 `workspace:` 改写和 peer 语义要按目标包管理器重新验证。
 
-来源：deepseek-harness/scripts/release/families.ts:93-438@687f282e
-来源：deepseek-harness/scripts/publication-payload.ts:1-55@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:1-110@687f282e
-来源：deepseek-harness/scripts/release/tarball.ts:1-63@687f282e
-来源：deepseek-harness/scripts/release/process.ts:1-129@687f282e
+来源：deepseek-harness/scripts/release/families.ts:93-438@687f282e 来源：deepseek-harness/scripts/publication-payload.ts:1-55@687f282e 来源：deepseek-harness/scripts/release/verify.ts:1-110@687f282e 来源：deepseek-harness/scripts/release/tarball.ts:1-63@687f282e 来源：deepseek-harness/scripts/release/process.ts:1-129@687f282e
 
 <a id="workspace-version-ranges"></a>
 ### 2.3 dsh 家族版本一致性与 workspace 范围
@@ -192,15 +182,7 @@
 
 **【迁移设计】** 把版本线写成按名字判定的单一纯函数，把范围规则写成按依赖目标判定的纯函数；不要让目录列表决定哪一个 package 属于哪条版本线。迁移到非 pnpm 包管理器时，`workspace:` 协议、`~` 替换和 lockfile 行为都要重新验证。
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-03-workspace-version-coherence-gate.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-22-workspace-release-ranges.md:1-28@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:407-427@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.ts:573-644@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:51-100@687f282e
-来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:259-287@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:373-375@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:789-795@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:1-110@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-09-03-workspace-version-coherence-gate.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-22-workspace-release-ranges.md:1-28@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:407-427@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.ts:573-644@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:51-100@687f282e 来源：deepseek-harness/scripts/check-workspace-constraints.spec.ts:259-287@687f282e 来源：deepseek-harness/scripts/run-gates.ts:373-375@687f282e 来源：deepseek-harness/scripts/run-gates.ts:789-795@687f282e 来源：deepseek-harness/scripts/release/verify.ts:1-110@687f282e
 
 <a id="published-dependency-faces"></a>
 ### 2.4 发布依赖面：section 分类与双版本安装布局
@@ -223,25 +205,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e
-来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-105@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:157-212@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:593-659@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:694-749@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:807-853@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.ts:967-1038@687f282e
-来源：deepseek-harness/scripts/verify-npm-install-layout.ts:1-275@687f282e
-来源：deepseek-harness/.github/workflows/release.yml:80-88@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:373-375@687f282e
-来源：deepseek-harness/scripts/run-gates.ts:789-795@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:1-50@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1039-1061@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e
-来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-08-26-published-dependency-faces.md:1-97@687f282e 来源：deepseek-harness/scripts/package-dependency-policy.ts:1-105@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:1-105@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:157-212@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:593-659@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:694-749@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:807-853@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.ts:967-1038@687f282e 来源：deepseek-harness/scripts/verify-npm-install-layout.ts:1-275@687f282e 来源：deepseek-harness/.github/workflows/release.yml:80-88@687f282e 来源：deepseek-harness/scripts/run-gates.ts:373-375@687f282e 来源：deepseek-harness/scripts/run-gates.ts:789-795@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-28-dual-release-install-layout-work-budget.md:1-50@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-14-experimental-dependency-policy.md:1-40@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1-207@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:345-999@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1039-1061@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1135-1211@687f282e 来源：deepseek-harness/scripts/verify-package-dependencies.spec.ts:1241-1246@687f282e
 
 <a id="npm-rehearsal"></a>
 ## 3. npm 的“无凭据打包预演”与“人工发布”分界
@@ -283,16 +247,7 @@
 
 **完成信号**：publish 日志逐包给出 `[i/N] name@version published` 或 `already published, skipping`；最终汇总 `published`/`already present` 数；`npm view` 的 integrity 与本地 tarball 一致。
 
-来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e
-来源：deepseek-harness/.github/workflows/release-vendor.yml:1-107@687f282e
-来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e
-来源：deepseek-harness/scripts/release/installed-product-isolation.ts:1-73@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:111-140@687f282e
-来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e
-来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:1-126@687f282e
-来源：deepseek-harness/scripts/release/verify.ts:45-110@687f282e
-来源：deepseek-harness/scripts/release/publish.ts:122-235@687f282e
-来源：deepseek-harness/scripts/ci-workflow.spec.ts:1401-1515@687f282e
+来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e 来源：deepseek-harness/.github/workflows/release-vendor.yml:1-107@687f282e 来源：deepseek-harness/scripts/release/verify-packed-install.ts:1-126@687f282e 来源：deepseek-harness/scripts/release/installed-product-isolation.ts:1-73@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:111-140@687f282e 来源：deepseek-harness/.github/workflows/release-publish.yml:1-131@687f282e 来源：deepseek-harness/.github/workflows/release-vendor-publish.yml:1-126@687f282e 来源：deepseek-harness/scripts/release/verify.ts:45-110@687f282e 来源：deepseek-harness/scripts/release/publish.ts:122-235@687f282e 来源：deepseek-harness/scripts/ci-workflow.spec.ts:1401-1515@687f282e
 
 <a id="rehearsal-runner-trust"></a>
 ### 3.3 发布预演的持久 Linux runner 信任边界
@@ -314,9 +269,7 @@
 
 ---
 
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-release-rehearsal-selfhosted.md:1-28@687f282e
-来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e
-来源：deepseek-harness/.github/workflows/release-vendor.yml:1-107@687f282e
+来源：deepseek-harness/.agents/notes/archived/process/2026-09-06-release-rehearsal-selfhosted.md:1-28@687f282e 来源：deepseek-harness/.github/workflows/release.yml:1-180@687f282e 来源：deepseek-harness/.github/workflows/release-vendor.yml:1-107@687f282e
 
 <a id="npm-registry"></a>
 ## 4. 注册表三态、重试与可恢复发布
@@ -361,9 +314,7 @@
 
 ---
 
-来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:96-125@687f282e
-来源：deepseek-harness/scripts/release/families.ts:288-374@687f282e
+来源：deepseek-harness/scripts/release/publish.ts:1-235@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md:96-125@687f282e 来源：deepseek-harness/scripts/release/families.ts:288-374@687f282e
 
 <a id="native"></a>
 ## 5. native/system 发布序列
@@ -417,14 +368,7 @@
 
 ---
 
-来源：deepseek-harness/.github/workflows/node-addon-system-release.yml:1-188@687f282e
-来源：deepseek-harness/.github/workflows/node-addon-system.yml:1-170@687f282e
-来源：deepseek-harness/native/system/scripts/verify-release.mjs:1-54@687f282e
-来源：deepseek-harness/native/system/scripts/publish-release.mjs:1-165@687f282e
-来源：deepseek-harness/native/system/scripts/github-matrix.mjs:1-69@687f282e
-来源：deepseek-harness/native/system/scripts/assemble-prebuilds.mjs:1-54@687f282e
-来源：deepseek-harness/native/system/scripts/pack-release.mjs:1-118@687f282e
-来源：deepseek-harness/native/system/scripts/verify-packed-install.mjs:1-238@687f282e
+来源：deepseek-harness/.github/workflows/node-addon-system-release.yml:1-188@687f282e 来源：deepseek-harness/.github/workflows/node-addon-system.yml:1-170@687f282e 来源：deepseek-harness/native/system/scripts/verify-release.mjs:1-54@687f282e 来源：deepseek-harness/native/system/scripts/publish-release.mjs:1-165@687f282e 来源：deepseek-harness/native/system/scripts/github-matrix.mjs:1-69@687f282e 来源：deepseek-harness/native/system/scripts/assemble-prebuilds.mjs:1-54@687f282e 来源：deepseek-harness/native/system/scripts/pack-release.mjs:1-118@687f282e 来源：deepseek-harness/native/system/scripts/verify-packed-install.mjs:1-238@687f282e
 
 <a id="python"></a>
 ## 6. Python SDK/runtime 的 PyPI 序列
@@ -509,19 +453,7 @@
 
 ---
 
-来源：deepseek-harness/.github/workflows/python-release.yml:1-248@687f282e
-来源：deepseek-harness/.github/workflows/build-exe-for-python-sdk.yml:1-512@687f282e
-来源：deepseek-harness/scripts/build-python-release.py:1-295@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:802-893@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:1077-1138@687f282e
-来源：deepseek-harness/.agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-08-11-python-publication-workflow.md:1-52@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:1-801@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:894-1076@687f282e
-来源：deepseek-harness/scripts/smoke-python-runtime.py:1139-3110@687f282e
-来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:1-622@687f282e
-来源：deepseek-harness/.github/workflows/python-release.yml:25-44@687f282e
+来源：deepseek-harness/.github/workflows/python-release.yml:1-248@687f282e 来源：deepseek-harness/.github/workflows/build-exe-for-python-sdk.yml:1-512@687f282e 来源：deepseek-harness/scripts/build-python-release.py:1-295@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:802-893@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:1077-1138@687f282e 来源：deepseek-harness/.agents/notes/implemented/testing/2026-08-23-installed-python-wheel-black-box-ci.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-08-11-python-publication-workflow.md:1-52@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-06-python-runtime-windows-hosted.md:1-25@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:1-801@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:894-1076@687f282e 来源：deepseek-harness/scripts/smoke-python-runtime.py:1139-3110@687f282e 来源：deepseek-harness/scripts/build-exe-for-python-sdk.ts:1-622@687f282e 来源：deepseek-harness/.github/workflows/python-release.yml:25-44@687f282e
 
 <a id="desktop-version"></a>
 ## 7. Desktop 的版本、产物与发布前验证
@@ -590,15 +522,7 @@ feed 元数据必须恰好一个 target 文件；URL 由发布器改写为最终
 
 **完成信号**：preset/source/版本校验通过；`--check` 与构建成功；retained package 目录存在，artifact 可下载且命名包含 mode/version/run/attempt。**失败处理**：source_ref 是 SHA/PR → 重新选分支或 tag；tag 与产品版本/checkout 不符 → 修正 tag，不改参数；缺适配脚本 → 换包含适配的 release；签名/公证开关不符合发布要求 → 重新打包，不能靠发布门补救。
 
-来源：deepseek-harness/apps/desktop/packaging/README.md:86-140@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-build-version.mjs:1-104@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-upload-plan.ts:1-294@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-release-tag.ts:25-80@687f282e
-来源：deepseek-harness/.github/workflows/macos-package.yml:1-142@687f282e
-来源：deepseek-harness/.github/workflows/windows-package.yml:1-167@687f282e
-来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-09-desktop-build-release-validation.md:1-24@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-21-desktop-build-version-as-input.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/process/2026-09-16-desktop-release-version-derivation.md:1-30@687f282e
+来源：deepseek-harness/apps/desktop/packaging/README.md:86-140@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-build-version.mjs:1-104@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-upload-plan.ts:1-294@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-release-tag.ts:25-80@687f282e 来源：deepseek-harness/.github/workflows/macos-package.yml:1-142@687f282e 来源：deepseek-harness/.github/workflows/windows-package.yml:1-167@687f282e 来源：deepseek-harness/.agents/notes/archived/architecture/2026-09-09-desktop-build-release-validation.md:1-24@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-21-desktop-build-version-as-input.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/process/2026-09-16-desktop-release-version-derivation.md:1-30@687f282e
 
 <a id="desktop-retention"></a>
 ### 7.5 构建版本解析与保留产物库的原子性
@@ -631,14 +555,7 @@ feed 元数据必须恰好一个 target 文件；URL 由发布器改写为最终
 
 ---
 
-来源：deepseek-harness/.github/workflows/macos-package.yml:1-142@687f282e
-来源：deepseek-harness/.github/workflows/windows-package.yml:1-167@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-ci-version.mjs:1-34@687f282e
-来源：deepseek-harness/apps/desktop/scripts/retain-desktop-ci.ts:1-79@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-release-store.ts:1-145@687f282e
-来源：deepseek-harness/apps/desktop/scripts/prepare-macos-ci.mjs:1-25@687f282e
-来源：deepseek-harness/apps/desktop/scripts/prepare-windows-ci.mjs:1-28@687f282e
-来源：deepseek-harness/apps/desktop/packaging/README.md:86-140@687f282e
+来源：deepseek-harness/.github/workflows/macos-package.yml:1-142@687f282e 来源：deepseek-harness/.github/workflows/windows-package.yml:1-167@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-ci-version.mjs:1-34@687f282e 来源：deepseek-harness/apps/desktop/scripts/retain-desktop-ci.ts:1-79@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-release-store.ts:1-145@687f282e 来源：deepseek-harness/apps/desktop/scripts/prepare-macos-ci.mjs:1-25@687f282e 来源：deepseek-harness/apps/desktop/scripts/prepare-windows-ci.mjs:1-28@687f282e 来源：deepseek-harness/apps/desktop/packaging/README.md:86-140@687f282e
 
 <a id="desktop-signing"></a>
 ## 8. Desktop 签名、保留产物复验与凭据隔离
@@ -790,23 +707,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 ---
 
-来源：deepseek-harness/.github/workflows/desktop-publish.yml:1-154@687f282e
-来源：deepseek-harness/apps/desktop/scripts/preflight-desktop-publish.mjs:1-47@687f282e
-来源：deepseek-harness/apps/desktop/scripts/resolve-desktop-publish-ci.ts:1-68@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish-route.ts:1-70@687f282e
-来源：deepseek-harness/apps/desktop/scripts/resolve-retained-desktop-publish-ci.ts:1-52@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-retained-desktop.ts:1-44@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish.ts:1-132@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish-record.ts:1-110@687f282e
-来源：deepseek-harness/apps/desktop/scripts/publish-desktop-ci.ts:1-129@687f282e
-来源：deepseek-harness/apps/desktop/scripts/rollback-desktop-channel.ts:1-60@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-rollback.ts:1-58@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish-config.ts:1-46@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish-cos.ts:1-81@687f282e
-来源：deepseek-harness/apps/desktop/scripts/desktop-publish-qualification.mjs:1-15@687f282e
-来源：deepseek-harness/apps/desktop/packaging/README.md:164-209@687f282e
-来源：deepseek-harness/apps/desktop/windows-signing/README.md:1-103@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-macos-signature.mjs:1-214@687f282e
+来源：deepseek-harness/.github/workflows/desktop-publish.yml:1-154@687f282e 来源：deepseek-harness/apps/desktop/scripts/preflight-desktop-publish.mjs:1-47@687f282e 来源：deepseek-harness/apps/desktop/scripts/resolve-desktop-publish-ci.ts:1-68@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish-route.ts:1-70@687f282e 来源：deepseek-harness/apps/desktop/scripts/resolve-retained-desktop-publish-ci.ts:1-52@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-retained-desktop.ts:1-44@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish.ts:1-132@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish-record.ts:1-110@687f282e 来源：deepseek-harness/apps/desktop/scripts/publish-desktop-ci.ts:1-129@687f282e 来源：deepseek-harness/apps/desktop/scripts/rollback-desktop-channel.ts:1-60@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-rollback.ts:1-58@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish-config.ts:1-46@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish-cos.ts:1-81@687f282e 来源：deepseek-harness/apps/desktop/scripts/desktop-publish-qualification.mjs:1-15@687f282e 来源：deepseek-harness/apps/desktop/packaging/README.md:164-209@687f282e 来源：deepseek-harness/apps/desktop/windows-signing/README.md:1-103@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-macos-signature.mjs:1-214@687f282e
 
 <a id="desktop-qualification"></a>
 ## 10. Desktop 安装升级与“未验证”清单
@@ -839,9 +740,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 **证据限制**：这是操作员程序，不是自动 gate；源明确说完整签名包生产、隔离网络故障工具、晚发布 feed、安装器触发重启和完整序列仍需单独资格验证。迁移时不能把它标成 CI 已执行。
 
-来源：deepseek-harness/apps/desktop/tests/README.md:1-88@687f282e
-来源：deepseek-harness/apps/desktop/tests/installed-update/README.md:1-132@687f282e
-来源：deepseek-harness/apps/desktop/packaging/README.md:164-279@687f282e
+来源：deepseek-harness/apps/desktop/tests/README.md:1-88@687f282e 来源：deepseek-harness/apps/desktop/tests/installed-update/README.md:1-132@687f282e 来源：deepseek-harness/apps/desktop/packaging/README.md:164-279@687f282e
 
 <a id="desktop-test-publication"></a>
 ### 10.3 测试 feed 的上传与发布（操作员授权）
@@ -867,12 +766,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 **证据限制**：源明确说这些是 pending manual steps；2026-09-14 的凭据能读 probe，但 `GetBucketVersioning` 返回 403，未尝试 PUT。真实 COS 写入、跨机器并发、CDN 缓存与安装器消费仍需独立资格验证。
 
-来源：deepseek-harness/apps/desktop/tests/installed-update/publication/README.md:1-72@687f282e
-来源：deepseek-harness/apps/desktop/scripts/installed-update-publication.ts:1-217@687f282e
-来源：deepseek-harness/apps/desktop/scripts/publish-installed-update.ts:1-40@687f282e
-来源：deepseek-harness/apps/desktop/scripts/installed-update-distribution.ts:1-74@687f282e
-来源：deepseek-harness/apps/desktop/scripts/installed-update-packaging.ts:112-115@687f282e
-来源：deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:55-101@687f282e
+来源：deepseek-harness/apps/desktop/tests/installed-update/publication/README.md:1-72@687f282e 来源：deepseek-harness/apps/desktop/scripts/installed-update-publication.ts:1-217@687f282e 来源：deepseek-harness/apps/desktop/scripts/publish-installed-update.ts:1-40@687f282e 来源：deepseek-harness/apps/desktop/scripts/installed-update-distribution.ts:1-74@687f282e 来源：deepseek-harness/apps/desktop/scripts/installed-update-packaging.ts:112-115@687f282e 来源：deepseek-harness/apps/desktop/scripts/verify-installed-update-package.ts:55-101@687f282e
 
 <a id="desktop-network-fault"></a>
 ### 10.4 仅针对测试应用的网络故障
@@ -899,9 +793,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 ---
 
-来源：deepseek-harness/apps/desktop/tests/installed-update/network/README.md:1-58@687f282e
-来源：deepseek-harness/apps/desktop/scripts/prepare-installed-update-network.ts:1-62@687f282e
-来源：deepseek-harness/apps/desktop/scripts/installed-update-network.ps1:1-89@687f282e
+来源：deepseek-harness/apps/desktop/tests/installed-update/network/README.md:1-58@687f282e 来源：deepseek-harness/apps/desktop/scripts/prepare-installed-update-network.ts:1-62@687f282e 来源：deepseek-harness/apps/desktop/scripts/installed-update-network.ps1:1-89@687f282e
 
 <a id="other-delivery"></a>
 ## 11. SSH helper、文档站点、预览与 GitLab
@@ -953,14 +845,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 ---
 
-来源：deepseek-harness/.github/workflows/publish-ssh-helper.yml:1-101@687f282e
-来源：deepseek-harness/.github/workflows/build-exe-for-ssh-helper.yml:1-127@687f282e
-来源：deepseek-harness/.github/workflows/docs-pages.yml:1-93@687f282e
-来源：deepseek-harness/.github/workflows/build-preview-cloudflare.yml:1-170@687f282e
-来源：deepseek-harness/.gitlab-ci.yml:1-191@687f282e
-来源：deepseek-harness/scripts/ssh-helper/release.ts:1-76@687f282e
-来源：deepseek-harness/scripts/ssh-helper/artifact.ts:1-88@687f282e
-来源：deepseek-harness/scripts/verify-ssh-helper-artifact.ts:1-167@687f282e
+来源：deepseek-harness/.github/workflows/publish-ssh-helper.yml:1-101@687f282e 来源：deepseek-harness/.github/workflows/build-exe-for-ssh-helper.yml:1-127@687f282e 来源：deepseek-harness/.github/workflows/docs-pages.yml:1-93@687f282e 来源：deepseek-harness/.github/workflows/build-preview-cloudflare.yml:1-170@687f282e 来源：deepseek-harness/.gitlab-ci.yml:1-191@687f282e 来源：deepseek-harness/scripts/ssh-helper/release.ts:1-76@687f282e 来源：deepseek-harness/scripts/ssh-helper/artifact.ts:1-88@687f282e 来源：deepseek-harness/scripts/verify-ssh-helper-artifact.ts:1-167@687f282e
 
 <a id="session-authority"></a>
 ## 12. Session 版本的四个权威与“已发布”判定
@@ -998,10 +883,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 **相邻但未展开的持久化面**：根 `AGENTS.md` 还规定 SQLite 使用单调 `SCHEMA_VERSION`。本域只审计 Session JSONL/类型记录，没有逐行审计 SQLite schema/migration；迁移时把 SQLite 版本化归入持久化/存储域，并保留“只增不减、旧库可读/可迁移”的等价约束，不能因为本文覆盖 Session 就认为 SQLite 已覆盖。依据：`deepseek-harness/AGENTS.md:8-18@687f282e`。
 
-来源：deepseek-harness/docs/session-format-status.md:1-63@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-10-session-log-version-mechanism.md:1-42@687f282e
-来源：deepseek-harness/docs/persistence-changes/README.md:1-90@687f282e
-来源：deepseek-harness/scripts/doc-standard.spec.ts:162-300@687f282e
+来源：deepseek-harness/docs/session-format-status.md:1-63@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-10-session-log-version-mechanism.md:1-42@687f282e 来源：deepseek-harness/docs/persistence-changes/README.md:1-90@687f282e 来源：deepseek-harness/scripts/doc-standard.spec.ts:162-300@687f282e
 
 <a id="persistence-format-archive"></a>
 ### 12.3 历史格式参考：v0 到 checkout writer 的完整声明
@@ -1023,9 +905,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 **证据限制**：该检查不 Git fetch、不查询服务、不重放历史应用，也不证明迁移安全；它只证明“选定的完整声明快照与当前 writer 边界一致”。快照可以保留历史可选字段与 opaque 值，不能把当前类型回填成旧格式。
 
-来源：deepseek-harness/docs/persistence-changes/historical-formats/README.md:1-75@687f282e
-来源：deepseek-harness/scripts/persistence-formats.ts:1-230@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-session-format-version.md:23-68@687f282e
+来源：deepseek-harness/docs/persistence-changes/historical-formats/README.md:1-75@687f282e 来源：deepseek-harness/scripts/persistence-formats.ts:1-230@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-session-format-version.md:23-68@687f282e
 
 <a id="persistence-release-archive"></a>
 ### 12.4 预发布标签快照：tag-by-tag 的历史差异
@@ -1048,9 +928,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 ---
 
-来源：deepseek-harness/docs/persistence-changes/releases/README.md:1-103@687f282e
-来源：deepseek-harness/docs/persistence-changes/releases/manifest.json:1-162@687f282e
-来源：deepseek-harness/scripts/persistence-releases.ts:1-257@687f282e
+来源：deepseek-harness/docs/persistence-changes/releases/README.md:1-103@687f282e 来源：deepseek-harness/docs/persistence-changes/releases/manifest.json:1-162@687f282e 来源：deepseek-harness/scripts/persistence-releases.ts:1-257@687f282e
 
 <a id="session-migration"></a>
 
@@ -1080,14 +958,7 @@ if [ "$GITHUB_REF" != "refs/heads/master" ]; then error
 
 **失败处理**：发布过程中一旦 `publish()` 开始，编码、Worker 验证、发布不接收调用方取消，必须跑到结算；已发布代际永不回滚。写入源不变；拒绝时不得截断、覆盖或发布 successor。依据：同 Note `:106-108@687f282e`、`:174-176@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md:1-251@687f282e
-来源：deepseek-harness/scripts/gen-session-format-catalog.ts:1-261@687f282e
-来源：deepseek-harness/docs/cookbook/adding-a-session-format-version.md:1-153@687f282e
-来源：deepseek-harness/packages/session/session-format-v3-to-v4/README.md:1-350@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e
-来源：deepseek-harness/benchmarks/session-open/session-open.bench.ts:340-400@687f282e
-来源：deepseek-harness/snapshots/session/headless.snapshot.ts:173-185@687f282e
-来源：deepseek-harness/snapshots/session/headless.snapshot.ts:1014-1129@687f282e
+来源：deepseek-harness/.agents/notes/implemented/architecture/2026-08-31-released-session-format-migrations.md:1-251@687f282e 来源：deepseek-harness/scripts/gen-session-format-catalog.ts:1-261@687f282e 来源：deepseek-harness/docs/cookbook/adding-a-session-format-version.md:1-153@687f282e 来源：deepseek-harness/packages/session/session-format-v3-to-v4/README.md:1-350@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e 来源：deepseek-harness/benchmarks/session-open/session-open.bench.ts:340-400@687f282e 来源：deepseek-harness/snapshots/session/headless.snapshot.ts:173-185@687f282e 来源：deepseek-harness/snapshots/session/headless.snapshot.ts:1014-1129@687f282e
 
 <a id="session-migration-preparation"></a>
 ### 13.2a 准备先于发布：只读打开不落盘，写入前才发布
@@ -1148,8 +1019,7 @@ Worker scheduler/取消测试替换了 `node:worker_threads`：它们证明 perm
 
 依据：`deepseek-harness/docs/cookbook/adding-a-session-format-version.md:1-153@687f282e`。
 
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-read-only-session-migration-preparation.md:1-170@687f282e
-来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e
+来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-05-read-only-session-migration-preparation.md:1-170@687f282e 来源：deepseek-harness/.agents/notes/implemented/architecture/2026-09-29-explicit-session-history-preparation.md:1-43@687f282e
 
 <a id="session-batch-migration"></a>
 ### 13.4a 批量迁移命令的运维契约
@@ -1207,9 +1077,7 @@ Worker scheduler/取消测试替换了 `node:worker_threads`：它们证明 perm
 
 ---
 
-来源：deepseek-harness/scripts/migrate-sessions-to-v4.ts:1-303@687f282e
-来源：deepseek-harness/scripts/migrate-sessions-to-v4.spec.ts:1-450@687f282e
-来源：deepseek-harness/scripts/migration-failure-summary.ts:1-43@687f282e
+来源：deepseek-harness/scripts/migrate-sessions-to-v4.ts:1-303@687f282e 来源：deepseek-harness/scripts/migrate-sessions-to-v4.spec.ts:1-450@687f282e 来源：deepseek-harness/scripts/migration-failure-summary.ts:1-43@687f282e
 
 <a id="persistence-records"></a>
 
@@ -1246,23 +1114,7 @@ root 添加/删除及 header/envelope optional property 的精确边界见 `deep
 
 **重要限制**：classifier 只识别“需要审查”的结构变化，不能证明语义安全；same-version 需显式 `--decision same-version`。checker 只校验 decision 与 schema，不证明解释符合运行时行为；reviewer 必须比较 base/head inventory，而不是只跑 current-tree `--check`。依据：同 Note `:17-31@687f282e`；README `:66-75@687f282e`。
 
-来源：deepseek-harness/docs/persistence-changes/README.md:1-90@687f282e
-来源：deepseek-harness/docs/cookbook/reviewing-persistence-type-changes.md:1-122@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e
-来源：deepseek-harness/docs/session-format-status.md:1-63@687f282e
-来源：deepseek-harness/scripts/persistence-finalization.ts:1-168@687f282e
-来源：deepseek-harness/docs/persistence-changes/finalized/v4.json:1-20@687f282e
-来源：deepseek-harness/docs/persistence-changes/finalized/v4.json:340-379@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:23-40@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:535-635@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:646-716@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:793-879@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:1-22@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:41-534@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:636-645@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:717-792@687f282e
-来源：deepseek-harness/scripts/persistence-changes.ts:880-923@687f282e
+来源：deepseek-harness/docs/persistence-changes/README.md:1-90@687f282e 来源：deepseek-harness/docs/cookbook/reviewing-persistence-type-changes.md:1-122@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-10-08-session-reader-compatibility-review.md:1-39@687f282e 来源：deepseek-harness/docs/session-format-status.md:1-63@687f282e 来源：deepseek-harness/scripts/persistence-finalization.ts:1-168@687f282e 来源：deepseek-harness/docs/persistence-changes/finalized/v4.json:1-20@687f282e 来源：deepseek-harness/docs/persistence-changes/finalized/v4.json:340-379@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:23-40@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:535-635@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:646-716@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:793-879@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:1-22@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:41-534@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:636-645@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:717-792@687f282e 来源：deepseek-harness/scripts/persistence-changes.ts:880-923@687f282e
 
 <a id="persistence-schema-policy"></a>
 ### 14.2a schema 策略：指纹域、显式 binding 与 `@persistenceReserved`
@@ -1337,24 +1189,7 @@ root 添加/删除及 header/envelope optional property 的精确边界见 `deep
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/scripts/persistence-review.ts:1-19@687f282e`、`deepseek-harness/scripts/persistence-review.ts:184-230@687f282e`、`deepseek-harness/scripts/persistence-schema-model.ts:1-99@687f282e`、`deepseek-harness/scripts/persistence-schema-model.ts:186-276@687f282e`、`deepseek-harness/scripts/persistence-schema-model.ts:295-321@687f282e`、`deepseek-harness/scripts/persistence-schema.ts:1-41@687f282e`、`deepseek-harness/scripts/persistence-schema.ts:134-209@687f282e`、`deepseek-harness/scripts/persistence-schema.ts:361-399@687f282e`、`deepseek-harness/scripts/persistence-schema.ts:481-512@687f282e`
 
 
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e
-来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:42-133@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:210-360@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:400-480@687f282e
-来源：deepseek-harness/scripts/persistence-source-policy.ts:1-69@687f282e
-来源：deepseek-harness/scripts/persistence-review.ts:20-183@687f282e
-来源：deepseek-harness/scripts/persistence-schema-model.ts:100-185@687f282e
-来源：deepseek-harness/scripts/persistence-schema-model.ts:277-294@687f282e
-来源：deepseek-harness/scripts/persistence-review.ts:1-19@687f282e
-来源：deepseek-harness/scripts/persistence-review.ts:184-230@687f282e
-来源：deepseek-harness/scripts/persistence-schema-model.ts:1-99@687f282e
-来源：deepseek-harness/scripts/persistence-schema-model.ts:186-276@687f282e
-来源：deepseek-harness/scripts/persistence-schema-model.ts:295-321@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:1-41@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:134-209@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:361-399@687f282e
-来源：deepseek-harness/scripts/persistence-schema.ts:481-512@687f282e
+来源：deepseek-harness/.agents/notes/implemented/process/2026-09-17-persistence-schema-review.md:1-39@687f282e 来源：deepseek-harness/.agents/notes/implemented/process/2026-09-11-persistence-type-history.md:1-51@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:42-133@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:210-360@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:400-480@687f282e 来源：deepseek-harness/scripts/persistence-source-policy.ts:1-69@687f282e 来源：deepseek-harness/scripts/persistence-review.ts:20-183@687f282e 来源：deepseek-harness/scripts/persistence-schema-model.ts:100-185@687f282e 来源：deepseek-harness/scripts/persistence-schema-model.ts:277-294@687f282e 来源：deepseek-harness/scripts/persistence-review.ts:1-19@687f282e 来源：deepseek-harness/scripts/persistence-review.ts:184-230@687f282e 来源：deepseek-harness/scripts/persistence-schema-model.ts:1-99@687f282e 来源：deepseek-harness/scripts/persistence-schema-model.ts:186-276@687f282e 来源：deepseek-harness/scripts/persistence-schema-model.ts:295-321@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:1-41@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:134-209@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:361-399@687f282e 来源：deepseek-harness/scripts/persistence-schema.ts:481-512@687f282e
 
 <a id="persistence-sqlite-schema"></a>
 ### 14.5 SQLite：物理库拒绝不兼容，派生索引只重置自己
@@ -1384,25 +1219,7 @@ root 添加/删除及 header/envelope optional property 的精确边界见 `deep
 **补充源码引用（尾部区间复读分派实际读取）**：`deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:1-8@687f282e`、`deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:21-54@687f282e`、`deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:106-119@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:1-37@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:67-95@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:139-173@687f282e`、`deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:1-290@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1261-1318@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1376-1500@687f282e`、`deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1570-1880@687f282e`
 
 
-来源：deepseek-harness/AGENTS.md:7-7@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:9-20@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:55-105@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:69-85@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:7-8@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:10-11@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:38-66@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:96-138@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1319-1375@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:1-8@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:21-54@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:106-119@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:1-37@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:67-95@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:139-173@687f282e
-来源：deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:1-290@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1261-1318@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1376-1500@687f282e
-来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1570-1880@687f282e
+来源：deepseek-harness/AGENTS.md:7-7@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:9-20@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:55-105@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:69-85@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:7-8@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:10-11@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:38-66@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:96-138@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1319-1375@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:1-8@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:21-54@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/src/schema.ts:106-119@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:1-37@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:67-95@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/src/schema.ts:139-173@687f282e 来源：deepseek-harness/packages/storage/storage-sqlite/tests/sqlite-backend.spec.ts:1-290@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1261-1318@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1376-1500@687f282e 来源：deepseek-harness/packages/session-query/session-query-sqlite/tests/sqlite.spec.ts:1570-1880@687f282e
 
 <a id="upgrade-guides"></a>
 ## 15. 升级指南（upgrade guide）的写入与验证
@@ -1460,9 +1277,7 @@ root 添加/删除及 header/envelope optional property 的精确边界见 `deep
 
 ---
 
-来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e
-来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e
-来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e
+来源：deepseek-harness/.agents/skills/dsh-create-upgrade-guide/SKILL.md:1-54@687f282e 来源：deepseek-harness/scripts/verify-upgrade-guides.ts:1-85@687f282e 来源：deepseek-harness/.agents/skills/dsh-doc/templates/upgrade-guide.md:1-29@687f282e
 
 <a id="release-operator"></a>
 ## 16. 发布操作手册与 Session record 的交接

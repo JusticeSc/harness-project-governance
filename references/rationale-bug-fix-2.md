@@ -100,8 +100,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-session-reference-model-budget.md:1-26@687f282e`；`deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-11-process-specific-prompt-values-in-runtime-context.md:1-95@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-session-reference-model-budget.md:1-26@687f282e
-来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-11-process-specific-prompt-values-in-runtime-context.md:1-95@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-session-reference-model-budget.md:1-26@687f282e 来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-11-process-specific-prompt-values-in-runtime-context.md:1-95@687f282e
 
 <a id="authority-action-propagation"></a>
 ## 5. Authority Action Propagation
@@ -122,8 +121,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-01-host-goal-pause-aborts-turn.md:1-30@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-03-user-owned-goal-pause-activation.md:1-36@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-01-host-goal-pause-aborts-turn.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-03-user-owned-goal-pause-activation.md:1-36@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-01-host-goal-pause-aborts-turn.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-03-user-owned-goal-pause-activation.md:1-36@687f282e
 
 <a id="bootstrap-before-plugin"></a>
 ## 6. Bootstrap Before Plugin
@@ -292,12 +290,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-23-demo-web-builds-client-bundles.md:1-28@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-23-demo-web-builds-client-bundles.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e
-来源：deepseek-harness/package.json:77-87@687f282e；deepseek-harness/scripts/run-gates.ts:332-352@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-23-demo-web-builds-client-bundles.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e 来源：deepseek-harness/package.json:77-87@687f282e；deepseek-harness/scripts/run-gates.ts:332-352@687f282e
 
 <a id="cancellation-scope"></a>
 ## 14. Cancellation Scope
@@ -633,8 +626,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-05-context-meter-blind-to-compaction.md:1-47@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-05-context-meter-blind-to-compaction.md:1-47@687f282e
-来源：deepseek-harness/packages/llm/token-meter/src/usage-projection.ts:67-106,173-218@687f282e；deepseek-harness/packages/client/ui-conversation/src/client/context-occupancy.ts:15-25@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-05-context-meter-blind-to-compaction.md:1-47@687f282e 来源：deepseek-harness/packages/llm/token-meter/src/usage-projection.ts:67-106,173-218@687f282e；deepseek-harness/packages/client/ui-conversation/src/client/context-occupancy.ts:15-25@687f282e
 
 <a id="display-memory-keyed-identity"></a>
 ## 30. Display Memory Keyed Identity
@@ -740,8 +732,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-host-backed-web-preferences.md:1-44@687f282e`（部分被取代的历史）；`deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md:1-29@687f282e`（当前身份/存储边界）。
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-host-backed-web-preferences.md:1-44@687f282e
-来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md:1-29@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-host-backed-web-preferences.md:1-44@687f282e 来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-09-15-authenticated-browser-host-preferences.md:1-29@687f282e
 
 <a id="early-authoritative-facts"></a>
 ## 35. Early Authoritative Facts
@@ -882,8 +873,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e
 
 <a id="exact-format-recognition"></a>
 ## 42. Exact Format Recognition
@@ -1008,15 +998,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-fail-loud-releases-the-terminal.md:1-61@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-hero-visible-while-blank-session-opens.md:1-34@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-04-composer-tab-gutter-reservation.md:1-49@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-reader-scroll-attribution-observed-top-ledger.md:1-38@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-13-safari-textarea-soft-wrap-reflow.md:1-48@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-fail-loud-releases-the-terminal.md:1-61@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-hero-visible-while-blank-session-opens.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-04-composer-tab-gutter-reservation.md:1-49@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-reader-scroll-attribution-observed-top-ledger.md:1-38@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-13-safari-textarea-soft-wrap-reflow.md:1-48@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-28-themed-scrollbars-and-reserved-gutter.md:1-85@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-approval-panel-command-cap.md:1-53@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-composer-text-layers-share-one-scrollport.md:1-85@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-fail-loud-releases-the-terminal.md:1-61@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-31-hero-visible-while-blank-session-opens.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-04-composer-tab-gutter-reservation.md:1-49@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-06-reader-scroll-attribution-observed-top-ledger.md:1-38@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-13-safari-textarea-soft-wrap-reflow.md:1-48@687f282e
 
 <a id="fatal-exit-cleanup"></a>
 ## 48. Fatal Exit Cleanup
@@ -1056,8 +1038,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-tui-diff-card-redundant-path-header.md:1-38@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-tui-diff-card-redundant-path-header.md:1-38@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-question-composer-rows-do-not-shrink.md:1-51@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-27-tui-diff-card-redundant-path-header.md:1-38@687f282e
 
 <a id="heap-derived-limits"></a>
 ## 50. Heap Derived Limits
@@ -1077,8 +1058,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-code-runtime-python-call-backlog-and-binding-metadata-snapshot.md:1-71@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-code-runtime-python-call-backlog-and-binding-metadata-snapshot.md:1-71@687f282e
-来源：deepseek-harness/packages/experimental/ptc-runtime-python/src/index.ts:263-307@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-code-runtime-python-call-backlog-and-binding-metadata-snapshot.md:1-71@687f282e 来源：deepseek-harness/packages/experimental/ptc-runtime-python/src/index.ts:263-307@687f282e
 
 <a id="honest-degradation"></a>
 ## 51. Honest Degradation
@@ -1161,8 +1141,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-session-local-subagent-migration.md:1-34@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-19-v3-incomplete-child-catalog-evidence.md:1-30@687f282e
 
 <a id="lossless-encoding-collision"></a>
 ## 55. Lossless Encoding Collision
@@ -1593,8 +1572,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-nested-terminal-cards.md:1-36@687f282e`；`deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-10-background-shell-command-display.md:1-33@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-nested-terminal-cards.md:1-36@687f282e
-来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-10-background-shell-command-display.md:1-33@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-05-nested-terminal-cards.md:1-36@687f282e 来源：deepseek-harness/.agents/notes/implemented/bug-fix/2026-10-10-background-shell-command-display.md:1-33@687f282e
 
 <a id="presentation-single-row-escape"></a>
 ## 76. Presentation Single Row Escape
@@ -2291,9 +2269,7 @@
 
 **引用**：`deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-tui-adapter-registration-race.md:1-30@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-windows-atomic-replace-retry.md:1-28@687f282e`；`deepseek-harness/.agents/notes/archived/bug-fix/2026-09-14-windows-lock-release-probe.md:1-22@687f282e`
 
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-tui-adapter-registration-race.md:1-30@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-windows-atomic-replace-retry.md:1-28@687f282e
-来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-14-windows-lock-release-probe.md:1-22@687f282e
+来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-07-30-tui-adapter-registration-race.md:1-30@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-08-29-windows-atomic-replace-retry.md:1-28@687f282e 来源：deepseek-harness/.agents/notes/archived/bug-fix/2026-09-14-windows-lock-release-probe.md:1-22@687f282e
 
 <a id="two-stage-checkpoint-recovery"></a>
 ## 109. Two Stage Checkpoint Recovery

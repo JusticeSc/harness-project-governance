@@ -49,7 +49,9 @@
 
 注意最后一个数字：finalized 检查点不是"当前 catalog 的镜像"。本域结构化解析 `finalized/v4.json` 得到 62 个根；当前 `docs/persistence-schema.json` 有 65 个根，多出 `event:job/registered`、`event:job/settled`、`event:working-directory/change`，另有 8 个根的当前 digest 与检查点不同。finalized 锁定的是接受时的基线，后续兼容增量由新的 change record 承接——这正说明"finalized ≠ 当前格式冻结"。
 
-## 1. 写入器版本驱动的历史格式全集 {#persistence-historical-finalized.historical-format-coverage}
+<a id="persistence-historical-finalized.historical-format-coverage"></a>
+
+## 1. 写入器版本驱动的历史格式全集
 
 ### 触发
 
@@ -143,7 +145,9 @@ docs/<area>/formats/
 - 拒绝：删除 `v2.schema.json` 或把 v2 编号改成 v5，命令非零并指出缺失/编号错误。
 - 恢复：补回 v2 后重跑，退出 0，且 v0/v1/v3 的字节不变。
 
-## 2. 推进写入器前的只读归档与拒绝式写入 {#persistence-historical-finalized.format-snapshot-archive}
+<a id="persistence-historical-finalized.format-snapshot-archive"></a>
+
+## 2. 推进写入器前的只读归档与拒绝式写入
 
 ### 触发
 
@@ -167,8 +171,7 @@ docs/<area>/formats/
    - 目标已存在；
    - N 不等于当前 writer；
    - schema 无效或不完整；
-   - 与 `--write` 组合使用。
-   （`deepseek-harness/docs/persistence-changes/historical-formats/README.md:60-60@687f282e`）
+   - 与 `--write` 组合使用。 （`deepseek-harness/docs/persistence-changes/historical-formats/README.md:60-60@687f282e`）
 4. **随后补双语记录与来源证据**：用 persistence-format 模板添加 snapshot 的双语记录和 source evidence；保留所有更早记录（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:60-60@687f282e`）。
 5. **后继格式使用当前 catalog**；复制一份新的当前 catalog 不能满足"归档前驱"的要求（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:60-60@687f282e`）。
 6. **`--write` 先验证机器数据，再更新生成 Markdown 与配对记录**；它保留人工说明、机器声明和 schema（`deepseek-harness/docs/persistence-changes/historical-formats/README.md:70-70@687f282e`）。
@@ -241,7 +244,9 @@ pnpm run doc-sync
 - 拒绝 C：`--archive 3 --write` → 非零并拒绝（与 `--write` 组合）。
 - 恢复：不覆盖旧文件，改用已有快照或正确版本；验证器保持绿。
 
-## 3. 传递性类型指纹与声明/快照/生成表等价 {#persistence-historical-finalized.schema-fingerprint-equivalence}
+<a id="persistence-historical-finalized.schema-fingerprint-equivalence"></a>
+
+## 3. 传递性类型指纹与声明/快照/生成表等价
 
 ### 触发
 
@@ -349,7 +354,9 @@ pnpm run doc-sync
 - 拒绝：只改声明中的 root digest → 验证非零；只改 schema 中嵌套类型 → digest 变化被检出。
 - 恢复：`--write` 从已验证 schema 重建生成表，人工说明与机器声明不变，再验证通过。
 
-## 4. finalized/vN.json 的接受基线与不可变记录 {#persistence-historical-finalized.finalized-checkpoint-immutability}
+<a id="persistence-historical-finalized.finalized-checkpoint-immutability"></a>
+
+## 4. finalized/vN.json 的接受基线与不可变记录
 
 ### 触发
 
@@ -447,7 +454,9 @@ pnpm run doc-sync
 - 拒绝：把 `sessionFormatVersion` 改成 3 或删掉 baseline → 非零（拒绝无效/缺失元数据）。
 - 恢复：从 history 重新生成检查点（新文件）或恢复记录；不得手改旧 JSON。
 
-## 5. V0→V1→V2→V3→V4 具名转换与边界 {#persistence-historical-finalized.named-adjacent-migrations}
+<a id="persistence-historical-finalized.named-adjacent-migrations"></a>
+
+## 5. V0→V1→V2→V3→V4 具名转换与边界
 
 ### 触发
 
@@ -553,8 +562,7 @@ pnpm run doc-sync
 - 载荷位置变化（chunk → embedded stream；system prompt → system/message）；
 - 事件重命名（`tool/code-dispatch*` → `tool/ptc-dispatch*`）；
 - 信封/端点变化（`start`/`end` → `startSeq`/`endSeq`，`surfaceOp`）；
-- 序号/继承切点规则（`session/end-seed` + `data.inherited`）。
-每步先断言源格式版本，再转换，再对目标格式做完整校验；任一步失败即拒绝，不写回源日志。
+- 序号/继承切点规则（`session/end-seed` + `data.inherited`）。 每步先断言源格式版本，再转换，再对目标格式做完整校验；任一步失败即拒绝，不写回源日志。
 
 【额外建议】建立"格式特征表"作为迁移 checklist 的单一来源；为每对迁移保留至少一个真实旧日志 fixture 和一个损坏样本（验证拒绝）。
 
@@ -564,7 +572,9 @@ pnpm run doc-sync
 - 拒绝：对 V2 seeded 日志伪造 inherited cut → 迁移/验证失败；对损坏日志 → 明确拒绝，不产生截断输出。
 - 恢复：修正输入或使用正确 codec；不得通过改 schema/digest 让坏数据"通过"。
 
-## 6. 历史快照能证明与不能证明的边界 {#persistence-historical-finalized.historical-evidence-limits}
+<a id="persistence-historical-finalized.historical-evidence-limits"></a>
+
+## 6. 历史快照能证明与不能证明的边界
 
 ### 触发
 
@@ -653,7 +663,9 @@ pnpm run doc-sync
 - 拒绝：在评审中仅凭 `vN.md` 声称"V2→V3 迁移安全"→评审拒绝，要求 codec/spec 测试证据。
 - 恢复：补跑迁移/回放测试并记录输出，或在结论中降级为"未验证"。
 
-## 7. 双语记录与配对哈希：围栏代码块与 BEGIN/END GENERATED 区之外 {#persistence-historical-finalized.bilingual-pairing}
+<a id="persistence-historical-finalized.bilingual-pairing"></a>
+
+## 7. 双语记录与配对哈希：围栏代码块与 BEGIN/END GENERATED 区之外
 
 ### 触发
 
@@ -749,7 +761,9 @@ pnpm run doc-sync
 - 恢复：补 `v0.zh.md` 并重录，再跑 `--write`/验证/`doc-sync`，退出 0。
 - 拒绝：手改 `v0.schema.json` 的生成表 → `--write` 从 schema 重建，人工说明不变。
 
-## 8. 来源检查点声明与"不虚构发布" {#persistence-historical-finalized.source-checkpoint-provenance}
+<a id="persistence-historical-finalized.source-checkpoint-provenance"></a>
+
+## 8. 来源检查点声明与"不虚构发布"
 
 ### 触发
 
