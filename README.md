@@ -24,7 +24,7 @@ It is not a hosted governance service, a security audit, or a substitute for you
 
 Adoption is assisted and owner-reviewed: record the target facts and every obligation the change actually triggers, adapt the package's published migration decisions ([SKILL §3.2a](SKILL.md) and per-domain migration sections such as [documentation migration](references/documentation.md#migration)) to the target's owner, commands, corpora, dependencies and permissions, then have the project owner or an independent reviewer accept the decision before implementation. The withdrawn per-semantic-unit fresh-context adoption program is not the default. Earlier candidates—the cold-session PowerShell and Node exercises, reviewed-decision, citation-backed, split-context and source-bound attempts—did not satisfy their required conditions, and those failures remain failed; [METHODS §14](METHODS.zh.md#a07-adoption-candidate) preserves that history rather than this quickstart. This candidate has no complete independent adoption result, no autonomous-Agent adoption, no cross-project or cross-language certification, and no complete-source certification.
 
-Maintainer session progress, next actions and local investigation records belong in a separate development workspace outside the product checkout. A fresh clone requires no private records or parent-directory layout; follow `AGENTS.md`, the current request and repository facts. `AGENTS.md` is not installed into consumer projects. [Public verification](PUBLIC-VERIFICATION.md) is the version-scoped evidence record; the observations preserved there are historical release observations, not a rerun of this candidate.
+Maintainer session progress, next actions and local investigation records belong in a separate development workspace outside the product checkout. A fresh clone requires no private records or parent-directory layout; follow `AGENTS.md`, the current request and repository facts. `AGENTS.md` is not installed into consumer projects. [Public verification](PUBLIC-VERIFICATION.md) separates version-specific release checks from historical observations; neither certifies complete adoption.
 
 ## Quickstart (no `npm install`)
 
@@ -55,7 +55,7 @@ Replace `path/to/your-repo` with the target path; forward slashes work in PowerS
 
 Before creating metadata, check whether the target already has a single state owner (a task board, issue/PR ledger, handoff file or `PROJECT.md`). If it does, keep requirements, acceptance, the adoption decision and the next action there; do not run `init` and do not create `.governance/`.
 
-Run `init` only when the target has no state owner and the user asked to initialize governance, or work must continue across sessions, be handed off, or be saved before compaction:
+Run `init` only when the target has no state owner and at least one of these conditions holds: the user asked to initialize governance; work must continue across sessions or be handed off; or progress must be saved before compaction:
 
 ```bash
 node .agents/skills/harness-project-governance/bin/governance.mjs init .
@@ -167,7 +167,7 @@ Node.js is the CLI host, not evidence that every target language is supported or
 
 ### Optional OMP preflight adapter
 
-`tools/omp-preflight/simplification.mjs` is a target-added OMP adapter, not recovered upstream behavior and not part of the zero-dependency `bin/governance.mjs` CLI. It uses Node built-ins only. The recorded probes ran on OMP 18.13.1 on Windows with `--mode rpc`; that version-specific evidence covers host mechanics, not semantic acceptance of the source workflow or general adoption. Interactive TUI, other modes, hosts, and other versions remain unverified. A separately installed OMP can be exercised from a development checkout with the repository's localhost fixture; the exact installed version, command and result belong in the version-scoped [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md), and one version's result is not generalized to another. Real-model candidate failures and any later bounded results are recorded in [METHODS](METHODS.zh.md).
+`tools/omp-preflight/simplification.mjs` is a target-added OMP adapter, not recovered upstream behavior and not part of the zero-dependency `bin/governance.mjs` CLI. It uses Node built-ins only. Historical probes ran on OMP 18.13.1 on Windows with `--mode rpc`; that version-specific evidence covers host mechanics, not semantic acceptance of the source workflow or general adoption. Interactive TUI and unlisted host/mode/version combinations are not certified. A separately installed OMP can be exercised from a development checkout with the repository's localhost fixture; the exact installed version, command and result belong in the version-scoped [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md), and one version's result is not generalized to another. Real-model candidate failures and any later bounded results are recorded in [METHODS](METHODS.zh.md).
 
 Start it per session from the consumer repository root (or pass `--cwd`), with the installed module on OMP's exact allowlist and an existing Markdown state owner:
 

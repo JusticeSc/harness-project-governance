@@ -26,7 +26,7 @@
 
 采用是协助式、由 owner 评审的：记录目标事实与本次变更实际触发的全部义务，把本包已发布的迁移决定（[SKILL §3.2a](SKILL.md) 与分域迁移小节，例如[文档迁移](references/documentation.md#migration)）适配到目标的 owner、命令、语料、依赖与权限，再由项目负责人或独立评审接受决定后才实施。已撤下的逐语义单元新上下文采用程序不是默认流程。此前的候选——冷会话 PowerShell 与 Node 练习、评审决定、引用取证、拆分上下文与来源绑定尝试——均未满足各自必需条件，原失败判定保持；历史见 [METHODS 第14节](METHODS.zh.md#a07-adoption-candidate)，不在快速开始中展开。本候选没有完整的独立采用结果，不构成自主 Agent 采用、跨项目或跨语言认证，也不构成完整来源认证。
 
-维护者的会话进度、下一动作及本机查证记录归产品检出目录之外的开发工作空间。新克隆不依赖私有记录或父目录布局，按 `AGENTS.md`、当前请求与仓库事实接手；`AGENTS.md` 不安装到消费者项目。[公开验证记录](PUBLIC-VERIFICATION.md)是按版本保存的证据 owner；其中保留的是历史发布观察，不是对本候选的重跑或认证。
+维护者的会话进度、下一动作及本机查证记录归产品检出目录之外的开发工作空间。新克隆不依赖私有记录或父目录布局，按 `AGENTS.md`、当前请求与仓库事实接手；`AGENTS.md` 不安装到消费者项目。[公开验证记录](PUBLIC-VERIFICATION.md)区分版本特定的发布检查与历史观察；两者都不认证完整采用。
 
 ## 快速开始（无需 `npm install`）
 
@@ -57,7 +57,7 @@ node path/to/your-repo/.agents/skills/harness-project-governance/bin/governance.
 
 创建元数据前，先检查目标是否已有唯一状态 owner（任务板、Issue/PR 台账、交接文件或 `PROJECT.md`）。已有则把需求、验收、采用决定与下一动作留在该 owner；不要运行 `init`，也不要新建 `.governance/`。
 
-仅当目标没有状态 owner，且用户要求初始化治理，或工作需跨会话继续/交接、或在压缩前保存时才运行 `init`：
+仅当目标没有状态 owner，且以下条件至少满足一项时运行 `init`：用户要求初始化治理；工作需跨会话继续或交接；或需在压缩前保存进度：
 
 ```bash
 node .agents/skills/harness-project-governance/bin/governance.mjs init .
@@ -169,7 +169,7 @@ Node.js 只是 CLI 的宿主，不代表支持或验证了所有目标语言：�
 
 ### 可选的 OMP 前置检查适配器
 
-`tools/omp-preflight/simplification.mjs` 是目标新增的 OMP 适配器，不是恢复出的上游行为，也不属于零依赖的 `bin/governance.mjs` CLI。它只使用 Node 内置模块。已记录的探测在 Windows 上的 OMP 18.13.1 加 `--mode rpc` 下运行；该版本特定证据只覆盖宿主机制，不是来源工作流的语义验收或普遍采用声明。交互 TUI、其他模式、宿主与其他版本均未验证。在开发 checkout 中可用仓库的 localhost 夹具执行另行安装的 OMP；确切安装版本、命令与结果归按版本保存的 [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md)，不把一个版本的结果外推到另一个版本。真实模型候选的失败及后续有界结果另记于 [METHODS](METHODS.zh.md)。
+`tools/omp-preflight/simplification.mjs` 是目标新增的 OMP 适配器，不是恢复出的上游行为，也不属于零依赖的 `bin/governance.mjs` CLI。它只使用 Node 内置模块。历史探测在 Windows 上的 OMP 18.13.1 加 `--mode rpc` 下运行；该版本特定证据只覆盖宿主机制，不是来源工作流的语义验收或普遍采用声明。交互 TUI 和未列明的宿主/模式/版本组合未获认证。在开发 checkout 中可用仓库的 localhost 夹具执行另行安装的 OMP；确切安装版本、命令与结果归按版本保存的 [PUBLIC-VERIFICATION.md](PUBLIC-VERIFICATION.md)，不把一个版本的结果外推到另一个版本。真实模型候选的失败及后续有界结果另记于 [METHODS](METHODS.zh.md)。
 
 在消费仓库根目录（或传入 `--cwd`）按会话启动：模块须在 OMP 的精确允许列表中，并指定仓库内已有 Markdown 状态 owner：
 
